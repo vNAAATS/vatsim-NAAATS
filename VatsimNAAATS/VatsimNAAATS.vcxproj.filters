@@ -21,6 +21,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CNAAATSPlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VatsimNAAATS.def">
@@ -46,7 +49,10 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\EuroScopePlugIn.h">
+    <ClInclude Include="..\lib\include\EuroScopePlugIn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CNAAATSPlugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

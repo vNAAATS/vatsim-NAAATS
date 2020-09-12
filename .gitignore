@@ -31,5 +31,6 @@
 *.out
 *.app
 
-# Visual Studio Folder
+# Folders
 .vs/
+VatsimNAAATS/Debug/

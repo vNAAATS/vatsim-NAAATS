@@ -8,6 +8,7 @@
 #endif
 
 #include "resource.h"		// main symbols
+#include <EuroScopePlugIn.h>
 
 
 // CVatsimNAAATSApp
@@ -25,3 +26,4 @@ public:
 
 	DECLARE_MESSAGE_MAP()
 };
+

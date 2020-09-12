@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "framework.h"
 #include "VatsimNAAATS.h"
+#include "CNAAATSPlugin.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,7 +53,7 @@ CVatsimNAAATSApp::CVatsimNAAATSApp()
 // The one and only CVatsimNAAATSApp object
 
 CVatsimNAAATSApp theApp;
-
+EuroScopePlugIn::CPlugIn* pMyPlugIn = nullptr;
 
 // CVatsimNAAATSApp initialization
 
@@ -61,4 +62,18 @@ BOOL CVatsimNAAATSApp::InitInstance()
 	CWinApp::InitInstance();
 
 	return TRUE;
+}
+
+void __declspec (dllexport)
+EuroScopePlugInInit(EuroScopePlugIn::CPlugIn** ppPlugInInstance)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState())
+	* ppPlugInInstance = pMyPlugIn = new CNAAATSPlugin;
+}
+
+void __declspec (dllexport)
+EuroScopePlugInExit(void)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState())
+	delete pMyPlugIn;
 }
