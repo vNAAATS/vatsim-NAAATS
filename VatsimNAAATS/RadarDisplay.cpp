@@ -18,8 +18,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	if (Phase != REFRESH_PHASE_BEFORE_TAGS) return;
 
-	CDC dc;
-	dc.Attach(hDC);
+	Graphics g(hDC);
 
 	CRadarTarget ac;
 	ac = GetPlugIn()->RadarTargetSelectFirst();
@@ -27,122 +26,39 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	while (ac.IsValid()) {
 		POINT acPoint = this->ConvertCoordFromPositionToPixel(ac.GetPosition().GetPosition());
 
-		CPen pen;
-		pen.CreatePen(0, 1, RGB(255, 128, 0));
-		dc.SelectObject(pen);
+		SolidBrush brush(Color(255, 125, 0));
+		GraphicsContainer gContainer;
+		double hdg = (double)ac.GetPosition().GetReportedHeading();
 
+		gContainer = g.BeginContainer();
+		g.RotateTransform(hdg);
+		g.TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
+		Point points[19] = {
+			Point(0,-8),
+			Point(-1,-7),
+			Point(-1,-2),
+			Point(-8,3),
+			Point(-8,4),
+			Point(-1,2),
+			Point(-1,7),
+			Point(-4,9),
+			Point(-4,10),
+			Point(0,9),
+			Point(4,10),
+			Point(4,9),
+			Point(1,7),
+			Point(1,2),
+			Point(8,4),
+			Point(8,3),
+			Point(1,-2),
+			Point(1,-7),
+			Point(0,-8)
+		};
+		g.FillPolygon(&brush, points, 19);
+		g.EndContainer(gContainer);
 
-		dc.MoveTo(acPoint.x, acPoint.y - 8);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x - 8, acPoint.y + 3);
-		dc.LineTo(acPoint.x - 8, acPoint.y + 4);
-		dc.LineTo(acPoint.x - 1, acPoint.y + 2);
-		dc.LineTo(acPoint.x - 1, acPoint.y + 7);
-		dc.LineTo(acPoint.x - 4, acPoint.y + 9);
-		dc.LineTo(acPoint.x - 4, acPoint.y + 10);
-		dc.LineTo(acPoint.x, acPoint.y + 9);
-		dc.LineTo(acPoint.x + 4, acPoint.y + 10);
-		dc.LineTo(acPoint.x + 4, acPoint.y + 9);
-		dc.LineTo(acPoint.x + 1, acPoint.y + 7);
-		dc.LineTo(acPoint.x + 1, acPoint.y + 2);
-		dc.LineTo(acPoint.x + 8, acPoint.y + 4);
-		dc.LineTo(acPoint.x + 8, acPoint.y + 3);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x, acPoint.y - 8);
-		dc.LineTo(acPoint.x, acPoint.y + 9);
-		dc.MoveTo(acPoint.x - 8, acPoint.y + 4);
-		dc.LineTo(acPoint.x, acPoint.y + 1);
-		dc.LineTo(acPoint.x + 8, acPoint.y + 4);
-		dc.LineTo(acPoint.x, acPoint.y);
-		dc.LineTo(acPoint.x - 8, acPoint.y + 4);
-		dc.LineTo(acPoint.x, acPoint.y - 1);
-		dc.LineTo(acPoint.x + 8, acPoint.y + 4);
-		dc.LineTo(acPoint.x, acPoint.y - 2);
-		dc.LineTo(acPoint.x - 8, acPoint.y + 4);
-		dc.MoveTo(acPoint.x - 8, acPoint.y + 3);
-		dc.LineTo(acPoint.x, acPoint.y + 1);
-		dc.LineTo(acPoint.x + 8, acPoint.y + 3);
-		dc.LineTo(acPoint.x, acPoint.y);
-		dc.LineTo(acPoint.x - 8, acPoint.y + 3);
-		dc.LineTo(acPoint.x, acPoint.y - 1);
-		dc.LineTo(acPoint.x + 8, acPoint.y + 3);
-		dc.MoveTo(acPoint.x + 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 1);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 1);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 7);
-		dc.MoveTo(acPoint.x + 1, acPoint.y + 2);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 2);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 8);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 8);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 9);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 9);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 8);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 8);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 7);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 6);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 5);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 4);
-		dc.LineTo(acPoint.x + 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x - 1, acPoint.y - 3);
-		dc.LineTo(acPoint.x + 1, acPoint.y + 2);
-		dc.MoveTo(acPoint.x - 4, acPoint.y + 9);
-		dc.LineTo(acPoint.x, acPoint.y + 7);
-		dc.LineTo(acPoint.x + 4, acPoint.y + 9);
-		dc.LineTo(acPoint.x , acPoint.y + 8);
-		dc.LineTo(acPoint.x - 4, acPoint.y + 9);
-		dc.LineTo(acPoint.x - 4, acPoint.y + 9);
-		dc.LineTo(acPoint.x, acPoint.y + 9);
-		dc.LineTo(acPoint.x + 4, acPoint.y + 9);
-		dc.MoveTo(acPoint.x - 4, acPoint.y + 10);
-		dc.LineTo(acPoint.x, acPoint.y + 7);
-		dc.LineTo(acPoint.x + 4, acPoint.y + 10);
-		dc.LineTo(acPoint.x, acPoint.y + 8);
-		dc.LineTo(acPoint.x - 1, acPoint.y + 10);
-
-		if (&pen != nullptr) {
-			pen.DeleteObject();
-		}
 		ac = GetPlugIn()->RadarTargetSelectNext(ac);
 	}
-
-	dc.Detach();
 }
 
 void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
