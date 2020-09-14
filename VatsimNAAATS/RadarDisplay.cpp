@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "RadarDisplay.h"
+#include "AcTargets.h"
 #include <gdiplus.h>
+
 
 using namespace Gdiplus;
 
@@ -24,38 +26,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	ac = GetPlugIn()->RadarTargetSelectFirst();
 
 	while (ac.IsValid()) {
-		POINT acPoint = this->ConvertCoordFromPositionToPixel(ac.GetPosition().GetPosition());
-
-		SolidBrush brush(Color(255, 125, 0));
-		GraphicsContainer gContainer;
-		double hdg = (double)ac.GetPosition().GetReportedHeading();
-
-		gContainer = g.BeginContainer();
-		g.RotateTransform(hdg);
-		g.TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
-		Point points[19] = {
-			Point(0,-8),
-			Point(-1,-7),
-			Point(-1,-2),
-			Point(-8,3),
-			Point(-8,4),
-			Point(-1,2),
-			Point(-1,7),
-			Point(-4,9),
-			Point(-4,10),
-			Point(0,9),
-			Point(4,10),
-			Point(4,9),
-			Point(1,7),
-			Point(1,2),
-			Point(8,4),
-			Point(8,3),
-			Point(1,-2),
-			Point(1,-7),
-			Point(0,-8)
-		};
-		g.FillPolygon(&brush, points, 19);
-		g.EndContainer(gContainer);
+		AcTargets::DrawAirplane(&g, this, ac);
 
 		ac = GetPlugIn()->RadarTargetSelectNext(ac);
 	}
