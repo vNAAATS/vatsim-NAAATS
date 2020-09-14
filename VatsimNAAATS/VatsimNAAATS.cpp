@@ -11,6 +11,7 @@
 
 using namespace Gdiplus;
 
+// Token for gdiplus
 ULONG_PTR m_gdiplusToken = 0;
 
 BEGIN_MESSAGE_MAP(CVatsimNAAATSApp, CWinApp)

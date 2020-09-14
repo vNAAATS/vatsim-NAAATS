@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "RadarDisplay.h"
 #include "AcTargets.h"
+#include "MenuBar.h"
 #include <gdiplus.h>
 
 
@@ -16,19 +17,35 @@ RadarDisplay::~RadarDisplay()
 
 }
 
+// On radar screen refresh (occurs about once a second)
 void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
-	if (Phase != REFRESH_PHASE_BEFORE_TAGS) return;
-
+	// Graphics object
 	Graphics g(hDC);
 
-	CRadarTarget ac;
-	ac = GetPlugIn()->RadarTargetSelectFirst();
+	// Get the radar area
+	CRect RadarArea(GetRadarArea());
+	RadarArea.top = RadarArea.top - 1;
+	RadarArea.bottom = GetChatArea().bottom;
 
-	while (ac.IsValid()) {
-		AcTargets::DrawAirplane(&g, this, ac);
+	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
+		// Get first aircraft
+		CRadarTarget ac;
+		ac = GetPlugIn()->RadarTargetSelectFirst();
 
-		ac = GetPlugIn()->RadarTargetSelectNext(ac);
+		// Loop all aircraft
+		while (ac.IsValid()) {
+			// Draw the aircraft ONLY if inbound or already in airspace
+			if (GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() != -1 || GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorExitMinutes() != -1) {
+				AcTargets::DrawAirplane(&g, this, ac);
+			}
+
+			ac = GetPlugIn()->RadarTargetSelectNext(ac);
+		}
+	}
+	
+	if (Phase == REFRESH_PHASE_AFTER_TAGS) {
+		MenuBar::DrawMenuBar(&g, this, { RadarArea.left, RadarArea.top });
 	}
 }
 
@@ -38,11 +55,6 @@ void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POI
 }
 
 void RadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
-{
-
-}
-
-void RadarDisplay::OnFlightPlanControllerAssignedDataUpdate(CFlightPlan FlightPlan, int DataType)
 {
 
 }

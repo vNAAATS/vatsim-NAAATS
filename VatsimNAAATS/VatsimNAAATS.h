@@ -5,7 +5,7 @@
 #include "resource.h"
 #include <EuroScopePlugIn.h>
 
-
+// Main App
 class CVatsimNAAATSApp : public CWinApp
 {
 public:
