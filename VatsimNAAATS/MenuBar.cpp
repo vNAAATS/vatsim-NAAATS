@@ -6,9 +6,22 @@
 
 using namespace Colours;
 
-/*map<int, string> MenuBar::BuildButtonData() {
+map<int, string> MenuBar::BuildButtonData() {
+	map<int, string> data;
 
-}*/
+	// First rectangle
+	data[MENBTN_SETUP] = "Setup";
+	data[MENBTN_NOTEPAD] = "NotePad";
+	data[MENBTN_ADSC] = "Contracts";
+	data[MENBTN_FREQUENCY] = "Frequency";
+	data[MENBTN_MISC] = "Misc";
+	data[MENBTN_MESSAGE] = "Message";
+	data[MENBTN_MISC] = "Misc";
+	data[MENBTN_TAGS] = "Tags";
+	data[MENBTN_FLIGHTPLAN] = "Flight Plan";
+	data[MENBTN_DESTAPT] = "Dest Airport";
+	return data;
+}
 
 void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 
@@ -32,6 +45,7 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	dc->Draw3dRect(rect1, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(rect1, -1, -1);
 	dc->Draw3dRect(rect1, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	CRect rect = DrawMenuBarButton(dc, { topLeft.x + 20, topLeft.y + 2 }, "Setup", 40 + BTN_PAD_SIDE * 2, 20 + BTN_PAD_TOP * 2, { 0, 0 }, false);
 	menuOffsetX = RECT1_WIDTH + 1;
 
 	// Create rectangle
@@ -90,7 +104,33 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	dc->Draw3dRect(rect9, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 }
 
-/*static CRect DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, POINT mousePointer, bool isPressed) 
+CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, POINT mousePointer, bool isPressed) 
 {
+	// Brushes
+	CBrush btnNormal(ScreenBlue.ToCOLORREF());
+	CBrush btnPressed(ButtonPressed.ToCOLORREF());
 
-}*/
+	// Create rectangle
+	CRect button(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
+
+	// Check if pressed
+	if (isPressed) {
+		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
+	}
+	else {
+		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+	}
+
+	// Button bevel
+	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(button, -1, -1);
+	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Draw text
+	dc->SelectObject(CFont::FromHandle(FontSelector::ATCFont(MEN_FONT_SIZE)));
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->TextOutA(topLeft.x + BTN_PAD_SIDE, topLeft.y + BTN_PAD_TOP, text.c_str());
+
+	// Return the rectangle
+	return button;
+}
