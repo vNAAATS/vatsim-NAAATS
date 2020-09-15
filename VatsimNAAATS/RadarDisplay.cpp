@@ -1,3 +1,4 @@
+#pragma once
 #include "pch.h"
 #include "RadarDisplay.h"
 #include "AcTargets.h"
@@ -23,6 +24,10 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// Graphics object
 	Graphics g(hDC);
 
+	// Create device context
+	CDC dc;
+	dc.Attach(hDC);
+
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
 	RadarArea.top = RadarArea.top - 1;
@@ -45,8 +50,10 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_TAGS) {
-		MenuBar::DrawMenuBar(&g, this, { RadarArea.left, RadarArea.top });
+		MenuBar::DrawMenuBar(&dc, this, { RadarArea.left, RadarArea.top });
 	}
+
+	dc.Detach();
 }
 
 void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)

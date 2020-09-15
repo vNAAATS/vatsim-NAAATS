@@ -1,3 +1,4 @@
+#pragma once
 #include "pch.h"
 #include "NAAATS.h"
 #include "Constants.h"

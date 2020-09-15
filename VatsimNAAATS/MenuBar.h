@@ -14,10 +14,13 @@ class MenuBar
 {
 	public:
 		// Button data
-		static map<int, string> BuildButtonData();
+		//static map<int, string> BuildButtonData();
 
 		// Render the menu bar
-		static void DrawMenuBar(Graphics* g, CRadarScreen* screen, POINT topLeft);
+		static void DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft);
+
+		// Render a button, any button
+		//static CRect DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, POINT mousePointer, bool isPressed);
 	
 };
 
