@@ -49,9 +49,26 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	dc->Draw3dRect(rect1, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(rect1, -1, -1);
 	dc->Draw3dRect(rect1, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Render time
+	time_t now = time(0);
+	tm* date = gmtime(&now);
+	string strDate;
+	strDate += to_string(date->tm_mon + 1);
+	strDate += "-";
+	strDate += to_string(date->tm_mday);
+	strDate += "-";
+	strDate += to_string(1900 + date->tm_year);
+	int sDC = dc->SaveDC();
+	dc->SelectObject(CFont::FromHandle(FontSelector::NormalFont(MEN_FONT_SIZE)));
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+	dc->TextOutA(topLeft.x + 64, topLeft.y + 12, strDate.c_str());
+	dc->RestoreDC(sDC);
+
 	// Create buttons
 	btnData = BuildButtonData(0);
-	int offsetX = 100;
+	int offsetX = 128;
 	int offsetY = 30;
 	int idx = 0;
 	for (auto kv : btnData) {
@@ -59,24 +76,24 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 		switch (kv.first) {
 			case MENBTN_SETUP:
 			case MENBTN_TAGS:
-				btnWidth = 40 + (BTN_PAD_SIDE * 2);
+				btnWidth = 38 + (BTN_PAD_SIDE * 2);
 				break;
 			case MENBTN_NOTEPAD:
 			case MENBTN_FLIGHTPLAN:
-				btnWidth = 80 + (BTN_PAD_SIDE * 2);
+				btnWidth = 70 + (BTN_PAD_SIDE * 2);
 				break;
 			case MENBTN_ADSC:
 			case MENBTN_DESTAPT:
-				btnWidth = 90 + (BTN_PAD_SIDE * 2);
+				btnWidth = 80 + (BTN_PAD_SIDE * 2);
 				break;
 			case MENBTN_FREQUENCY:
-				btnWidth = 110 + (BTN_PAD_SIDE * 2);
+				btnWidth = 70 + (BTN_PAD_SIDE * 2);
 				break;
 			case MENBTN_MISC:
-				btnWidth = 55 + (BTN_PAD_SIDE * 2);
+				btnWidth = 35 + (BTN_PAD_SIDE * 2);
 				break;
 			case MENBTN_MESSAGE:
-				btnWidth = 90 + (BTN_PAD_SIDE * 2);
+				btnWidth = 65 + (BTN_PAD_SIDE * 2);
 				break;
 		}
 
@@ -84,11 +101,11 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 		{
 			offsetX = 10;
 			offsetY += MENBAR_BTN_HEIGHT + 1;
-			DrawMenuBarButton(dc, { offsetX, offsetY }, kv.second, btnWidth, MENBAR_BTN_HEIGHT, { 0, 0 }, false);
+			DrawMenuBarButton(dc, { offsetX, offsetY }, kv.second, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false);
 			offsetX += btnWidth + 1;
 		}
 		else {
-			DrawMenuBarButton(dc, { offsetX, offsetY }, kv.second, btnWidth, MENBAR_BTN_HEIGHT, { 0, 0 }, false);
+			DrawMenuBarButton(dc, { offsetX, offsetY }, kv.second, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false);
 			offsetX += btnWidth + 1;
 		}
 
@@ -151,10 +168,16 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	dc->Draw3dRect(rect9, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(rect9, -1, -1);
 	dc->Draw3dRect(rect9, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Delete object
+	DeleteObject(brush);
 }
 
-CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, POINT mousePointer, bool isPressed) 
+CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed)
 {
+	// Save context for later
+	int sDC = dc->SaveDC();
+
 	// Brushes
 	CBrush btnNormal(ScreenBlue.ToCOLORREF());
 	CBrush btnPressed(ButtonPressed.ToCOLORREF());
@@ -178,7 +201,20 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width,
 	// Draw text
 	dc->SelectObject(CFont::FromHandle(FontSelector::NormalFont(MEN_FONT_SIZE)));
 	dc->SetTextColor(TextWhite.ToCOLORREF());
-	dc->TextOutA(topLeft.x + BTN_PAD_SIDE, topLeft.y + BTN_PAD_TOP, text.c_str());
+	
+	// Check centred
+	if (isCentred) {
+		dc->SetTextAlign(TA_CENTER);
+		dc->TextOutA(button.left + (button.Width() / 2), button.top + vtcAlign, text.c_str());
+	}
+	else {
+		dc->TextOutA(topLeft.x + BTN_PAD_SIDE, topLeft.y + BTN_PAD_TOP, text.c_str());
+	}
+	
+	// Delete objects
+	DeleteObject(btnNormal);
+	DeleteObject(btnPressed);
+	dc->RestoreDC(sDC);
 
 	// Return the rectangle
 	return button;

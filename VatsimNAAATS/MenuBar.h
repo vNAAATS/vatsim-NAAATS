@@ -20,7 +20,7 @@ class MenuBar
 		static void DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft);
 
 		// Render a button, any button
-		static CRect DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, POINT mousePointer, bool isPressed);
+		static CRect DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed);
 	
 };
 

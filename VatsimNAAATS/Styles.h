@@ -27,7 +27,7 @@ class FontSelector
 			// Clear out
 			memset(&lFont, 0, sizeof(LOGFONT));
 			// Get the face
-			strcpy_s(lFont.lfFaceName, _T("Tahoma"));
+			strcpy_s(lFont.lfFaceName, _T("Arial"));
 			// Size
 			lFont.lfHeight = size;
 			// Normal weight
@@ -53,7 +53,7 @@ class FontSelector
 			// Size
 			lFont.lfHeight = size;
 			// Normal weight
-			lFont.lfWeight = FW_NORMAL;
+			lFont.lfWeight = FW_SEMIBOLD;
 			// Finally create the font
 			font = ::CreateFontIndirect(&lFont);
 

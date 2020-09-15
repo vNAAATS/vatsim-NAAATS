@@ -54,6 +54,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	}
 
 	dc.Detach();
+	g.ReleaseHDC(hDC);
 }
 
 void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)

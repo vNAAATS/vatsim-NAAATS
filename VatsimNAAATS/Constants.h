@@ -16,8 +16,8 @@ const string PLUGIN_COPYRIGHT = "GPL v3";
 
 // Text, margins, padding and sizes
 const int MEN_FONT_SIZE = 16;
-const int BTN_PAD_SIDE = 5;
-const int BTN_PAD_TOP = 3;
+const int BTN_PAD_SIDE = 4;
+const int BTN_PAD_TOP = 6;
 
 // Menu bar
 const int MENBAR_HEIGHT = 100;
