@@ -14,7 +14,7 @@ class MenuBar
 {
 	public:
 		// Button data
-		static map<int, string> BuildButtonData();
+		static map<int, string> BuildButtonData(int section);
 
 		// Render the menu bar
 		static void DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft);

@@ -14,12 +14,14 @@ const string PLUGIN_COPYRIGHT = "GPL v3";
 // Screen details
 #define DISPLAY_NAME "vNAAATS Display"
 
-// Text, margins and padding
-const int MEN_FONT_SIZE = 14;
+// Text, margins, padding and sizes
+const int MEN_FONT_SIZE = 16;
 const int BTN_PAD_SIDE = 5;
-const int BTN_PAD_TOP = 2;
+const int BTN_PAD_TOP = 3;
 
-// Menu bar sizes
+// Menu bar
+const int MENBAR_HEIGHT = 100;
+const int MENBAR_BTN_HEIGHT = 30;
 const int RECT1_WIDTH = 500;
 const int RECT2_WIDTH = 340;
 const int RECT3_WIDTH = 160;
@@ -30,12 +32,12 @@ const int RECT7_WIDTH = 250;
 const int RECT8_WIDTH = 70;
 
 // Menu buttons
-const int MENBTN_MISC = 400;
-const int MENBTN_MESSAGE = 401;
-const int MENBTN_SETUP = 402;
-const int MENBTN_TAGS = 403;
-const int MENBTN_NOTEPAD = 404;
-const int MENBTN_FLIGHTPLAN = 405;
-const int MENBTN_ADSC = 406;
-const int MENBTN_DESTAPT = 407;
-const int MENBTN_FREQUENCY = 408;
+const int MENBTN_SETUP = 400;
+const int MENBTN_NOTEPAD = 401;
+const int MENBTN_ADSC = 402;
+const int MENBTN_FREQUENCY = 403;
+const int MENBTN_MISC = 404;
+const int MENBTN_MESSAGE = 405;
+const int MENBTN_TAGS = 406;
+const int MENBTN_FLIGHTPLAN = 407;
+const int MENBTN_DESTAPT = 408;

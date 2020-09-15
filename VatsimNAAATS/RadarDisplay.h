@@ -26,7 +26,7 @@ class RadarDisplay : public CRadarScreen
 		void OnAsrContentToBeClosed(void);
 
 	private:
-		map<int, string> MenuButtons;
-		map<int, bool> ButtonsPressed;
+		map<int, string> menuButtons;
+		map<int, bool> buttonsPressed;
 };
 
