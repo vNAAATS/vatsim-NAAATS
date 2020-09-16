@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 #include <string>
+#include <vector>
 #include "EuroScopePlugIn.h"
 
 using namespace std;
@@ -28,5 +29,6 @@ class RadarDisplay : public CRadarScreen
 	private:
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
+		vector<pair<CRadarTarget, bool>> inboundAircraft;
 };
 

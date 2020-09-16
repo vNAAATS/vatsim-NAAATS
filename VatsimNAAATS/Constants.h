@@ -14,10 +14,13 @@ const string PLUGIN_COPYRIGHT = "GPL v3";
 // Screen details
 #define DISPLAY_NAME "vNAAATS Display"
 
-// Text, margins, padding and sizes
+// Text, margins and padding
 const int MEN_FONT_SIZE = 16;
 const int BTN_PAD_SIDE = 4;
 const int BTN_PAD_TOP = 6;
+
+// List sizes
+const int LIST_INBOUND_WIDTH = 400;
 
 // Menu bar
 const int MENBAR_HEIGHT = 100;

@@ -12,5 +12,5 @@ class AcTargets
 {
 	public:
 		// Render the airplane icon
-		static void DrawAirplane(Graphics* g, CRadarScreen* screen, CRadarTarget target);
+		static void DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget target, int hdg);
 };

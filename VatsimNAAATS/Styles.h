@@ -20,7 +20,7 @@ namespace Colours {
 class FontSelector 
 {
 	public:
-		static HFONT NormalFont(int size) {
+		static CFont* NormalFont(int size) {
 			HFONT font;
 			LOGFONT lFont;
 
@@ -36,10 +36,10 @@ class FontSelector
 			font = ::CreateFontIndirect(&lFont);
 
 			// Select the font
-			return font;
+			return CFont::FromHandle(font);
 		}
 
-		static HFONT ATCFont(int size) 
+		static CFont* ATCFont(int size) 
 		{
 			HFONT font;
 			LOGFONT lFont;
@@ -53,15 +53,15 @@ class FontSelector
 			// Size
 			lFont.lfHeight = size;
 			// Normal weight
-			lFont.lfWeight = FW_SEMIBOLD;
+			lFont.lfWeight = FW_REGULAR;
 			// Finally create the font
 			font = ::CreateFontIndirect(&lFont);
 
 			// Select the font
-			return font;
+			return CFont::FromHandle(font);
 		}
 
-		static HFONT MonoFont(int size) 
+		static CFont* MonoFont(int size) 
 		{
 			HFONT font;
 			LOGFONT lFont;
@@ -73,11 +73,11 @@ class FontSelector
 			// Size
 			lFont.lfHeight = size;
 			// Normal weight
-			lFont.lfWeight = FW_NORMAL;
+			lFont.lfWeight = FW_SEMIBOLD;
 			// Finally create the font
 			font = ::CreateFontIndirect(&lFont);
 
 			// Select the font
-			return font;
+			return CFont::FromHandle(font);
 		}
 };

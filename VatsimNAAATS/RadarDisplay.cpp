@@ -3,6 +3,7 @@
 #include "RadarDisplay.h"
 #include "AcTargets.h"
 #include "MenuBar.h"
+#include "Lists.h"
 #include <gdiplus.h>
 
 
@@ -21,12 +22,15 @@ RadarDisplay::~RadarDisplay()
 // On radar screen refresh (occurs about once a second)
 void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
-	// Graphics object
-	Graphics g(hDC);
-
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
+
+	// Graphics object
+	Graphics g(hDC);
+
+	// Clean up old list
+	inboundAircraft.clear();
 
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
@@ -38,21 +42,49 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CRadarTarget ac;
 		ac = GetPlugIn()->RadarTargetSelectFirst();
 
+		// Get entry time and heading
+		int entryMinutes;
+		int hdg;
+
 		// Loop all aircraft
 		while (ac.IsValid()) {
-			// Draw the aircraft ONLY if inbound or already in airspace
-			if (GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() != -1 || GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorExitMinutes() != -1) {
-				AcTargets::DrawAirplane(&g, this, ac);
-			}
+			// Time and heading
+			entryMinutes = GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes();
+			hdg = ac.GetPosition().GetReportedHeading();
 
+			// Draw the aircraft if already in airspace
+			if (entryMinutes == 0) {
+				AcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
+			}
+			else if (entryMinutes > 0) {
+				// If inbound
+				if (GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() > 0) {
+					AcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
+
+					if ((hdg <= 359) && (hdg >= 181)) {
+						// Shanwick
+						inboundAircraft.push_back(make_pair(ac, false));
+					}
+					else if ((hdg >= 1) && (hdg <= 179)) {
+						// Gander
+						inboundAircraft.push_back(make_pair(ac, true));
+					}
+				}
+			}
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
+
+		// Draw menu bar
+		MenuBar::DrawMenuBar(&dc, this, { RadarArea.left, RadarArea.top });
+		// Inbound list
+		Lists::DrawInboundList(&g, &dc, this, { RadarArea.left, RadarArea.top }, &inboundAircraft);
 	}
 	
-	if (Phase == REFRESH_PHASE_AFTER_TAGS) {
-		MenuBar::DrawMenuBar(&dc, this, { RadarArea.left, RadarArea.top });
+	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
+		
 	}
 
+	// De-allocation
 	dc.Detach();
 	g.ReleaseHDC(hDC);
 }
