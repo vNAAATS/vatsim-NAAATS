@@ -20,7 +20,7 @@ namespace Colours {
 class FontSelector 
 {
 	public:
-		static CFont* NormalFont(int size) {
+		static void SelectNormalFont(int size, CDC* dc) {
 			HFONT font;
 			LOGFONT lFont;
 
@@ -35,11 +35,14 @@ class FontSelector
 			// Finally create the font
 			font = ::CreateFontIndirect(&lFont);
 
-			// Select the font
-			return CFont::FromHandle(font);
+			// Select font
+			dc->SelectObject(CFont::FromHandle(font));
+
+			// Cleanup
+			DeleteObject(font);
 		}
 
-		static CFont* ATCFont(int size) 
+		static void SelectATCFont(int size, CDC* dc)
 		{
 			HFONT font;
 			LOGFONT lFont;
@@ -57,11 +60,14 @@ class FontSelector
 			// Finally create the font
 			font = ::CreateFontIndirect(&lFont);
 
-			// Select the font
-			return CFont::FromHandle(font);
+			// Select font
+			dc->SelectObject(CFont::FromHandle(font));
+
+			// Cleanup
+			DeleteObject(font);
 		}
 
-		static CFont* MonoFont(int size) 
+		static void SelectMonoFont(int size, CDC* dc)
 		{
 			HFONT font;
 			LOGFONT lFont;
@@ -77,7 +83,10 @@ class FontSelector
 			// Finally create the font
 			font = ::CreateFontIndirect(&lFont);
 
-			// Select the font
-			return CFont::FromHandle(font);
+			// Select font
+			dc->SelectObject(CFont::FromHandle(font));
+
+			// Cleanup
+			DeleteObject(font);
 		}
 };

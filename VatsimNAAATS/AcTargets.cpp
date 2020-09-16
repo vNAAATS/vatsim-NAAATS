@@ -18,13 +18,12 @@ void AcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarT
 	// Begin drawing
 	gContainer = g->BeginContainer();
 	
-	CFont* lineFont = FontSelector::ATCFont(MEN_FONT_SIZE);
-	dc->SelectObject(lineFont);
+	FontSelector::SelectATCFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	string line(target.GetCallsign());
 
-	dc->TextOutA(acPoint.x, acPoint.y - 230, line.c_str());
+	dc->TextOutA(acPoint.x, acPoint.y - 23, line.c_str());
 
 	// Rotate the graphics object and set the middle to the aircraft position
 	g->RotateTransform(hdg);
@@ -65,5 +64,4 @@ void AcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarT
 	DeleteObject(&points);
 	DeleteObject(&gContainer);
 	DeleteObject(&acPoint);
-	DeleteObject(&lineFont);
 }

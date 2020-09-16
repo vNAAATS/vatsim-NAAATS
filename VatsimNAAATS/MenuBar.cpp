@@ -61,14 +61,11 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	strDate += to_string(1900 + date->tm_year);
 	int sDC = dc->SaveDC();
 	// Font stuff
-	CFont* font = FontSelector::NormalFont(MEN_FONT_SIZE);
-	dc->SelectObject(font);
+	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(topLeft.x + 64, topLeft.y + 12, strDate.c_str());
 	dc->RestoreDC(sDC);
-
-	DeleteObject(font);
 
 	// Create buttons
 	btnData = BuildButtonData(0);
@@ -174,7 +171,7 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	dc->Draw3dRect(rect9, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Delete object
-	DeleteObject(brush);
+	DeleteObject(&brush);
 }
 
 CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed)
@@ -203,8 +200,7 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width,
 	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Draw text
-	CFont* font = FontSelector::NormalFont(MEN_FONT_SIZE);
-	dc->SelectObject(font);
+	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	
 	// Check centred
@@ -220,9 +216,8 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width,
 	dc->RestoreDC(sDC);
 
 	// Delete objects
-	DeleteObject(btnNormal);
-	DeleteObject(btnPressed);
-	DeleteObject(font);
+	DeleteObject(&btnNormal);
+	DeleteObject(&btnPressed);
 
 	// Return the rectangle
 	return button;

@@ -19,8 +19,7 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 
 	/// Make "Inbound" text
 	// Font
-	CFont* monoFont = FontSelector::MonoFont(MEN_FONT_SIZE);
-	dc->SelectObject(monoFont);
+	FontSelector::SelectMonoFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 	dc->TextOutA(rectangle.X, rectangle.Y, string("Inbound (" + to_string(inboundAircraft->size()) + ")").c_str());
@@ -31,8 +30,7 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 		// Get the aircraft
 		CFlightPlan fp(screen->GetPlugIn()->FlightPlanSelect(ac->first.GetCallsign()));
 
-		CFont* lineFont = FontSelector::ATCFont(MEN_FONT_SIZE);
-		dc->SelectObject(lineFont);
+		FontSelector::SelectATCFont(MEN_FONT_SIZE, dc);
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 		dc->SetTextAlign(TA_LEFT);
 		string line;
@@ -53,7 +51,6 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 
 	// Deallocate
 	DeleteObject(&transparentBrush);
-	DeleteObject(&monoFont);
 
 	return rectangle;
 }

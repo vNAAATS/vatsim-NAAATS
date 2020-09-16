@@ -58,7 +58,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 			}
 			else if (entryMinutes > 0) {
 				// If inbound
-				if (GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() > 0) {
+				if (GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() > 0 && GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() <= 90) {
 					AcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
 
 					if ((hdg <= 359) && (hdg >= 181)) {
