@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "InboundList.h"
 #include "EuroScopePlugIn.h"
 
 using namespace std;
@@ -27,8 +28,10 @@ class RadarDisplay : public CRadarScreen
 		void OnAsrContentToBeClosed(void);
 
 	private:
+		POINT mousePointer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
+		CInboundList* inboundList;
 };
 

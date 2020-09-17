@@ -3,7 +3,7 @@
 #include "RadarDisplay.h"
 #include "AcTargets.h"
 #include "MenuBar.h"
-#include "Lists.h"
+#include "InboundList.h"
 #include "Constants.h"
 #include <gdiplus.h>
 
@@ -12,7 +12,7 @@ using namespace Gdiplus;
 
 RadarDisplay::RadarDisplay() 
 {
-
+	inboundList = new CInboundList({ 100, 150 });
 }
 
 RadarDisplay::~RadarDisplay() 
@@ -99,7 +99,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Draw menu bar
 		MenuBar::DrawMenuBar(&dc, this, { RadarArea.left, RadarArea.top });
 		// Inbound list
-		Lists::DrawInboundList(&g, &dc, this, { RadarArea.left, RadarArea.top }, &inboundAircraft, &epVec);
+		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
@@ -113,7 +113,12 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
 {
+	mousePointer = Pt;
+	if (ObjectType == LIST_INBOUND) {
+		inboundList->MoveList(Area, Released);
+	}
 
+	RequestRefresh();
 }
 
 void RadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 

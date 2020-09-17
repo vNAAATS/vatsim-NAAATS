@@ -6,7 +6,7 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
-/// VALUES
+/// WAYPOINTS
 // Entry Waypoints
 const vector<string> pointsGander = { "AVPUT",
         "CLAVY",
@@ -102,6 +102,7 @@ const vector<string> pointsShanwick = { "RATSU",
         "GONAN" 
 };
 
+/// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
 const string PLUGIN_VERSION = "dev";

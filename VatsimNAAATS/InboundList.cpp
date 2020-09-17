@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Lists.h"
+#include "InboundList.h"
 #include "Constants.h"
 #include "Styles.h"
 #include <sstream>
@@ -8,7 +8,15 @@
 
 using namespace Colours;
 
-Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT topLeft, vector<pair<CRadarTarget, bool>>* inboundAircraft, vector<pair<string, int>>* epVec)
+CInboundList::CInboundList(POINT topLeftPt) {
+	topLeft = topLeftPt;
+}
+
+POINT CInboundList::GetTopLeft() {
+	return topLeft;
+}
+
+Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<pair<CRadarTarget, bool>>* inboundAircraft, vector<pair<string, int>>* epVec)
 {
 	// Brushes
 	SolidBrush transparentBrush(Color(0, 0, 0, 0));
@@ -17,7 +25,7 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 	int sDC = dc->SaveDC();
 
 	// Make rectangle
-	Rect rectangle(100, 150, LIST_INBOUND_WIDTH, 500);
+	Rect rectangle(topLeft.x, topLeft.y, LIST_INBOUND_WIDTH, 500);
 	g->FillRectangle(&transparentBrush, rectangle);
 
 	/// Make "Inbound" text
@@ -66,12 +74,18 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 70;
 
+		// TODO fix
 		// Draw estimated time
 		time_t now = time(0);
 		tm* zuluTime = gmtime(&now);
 		zuluTime->tm_min += fp.GetExtractedRoute().GetPointDistanceInMinutes(epVec->at(idx).second);
+		int h = zuluTime->tm_hour;
+		int h_add = (zuluTime->tm_min % 60) / 60;
+		int h_add_floored = floor(h_add);
+		h += h_add_floored;
+		int m = zuluTime->tm_min - (h_add - h_add_floored) * 60;
+		int zuluTimeInt = h * 100 + m;
 		// Leading zeroes
-		int zuluTimeInt = zuluTime->tm_hour + zuluTime->tm_min;
 		std::ostringstream stream;
 		stream << std::setw(4) << std::setfill('0') << zuluTimeInt;
 		line = stream.str();
@@ -110,7 +124,7 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 	dc->RestoreDC(sDC);
 
 	// Get object area and add object to screen
-	CRect area(100, 150, LIST_INBOUND_WIDTH, 500);
+	CRect area(topLeft.x, topLeft.y, topLeft.x + LIST_INBOUND_WIDTH, topLeft.y + 14);
 	screen->AddScreenObject(LIST_INBOUND, "", area, true, "");
 
 
@@ -118,4 +132,9 @@ Rect Lists::DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT to
 	DeleteObject(&transparentBrush);
 
 	return rectangle;
+}
+
+void CInboundList::MoveList(CRect area, bool isReleased) {
+	isMouseReleased = isReleased;
+	topLeft = { area.left, area.top };
 }

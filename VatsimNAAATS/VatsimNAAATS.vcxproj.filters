@@ -33,7 +33,7 @@
     <ClCompile Include="MenuBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lists.cpp">
+    <ClCompile Include="InboundList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,7 +82,7 @@
     <ClInclude Include="Styles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lists.h">
+    <ClInclude Include="InboundList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
