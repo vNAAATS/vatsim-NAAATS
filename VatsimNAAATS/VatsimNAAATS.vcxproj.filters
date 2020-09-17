@@ -30,9 +30,6 @@
     <ClCompile Include="AcTargets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Tag.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MenuBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -77,9 +74,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AcTargets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tag.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MenuBar.h">

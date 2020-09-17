@@ -64,7 +64,7 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(topLeft.x + 64, topLeft.y + 12, strDate.c_str());
+	dc->TextOutA(topLeft.x + 64, topLeft.y + 12.5, strDate.c_str());
 	dc->RestoreDC(sDC);
 
 	// Create buttons

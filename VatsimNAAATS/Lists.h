@@ -14,6 +14,6 @@ class Lists
 {
 	public:
 		// Inbound list
-		static Rect DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT topLeft, vector<pair<CRadarTarget, bool>>* inboundAircraft);
+		static Rect DrawInboundList(Graphics* g, CDC* dc, CRadarScreen* screen, POINT topLeft, vector<pair<CRadarTarget, bool>>* inboundAircraft, vector<pair<string, int>>* epVec);
 };
 

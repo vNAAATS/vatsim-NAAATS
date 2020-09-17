@@ -4,6 +4,7 @@
 #include "AcTargets.h"
 #include "MenuBar.h"
 #include "Lists.h"
+#include "Constants.h"
 #include <gdiplus.h>
 
 
@@ -46,10 +47,19 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		int entryMinutes;
 		int hdg;
 
+		// List of entry points
+		vector<pair<string, int>> epVec;
+
 		// Loop all aircraft
 		while (ac.IsValid()) {
+			// Flight plan
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(ac.GetCallsign());
+
+			// Route
+			CFlightPlanExtractedRoute rte = fp.GetExtractedRoute();
+
 			// Time and heading
-			entryMinutes = GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes();
+			entryMinutes = fp.GetSectorEntryMinutes();
 			hdg = ac.GetPosition().GetReportedHeading();
 
 			// Draw the aircraft if already in airspace
@@ -58,16 +68,28 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 			}
 			else if (entryMinutes > 0) {
 				// If inbound
-				if (GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() > 0 && GetPlugIn()->FlightPlanSelect(ac.GetCallsign()).GetSectorEntryMinutes() <= 90) {
+				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
 					AcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
 
 					if ((hdg <= 359) && (hdg >= 181)) {
 						// Shanwick
-						inboundAircraft.push_back(make_pair(ac, false));
+						for (int i = 0; i < rte.GetPointsNumber(); i++) {
+							if (std::find(pointsShanwick.begin(), pointsShanwick.end(), rte.GetPointName(i)) != pointsShanwick.end()) {
+								inboundAircraft.push_back(make_pair(ac, false));
+								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								break;
+							}
+						}		
 					}
 					else if ((hdg >= 1) && (hdg <= 179)) {
 						// Gander
-						inboundAircraft.push_back(make_pair(ac, true));
+						for (int i = 0; i < rte.GetPointsNumber(); i++) {
+							if (std::find(pointsGander.begin(), pointsGander.end(), rte.GetPointName(i)) != pointsGander.end()) {
+								inboundAircraft.push_back(make_pair(ac, true));
+								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -77,7 +99,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Draw menu bar
 		MenuBar::DrawMenuBar(&dc, this, { RadarArea.left, RadarArea.top });
 		// Inbound list
-		Lists::DrawInboundList(&g, &dc, this, { RadarArea.left, RadarArea.top }, &inboundAircraft);
+		Lists::DrawInboundList(&g, &dc, this, { RadarArea.left, RadarArea.top }, &inboundAircraft, &epVec);
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {

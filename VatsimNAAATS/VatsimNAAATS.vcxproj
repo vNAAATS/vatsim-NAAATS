@@ -195,7 +195,6 @@
     <ClCompile Include="NAAATS.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
-    <ClCompile Include="Tag.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -214,7 +213,6 @@
     <ClInclude Include="RadarDisplay.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Styles.h" />
-    <ClInclude Include="Tag.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VatsimNAAATS.h" />
   </ItemGroup>
