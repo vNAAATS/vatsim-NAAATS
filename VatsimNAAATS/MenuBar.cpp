@@ -6,31 +6,45 @@
 
 using namespace Colours;
 
-map<int, string> MenuBar::BuildButtonData(int section) {
+map<int, string> MenuBar::BuildButtonData() {
 	map<int, string> data;
 
-	// First rectangle
-	if (section == 0) {
-		data[MENBTN_SETUP] = "Setup";
-		data[MENBTN_NOTEPAD] = "NotePad";
-		data[MENBTN_ADSC] = "Contracts";
-		data[MENBTN_FREQUENCY] = "Frequency";
-		data[MENBTN_MISC] = "Misc";
-		data[MENBTN_MESSAGE] = "Message";
-		data[MENBTN_TAGS] = "Tags";
-		data[MENBTN_FLIGHTPLAN] = "Flight Plan";
-		data[MENBTN_DESTAPT] = "Dest Airport";
-		return data;
-	}
+	data[MENBTN_SETUP] = "Setup";
+	data[MENBTN_NOTEPAD] = "NotePad";
+	data[MENBTN_ADSC] = "Contracts";
+	data[MENBTN_FREQUENCY] = "Frequency";
+	data[MENBTN_MISC] = "Misc";
+	data[MENBTN_MESSAGE] = "Message";
+	data[MENBTN_TAGS] = "Tags";
+	data[MENBTN_FLIGHTPLAN] = "Flight Plan";
+	data[MENBTN_DESTAPT] = "Dest Airport";
+	data[MENBTN_AREASEL] = "Area Sel";
+	data[MENBTN_TCKCTRL] = "Tck Control";
+	data[MENBTN_OVERLAYS] = "Overlays";
+	data[MENBTN_TYPESEL] = "Select";
+	data[MENBTN_ALTFILT] = "Alt Filter";
+	data[MENBTN_HALO] = "Halo ";
+	data[MENBTN_RBL] = "RBL";
+	data[MENBTN_RINGS] = "Rings ";
+	data[MENBTN_MTT] = "MTT";
+	data[MENBTN_PTL] = "PTL ";
+	data[MENBTN_PIV] = "PIV";
+	data[MENBTN_GRID] = "Grid";
+	data[MENBTN_SEP] = "Sep";
+	data[MENBTN_POS] = "CZQX";
+	data[MENBTN_QCKLOOK] = "Qck Look";
+	data[MENDRP_AREASEL] = "";
+	data[MENDRP_TCKCTRL] = "";
+	data[MENDRP_OVERLAYS] = "";
+	data[MENDRP_TYPESEL] = "";
+
+	return data;
 }
 
-void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
+void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData) {
 
 	// Brush to draw the bar
 	CBrush brush(ScreenBlue.ToCOLORREF());
-
-	// Make the data
-	map<int, string> btnData;
 
 	// Get screen width
 	LONG screenWidth = screen->GetRadarArea().left + screen->GetRadarArea().right;
@@ -65,53 +79,7 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(topLeft.x + 64, topLeft.y + 12.5, strDate.c_str());
-	dc->RestoreDC(sDC);
 
-	// Create buttons
-	btnData = BuildButtonData(0);
-	int offsetX = 128;
-	int offsetY = 30;
-	int idx = 0;
-	for (auto kv : btnData) {
-		int btnWidth = 0;
-		switch (kv.first) {
-			case MENBTN_SETUP:
-			case MENBTN_TAGS:
-				btnWidth = 38 + (BTN_PAD_SIDE * 2);
-				break;
-			case MENBTN_NOTEPAD:
-			case MENBTN_FLIGHTPLAN:
-				btnWidth = 70 + (BTN_PAD_SIDE * 2);
-				break;
-			case MENBTN_ADSC:
-			case MENBTN_DESTAPT:
-				btnWidth = 80 + (BTN_PAD_SIDE * 2);
-				break;
-			case MENBTN_FREQUENCY:
-				btnWidth = 70 + (BTN_PAD_SIDE * 2);
-				break;
-			case MENBTN_MISC:
-				btnWidth = 35 + (BTN_PAD_SIDE * 2);
-				break;
-			case MENBTN_MESSAGE:
-				btnWidth = 65 + (BTN_PAD_SIDE * 2);
-				break;
-		}
-
-		if (idx == 4)
-		{
-			offsetX = 10;
-			offsetY += MENBAR_BTN_HEIGHT + 1;
-			DrawMenuBarButton(dc, { offsetX, offsetY }, kv.second, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false);
-			offsetX += btnWidth + 1;
-		}
-		else {
-			DrawMenuBarButton(dc, { offsetX, offsetY }, kv.second, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false);
-			offsetX += btnWidth + 1;
-		}
-
-		idx++;
-	}
 	// Offset for the next rectangle
 	menuOffsetX = RECT1_WIDTH + 1;
 
@@ -170,17 +138,235 @@ void MenuBar::DrawMenuBar(CDC* dc, CRadarScreen* screen, POINT topLeft) {
 	InflateRect(rect9, -1, -1);
 	dc->Draw3dRect(rect9, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
+	// Create buttons
+	// TODO: comment
+	int offsetX = 128;
+	int offsetY = 30;
+	int idx = 0;
+	for (auto kv : *btnData) {
+		int btnWidth = 0;
+		switch (kv.first) {
+		case MENBTN_SETUP:
+		case MENBTN_TAGS:
+			btnWidth = 38 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_NOTEPAD:
+		case MENBTN_FLIGHTPLAN:
+			btnWidth = 70 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_ADSC:
+		case MENBTN_DESTAPT:
+			btnWidth = 80 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_FREQUENCY:
+			btnWidth = 70 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_MISC:
+			btnWidth = 35 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_MESSAGE:
+			btnWidth = 65 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_AREASEL:
+		case MENDRP_AREASEL:
+			btnWidth = 75 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_TCKCTRL:
+		case MENDRP_TCKCTRL:
+			btnWidth = 80 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_OVERLAYS:
+		case MENDRP_OVERLAYS:
+			btnWidth = 65 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_TYPESEL:
+		case MENDRP_TYPESEL:
+			btnWidth = 60 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_ALTFILT:
+			btnWidth = 78 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_HALO:
+		case MENBTN_PTL:
+			btnWidth = 60 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_RBL:
+		case MENBTN_PIV:
+			btnWidth = 40 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_RINGS:
+		case MENBTN_GRID:
+			btnWidth = 65 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_MTT:
+		case MENBTN_SEP:
+			btnWidth = 35 + (BTN_PAD_SIDE * 2);
+			break;
+		case MENBTN_POS:
+		case MENBTN_QCKLOOK:
+			btnWidth = 78 + (BTN_PAD_SIDE * 2);
+			break;
+		}
+
+		if (idx == 4)
+		{
+			offsetX = 10;
+			offsetY += MENBAR_BTN_HEIGHT + 1;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += btnWidth + 1;
+			
+		}
+		else if (idx < 9) {
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += btnWidth + 1;
+		}
+		else if (idx == 9) {
+			offsetY = 30;
+			offsetX = RECT1_WIDTH + 10;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += btnWidth + 1;
+		}
+		else if (idx == 10) {
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += (btnWidth * 1.41);
+		}
+		else if (idx == 11) {
+			FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+			dc->SetTextColor(TextWhite.ToCOLORREF());
+			dc->TextOutA(offsetX, offsetY + BTN_PAD_TOP, "Map");
+			offsetX += 40;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+		}
+		else if (idx == 12) {
+			FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
+			dc->SetTextColor(TextWhite.ToCOLORREF());
+			dc->TextOutA(offsetX, offsetY + BTN_PAD_TOP, "Pos Type");
+			offsetX += 75;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+		}
+		else if (idx == 13) {
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + 10;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + 11;
+		}
+		else if (idx < 18) {
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += btnWidth + 1;
+		}
+		else if (idx == 18)
+		{
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + 11;
+			offsetY += MENBAR_BTN_HEIGHT + 1;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += btnWidth + 1;
+		}
+		else if (idx < 22) {
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+			offsetX += btnWidth + 1;
+		}
+		else if (idx == 22) {
+			offsetY = 30;
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + 11;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+		}
+		else if (idx == 23) {
+			offsetY += MENBAR_BTN_HEIGHT + 1;
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			}
+			else {
+				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			}
+		}
+		else if (idx == 24) {
+			offsetX = RECT1_WIDTH + 10;
+			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			offsetX += btnWidth + 1;
+		}
+		else if (idx == 25) {
+			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			offsetX += (btnWidth * 1.41);
+		}
+		else if (idx == 26) {
+			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+		}
+		else if (idx == 27) {
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
+			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+		}
+
+		dc->RestoreDC(sDC);
+		idx++;
+	}
+
 	// Delete object
 	DeleteObject(&brush);
 }
 
-CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed)
+CRect MenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive)
 {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
 	// Brushes
 	CBrush btnNormal(ScreenBlue.ToCOLORREF());
+	
 	CBrush btnPressed(ButtonPressed.ToCOLORREF());
 
 	// Create rectangle
@@ -188,16 +374,37 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width,
 
 	// Check if pressed
 	if (isPressed) {
-		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
+		if (isPosActive) {
+			dc->FillSolidRect(button, LightGreen.ToCOLORREF());
+			// Button bevel
+			dc->Draw3dRect(button, GreenBevelLight.ToCOLORREF(), GreenBevelDark.ToCOLORREF());
+			InflateRect(button, -1, -1);
+			dc->Draw3dRect(button, GreenBevelLight.ToCOLORREF(), GreenBevelDark.ToCOLORREF());
+		}
+		else {
+			dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
+			// Button bevel
+			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+			InflateRect(button, -1, -1);
+			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		}
 	}
 	else {
-		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+		if (isPosActive) {
+			dc->FillSolidRect(button, LightGreen.ToCOLORREF());
+			// Button bevel
+			dc->Draw3dRect(button, GreenBevelLight.ToCOLORREF(), GreenBevelDark.ToCOLORREF());
+			InflateRect(button, -1, -1);
+			dc->Draw3dRect(button, GreenBevelLight.ToCOLORREF(), GreenBevelDark.ToCOLORREF());
+		}
+		else {
+			dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+			// Button bevel
+			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+			InflateRect(button, -1, -1);
+			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		}
 	}
-
-	// Button bevel
-	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	InflateRect(button, -1, -1);
-	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Draw text
 	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
@@ -206,10 +413,10 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width,
 	// Check centred
 	if (isCentred) {
 		dc->SetTextAlign(TA_CENTER);
-		dc->TextOutA(button.left + (button.Width() / 2), button.top + vtcAlign, text.c_str());
+		dc->TextOutA(button.left + (button.Width() / 2), button.top + vtcAlign, kv.second.c_str());
 	}
 	else {
-		dc->TextOutA(topLeft.x + BTN_PAD_SIDE, topLeft.y + BTN_PAD_TOP, text.c_str());
+		dc->TextOutA(topLeft.x + BTN_PAD_SIDE, topLeft.y + BTN_PAD_TOP, kv.second.c_str());
 	}
 	
 	// Restore device context
@@ -219,6 +426,75 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, POINT topLeft, string text, int width,
 	DeleteObject(&btnNormal);
 	DeleteObject(&btnPressed);
 
-	// Return the rectangle
+	// Add object and return the rectangle
+	screen->AddScreenObject(kv.first, "", button, false, "");
 	return button;
+}
+
+CRect MenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen) {
+	// Save context for later
+	int sDC = dc->SaveDC();
+
+	// Create dropdown area
+	CRect dropDown(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
+
+	// Fill
+	dc->FillSolidRect(dropDown, ScreenBlue.ToCOLORREF());
+
+	// Dropdown bevel
+	dc->Draw3dRect(dropDown, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(dropDown, -1, -1);
+	dc->Draw3dRect(dropDown, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Create dropdown button
+	CRect button(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+
+	// Check if pressed
+	if (isOpen) {
+		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
+		// Button bevel
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(button, -1, -1);
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	}
+	else {
+		// Button
+		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+		// Button bevel
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(button, -1, -1);
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		// Button triangle
+		SolidBrush brush(Grey);
+		// Coz GDI+ doesn't like GDI
+		Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+		Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
+			Point(rectangle.X + 12, rectangle.Y + 4),
+			Point(rectangle.X + 7.5, rectangle.Y + 14) };
+		g->FillPolygon(&brush, points, 3);
+	}
+	// Button
+	dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+	// Button bevel
+	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(button, -1, -1);
+	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	// Button triangle
+	SolidBrush brush(TextWhite);
+	// Coz GDI+ doesn't like GDI
+	Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+	Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4 ),
+		Point(rectangle.X + 12, rectangle.Y + 4),
+		Point(rectangle.X + 7.5, rectangle.Y + 14 )};
+	g->FillPolygon(&brush, points, 3);
+
+	// Restore device context
+	dc->RestoreDC(sDC);
+
+	// Clean up
+	DeleteObject(&brush);
+
+	// Add object and return dropdown
+	screen->AddScreenObject(kv.first, "", button, false, "");
+	return dropDown;
 }

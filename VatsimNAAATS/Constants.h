@@ -105,9 +105,9 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "dev";
+const string PLUGIN_VERSION = "v0";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
-const string PLUGIN_COPYRIGHT = "GPL v3";
+const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
 // Screen details
 #define DISPLAY_NAME "vNAAATS Display"
@@ -126,17 +126,17 @@ const int MENBAR_BTN_HEIGHT = 30;
 const int RECT1_WIDTH = 500;
 const int RECT2_WIDTH = 340;
 const int RECT3_WIDTH = 160;
-const int RECT4_WIDTH = 110;
-const int RECT5_WIDTH = 280;
+const int RECT4_WIDTH = 100;
+const int RECT5_WIDTH = 250;
 const int RECT6_WIDTH = 100;
-const int RECT7_WIDTH = 250;
-const int RECT8_WIDTH = 70;
+const int RECT7_WIDTH = 270;
+const int RECT8_WIDTH = 90;
 
 /// OBJECTS
 // Lists
 const int LIST_INBOUND = 300;
 
-// Menu buttons
+// Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;
 const int MENBTN_NOTEPAD = 401;
 const int MENBTN_ADSC = 402;
@@ -146,3 +146,23 @@ const int MENBTN_MESSAGE = 405;
 const int MENBTN_TAGS = 406;
 const int MENBTN_FLIGHTPLAN = 407;
 const int MENBTN_DESTAPT = 408;
+const int MENBTN_AREASEL = 409;
+const int MENBTN_TCKCTRL = 410;
+const int MENBTN_OVERLAYS = 411;
+const int MENBTN_TYPESEL = 412;
+const int MENBTN_ALTFILT = 413;
+const int MENBTN_HALO = 414;
+const int MENBTN_RBL = 415;
+const int MENBTN_RINGS = 416;
+const int MENBTN_MTT = 417;
+const int MENBTN_PTL = 418;
+const int MENBTN_PIV = 419;
+const int MENBTN_GRID = 420;
+const int MENBTN_SEP = 421;
+const int MENBTN_POS = 422;
+const int MENBTN_QCKLOOK = 423;
+const int MENDRP_AREASEL = 424;
+const int MENDRP_TCKCTRL = 425;
+const int MENDRP_OVERLAYS = 426;
+const int MENDRP_TYPESEL = 427;
+const int MENTXT_ALTFILT = 428;

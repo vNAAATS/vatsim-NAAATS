@@ -13,6 +13,7 @@ using namespace Gdiplus;
 RadarDisplay::RadarDisplay() 
 {
 	inboundList = new CInboundList({ 100, 150 });
+	menuButtons = MenuBar::BuildButtonData();
 }
 
 RadarDisplay::~RadarDisplay() 
@@ -97,7 +98,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// Draw menu bar
-		MenuBar::DrawMenuBar(&dc, this, { RadarArea.left, RadarArea.top });
+		MenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed);
 		// Inbound list
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
 	}
@@ -128,7 +129,17 @@ void RadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POI
 
 void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
+	// If menu button is being unpressed
+	if (buttonsPressed.find(ObjectType) != buttonsPressed.end()) {
+		buttonsPressed.erase(ObjectType);
+	} else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
+		if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
+			buttonsPressed[ObjectType] = true;
+		}
+	}
 
+	
+	
 }
 
 void RadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
