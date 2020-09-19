@@ -133,7 +133,7 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 	return rectangle;
 }
 
-void CInboundList::MoveList(CRect area, bool isReleased) {
+void CInboundList::MoveList(CRect area, bool isReleased) { // TODO: check need for isReleased
 	isMouseReleased = isReleased;
 	topLeft = { area.left, area.top };
 }

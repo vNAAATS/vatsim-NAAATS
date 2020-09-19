@@ -35,6 +35,7 @@ class RadarDisplay : public CRadarScreen
 		CInboundList* inboundList;
 		map<int, string> dropDownsCurrent;
 		map<int, string> menuFields;
+		map<string, pair<bool, POINT>> tagStatuses;
 
 		// Selected active tracks for ownership (vector)
 		// Selected active control postion for ownership

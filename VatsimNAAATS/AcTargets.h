@@ -12,8 +12,11 @@ class CAcTargets
 {
 	public:
 		// Render the airplane icon
-		static void DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget target, int hdg);
+		static void DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, int hdg);
 
 		// Render tags
-		static void DrawTag(CDC* dc);
+		static POINT DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition);
+
+		// Move tag
+		static POINT MoveTag(POINT oldPosition);
 };

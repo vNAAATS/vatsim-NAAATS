@@ -136,6 +136,9 @@ const int RECT8_WIDTH = 90;
 // Lists
 const int LIST_INBOUND = 300;
 
+// Screen
+const int SCREEN_TAG = 1;
+
 // Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;
 const int MENBTN_NOTEPAD = 401;
@@ -145,7 +148,7 @@ const int MENBTN_MISC = 404;
 const int MENBTN_MESSAGE = 405;
 const int MENBTN_TAGS = 406;
 const int MENBTN_FLIGHTPLAN = 407;
-const int MENBTN_DESTAPT = 408;
+const int MENBTN_DETAILED = 408;
 const int MENBTN_AREASEL = 409;
 const int MENBTN_TCKCTRL = 410;
 const int MENBTN_OVERLAYS = 411;

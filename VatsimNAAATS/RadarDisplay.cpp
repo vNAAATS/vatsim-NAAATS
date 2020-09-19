@@ -65,12 +65,46 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 			// Draw the aircraft if already in airspace
 			if (entryMinutes == 0) {
-				CAcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
+				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
+					// Insert point (first time appearance)
+					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
+					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+
+					// Draw target and tag
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
+					CAcTargets::DrawTag(&dc, this, &ac, &pt);
+				}
+				else {
+					// Draw target and tag
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
+					CAcTargets::DrawTag(&dc, this, &ac, &tagStatuses.find(fp.GetCallsign())->second);
+				}
 			}
 			else if (entryMinutes > 0) {
 				// If inbound
 				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
-					CAcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
+					if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
+						// Create blank point
+						pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
+						tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+
+						// Draw target and tag
+						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
+						POINT tagPt = CAcTargets::DrawTag(&dc, this, &ac, &pt);
+
+						// Insert the current point for the tag
+						//pt = make_pair(false, tagPt);
+						//tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+					}
+					else {
+						// Draw target and tag
+						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
+						POINT tagPt = CAcTargets::DrawTag(&dc, this, &ac, &tagStatuses.find(fp.GetCallsign())->second);
+
+						// Insert the current point for the tag
+						//pair<bool, POINT> pt = make_pair(false, tagPt);
+						//tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+					}
 
 					if ((hdg <= 359) && (hdg >= 181)) {
 						// Shanwick
@@ -138,7 +172,7 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 		}
 	}
 
-	
+	// If
 	
 }
 

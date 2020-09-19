@@ -17,7 +17,7 @@ map<int, string> MenuBar::BuildButtonData() {
 	data[MENBTN_MESSAGE] = "Message";
 	data[MENBTN_TAGS] = "Tags";
 	data[MENBTN_FLIGHTPLAN] = "Flight Plan";
-	data[MENBTN_DESTAPT] = "Dest Airport";
+	data[MENBTN_DETAILED] = "Detailed";
 	data[MENBTN_AREASEL] = "Area Sel";
 	data[MENBTN_TCKCTRL] = "Tck Control";
 	data[MENBTN_OVERLAYS] = "Overlays";
@@ -155,8 +155,8 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 			btnWidth = 70 + (BTN_PAD_SIDE * 2);
 			break;
 		case MENBTN_ADSC:
-		case MENBTN_DESTAPT:
-			btnWidth = 80 + (BTN_PAD_SIDE * 2);
+		case MENBTN_DETAILED:
+			btnWidth = 65 + (BTN_PAD_SIDE * 2);
 			break;
 		case MENBTN_FREQUENCY:
 			btnWidth = 70 + (BTN_PAD_SIDE * 2);
