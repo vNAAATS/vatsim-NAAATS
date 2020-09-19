@@ -340,19 +340,39 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 		}
 		else if (idx == 24) {
 			offsetX = RECT1_WIDTH + 10;
-			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+			}
+			else {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			}
 			offsetX += btnWidth + 1;
 		}
 		else if (idx == 25) {
+		if (pressedData->find(kv.first) != pressedData->end()) {
+			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+		}
+		else {
 			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+		}
 			offsetX += (btnWidth * 1.41);
 		}
 		else if (idx == 26) {
+		if (pressedData->find(kv.first) != pressedData->end()) {
+			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+		}
+		else {
 			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+		}
 		}
 		else if (idx == 27) {
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
-			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+			}
+			else {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			}
 		}
 
 		dc->RestoreDC(sDC);
@@ -464,17 +484,9 @@ CRect MenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT to
 	if (isOpen) {
 		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
 		// Button bevel
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	}
-	else {
-		// Button
-		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
-		// Button bevel
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 		// Button triangle
 		SolidBrush brush(Grey);
 		// Coz GDI+ doesn't like GDI
@@ -483,27 +495,38 @@ CRect MenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT to
 			Point(rectangle.X + 12, rectangle.Y + 4),
 			Point(rectangle.X + 7.5, rectangle.Y + 14) };
 		g->FillPolygon(&brush, points, 3);
-	}
-	// Button
-	dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
-	// Button bevel
-	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	InflateRect(button, -1, -1);
-	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	// Button triangle
-	SolidBrush brush(TextWhite);
-	// Coz GDI+ doesn't like GDI
-	Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
-	Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4 ),
-		Point(rectangle.X + 12, rectangle.Y + 4),
-		Point(rectangle.X + 7.5, rectangle.Y + 14 )};
-	g->FillPolygon(&brush, points, 3);
 
+		// Clean up
+		DeleteObject(&brush);
+	}
+	else {
+		// Button
+		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+		// Button bevel
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(button, -1, -1);
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		// Button
+		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
+		// Button bevel
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(button, -1, -1);
+		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		// Button triangle
+		SolidBrush brush(TextWhite);
+		// Coz GDI+ doesn't like GDI
+		Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+		Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
+			Point(rectangle.X + 12, rectangle.Y + 4),
+			Point(rectangle.X + 7.5, rectangle.Y + 14) };
+		g->FillPolygon(&brush, points, 3);
+
+		// Clean up
+		DeleteObject(&brush);
+	}
+	
 	// Restore device context
 	dc->RestoreDC(sDC);
-
-	// Clean up
-	DeleteObject(&brush);
 
 	// Add object and return dropdown
 	screen->AddScreenObject(kv.first, "", button, false, "");
