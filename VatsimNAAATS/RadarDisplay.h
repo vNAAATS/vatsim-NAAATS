@@ -34,6 +34,8 @@ class RadarDisplay : public CRadarScreen
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
 		CInboundList* inboundList;
 		map<int, string> dropDownsCurrent;
+		map<int, string> menuFields;
+
 		// Selected active tracks for ownership (vector)
 		// Selected active control postion for ownership
 		// ASEL

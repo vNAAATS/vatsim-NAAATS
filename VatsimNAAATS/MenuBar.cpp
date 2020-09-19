@@ -31,7 +31,7 @@ map<int, string> MenuBar::BuildButtonData() {
 	data[MENBTN_PIV] = "PIV";
 	data[MENBTN_GRID] = "Grid";
 	data[MENBTN_SEP] = "Sep";
-	data[MENBTN_POS] = "CZQX";
+	data[MENBTN_POS] = "CX-BBX";
 	data[MENBTN_QCKLOOK] = "Qck Look";
 	data[MENDRP_AREASEL] = "";
 	data[MENDRP_TCKCTRL] = "";
@@ -184,6 +184,7 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 			btnWidth = 60 + (BTN_PAD_SIDE * 2);
 			break;
 		case MENBTN_ALTFILT:
+		case MENTXT_ALTFILT:
 			btnWidth = 78 + (BTN_PAD_SIDE * 2);
 			break;
 		case MENBTN_HALO:
@@ -231,6 +232,10 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 			offsetX += btnWidth + 1;
 		}
 		else if (idx == 9) {
+			offsetX += 7;
+			FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+			dc->SetTextColor(TextWhite.ToCOLORREF());
+			dc->TextOutA(offsetX, offsetY + BTN_PAD_TOP + 1, "ASEL: NONE"); // TODO: interpolate ASEL
 			offsetY = 30;
 			offsetX = RECT1_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
@@ -283,7 +288,11 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 			else {
 				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
 			}
+			// TODO: Make dynamic
+			offsetY += MENBAR_BTN_HEIGHT + 1;
+			DrawMenuBarButton(dc, screen, { offsetX, offsetY }, make_pair(428, "000-000"), btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + 11;
+			offsetY = 30;
 		}
 		else if (idx < 18) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
@@ -318,12 +327,7 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 		else if (idx == 22) {
 			offsetY = 30;
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + 11;
-			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
-			}
-			else {
-				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
-			}
+			DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, true);
 		}
 		else if (idx == 23) {
 			offsetY += MENBAR_BTN_HEIGHT + 1;
@@ -373,7 +377,7 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, p
 	CRect button(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
 
 	// Check if pressed
-	if (isPressed) {
+	if (isPressed && kv.first != 428) {
 		if (isPosActive) {
 			dc->FillSolidRect(button, LightGreen.ToCOLORREF());
 			// Button bevel
@@ -390,7 +394,14 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, p
 		}
 	}
 	else {
-		if (isPosActive) {
+		if (kv.first == 428) {
+			dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
+			// Button bevel
+			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+			InflateRect(button, -1, -1);
+			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		}
+		else if (isPosActive) {
 			dc->FillSolidRect(button, LightGreen.ToCOLORREF());
 			// Button bevel
 			dc->Draw3dRect(button, GreenBevelLight.ToCOLORREF(), GreenBevelDark.ToCOLORREF());
