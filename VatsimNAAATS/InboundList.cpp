@@ -26,7 +26,6 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 
 	// Make rectangle
 	Rect rectangle(topLeft.x, topLeft.y, LIST_INBOUND_WIDTH, 500);
-	g->FillRectangle(&transparentBrush, rectangle);
 
 	/// Make "Inbound" text
 	// Font

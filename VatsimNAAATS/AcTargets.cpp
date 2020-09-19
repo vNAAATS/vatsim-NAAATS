@@ -4,7 +4,7 @@
 
 using namespace Colours;
 
-void AcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget target, int hdg) {
+void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget target, int hdg) {
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target.GetPosition().GetPosition());
 
@@ -18,12 +18,19 @@ void AcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarT
 	// Begin drawing
 	gContainer = g->BeginContainer();
 	
-	FontSelector::SelectATCFont(MEN_FONT_SIZE, dc);
+	// Draw the altitude
+	FontSelector::SelectMonoFont(14, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	string line(target.GetCallsign());
-
-	dc->TextOutA(acPoint.x, acPoint.y - 23, line.c_str());
+	string line;
+	if (screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign()).GetClearedAltitude() != 0) {
+		line = to_string(screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign()).GetClearedAltitude() / 1000);
+	}
+	else {
+		line = to_string(screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign()).GetFinalAltitude() / 1000);
+	}
+	
+	dc->TextOutA(acPoint.x, acPoint.y - 25, line.c_str());
 
 	// Rotate the graphics object and set the middle to the aircraft position
 	g->RotateTransform(hdg);
@@ -64,4 +71,8 @@ void AcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarT
 	DeleteObject(&points);
 	DeleteObject(&gContainer);
 	DeleteObject(&acPoint);
+}
+
+void CAcTargets::DrawTag(CDC* dc) {
+
 }

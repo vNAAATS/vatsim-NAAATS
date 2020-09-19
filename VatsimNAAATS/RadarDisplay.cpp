@@ -65,12 +65,12 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 			// Draw the aircraft if already in airspace
 			if (entryMinutes == 0) {
-				AcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
+				CAcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
 			}
 			else if (entryMinutes > 0) {
 				// If inbound
 				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
-					AcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
+					CAcTargets::DrawAirplane(&g, &dc, this, ac, hdg);
 
 					if ((hdg <= 359) && (hdg >= 181)) {
 						// Shanwick
