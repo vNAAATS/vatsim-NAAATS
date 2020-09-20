@@ -235,7 +235,8 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 			offsetX += 7;
 			FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 			dc->SetTextColor(TextWhite.ToCOLORREF());
-			dc->TextOutA(offsetX, offsetY + BTN_PAD_TOP + 1.5, "ASEL: NONE"); // TODO: interpolate ASEL
+			string asel = string(screen->GetPlugIn()->FlightPlanSelectASEL().GetCallsign());			
+			dc->TextOutA(offsetX, offsetY + BTN_PAD_TOP + 1.5, string("ASEL: " + (asel != "" ? asel : "NONE")).c_str()); // TODO: interpolate ASEL
 			offsetY = 30;
 			offsetX = RECT1_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {

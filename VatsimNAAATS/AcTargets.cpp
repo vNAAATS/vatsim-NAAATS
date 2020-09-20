@@ -86,15 +86,28 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	CRect tagRect;
 	int tagOffsetX = tagPosition->second.x;
 	int tagOffsetY = tagPosition->second.y;
-	if (tagPosition->first == true) {
-		// Detailed
-		tagRect = CRect((acPoint.x + tagOffsetX) - 50, (acPoint.y + tagOffsetY) - 85, (acPoint.x + tagOffsetX) + 35, (acPoint.y + tagOffsetY) - 30);
+	if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
+		if (tagPosition->first == true) {
+			// Detailed
+			tagRect = CRect(acPoint.x  - 50, acPoint.y - 86, acPoint.x + 30, acPoint.y - 30);
+		}
+		else {
+			// Not detailed
+			tagRect = CRect(acPoint.x - 50, acPoint.y - 65, acPoint.x + 30, acPoint.y - 35);
+		}
 	}
 	else {
-		// Not detailed
-		tagRect = CRect((acPoint.x + tagOffsetX) - 50, (acPoint.y + tagOffsetY) - 65, (acPoint.x + tagOffsetX) + 30, (acPoint.y + tagOffsetY) - 35);
+		if (tagPosition->first == true) {
+			// Detailed
+			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 80, (acPoint.y + tagOffsetY) + 56);
+		}
+		else {
+			// Not Detailed
+			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 80, (acPoint.y + tagOffsetY) + 30);
+		}
 	}
-
+	
+	dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
 	// Pick atc font for callsign
 	// TODO: colour change based on status
 	FontSelector::SelectATCFont(16, dc);
@@ -134,8 +147,14 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 	}
 	
+	// Tag line
+	if (tagRect.right < acPoint.x) {
+		dc->MoveTo({ tagRect.right, tagRect.top + 2 });
+		dc->LineTo({ tagRect.right + 20, tagRect.top + 2 });
+	}
+
 	// Create screen object
-	screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, "");
+	screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, acFP.GetPilotName());
 
 	// Restore context
 	dc->RestoreDC(sDC);

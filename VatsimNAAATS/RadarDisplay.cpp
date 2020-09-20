@@ -153,6 +153,12 @@ void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POI
 		inboundList->MoveList(Area, Released);
 	}
 
+	if (ObjectType == SCREEN_TAG) {
+		auto kv = tagStatuses.find(sObjectId);
+		POINT acPosPix = ConvertCoordFromPositionToPixel(GetPlugIn()->RadarTargetSelect(sObjectId).GetPosition().GetPosition());
+		kv->second.second = { Area.left - acPosPix.x, Area.top - acPosPix.y };
+	}
+
 	RequestRefresh();
 }
 
@@ -172,7 +178,11 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 		}
 	}
 
-	// If
+	// If screen object is a tag
+	if (ObjectType == SCREEN_TAG) {
+		// Set the ASEL
+		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+	}
 	
 }
 
