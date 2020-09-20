@@ -14,6 +14,7 @@ RadarDisplay::RadarDisplay()
 {
 	inboundList = new CInboundList({ 100, 150 });
 	menuButtons = MenuBar::BuildButtonData();
+	buttonsPressed.insert(make_pair(MENBTN_TAGS, true));
 }
 
 RadarDisplay::~RadarDisplay() 
@@ -81,30 +82,36 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 					// Draw target and tag
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-					// Check if detailed
-					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-						auto kv = tagStatuses.find(fp.GetCallsign());
-						kv->second.first = true; // Set detailed on
-						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-					}
-					else {
-						auto kv = tagStatuses.find(fp.GetCallsign());
-						kv->second.first = false; // Set detailed off
-						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					// If tags enabled
+					if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+						// Check if detailed
+						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = true; // Set detailed on
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
+						else {
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = false; // Set detailed off
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
 					}
 				}
 				else {
 					// Draw target and tag
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-						auto kv = tagStatuses.find(fp.GetCallsign());
-						kv->second.first = true; // Set detailed on
-						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-					}
-					else {
-						auto kv = tagStatuses.find(fp.GetCallsign());
-						kv->second.first = false; // Set detailed off
-						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					// If tags enabled
+					if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = true; // Set detailed on
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
+						else {
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = false; // Set detailed off
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
 					}
 				}
 			}
@@ -118,65 +125,71 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 						// Draw target and tag
 						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-						// Check if all detailed
-						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = true; // Set detailed on
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-							// Unpress detailed if it is there
-							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
-								buttonsPressed.erase(MENBTN_DETAILED);
+						// If tags enabled
+						if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+							// Check if all detailed
+							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+								auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = true; // Set detailed on
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+								// Unpress detailed if it is there
+								if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
+									buttonsPressed.erase(MENBTN_DETAILED);
+								}
 							}
-						}
-						else {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = false; // Set detailed off
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-						}
+							else {
+								auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = false; // Set detailed off
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+							}
 
-						
-						if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
-							/*auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = true; // Set detailed on
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
-							// Unpress detailed if it is there
-							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
-								buttonsPressed.erase(MENBTN_QCKLOOK);
+							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
+								/*auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = true; // Set detailed on
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
+								// Unpress detailed if it is there
+								if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
+									buttonsPressed.erase(MENBTN_QCKLOOK);
+								}
 							}
-						}
-						else {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = false; // Set detailed off
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+							else {
+								auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = false; // Set detailed off
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+							}
 						}
 					}
 					else {
 						// Draw target and tag
 						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-						// Check if all detailed
-						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = true; // Set detailed on
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-							// Unpress detailed if it is there
-							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
-								buttonsPressed.erase(MENBTN_DETAILED);
+						// If tags enabled
+						if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+							// Check if all detailed
+							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+								auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = true; // Set detailed on
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+								// Unpress detailed if it is there
+								if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
+									buttonsPressed.erase(MENBTN_DETAILED);
+								}
 							}
-						}
-						else {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = false; // Set detailed off
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-						}
+							else {
+								auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = false; // Set detailed off
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+							}
 
-						// Check if ASEL detailed
-						if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // All detailed
-							/*auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = true; // Set detailed on
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
-							// Unpress detailed if it is there
-							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
-								buttonsPressed.erase(MENBTN_QCKLOOK);
+
+							// Check if ASEL detailed
+							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // All detailed
+								/*auto kv = tagStatuses.find(fp.GetCallsign());
+								kv->second.first = true; // Set detailed on
+								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
+								// Unpress detailed if it is there
+								if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
+									buttonsPressed.erase(MENBTN_QCKLOOK);
+								}
 							}
 						}
 					}
