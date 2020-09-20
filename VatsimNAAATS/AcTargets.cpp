@@ -150,7 +150,11 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// Tag line
 	if (tagRect.right < acPoint.x) {
 		dc->MoveTo({ tagRect.right, tagRect.top + 2 });
-		dc->LineTo({ tagRect.right + 20, tagRect.top + 2 });
+		dc->LineTo({ tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 2 });
+	}
+	else {
+		dc->MoveTo({ tagRect.left, tagRect.top + 2 });
+		dc->LineTo({ tagRect.left - (tagRect.right - acPoint.x), tagRect.top + 2 });
 	}
 
 	// Create screen object
