@@ -73,22 +73,8 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 70;
 
-		// TODO fix
 		// Draw estimated time
-		time_t now = time(0);
-		tm* zuluTime = gmtime(&now);
-		zuluTime->tm_min += fp.GetExtractedRoute().GetPointDistanceInMinutes(epVec->at(idx).second);
-		int h = zuluTime->tm_hour;
-		int h_add = (zuluTime->tm_min % 60) / 60;
-		int h_add_floored = floor(h_add);
-		h += h_add_floored;
-		int m = zuluTime->tm_min - (h_add - h_add_floored) * 60;
-		int zuluTimeInt = h * 100 + m;
-		// Leading zeroes
-		std::ostringstream stream;
-		stream << std::setw(4) << std::setfill('0') << zuluTimeInt;
-		line = stream.str();
-		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
+		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, ParseZuluTime(fp, epVec->at(idx).second).c_str());
 		offsetX += 45;
 
 		// Draw altitude
@@ -136,4 +122,59 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 void CInboundList::MoveList(CRect area, bool isReleased) { // TODO: check need for isReleased
 	isMouseReleased = isReleased;
 	topLeft = { area.left, area.top };
+}
+
+// TODO: move code to a utils class
+string CInboundList::ParseZuluTime(CFlightPlan fp, int ep) {
+	time_t now = time(0);
+	tm* zuluTime = gmtime(&now);
+	int deltaMinutes = fp.GetExtractedRoute().GetPointDistanceInMinutes(ep);
+	int hours = zuluTime->tm_hour;
+	int minutes = zuluTime->tm_min + deltaMinutes;
+	
+	if (minutes >= 60) {
+		// Get minutes
+		int minRemainder = minutes % 60;
+
+		// Get number of hours
+		hours = (minutes - minRemainder) / 60;
+
+		// Reassign number of minutes
+		minutes = minRemainder;
+	}
+
+	// Check if over 24 hours
+	if (hours >= 24) {
+		hours = hours - 24;
+	}
+
+
+	// Pad for zeros
+	string strHours;
+	if (hours < 10) {
+		if (hours == 0) {
+			strHours = "00";
+		}
+		else {
+			strHours = "0" + to_string(hours);
+		}
+	}
+	else {
+		strHours = to_string(hours);
+	}
+
+	string strMinutes;
+	if (minutes < 10) {
+		if (minutes == 0) {
+			strMinutes = "00";
+		}
+		else {
+			strMinutes = "0" + to_string(minutes);
+		}
+	}
+	else {
+		strMinutes = to_string(minutes);
+	}
+
+	return strHours + strMinutes;
 }

@@ -17,6 +17,7 @@ class CInboundList
 		POINT GetTopLeft();
 		Rect DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<pair<CRadarTarget, bool>>* inboundAircraft, vector<pair<string, int>>* epVec);
 		void MoveList(CRect area, bool isReleased);
+		string ParseZuluTime(CFlightPlan fp, int ep);
 
 	private:
 		bool isMouseReleased = true;
