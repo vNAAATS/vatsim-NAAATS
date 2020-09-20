@@ -32,11 +32,12 @@ class RadarDisplay : public CRadarScreen
 		clock_t buttonClickTimer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
-		bool aselDetailed;
+		bool aselDetailed;	
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
 		CInboundList* inboundList;
 		map<int, string> dropDownsCurrent;
 		map<int, string> menuFields;
+		string asel;
 		map<string, pair<bool, POINT>> tagStatuses;
 
 		// Selected active tracks for ownership (vector)

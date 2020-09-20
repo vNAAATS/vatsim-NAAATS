@@ -15,6 +15,7 @@ RadarDisplay::RadarDisplay()
 	inboundList = new CInboundList({ 100, 150 });
 	menuButtons = MenuBar::BuildButtonData();
 	buttonsPressed.insert(make_pair(MENBTN_TAGS, true));
+	asel = "NONE";
 }
 
 RadarDisplay::~RadarDisplay() 
@@ -73,7 +74,81 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 			entryMinutes = fp.GetSectorEntryMinutes();
 			hdg = ac.GetPosition().GetReportedHeading();
 
-			// Draw the aircraft if already in airspace
+			// Aircraft already inside airspace
+			if (entryMinutes >= 0) {
+				// If not there
+				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
+					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
+					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+				}
+				
+				// If inbound
+				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
+					if ((hdg <= 359) && (hdg >= 181)) {
+						// Shanwick
+						for (int i = 0; i < rte.GetPointsNumber(); i++) {
+							// Add to inbound aircraft list
+							if (std::find(pointsShanwick.begin(), pointsShanwick.end(), rte.GetPointName(i)) != pointsShanwick.end()) {
+								inboundAircraft.push_back(make_pair(ac, false));
+								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								break;
+							}
+						}
+					}
+					else if ((hdg >= 1) && (hdg <= 179)) {
+						// Gander
+						for (int i = 0; i < rte.GetPointsNumber(); i++) {
+							// Add to inbound aircraft list
+							if (std::find(pointsGander.begin(), pointsGander.end(), rte.GetPointName(i)) != pointsGander.end()) {
+								inboundAircraft.push_back(make_pair(ac, true));
+								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								break;
+							}
+						}
+					}
+				}
+
+				// Store whether detailed tags are enabled
+				bool detailedEnabled = false; 
+
+				// Now we check if all the tags are selected as detailed				
+				if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) {
+					detailedEnabled = true; // Set detailed on
+
+					// Unpress detailed if not already
+					if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
+						buttonsPressed.erase(MENBTN_DETAILED);
+					}
+				}
+
+				// Check if only one is set to detailed
+				if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) {
+					if (fp.GetCallsign() == asel) {
+						detailedEnabled = true; // Set detailed on
+					}
+
+					// Unpress quick look if not already
+					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
+						buttonsPressed.erase(MENBTN_QCKLOOK);
+					}
+				}
+
+				// Draw the tag and target with the information if tags are turned on
+				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+					auto kv = tagStatuses.find(fp.GetCallsign());
+					kv->second.first = detailedEnabled; // Set detailed on
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, true);
+					CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+				}
+				else {
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, false);
+				}
+			}
+
+
+
+
+			/*// Draw the aircraft if already in airspace
 			if (entryMinutes == 0) {
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 					// Insert point (first time appearance)
@@ -127,9 +202,9 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
 						// If tags enabled
 						if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+							auto kv = tagStatuses.find(fp.GetCallsign());
 							// Check if all detailed
 							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-								auto kv = tagStatuses.find(fp.GetCallsign());
 								kv->second.first = true; // Set detailed on
 								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
 								// Unpress detailed if it is there
@@ -142,20 +217,15 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 								kv->second.first = false; // Set detailed off
 								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
 							}
-
+							// Check if detailed
 							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
-								/*auto kv = tagStatuses.find(fp.GetCallsign());
-								kv->second.first = true; // Set detailed on
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
+								auto selected = tagStatuses.find(asel);
+								selected->second.first = true;
+								CAcTargets::DrawTag(&dc, this, &ac, &selected->second);
 								// Unpress detailed if it is there
 								if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
 									buttonsPressed.erase(MENBTN_QCKLOOK);
 								}
-							}
-							else {
-								auto kv = tagStatuses.find(fp.GetCallsign());
-								kv->second.first = false; // Set detailed off
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
 							}
 						}
 					}
@@ -164,9 +234,9 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
 						// If tags enabled
 						if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+							auto kv = tagStatuses.find(fp.GetCallsign());
 							// Check if all detailed
 							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-								auto kv = tagStatuses.find(fp.GetCallsign());
 								kv->second.first = true; // Set detailed on
 								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
 								// Unpress detailed if it is there
@@ -180,12 +250,11 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
 							}
 
-
-							// Check if ASEL detailed
-							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // All detailed
-								/*auto kv = tagStatuses.find(fp.GetCallsign());
-								kv->second.first = true; // Set detailed on
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
+							// Check if detailed
+							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
+								auto selected = tagStatuses.at(asel);
+								selected.first = true;
+								CAcTargets::DrawTag(&dc, this, &ac, &selected);
 								// Unpress detailed if it is there
 								if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
 									buttonsPressed.erase(MENBTN_QCKLOOK);
@@ -193,29 +262,8 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 							}
 						}
 					}
-
-					if ((hdg <= 359) && (hdg >= 181)) {
-						// Shanwick
-						for (int i = 0; i < rte.GetPointsNumber(); i++) {
-							if (std::find(pointsShanwick.begin(), pointsShanwick.end(), rte.GetPointName(i)) != pointsShanwick.end()) {
-								inboundAircraft.push_back(make_pair(ac, false));
-								epVec.push_back(make_pair(rte.GetPointName(i), i));
-								break;
-							}
-						}		
-					}
-					else if ((hdg >= 1) && (hdg <= 179)) {
-						// Gander
-						for (int i = 0; i < rte.GetPointsNumber(); i++) {
-							if (std::find(pointsGander.begin(), pointsGander.end(), rte.GetPointName(i)) != pointsGander.end()) {
-								inboundAircraft.push_back(make_pair(ac, true));
-								epVec.push_back(make_pair(rte.GetPointName(i), i));
-								break;
-							}
-						}
-					}
 				}
-			}
+			}*/
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
 		// Draw menu bar
@@ -269,6 +317,7 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 	// If screen object is a tag
 	if (ObjectType == SCREEN_TAG) {
 		// Set the ASEL
+		asel = sObjectId;
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 	}
 

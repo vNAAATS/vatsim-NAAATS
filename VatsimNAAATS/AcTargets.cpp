@@ -5,7 +5,7 @@
 
 using namespace Colours;
 
-void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, int hdg) {
+void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, int hdg, bool tagsOn) {
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 
@@ -14,24 +14,25 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 	// Define a brush and a container for the target
 	SolidBrush brush(Colours::TargetOrange);
-	GraphicsContainer gContainer;	
+	GraphicsContainer gContainer;
 
 	// Begin drawing
 	gContainer = g->BeginContainer();
-	
+
 	// Draw the altitude
 	FontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	string line;
-	if (screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude() != 0) {
-		line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude() / 1000);
+	if (tagsOn) {
+		if (screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude() != 0) {
+			line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude() / 1000);
+		}
+		else {
+			line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetFinalAltitude() / 1000);
+		}
+		dc->TextOutA(acPoint.x, acPoint.y - 25, line.c_str());
 	}
-	else {
-		line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetFinalAltitude() / 1000);
-	}
-	
-	dc->TextOutA(acPoint.x, acPoint.y - 25, line.c_str());
 
 	// Rotate the graphics object and set the middle to the aircraft position
 	g->RotateTransform(hdg);
