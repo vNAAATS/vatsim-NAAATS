@@ -90,11 +90,11 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
 		if (tagPosition->first == true) {
 			// Detailed
-			tagRect = CRect(acPoint.x  - 50, acPoint.y - 86, acPoint.x + 35, acPoint.y - 30);
+			tagRect = CRect(acPoint.x  - 80, acPoint.y - 86, acPoint.x + 5, acPoint.y - 30);
 		}
 		else {
 			// Not detailed
-			tagRect = CRect(acPoint.x - 50, acPoint.y - 65, acPoint.x + 35, acPoint.y - 35);
+			tagRect = CRect(acPoint.x - 80, acPoint.y - 65, acPoint.x + 5, acPoint.y - 35);
 		}
 	}
 	else {
@@ -109,7 +109,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	}
 	
 	// TAG DEBUG
-	//dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
+	// dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
 	
 	// Pick atc font for callsign
 	// TODO: colour change based on status
@@ -150,14 +150,36 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 	}
 	
-	// Tag line
-	if (tagRect.right < acPoint.x) {
-		dc->MoveTo({ tagRect.right, tagRect.top + 2 });
-		dc->LineTo({ tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 2 });
+	/// Tag line
+	CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
+	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
+	dc->SelectObject(orangePen);
+	int tagMiddle = tagRect.left + ((tagRect.right - tagRect.left) / 2);
+
+	// Dog leg
+	if ((tagRect.left + txtExtent.cx + 5) < acPoint.x) {
+		dc->MoveTo({ tagRect.left + txtExtent.cx + 2, tagRect.top + 8 });
+		if ((tagRect.right - (tagRect.right - acPoint.x)) > (tagRect.left + txtExtent.cx + 5)) {
+			if ((tagRect.right - (tagRect.right - acPoint.x)) < tagRect.right + 5) {
+				dc->LineTo({ tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 8 });
+			}
+			else {
+				dc->LineTo({ tagRect.right + 5, tagRect.top + 8 });
+			}
+			dc->LineTo({ acPoint.x, acPoint.y });
+		}
 	}
-	else {
-		dc->MoveTo({ tagRect.left, tagRect.top + 2 });
-		dc->LineTo({ tagRect.left - (tagRect.right - acPoint.x), tagRect.top + 2 });
+	else { // Line to target
+		dc->MoveTo({ tagRect.left - 2, tagRect.top + 8 });
+
+
+		if (tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2) > tagRect.left - 10) {
+			dc->LineTo({ tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2), tagRect.top + 8 });
+		}
+		else {
+			dc->LineTo({ tagRect.left - 10, tagRect.top + 8 });
+		}
+		dc->LineTo({ acPoint.x, acPoint.y });
 	}
 
 	// Create screen object
@@ -166,9 +188,8 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// Restore context
 	dc->RestoreDC(sDC);
 
-	return { tagRect.left, tagRect.top };
-}
+	// Clean up
+	DeleteObject(orangePen);
 
-POINT CAcTargets::MoveTag(POINT oldPosition) {
-	return { 0, 0 };
+	return { tagRect.left, tagRect.top };
 }

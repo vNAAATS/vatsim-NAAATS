@@ -15,7 +15,7 @@ RadarDisplay::RadarDisplay()
 	inboundList = new CInboundList({ 100, 150 });
 	menuButtons = MenuBar::BuildButtonData();
 	buttonsPressed.insert(make_pair(MENBTN_TAGS, true));
-	asel = "NONE";
+	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 }
 
 RadarDisplay::~RadarDisplay() 
@@ -145,125 +145,6 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 			}
 
-
-
-
-			/*// Draw the aircraft if already in airspace
-			if (entryMinutes == 0) {
-				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
-					// Insert point (first time appearance)
-					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
-					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
-
-					// Draw target and tag
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-					// If tags enabled
-					if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
-						// Check if detailed
-						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = true; // Set detailed on
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-						}
-						else {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = false; // Set detailed off
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-						}
-					}
-				}
-				else {
-					// Draw target and tag
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-					// If tags enabled
-					if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
-						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = true; // Set detailed on
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-						}
-						else {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							kv->second.first = false; // Set detailed off
-							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-						}
-					}
-				}
-			}
-			else if (entryMinutes > 0) {
-				// If inbound 
-				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
-					if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
-						// Create blank point
-						pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
-						tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
-
-						// Draw target and tag
-						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-						// If tags enabled
-						if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							// Check if all detailed
-							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-								kv->second.first = true; // Set detailed on
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-								// Unpress detailed if it is there
-								if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
-									buttonsPressed.erase(MENBTN_DETAILED);
-								}
-							}
-							else {
-								auto kv = tagStatuses.find(fp.GetCallsign());
-								kv->second.first = false; // Set detailed off
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-							}
-							// Check if detailed
-							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
-								auto selected = tagStatuses.find(asel);
-								selected->second.first = true;
-								CAcTargets::DrawTag(&dc, this, &ac, &selected->second);
-								// Unpress detailed if it is there
-								if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
-									buttonsPressed.erase(MENBTN_QCKLOOK);
-								}
-							}
-						}
-					}
-					else {
-						// Draw target and tag
-						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-						// If tags enabled
-						if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
-							auto kv = tagStatuses.find(fp.GetCallsign());
-							// Check if all detailed
-							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
-								kv->second.first = true; // Set detailed on
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-								// Unpress detailed if it is there
-								if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
-									buttonsPressed.erase(MENBTN_DETAILED);
-								}
-							}
-							else {
-								auto kv = tagStatuses.find(fp.GetCallsign());
-								kv->second.first = false; // Set detailed off
-								CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
-							}
-
-							// Check if detailed
-							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
-								auto selected = tagStatuses.at(asel);
-								selected.first = true;
-								CAcTargets::DrawTag(&dc, this, &ac, &selected);
-								// Unpress detailed if it is there
-								if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
-									buttonsPressed.erase(MENBTN_QCKLOOK);
-								}
-							}
-						}
-					}
-				}
-			}*/
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
 		// Draw menu bar
@@ -334,22 +215,34 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 	RequestRefresh();
 }
 
+void RadarDisplay::OnAsrContentToBeSaved(void)
+{
+	/// Save all necessary data to ASR
+
+	// Inbound list
+	SaveDataToAsr(ASR_INBND_X.c_str(), "Position of the vNAAATS inbound list (x coordinate)", to_string(inboundList->GetTopLeft().x).c_str());
+	SaveDataToAsr(ASR_INBND_Y.c_str(), "Position of the vNAAATS inbound list (y coordinate)", to_string(inboundList->GetTopLeft().y).c_str());
+}
+
+void RadarDisplay::OnAsrContentLoaded(bool Loaded)
+{
+	if (!Loaded)
+		return;
+
+	// Get inbound list data
+	const char* inbX = GetDataFromAsr(ASR_INBND_X.c_str());
+	const char* inbY = GetDataFromAsr(ASR_INBND_Y.c_str());
+	if (inbX != NULL && inbY != NULL) {
+		inboundList->MoveList(CRect(atoi(inbX), atoi(inbY), 0, 0), true);
+	}	
+}
+
 void RadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
 { 
 
 }
 
 void RadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
-{
-
-}
-
-void RadarDisplay::OnAsrContentToBeSaved(void)
-{
-
-}
-
-void RadarDisplay::OnAsrContentLoaded(bool Loaded)
 {
 
 }

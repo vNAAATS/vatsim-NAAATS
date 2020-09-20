@@ -105,7 +105,7 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v0";
+const string PLUGIN_VERSION = "v0.1a";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
@@ -169,3 +169,7 @@ const int MENDRP_TCKCTRL = 425;
 const int MENDRP_OVERLAYS = 426;
 const int MENDRP_TYPESEL = 427;
 const int MENTXT_ALTFILT = 428;
+
+/// ASR VARIABLES
+const string ASR_INBND_X = "VN_ASR_INBND_X";
+const string ASR_INBND_Y = "VN_ASR_INBND_Y";

@@ -16,7 +16,4 @@ class CAcTargets
 
 		// Render tags
 		static POINT DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition);
-
-		// Move tag
-		static POINT MoveTag(POINT oldPosition);
 };
