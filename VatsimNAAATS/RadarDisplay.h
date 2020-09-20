@@ -29,8 +29,10 @@ class RadarDisplay : public CRadarScreen
 
 	private:
 		POINT mousePointer;
+		clock_t buttonClickTimer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
+		bool aselDetailed;
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
 		CInboundList* inboundList;
 		map<int, string> dropDownsCurrent;

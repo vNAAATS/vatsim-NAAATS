@@ -350,21 +350,21 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 			offsetX += btnWidth + 1;
 		}
 		else if (idx == 25) {
-		if (pressedData->find(kv.first) != pressedData->end()) {
-			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
-		}
-		else {
-			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
-		}
-			offsetX += (btnWidth * 1.41);
-		}
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+			}
+			else {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			}
+				offsetX += (btnWidth * 1.41);
+			}
 		else if (idx == 26) {
-		if (pressedData->find(kv.first) != pressedData->end()) {
-			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
-		}
-		else {
-			DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
-		}
+			if (pressedData->find(kv.first) != pressedData->end()) {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+			}
+			else {
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+			}
 		}
 		else if (idx == 27) {
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;

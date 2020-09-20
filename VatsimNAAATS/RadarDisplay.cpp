@@ -31,6 +31,15 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// Graphics object
 	Graphics g(hDC);
 
+	/// TIMERS FOR BUTTONS
+	double t = (double)(clock() - buttonClickTimer) / ((double)CLOCKS_PER_SEC);
+	if (t >= 0.1) {
+		/*if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && clickType == true) {
+			buttonsPressed.erase(MENBTN_QCKLOOK);
+			buttonClickTimer = clock();
+		}*/
+	}
+
 	// Clean up old list
 	inboundAircraft.clear();
 
@@ -72,16 +81,35 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 					// Draw target and tag
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-					CAcTargets::DrawTag(&dc, this, &ac, &pt);
+					// Check if detailed
+					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+						auto kv = tagStatuses.find(fp.GetCallsign());
+						kv->second.first = true; // Set detailed on
+						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					}
+					else {
+						auto kv = tagStatuses.find(fp.GetCallsign());
+						kv->second.first = false; // Set detailed off
+						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					}
 				}
 				else {
 					// Draw target and tag
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-					CAcTargets::DrawTag(&dc, this, &ac, &tagStatuses.find(fp.GetCallsign())->second);
+					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+						auto kv = tagStatuses.find(fp.GetCallsign());
+						kv->second.first = true; // Set detailed on
+						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					}
+					else {
+						auto kv = tagStatuses.find(fp.GetCallsign());
+						kv->second.first = false; // Set detailed off
+						CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					}
 				}
 			}
 			else if (entryMinutes > 0) {
-				// If inbound
+				// If inbound 
 				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
 					if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 						// Create blank point
@@ -90,20 +118,67 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 						// Draw target and tag
 						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-						POINT tagPt = CAcTargets::DrawTag(&dc, this, &ac, &pt);
+						// Check if all detailed
+						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = true; // Set detailed on
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+							// Unpress detailed if it is there
+							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
+								buttonsPressed.erase(MENBTN_DETAILED);
+							}
+						}
+						else {
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = false; // Set detailed off
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
 
-						// Insert the current point for the tag
-						//pt = make_pair(false, tagPt);
-						//tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+						
+						if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // Check if ASEL detailed
+							/*auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = true; // Set detailed on
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
+							// Unpress detailed if it is there
+							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
+								buttonsPressed.erase(MENBTN_QCKLOOK);
+							}
+						}
+						else {
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = false; // Set detailed off
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
 					}
 					else {
 						// Draw target and tag
 						CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg);
-						POINT tagPt = CAcTargets::DrawTag(&dc, this, &ac, &tagStatuses.find(fp.GetCallsign())->second);
+						// Check if all detailed
+						if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) { // All detailed
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = true; // Set detailed on
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+							// Unpress detailed if it is there
+							if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
+								buttonsPressed.erase(MENBTN_DETAILED);
+							}
+						}
+						else {
+							auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = false; // Set detailed off
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+						}
 
-						// Insert the current point for the tag
-						//pair<bool, POINT> pt = make_pair(false, tagPt);
-						//tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+						// Check if ASEL detailed
+						if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) { // All detailed
+							/*auto kv = tagStatuses.find(fp.GetCallsign());
+							kv->second.first = true; // Set detailed on
+							CAcTargets::DrawTag(&dc, this, &ac, &kv->second);*/
+							// Unpress detailed if it is there
+							if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
+								buttonsPressed.erase(MENBTN_QCKLOOK);
+							}
+						}
 					}
 
 					if ((hdg <= 359) && (hdg >= 181)) {
@@ -130,7 +205,6 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 			}
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
-
 		// Draw menu bar
 		MenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed);
 		// Inbound list
@@ -174,6 +248,7 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 		buttonsPressed.erase(ObjectType);
 	} else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
 		if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
+			buttonClickTimer = clock();
 			buttonsPressed[ObjectType] = true;
 		}
 	}
@@ -183,7 +258,18 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 		// Set the ASEL
 		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
 	}
+
+	// Qck Look button
+	if (ObjectType == MENBTN_QCKLOOK) {
+		aselDetailed = false;
+	}
+
+	// Detailed button
+	if (ObjectType == MENBTN_DETAILED) {
+		aselDetailed = true;
+	}
 	
+	RequestRefresh();
 }
 
 void RadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)

@@ -89,25 +89,27 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
 		if (tagPosition->first == true) {
 			// Detailed
-			tagRect = CRect(acPoint.x  - 50, acPoint.y - 86, acPoint.x + 30, acPoint.y - 30);
+			tagRect = CRect(acPoint.x  - 50, acPoint.y - 86, acPoint.x + 35, acPoint.y - 30);
 		}
 		else {
 			// Not detailed
-			tagRect = CRect(acPoint.x - 50, acPoint.y - 65, acPoint.x + 30, acPoint.y - 35);
+			tagRect = CRect(acPoint.x - 50, acPoint.y - 65, acPoint.x + 35, acPoint.y - 35);
 		}
 	}
 	else {
 		if (tagPosition->first == true) {
 			// Detailed
-			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 80, (acPoint.y + tagOffsetY) + 56);
+			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 56);
 		}
 		else {
 			// Not Detailed
-			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 80, (acPoint.y + tagOffsetY) + 30);
+			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
 		}
 	}
 	
-	dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
+	// TAG DEBUG
+	//dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
+	
 	// Pick atc font for callsign
 	// TODO: colour change based on status
 	FontSelector::SelectATCFont(16, dc);
