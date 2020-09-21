@@ -177,7 +177,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// RBL draw
 		if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
-				CAcTargets::RangeBearingLine(&dc, this, aircraftSel1, aircraftSel2);
+				CAcTargets::RangeBearingLine(&g, &dc, this, aircraftSel1, aircraftSel2);
 			}
 		}
 		else {

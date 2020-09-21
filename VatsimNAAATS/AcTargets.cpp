@@ -289,10 +289,13 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	return { tagRect.left, tagRect.top };
 }
 
-void CAcTargets::RangeBearingLine(CDC* dc, CRadarScreen* screen, string target1, string target2) {
+void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2) {
+	// Save context
+	int iDC = dc->SaveDC();
+
 	// Make orange pen
-	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
-	dc->SelectObject(orangePen);
+	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+	dc->SelectObject(whitePen);
 
 	// Radar targets
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
@@ -313,10 +316,22 @@ void CAcTargets::RangeBearingLine(CDC* dc, CRadarScreen* screen, string target1,
 	POINT t1Point = screen->ConvertCoordFromPositionToPixel(t1Pos);
 	POINT t2Point = screen->ConvertCoordFromPositionToPixel(t2Pos);
 
+
 	// Draw the line
 	dc->MoveTo(t1Point);
 	dc->LineTo(t2Point);
-	
+
+	// Now draw the text
+	POINT midpoint = Utils::GetMidPoint(t1Point, t2Point);
+
+	FontSelector::SelectMonoFontRotate(12, Utils::GetHypotenuseAngle(t1Point, t2Point), dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+	dc->TextOutA(midpoint.x, midpoint.y, to_string(time).c_str());
+
+	// Restore context
+	dc->RestoreDC(iDC);
+
 	// Clean up
-	DeleteObject(orangePen);
+	DeleteObject(whitePen);
 }

@@ -2,9 +2,11 @@
 #include <string>
 #include "EuroScopePlugIn.h"
 #include <chrono>
+#include <cmath>
 
 using namespace std;
 using namespace EuroScopePlugIn;
+
 class Utils {
 	public:
 		// Parse zulu time
@@ -76,9 +78,55 @@ class Utils {
 			return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
 		}
 
+		// Midpoint
+		static POINT GetMidPoint(POINT p1, POINT p2) {
+			// Return midpoint
+			return { (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 };
+		}
+
 		// Time (minutes) based on distance and speed
 		static int GetTimeBetweenPoints(int distanceNM,  int speedGS) {
 			// Get time in minutes
-			return round((distanceNM / speedGS) * 60);
+			double temp = (float)distanceNM / (float)speedGS;
+			return ((float)distanceNM / speedGS) * 60;
+		}
+
+		// Use arctan to get the angle
+		static double GetHypotenuseAngle(POINT p1, POINT p2) {
+			int l;
+			int w;
+			// Get the side lengths
+			l = p1.y - p2.y;
+			if (p2.x < p1.x) {
+				w = p1.x - p2.x;
+			}
+			else {
+				w = p2.y - p1.y;
+			}
+			/*
+			if (p1.y > p2.y) {
+				l = p1.y - p2.y;
+				if (p2.x < p1.x) {
+					w = p1.x - p2.x;
+				}
+				else {
+					w = p2.y - p1.y;
+				}
+			}
+			else {
+				l = p1.y - p1.y;
+				if (p1.x < p2.x) {
+					w = p2.x - p1.x;
+				}
+				else {
+					w = p1.y - p2.y;
+				}
+			}*/
+
+			// Theta (in degrees)
+			double theta = tan((float)w / (float)l) * (180 / (acos(0.0) * 2));
+
+			// Return the angle (in degrees)
+			return atan(theta) * (180 / (acos(0.0) * 2));
 		}
 };
