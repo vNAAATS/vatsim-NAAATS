@@ -119,6 +119,7 @@ const int BTN_PAD_TOP = 6;
 
 // Lists
 const int LIST_INBOUND_WIDTH = 400;
+const int LIST_OTHERS_WIDTH = 100;
 
 // Menu bar
 const int MENBAR_HEIGHT = 100;
@@ -135,6 +136,7 @@ const int RECT8_WIDTH = 90;
 /// OBJECTS
 // Lists
 const int LIST_INBOUND = 300;
+const int LIST_OTHERS = 301;
 
 // Screen
 const int SCREEN_TAG = 1;

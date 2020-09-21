@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Styles.h"
 #include "AcTargets.h"
+#include "Utils.h"
 
 using namespace Colours;
 
@@ -137,7 +138,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
 
 		// Get distance TODO: put in utils class
-		int radius = sqrt(pow(haloPoint.x - acPoint.x, 2) + pow(haloPoint.y - acPoint.y, 2));
+		int radius = Utils::GetDistanceBetweenPoints(acPoint, haloPoint);
 
 		// Draw halo
 		Rect temp(acPoint.x - radius, acPoint.y - radius, radius * 2, radius * 2);
@@ -286,4 +287,36 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	DeleteObject(orangePen);
 
 	return { tagRect.left, tagRect.top };
+}
+
+void CAcTargets::RangeBearingLine(CDC* dc, CRadarScreen* screen, string target1, string target2) {
+	// Make orange pen
+	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
+	dc->SelectObject(orangePen);
+
+	// Radar targets
+	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
+	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(target2.c_str());
+
+	// Positions
+	CPosition t1Pos = ac1.GetPosition().GetPosition();
+	CPosition t2Pos = ac2.GetPosition().GetPosition();
+		
+	// Get distance & speed
+	double distanceNM = t1Pos.DistanceTo(t2Pos);
+	int speedGS = ac1.GetGS();
+
+	// Calculate time
+	int time = Utils::GetTimeBetweenPoints(distanceNM, speedGS);
+
+	// Now get points in screen pixels
+	POINT t1Point = screen->ConvertCoordFromPositionToPixel(t1Pos);
+	POINT t2Point = screen->ConvertCoordFromPositionToPixel(t2Pos);
+
+	// Draw the line
+	dc->MoveTo(t1Point);
+	dc->LineTo(t2Point);
+	
+	// Clean up
+	DeleteObject(orangePen);
 }

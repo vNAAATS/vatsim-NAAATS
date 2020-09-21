@@ -5,6 +5,7 @@
 #include "MenuBar.h"
 #include "InboundList.h"
 #include "Constants.h"
+#include "Utils.h"
 #include <gdiplus.h>
 
 
@@ -12,7 +13,8 @@ using namespace Gdiplus;
 
 RadarDisplay::RadarDisplay() 
 {
-	inboundList = new CInboundList({ 100, 150 });
+	inboundList = new CInboundList({ 500, 150 });
+	otherList = new COtherList({ 200, 150 });
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	buttonsPressed.insert(make_pair(MENBTN_TAGS, true));
@@ -43,8 +45,9 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}*/
 	}
 
-	// Clean up old list
+	// Clean up old lists
 	inboundAircraft.clear();
+	otherAircraft.clear();
 
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
@@ -113,6 +116,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 								epVec.push_back(make_pair(rte.GetPointName(i), i));
 								break;
 							}
+
 						}
 					}
 				}
@@ -166,8 +170,21 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
-		// Inbound list
+		// Draw Lists
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
+		otherList->DrawList(&g, &dc, this, &otherAircraft);
+
+		// RBL draw
+		if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+			if (aircraftSel1 != "" && aircraftSel2 != "") {
+				CAcTargets::RangeBearingLine(&dc, this, aircraftSel1, aircraftSel2);
+			}
+		}
+		else {
+			// Reset
+			aircraftSel1 = "";
+			aircraftSel2 = "";
+		}
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
@@ -184,6 +201,10 @@ void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POI
 	mousePointer = Pt;
 	if (ObjectType == LIST_INBOUND) {
 		inboundList->MoveList(Area, Released);
+	}
+
+	if (ObjectType == LIST_OTHERS) {
+		otherList->MoveList(Area);
 	}
 
 	if (ObjectType == SCREEN_TAG) {
@@ -219,7 +240,18 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 		if (ObjectType == SCREEN_TAG) {
 			// Set the ASEL
 			asel = sObjectId;
-			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
+			GetPlugIn()->SetASELAircraft(fp);
+
+			// RBL (if active)
+			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+				if (aircraftSel1 == "") {
+					aircraftSel1 = asel;
+				}
+				else if (aircraftSel2 == "") {
+					aircraftSel2 = asel;
+				}
+			}
 		}
 
 		// Qck Look button
@@ -231,7 +263,6 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 		if (ObjectType == MENBTN_DETAILED) {
 			aselDetailed = true;
 		}
-
 	}
 	
 	if (Button == BUTTON_RIGHT) {

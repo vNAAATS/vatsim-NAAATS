@@ -193,6 +193,7 @@
     <ClCompile Include="InboundList.cpp" />
     <ClCompile Include="MenuBar.cpp" />
     <ClCompile Include="NAAATS.cpp" />
+    <ClCompile Include="OtherList.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
@@ -209,11 +210,13 @@
     <ClInclude Include="MenuBar.h" />
     <ClInclude Include="NAAATS.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="OtherList.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RadarDisplay.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="VatsimNAAATS.h" />
   </ItemGroup>
   <ItemGroup>

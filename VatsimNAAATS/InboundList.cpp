@@ -2,9 +2,9 @@
 #include "InboundList.h"
 #include "Constants.h"
 #include "Styles.h"
+#include "Utils.h"
 #include <sstream>
 #include <iomanip>
-#include <chrono>
 
 using namespace Colours;
 
@@ -18,9 +18,6 @@ POINT CInboundList::GetTopLeft() {
 
 Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<pair<CRadarTarget, bool>>* inboundAircraft, vector<pair<string, int>>* epVec)
 {
-	// Brushes
-	SolidBrush transparentBrush(Color(0, 0, 0, 0));
-	
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -74,7 +71,7 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 		offsetX += 70;
 
 		// Draw estimated time
-		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, ParseZuluTime(fp, epVec->at(idx).second).c_str());
+		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, Utils::ParseZuluTime(false, &fp, epVec->at(idx).second).c_str());
 		offsetX += 45;
 
 		// Draw altitude
@@ -112,69 +109,10 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 	CRect area(topLeft.x, topLeft.y, topLeft.x + LIST_INBOUND_WIDTH, topLeft.y + 14);
 	screen->AddScreenObject(LIST_INBOUND, "", area, true, "");
 
-
-	// Deallocate
-	DeleteObject(&transparentBrush);
-
 	return rectangle;
 }
 
 void CInboundList::MoveList(CRect area, bool isReleased) { // TODO: check need for isReleased
 	isMouseReleased = isReleased;
 	topLeft = { area.left, area.top };
-}
-
-// TODO: move code to a utils class
-string CInboundList::ParseZuluTime(CFlightPlan fp, int ep) {
-	time_t now = time(0);
-	tm* zuluTime = gmtime(&now);
-	int deltaMinutes = fp.GetExtractedRoute().GetPointDistanceInMinutes(ep);
-	int hours = zuluTime->tm_hour;
-	int minutes = zuluTime->tm_min + deltaMinutes;
-	
-	if (minutes >= 60) {
-		// Get minutes
-		int minRemainder = minutes % 60;
-
-		// Get number of hours
-		hours = (minutes - minRemainder) / 60;
-
-		// Reassign number of minutes
-		minutes = minRemainder;
-	}
-
-	// Check if over 24 hours
-	if (hours >= 24) {
-		hours = hours - 24;
-	}
-
-
-	// Pad for zeros
-	string strHours;
-	if (hours < 10) {
-		if (hours == 0) {
-			strHours = "00";
-		}
-		else {
-			strHours = "0" + to_string(hours);
-		}
-	}
-	else {
-		strHours = to_string(hours);
-	}
-
-	string strMinutes;
-	if (minutes < 10) {
-		if (minutes == 0) {
-			strMinutes = "00";
-		}
-		else {
-			strMinutes = "0" + to_string(minutes);
-		}
-	}
-	else {
-		strMinutes = to_string(minutes);
-	}
-
-	return strHours + strMinutes;
 }

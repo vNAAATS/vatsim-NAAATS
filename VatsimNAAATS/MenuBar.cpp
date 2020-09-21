@@ -3,6 +3,7 @@
 #include "Constants.h"
 #include "MenuBar.h"
 #include "Styles.h"
+#include "Utils.h"
 
 using namespace Colours;
 
@@ -389,6 +390,10 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 		dc->RestoreDC(sDC);
 		idx++;
 	}
+
+	// Fnally render the zulu time
+	FontSelector::SelectNormalFont(30, dc);
+	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, Utils::ParseZuluTime(true).c_str());
 
 	// Delete object
 	DeleteObject(&brush);

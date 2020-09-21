@@ -36,6 +36,9 @@
     <ClCompile Include="InboundList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OtherList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VatsimNAAATS.def">
@@ -83,6 +86,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="InboundList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OtherList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

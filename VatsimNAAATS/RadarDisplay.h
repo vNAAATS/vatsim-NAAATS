@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "InboundList.h"
+#include "OtherList.h"
 #include "EuroScopePlugIn.h"
 
 using namespace std;
@@ -35,14 +36,14 @@ class RadarDisplay : public CRadarScreen
 		map<int, int> toggleButtons;
 		bool aselDetailed;	
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
+		vector<CRadarTarget> otherAircraft;
 		CInboundList* inboundList;
+		COtherList* otherList;
 		map<int, string> dropDownsCurrent;
 		map<int, string> menuFields;
 		string asel;
 		map<string, pair<bool, POINT>> tagStatuses;
-
-		// Selected active tracks for ownership (vector)
-		// Selected active control postion for ownership
-		// ASEL
+		string aircraftSel1 = ""; // For use in conflict tools
+		string aircraftSel2 = ""; // "
 };
 
