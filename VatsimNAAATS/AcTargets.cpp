@@ -33,7 +33,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		else {
 			line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetFinalAltitude() / 1000);
 		}
-		dc->TextOutA(acPoint.x, acPoint.y - 25, line.c_str());
+		dc->TextOutA(acPoint.x, acPoint.y - 20, line.c_str());
 	}
 
 	// Rotate the graphics object and set the middle to the aircraft position
@@ -107,6 +107,45 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		dc->LineTo(ptlPoint);
 
 		DeleteObject(pen);
+	}
+
+	// Draw halos
+	if (halo) {
+		// Get ptl value
+		int val = toggleData->at(MENBTN_HALO);
+
+		// Leader minutes
+		int min = 0;
+
+		// Switch
+		switch (val) {
+		case 0:
+			min = 5;
+			break;
+		case 1:
+			min = 10;
+			break;
+		case 2:
+			min = 15;
+			break;
+		case 3:
+			min = 20;
+			break;
+		}
+
+		// Get aircraft point at that time
+		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
+
+		// Get distance TODO: put in utils class
+		int radius = sqrt(pow(haloPoint.x - acPoint.x, 2) + pow(haloPoint.y - acPoint.y, 2));
+
+		// Draw halo
+		Rect temp(acPoint.x - radius, acPoint.y - radius, radius * 2, radius * 2);
+		Pen pen(&brush);
+		g->DrawEllipse(&pen, temp);
+
+		// Cleanup
+		DeleteObject(&pen);
 	}
 
 	// Restore context
@@ -234,7 +273,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		else {
 			dc->LineTo({ tagRect.left - 10, tagRect.top + 8 });
 		}
-		dc->LineTo({ acPoint.x, acPoint.y });
+		dc->LineTo(acPoint);
 	}
 
 	// Create screen object
