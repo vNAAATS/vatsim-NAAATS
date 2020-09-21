@@ -324,7 +324,7 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	// Now draw the text
 	POINT midpoint = Utils::GetMidPoint(t1Point, t2Point);
 
-	FontSelector::SelectMonoFontRotate(12, Utils::GetHypotenuseAngle(t1Point, t2Point), dc);
+	FontSelector::SelectMonoFontRotate(12, 0, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(midpoint.x, midpoint.y, to_string(time).c_str());

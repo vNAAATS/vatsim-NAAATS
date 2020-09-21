@@ -10,8 +10,10 @@
 
 
 using namespace Gdiplus;
+using namespace std;
+using namespace EuroScopePlugIn;
 
-RadarDisplay::RadarDisplay() 
+CRadarDisplay::CRadarDisplay() 
 {
 	inboundList = new CInboundList({ 500, 150 });
 	otherList = new COtherList({ 200, 150 });
@@ -21,13 +23,45 @@ RadarDisplay::RadarDisplay()
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 }
 
-RadarDisplay::~RadarDisplay() 
+CRadarDisplay::~CRadarDisplay() 
 {
 
 }
 
+void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
+	if (show) {
+		screen->GetPlugIn()->SelectScreenSectorfile(screen);
+		CSectorElement element(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
+		string elementName = string(element.GetName());
+		while (elementName != "CZQO Positional Grid Reference") {
+			element = screen->GetPlugIn()->SectorFileElementSelectNext(element, 13);
+			elementName = string(element.GetName());
+		}
+
+		int idx = 0;
+		screen->ShowSectorFileElement(element, "", true);
+		idx++;
+		
+	}
+	else {
+		screen->GetPlugIn()->SelectScreenSectorfile(screen);
+		CSectorElement element(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
+		string elementName = string(element.GetName());
+		while (elementName != "CZQO Positional Grid Reference") {
+			element = screen->GetPlugIn()->SectorFileElementSelectNext(element, 13);
+			elementName = string(element.GetName());
+		}
+
+		int idx = 0;
+		screen->ShowSectorFileElement(element, "", false);
+		idx++;
+	}
+
+	RefreshMapContent();
+}
+
 // On radar screen refresh (occurs about once a second)
-void RadarDisplay::OnRefresh(HDC hDC, int Phase)
+void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	// Create device context
 	CDC dc;
@@ -170,6 +204,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
+
 		// Draw Lists
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
 		otherList->DrawList(&g, &dc, this, &otherAircraft);
@@ -185,6 +220,21 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
+
+		// Grid draw
+		if (buttonsPressed.find(MENBTN_GRID) != buttonsPressed.end()) {
+			if (gridEnabled != true) {
+				gridEnabled = true;
+				ShowHideGridReference(this, gridEnabled);
+			}
+			
+		}
+		else {
+			if (gridEnabled != false) {
+				gridEnabled = false;
+				ShowHideGridReference(this, gridEnabled);
+			}
+		}
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
@@ -196,7 +246,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	g.ReleaseHDC(hDC);
 }
 
-void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
+void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
 {
 	mousePointer = Pt;
 	if (ObjectType == LIST_INBOUND) {
@@ -216,12 +266,12 @@ void RadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POI
 	RequestRefresh();
 }
 
-void RadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
+void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
 {
 
 }
 
-void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
+void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
 	// Left button actions
 	if (Button == BUTTON_LEFT) {
@@ -370,7 +420,7 @@ void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, PO
 	RequestRefresh();
 }
 
-void RadarDisplay::OnAsrContentToBeSaved(void)
+void CRadarDisplay::OnAsrContentToBeSaved(void)
 {
 	/// Save all necessary data to ASR
 
@@ -379,7 +429,7 @@ void RadarDisplay::OnAsrContentToBeSaved(void)
 	SaveDataToAsr(ASR_INBND_Y.c_str(), "Position of the vNAAATS inbound list (y coordinate)", to_string(inboundList->GetTopLeft().y).c_str());
 }
 
-void RadarDisplay::OnAsrContentLoaded(bool Loaded)
+void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 {
 	if (!Loaded)
 		return;
@@ -392,17 +442,17 @@ void RadarDisplay::OnAsrContentLoaded(bool Loaded)
 	}	
 }
 
-void RadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
+void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
 { 
 
 }
 
-void RadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
+void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
 
 }
 
-void RadarDisplay::OnAsrContentToBeClosed(void)
+void CRadarDisplay::OnAsrContentToBeClosed(void)
 {
 	delete this;
 }

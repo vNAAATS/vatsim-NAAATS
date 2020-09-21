@@ -10,12 +10,15 @@ using namespace std;
 using namespace EuroScopePlugIn;
 
 // Main radar display
-class RadarDisplay : public CRadarScreen
+class CRadarDisplay : public CRadarScreen
 {
 	public:
 		// Constructor & Destructor
-		RadarDisplay();
-		virtual ~RadarDisplay();
+		CRadarDisplay();
+		virtual ~CRadarDisplay();
+
+		// Custom methods
+		void ShowHideGridReference(CRadarScreen* screen, bool show);
 
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
@@ -45,5 +48,6 @@ class RadarDisplay : public CRadarScreen
 		map<string, pair<bool, POINT>> tagStatuses;
 		string aircraftSel1 = ""; // For use in conflict tools
 		string aircraftSel2 = ""; // "
+		bool gridEnabled = false;
 };
 

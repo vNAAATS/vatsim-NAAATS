@@ -96,34 +96,26 @@ class Utils {
 			int l;
 			int w;
 			// Get the side lengths
-			l = p1.y - p2.y;
-			if (p2.x < p1.x) {
-				w = p1.x - p2.x;
-			}
-			else {
-				w = p2.y - p1.y;
-			}
-			/*
 			if (p1.y > p2.y) {
-				l = p1.y - p2.y;
-				if (p2.x < p1.x) {
-					w = p1.x - p2.x;
-				}
-				else {
-					w = p2.y - p1.y;
-				}
-			}
-			else {
-				l = p1.y - p1.y;
+				l = p2.y - p1.y;
 				if (p1.x < p2.x) {
 					w = p2.x - p1.x;
 				}
 				else {
 					w = p1.y - p2.y;
 				}
-			}*/
+			}
+			else {
+				l = p1.y - p2.y;
+				if (p1.x > p2.x) {
+					w = p1.x - p2.x;
+				}
+				else {
+					w = p2.y - p1.y;
+				}
+			}
 
-			// Theta (in degrees)
+			// Get theta from the sides (in degrees)
 			double theta = tan((float)w / (float)l) * (180 / (acos(0.0) * 2));
 
 			// Return the angle (in degrees)

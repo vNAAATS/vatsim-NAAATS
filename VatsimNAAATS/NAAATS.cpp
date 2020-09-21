@@ -19,7 +19,7 @@ CRadarScreen* CNAAATSPlugin::OnRadarScreenCreated(const char* sDisplayName, bool
 {
 	// Create new display if the display name matches the constant
 	if (!strcmp(sDisplayName, DISPLAY_NAME)) {
-		return new RadarDisplay();
+		return new CRadarDisplay();
 	}
 
 	return nullptr;

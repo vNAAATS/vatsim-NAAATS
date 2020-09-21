@@ -195,7 +195,9 @@
     <ClCompile Include="NAAATS.cpp" />
     <ClCompile Include="OtherList.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="PIVTool.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
+    <ClCompile Include="SepTool.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -212,8 +214,10 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="OtherList.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PIVTool.h" />
     <ClInclude Include="RadarDisplay.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SepTool.h" />
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
