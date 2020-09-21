@@ -32,6 +32,7 @@ class RadarDisplay : public CRadarScreen
 		clock_t buttonClickTimer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
+		map<int, int> toggleButtons;
 		bool aselDetailed;	
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
 		CInboundList* inboundList;

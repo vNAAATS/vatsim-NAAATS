@@ -6,7 +6,7 @@
 
 using namespace Colours;
 
-map<int, string> MenuBar::BuildButtonData() {
+map<int, string> CMenuBar::BuildButtonData() {
 	map<int, string> data;
 
 	data[MENBTN_SETUP] = "Setup";
@@ -23,11 +23,11 @@ map<int, string> MenuBar::BuildButtonData() {
 	data[MENBTN_OVERLAYS] = "Overlays";
 	data[MENBTN_TYPESEL] = "Select";
 	data[MENBTN_ALTFILT] = "Alt Filter";
-	data[MENBTN_HALO] = "Halo ";
+	data[MENBTN_HALO] = "Halo 5";
 	data[MENBTN_RBL] = "RBL";
-	data[MENBTN_RINGS] = "Rings ";
+	data[MENBTN_RINGS] = "Rings 1";
 	data[MENBTN_MTT] = "MTT";
-	data[MENBTN_PTL] = "PTL ";
+	data[MENBTN_PTL] = "PTL 5";
 	data[MENBTN_PIV] = "PIV";
 	data[MENBTN_GRID] = "Grid";
 	data[MENBTN_SEP] = "Sep";
@@ -41,7 +41,17 @@ map<int, string> MenuBar::BuildButtonData() {
 	return data;
 }
 
-void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData) {
+map<int, int> CMenuBar::BuildToggleButtonData() {
+	map<int, int> data;
+
+	data[MENBTN_HALO] = 0;
+	data[MENBTN_RINGS] = 0;
+	data[MENBTN_PTL] = 0;
+
+	return data;
+}
+
+void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData) {
 
 	// Brush to draw the bar
 	CBrush brush(ScreenBlue.ToCOLORREF());
@@ -384,7 +394,7 @@ void MenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topL
 	DeleteObject(&brush);
 }
 
-CRect MenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive)
+CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive)
 {
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -463,7 +473,7 @@ CRect MenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, p
 	return button;
 }
 
-CRect MenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen) {
+CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 

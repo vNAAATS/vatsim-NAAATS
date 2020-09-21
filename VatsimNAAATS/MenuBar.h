@@ -10,14 +10,17 @@ using namespace EuroScopePlugIn;
 using namespace Gdiplus;
 
 // The menu bar
-class MenuBar
+class CMenuBar
 {
 	public:
 		// Button data
 		static map<int, string> BuildButtonData();
 
+		// Toggle button data
+		static map<int, int> BuildToggleButtonData();
+
 		// Render the menu bar
-		static void DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData);
+		static void DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData);
 
 		// Render a button, any button
 		static CRect DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive);

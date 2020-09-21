@@ -1,13 +1,15 @@
 #include "pch.h"
 #include "Styles.h"
 #include "AcTargets.h"
-#include <map>
 
 using namespace Colours;
 
-void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, int hdg, bool tagsOn) {
+void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, int hdg, bool tagsOn, map<int, int>* toggleData, bool halo, bool ptl) {
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
+
+	// Flight plan
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
 
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -64,6 +66,48 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Fill the polygon and finish
 	g->FillPolygon(&brush, points, 19);
 	g->EndContainer(gContainer);
+
+	// Check if leader lines are selected
+	if (ptl) {
+		// Get ptl value
+		int val = toggleData->at(MENBTN_PTL);
+
+		// Leader minutes
+		int min = 0;
+
+		// Switch
+		switch (val) {
+		case 0:
+			min = 5;
+			break;
+		case 1:
+			min = 10;
+			break;
+		case 2:
+			min = 15;
+			break;
+		case 3:
+			min = 20;
+			break;
+		case 4:
+			min = 25;
+			break;
+		case 5:
+			min = 30;
+			break;
+		}
+
+		// Get aircraft point at that time
+		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
+
+		// Draw leader
+		CPen pen(PS_SOLID, 1, Colours::TargetOrange.ToCOLORREF());
+		dc->SelectObject(pen);
+		dc->MoveTo(acPoint);
+		dc->LineTo(ptlPoint);
+
+		DeleteObject(pen);
+	}
 
 	// Restore context
 	dc->RestoreDC(sDC);

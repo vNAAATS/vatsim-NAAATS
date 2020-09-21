@@ -13,7 +13,8 @@ using namespace Gdiplus;
 RadarDisplay::RadarDisplay() 
 {
 	inboundList = new CInboundList({ 100, 150 });
-	menuButtons = MenuBar::BuildButtonData();
+	menuButtons = CMenuBar::BuildButtonData();
+	toggleButtons = CMenuBar::BuildToggleButtonData();
 	buttonsPressed.insert(make_pair(MENBTN_TAGS, true));
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 }
@@ -51,6 +52,9 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 	RadarArea.bottom = GetChatArea().bottom;
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
+		// Draw menu bar first
+		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons);
+
 		// Get first aircraft
 		CRadarTarget ac;
 		ac = GetPlugIn()->RadarTargetSelectFirst();
@@ -138,22 +142,30 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 					}
 				}
 
+				bool ptl = false;
+				bool halo = false;
+				// Set PTL and HALO if they are on
+				if (buttonsPressed.find(MENBTN_PTL) != buttonsPressed.end()) {
+					ptl = true;
+				}
+				if (buttonsPressed.find(MENBTN_HALO) != buttonsPressed.end()) {
+					halo = true;
+				}
+
 				// Draw the tag and target with the information if tags are turned on
 				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, true);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, true, &toggleButtons, halo, ptl);
 					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction);
 				}
 				else {
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, false);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, false, &toggleButtons, halo, ptl);
 				}
 			}
 
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
-		// Draw menu bar
-		MenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed);
 		// Inbound list
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
 	}
@@ -190,32 +202,139 @@ void RadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POI
 
 void RadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	// If menu button is being unpressed
-	if (buttonsPressed.find(ObjectType) != buttonsPressed.end()) {
-		buttonsPressed.erase(ObjectType);
-	} else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
-		if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
-			buttonClickTimer = clock();
-			buttonsPressed[ObjectType] = true;
+	// Left button actions
+	if (Button == BUTTON_LEFT) {
+		// If menu button is being unpressed
+		if (buttonsPressed.find(ObjectType) != buttonsPressed.end()) {
+			buttonsPressed.erase(ObjectType);
+		}
+		else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
+			if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
+				buttonClickTimer = clock();
+				buttonsPressed[ObjectType] = true;
+			}
+		}
+
+		// If screen object is a tag
+		if (ObjectType == SCREEN_TAG) {
+			// Set the ASEL
+			asel = sObjectId;
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
+		}
+
+		// Qck Look button
+		if (ObjectType == MENBTN_QCKLOOK) {
+			aselDetailed = false;
+		}
+
+		// Detailed button
+		if (ObjectType == MENBTN_DETAILED) {
+			aselDetailed = true;
+		}
+
+	}
+	
+	if (Button == BUTTON_RIGHT) {
+		if (ObjectType == MENBTN_HALO) {
+			// Get the toggle button
+			auto cycle = toggleButtons.find(MENBTN_HALO);
+
+			// Increment if less than or equal 3 (20 minute halos max)
+			if (cycle->second < 3) {
+				cycle->second++;
+			}
+			else {
+				cycle->second = 0;
+			}
+
+			// Now assign the values
+			auto haloBtn = menuButtons.find(MENBTN_HALO);
+			switch (cycle->second) {
+			case 0:
+				haloBtn->second = "Halo 5";
+				break;
+			case 1:
+				haloBtn->second = "Halo 10";
+				break;
+			case 2:
+				haloBtn->second = "Halo 15";
+				break;
+			case 3:
+				haloBtn->second = "Halo 20";
+				break;
+			}
+		}
+
+		if (ObjectType == MENBTN_PTL) {
+			// Get the toggle button
+			auto cycle = toggleButtons.find(MENBTN_PTL);
+
+			// Increment if less than or equal 5 (30 minute lines max)
+			if (cycle->second < 5) {
+				cycle->second++;
+			}
+			else {
+				cycle->second = 0;
+			}
+
+			// Now assign the values
+			auto ptlBtn = menuButtons.find(MENBTN_PTL);
+			switch (cycle->second) {
+			case 0:
+				ptlBtn->second = "PTL 5";
+				break;
+			case 1:
+				ptlBtn->second = "PTL 10";
+				break;
+			case 2:
+				ptlBtn->second = "PTL 15";
+				break;
+			case 3:
+				ptlBtn->second = "PTL 20";
+				break;
+			case 4:
+				ptlBtn->second = "PTL 25";
+				break;
+			case 5:
+				ptlBtn->second = "PTL 30";
+				break;
+			}
+		}
+
+		if (ObjectType == MENBTN_RINGS) {
+			// Get the toggle button
+			auto cycle = toggleButtons.find(MENBTN_RINGS);
+
+			// Increment if less than or equal 4 (5 rings max)
+			if (cycle->second < 4) {
+				cycle->second++;
+			}
+			else {
+				cycle->second = 0;
+			}
+
+			// Now assign the values
+			auto ringsBtn = menuButtons.find(MENBTN_RINGS);
+			switch (cycle->second) {
+			case 0:
+				ringsBtn->second = "Rings 1";
+				break;
+			case 1:
+				ringsBtn->second = "Rings 2";
+				break;
+			case 2:
+				ringsBtn->second = "Rings 3";
+				break;
+			case 3:
+				ringsBtn->second = "Rings 4";
+				break;
+			case 4:
+				ringsBtn->second = "Rings 5";
+				break;
+			}
 		}
 	}
-
-	// If screen object is a tag
-	if (ObjectType == SCREEN_TAG) {
-		// Set the ASEL
-		asel = sObjectId;
-		GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(sObjectId));
-	}
-
-	// Qck Look button
-	if (ObjectType == MENBTN_QCKLOOK) {
-		aselDetailed = false;
-	}
-
-	// Detailed button
-	if (ObjectType == MENBTN_DETAILED) {
-		aselDetailed = true;
-	}
+	
 	
 	RequestRefresh();
 }
