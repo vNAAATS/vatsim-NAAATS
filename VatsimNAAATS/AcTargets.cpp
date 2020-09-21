@@ -75,7 +75,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&acPoint);
 }
 
-POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition) {
+POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction) {
 	// Get the aircraft's position and flight plan
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 	CFlightPlan acFP = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
@@ -90,11 +90,22 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
 		if (tagPosition->first == true) {
 			// Detailed
-			tagRect = CRect(acPoint.x  - 80, acPoint.y - 86, acPoint.x + 5, acPoint.y - 30);
+			
+			if (direction) {
+				tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 66);
+			}
+			else {
+				tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 10);
+			}
 		}
 		else {
 			// Not detailed
-			tagRect = CRect(acPoint.x - 80, acPoint.y - 65, acPoint.x + 5, acPoint.y - 35);
+			if (direction) {
+				tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 40);
+			}
+			else {
+				tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 5);
+			}
 		}
 	}
 	else {

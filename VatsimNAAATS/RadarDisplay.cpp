@@ -73,18 +73,19 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// Time and heading
 			entryMinutes = fp.GetSectorEntryMinutes();
 			hdg = ac.GetPosition().GetReportedHeading();
-
-			// Aircraft already inside airspace
-			if (entryMinutes >= 0) {
+			// Get direction
+			bool direction = false;
+			// Aircraft to render
+			if (entryMinutes >= 0 && entryMinutes <= 90) {
 				// If not there
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
 					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
 				}
 				
-				// If inbound
-				if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
-					if ((hdg <= 359) && (hdg >= 181)) {
+				// Get inbound aircraft and flight direction	
+				if ((hdg <= 359) && (hdg >= 181)) {
+					if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
 						// Shanwick
 						for (int i = 0; i < rte.GetPointsNumber(); i++) {
 							// Add to inbound aircraft list
@@ -95,12 +96,16 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 							}
 						}
 					}
-					else if ((hdg >= 1) && (hdg <= 179)) {
+				}
+				else if ((hdg >= 1) && (hdg <= 179)) {
+					direction = true;
+					if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
 						// Gander
 						for (int i = 0; i < rte.GetPointsNumber(); i++) {
 							// Add to inbound aircraft list
 							if (std::find(pointsGander.begin(), pointsGander.end(), rte.GetPointName(i)) != pointsGander.end()) {
 								inboundAircraft.push_back(make_pair(ac, true));
+								direction = true;
 								epVec.push_back(make_pair(rte.GetPointName(i), i));
 								break;
 							}
@@ -138,7 +143,7 @@ void RadarDisplay::OnRefresh(HDC hDC, int Phase)
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, true);
-					CAcTargets::DrawTag(&dc, this, &ac, &kv->second);
+					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction);
 				}
 				else {
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, false);
@@ -249,5 +254,5 @@ void RadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObject
 
 void RadarDisplay::OnAsrContentToBeClosed(void)
 {
-
+	delete this;
 }
