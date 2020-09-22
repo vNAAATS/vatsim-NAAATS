@@ -116,3 +116,8 @@ void CInboundList::MoveList(CRect area, bool isReleased) { // TODO: check need f
 	isMouseReleased = isReleased;
 	topLeft = { area.left, area.top };
 }
+
+void CInboundList::MoveList(POINT topleft, bool isReleased) { // TODO: check need for isReleased
+	isMouseReleased = isReleased;
+	topLeft = { topleft.x, topleft.y };
+}

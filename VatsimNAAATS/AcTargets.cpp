@@ -316,7 +316,6 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	POINT t1Point = screen->ConvertCoordFromPositionToPixel(t1Pos);
 	POINT t2Point = screen->ConvertCoordFromPositionToPixel(t2Pos);
 
-
 	// Draw the line
 	dc->MoveTo(t1Point);
 	dc->LineTo(t2Point);
@@ -324,10 +323,10 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	// Now draw the text
 	POINT midpoint = Utils::GetMidPoint(t1Point, t2Point);
 
-	FontSelector::SelectMonoFontRotate(12, 0, dc);
+	FontSelector::SelectMonoFont(14, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(midpoint.x, midpoint.y, to_string(time).c_str());
+	dc->TextOutA(midpoint.x, midpoint.y - 4, to_string(time).c_str());
 
 	// Restore context
 	dc->RestoreDC(iDC);

@@ -52,3 +52,7 @@ Rect COtherList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CRa
 void COtherList::MoveList(CRect area) { // TODO: check need for isReleased
 	topLeft = { area.left, area.top };
 }
+
+void COtherList::MoveList(POINT topleft) { // TODO: check need for isReleased
+	topLeft = { topleft.x, topleft.y };
+}

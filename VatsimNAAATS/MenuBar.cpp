@@ -433,9 +433,9 @@ CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 		if (kv.first == 428) {
 			dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
 			// Button bevel
-			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+			dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 			InflateRect(button, -1, -1);
-			dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+			dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 		}
 		else if (isPosActive) {
 			dc->FillSolidRect(button, LightGreen.ToCOLORREF());

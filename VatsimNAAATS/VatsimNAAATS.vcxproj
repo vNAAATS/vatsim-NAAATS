@@ -198,6 +198,7 @@
     <ClCompile Include="PIVTool.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
     <ClCompile Include="SepTool.cpp" />
+    <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
   </ItemGroup>
   <ItemGroup>

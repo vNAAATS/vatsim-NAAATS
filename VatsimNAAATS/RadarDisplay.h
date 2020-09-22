@@ -18,7 +18,7 @@ class CRadarDisplay : public CRadarScreen
 		virtual ~CRadarDisplay();
 
 		// Custom methods
-		void ShowHideGridReference(CRadarScreen* screen, bool show);
+		void ShowHideGridReference(CRadarScreen* screen, bool show);		
 
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
@@ -29,7 +29,11 @@ class CRadarDisplay : public CRadarScreen
 		void OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button);
 		void OnAsrContentToBeSaved(void);
 		void OnAsrContentLoaded(bool Loaded);
-		void OnAsrContentToBeClosed(void);
+
+		inline void OnAsrContentToBeClosed(void)
+		{
+			delete this;
+		}
 
 	private:
 		POINT mousePointer;
@@ -48,6 +52,5 @@ class CRadarDisplay : public CRadarScreen
 		map<string, pair<bool, POINT>> tagStatuses;
 		string aircraftSel1 = ""; // For use in conflict tools
 		string aircraftSel2 = ""; // "
-		bool gridEnabled = false;
 };
 

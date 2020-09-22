@@ -9,6 +9,21 @@ using namespace EuroScopePlugIn;
 
 class Utils {
 	public:
+		// Variables to save
+		static int InboundX;
+		static int InboundY;
+		static int OthersX;
+		static int OthersY;
+		static int AltFiltLow;
+		static int AltFiltHigh;
+		static bool GridEnabled;
+		static bool TagsEnabled;
+
+		static void SavePluginData(CPlugIn* plugin);
+		static void LoadPluginData(CPlugIn* plugin);
+
+		// TODO: Cleanup into cpp file
+
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, CFlightPlan* fp = nullptr, int ep = -1) {
 			time_t now = time(0);
@@ -89,36 +104,5 @@ class Utils {
 			// Get time in minutes
 			double temp = (float)distanceNM / (float)speedGS;
 			return ((float)distanceNM / speedGS) * 60;
-		}
-
-		// Use arctan to get the angle
-		static double GetHypotenuseAngle(POINT p1, POINT p2) {
-			int l;
-			int w;
-			// Get the side lengths
-			if (p1.y > p2.y) {
-				l = p2.y - p1.y;
-				if (p1.x < p2.x) {
-					w = p2.x - p1.x;
-				}
-				else {
-					w = p1.y - p2.y;
-				}
-			}
-			else {
-				l = p1.y - p2.y;
-				if (p1.x > p2.x) {
-					w = p1.x - p2.x;
-				}
-				else {
-					w = p2.y - p1.y;
-				}
-			}
-
-			// Get theta from the sides (in degrees)
-			double theta = tan((float)w / (float)l) * (180 / (acos(0.0) * 2));
-
-			// Return the angle (in degrees)
-			return atan(theta) * (180 / (acos(0.0) * 2));
 		}
 };

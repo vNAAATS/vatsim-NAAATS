@@ -172,6 +172,12 @@ const int MENDRP_OVERLAYS = 426;
 const int MENDRP_TYPESEL = 427;
 const int MENTXT_ALTFILT = 428;
 
-/// ASR VARIABLES
-const string ASR_INBND_X = "VN_ASR_INBND_X";
-const string ASR_INBND_Y = "VN_ASR_INBND_Y";
+/// SETTINGS VARIABLES
+const string SET_INBNDX = "InboundX";
+const string SET_INBNDY = "InboundY";
+const string SET_OTHERSX = "OthersX";
+const string SET_OTHERSY = "OthersY";
+const string SET_ALTFILT_LOW = "AltFiltLow";
+const string SET_ALTFILT_HIGH = "AltFiltHigh";
+const string SET_GRID = "GridEnabled";
+const string SET_TAGS = "TagsEnabled";

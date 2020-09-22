@@ -15,6 +15,7 @@ using namespace EuroScopePlugIn;
 
 CRadarDisplay::CRadarDisplay() 
 {
+	ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ 500, 150 });
 	otherList = new COtherList({ 200, 150 });
 	menuButtons = CMenuBar::BuildButtonData();
@@ -28,33 +29,55 @@ CRadarDisplay::~CRadarDisplay()
 
 }
 
+// SHow and hide the grid reference and waypoints
 void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 	if (show) {
 		screen->GetPlugIn()->SelectScreenSectorfile(screen);
-		CSectorElement element(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
-		string elementName = string(element.GetName());
-		while (elementName != "CZQO Positional Grid Reference") {
-			element = screen->GetPlugIn()->SectorFileElementSelectNext(element, 13);
-			elementName = string(element.GetName());
+		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
+		string gridName = string(grid.GetName());
+		while (gridName != "CZQO Positional Grid Reference") {
+			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
+			gridName = string(grid.GetName());
 		}
 
-		int idx = 0;
-		screen->ShowSectorFileElement(element, "", true);
-		idx++;
-		
+		/*CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
+		string freetextName = string(freetext.GetName());
+		while (freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
+			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
+			freetextName = string(freetext.GetName());
+		}
+
+		while (freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
+			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
+			freetextName = string(freetext.GetName());
+			screen->ShowSectorFileElement(freetext, "", true);
+		}*/
+
+		screen->ShowSectorFileElement(grid, "", true);
 	}
 	else {
 		screen->GetPlugIn()->SelectScreenSectorfile(screen);
-		CSectorElement element(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
-		string elementName = string(element.GetName());
-		while (elementName != "CZQO Positional Grid Reference") {
-			element = screen->GetPlugIn()->SectorFileElementSelectNext(element, 13);
-			elementName = string(element.GetName());
+		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
+		string gridName = string(grid.GetName());
+		while (gridName != "CZQO Positional Grid Reference") {
+			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
+			gridName = string(grid.GetName());
 		}
 
-		int idx = 0;
-		screen->ShowSectorFileElement(element, "", false);
-		idx++;
+		/*CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
+		string freetextName = string(freetext.GetName());
+		while (freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
+			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
+			freetextName = string(freetext.GetName());
+		}
+
+		while (freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
+			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
+			freetextName = string(freetext.GetName());
+			screen->ShowSectorFileElement(freetext, "", false);
+		}*/
+
+		screen->ShowSectorFileElement(grid, "", false);
 	}
 
 	RefreshMapContent();
@@ -69,15 +92,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 	// Graphics object
 	Graphics g(hDC);
-
-	/// TIMERS FOR BUTTONS
-	double t = (double)(clock() - buttonClickTimer) / ((double)CLOCKS_PER_SEC);
-	if (t >= 0.1) {
-		/*if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && clickType == true) {
-			buttonsPressed.erase(MENBTN_QCKLOOK);
-			buttonClickTimer = clock();
-		}*/
-	}
 
 	// Clean up old lists
 	inboundAircraft.clear();
@@ -220,21 +234,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
-
-		// Grid draw
-		if (buttonsPressed.find(MENBTN_GRID) != buttonsPressed.end()) {
-			if (gridEnabled != true) {
-				gridEnabled = true;
-				ShowHideGridReference(this, gridEnabled);
-			}
-			
-		}
-		else {
-			if (gridEnabled != false) {
-				gridEnabled = false;
-				ShowHideGridReference(this, gridEnabled);
-			}
-		}
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
@@ -251,10 +250,17 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	mousePointer = Pt;
 	if (ObjectType == LIST_INBOUND) {
 		inboundList->MoveList(Area, Released);
+
+		// To save
+		Utils::InboundX = Area.left;
+		Utils::InboundY = Area.top;
 	}
 
 	if (ObjectType == LIST_OTHERS) {
 		otherList->MoveList(Area);
+
+		Utils::OthersX = Area.left;
+		Utils::OthersY = Area.top;
 	}
 
 	if (ObjectType == SCREEN_TAG) {
@@ -278,11 +284,30 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		// If menu button is being unpressed
 		if (buttonsPressed.find(ObjectType) != buttonsPressed.end()) {
 			buttonsPressed.erase(ObjectType);
+
+			// Button settings
+			if (ObjectType == MENBTN_TAGS) {
+				Utils::TagsEnabled = false;
+			}
+			else if (ObjectType == MENBTN_GRID) {
+				// Grid is off
+				Utils::GridEnabled = false;
+				ShowHideGridReference(this, Utils::GridEnabled);
+			}
 		}
 		else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
 			if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
-				buttonClickTimer = clock();
 				buttonsPressed[ObjectType] = true;
+
+				// Button settings
+				if (ObjectType == MENBTN_TAGS) {
+					Utils::TagsEnabled = true;
+				}
+				else if (ObjectType == MENBTN_GRID) {
+					// Grid is on
+					Utils::GridEnabled = true;
+					ShowHideGridReference(this, Utils::GridEnabled);
+				}
 			}
 		}
 
@@ -420,30 +445,8 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	RequestRefresh();
 }
 
-void CRadarDisplay::OnAsrContentToBeSaved(void)
-{
-	/// Save all necessary data to ASR
-
-	// Inbound list
-	SaveDataToAsr(ASR_INBND_X.c_str(), "Position of the vNAAATS inbound list (x coordinate)", to_string(inboundList->GetTopLeft().x).c_str());
-	SaveDataToAsr(ASR_INBND_Y.c_str(), "Position of the vNAAATS inbound list (y coordinate)", to_string(inboundList->GetTopLeft().y).c_str());
-}
-
-void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
-{
-	if (!Loaded)
-		return;
-
-	// Get inbound list data
-	const char* inbX = GetDataFromAsr(ASR_INBND_X.c_str());
-	const char* inbY = GetDataFromAsr(ASR_INBND_Y.c_str());
-	if (inbX != NULL && inbY != NULL) {
-		inboundList->MoveList(CRect(atoi(inbX), atoi(inbY), 0, 0), true);
-	}	
-}
-
 void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
-{ 
+{
 
 }
 
@@ -452,7 +455,15 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 
 }
 
-void CRadarDisplay::OnAsrContentToBeClosed(void)
+void CRadarDisplay::OnAsrContentToBeSaved(void)
 {
-	delete this;
+	Utils::SavePluginData(this->GetPlugIn());
+}
+
+void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
+{
+	if (!Loaded)
+		return;
+
+	Utils::LoadPluginData(this->GetPlugIn());
 }

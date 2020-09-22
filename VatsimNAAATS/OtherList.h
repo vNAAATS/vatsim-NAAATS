@@ -17,6 +17,7 @@ class COtherList
 		POINT GetTopLeft();
 		Rect DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CRadarTarget>* otherAircraft);
 		void MoveList(CRect area);
+		void MoveList(POINT topleft);
 
 	private:
 		POINT topLeft;
