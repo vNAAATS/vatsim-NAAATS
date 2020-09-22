@@ -253,8 +253,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			aircraftSel2 = "";
 		}
 
-		// Draw menu bar
-		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, & menuButtons, & buttonsPressed, & toggleButtons, & dropDownItems);
+		// Draw menu bar and reset dropdown click
+		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons, &dropDownItems, dropDownHover);
+		dropDownClicked = -1;
 
 		// Draw Lists
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
@@ -299,48 +300,71 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
 {
+	// Dropdown
+	if (ObjectType == DROPDOWN) {
+		dropDownHover = atoi(sObjectId);
+	}
 
+	RequestRefresh();
 }
 
 void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
 	// Left button actions
 	if (Button == BUTTON_LEFT) {
+		int dropDownToCancel = -1;
 		// If screen object is a dropdown
-
-		// Dropdown unclicker
-		bool unclicked = false;
-		if (ObjectType == currentDropDownId) {
-			unclicked = true;
-		}
-
 		if (ObjectType == MENDRP_AREASEL) {
-			if (currentDropDownId != -1) 
-				buttonsPressed.erase(currentDropDownId);
+			dropDownToCancel = currentDropDownId;
 			currentDropDownId = MENDRP_AREASEL;
-			dropDownItems[800] = "Test1";
-			dropDownItems[801] = "Test2";
-			dropDownItems[802] = "Test3";
-		}
-		else if (ObjectType == MENDRP_OVERLAYS) {
-			if (currentDropDownId != -1)
-				buttonsPressed.erase(currentDropDownId);
-			currentDropDownId = MENDRP_OVERLAYS;
+			dropDownHover = -1;
+			dropDownItems[800] = "EGGX";
+			dropDownItems[801] = "CZQX";
+			dropDownItems[802] = "BDBX";
 		}
 		else if (ObjectType == MENDRP_TCKCTRL) {
-			if (currentDropDownId != -1)
-				buttonsPressed.erase(currentDropDownId);
+			dropDownToCancel = currentDropDownId;		
 			currentDropDownId = MENDRP_TCKCTRL;
+			dropDownHover = -1;
+		}
+		else if (ObjectType == MENDRP_OVERLAYS) {
+			dropDownToCancel = currentDropDownId;
+			currentDropDownId = MENDRP_OVERLAYS;
+			dropDownHover = -1;
 		}
 		else if (ObjectType == MENDRP_TYPESEL) {
-			if (currentDropDownId != -1)
-				buttonsPressed.erase(currentDropDownId);
+			dropDownToCancel = currentDropDownId;
 			currentDropDownId = MENDRP_TYPESEL;
+			dropDownHover = -1;
+			dropDownItems[800] = "Delivery";
+			dropDownItems[801] = "OCA Enroute";
+			dropDownItems[802] = "All";
 		}
 
+		// If item is a drop down menu item
+		bool brk = false;
+		for (auto kv : dropDownItems) {
+			if (atoi(sObjectId) == kv.first) {
+				dropDownClicked = atoi(sObjectId);
+				dropDownHover = -1;
+				buttonsPressed.erase(currentDropDownId);
+				currentDropDownId = -1;
+				brk = true;
+				break;
+			}
+		}
+
+		// Clear dropdown items if so
+		if (brk) dropDownItems.clear();;
+
 		// If menu button is being unpressed
-		if (buttonsPressed.find(ObjectType) != buttonsPressed.end()) {
+		if (buttonsPressed.find(ObjectType) != buttonsPressed.end() && string(sObjectId) == "") {
 			buttonsPressed.erase(ObjectType);
+
+			if (ObjectType == currentDropDownId) {
+				currentDropDownId = -1;
+				dropDownHover = -1;
+			}
 
 			// Button settings
 			if (ObjectType == MENBTN_TAGS) {
@@ -352,9 +376,14 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				ShowHideGridReference(this, Utils::GridEnabled);
 			}
 		}
-		else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
-			if (buttonsPressed.find(ObjectType) == buttonsPressed.end() && !unclicked) {
+		else if (menuButtons.find(ObjectType) != menuButtons.end() && string(sObjectId) == "") { // If being pressed
+			if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
 				buttonsPressed[ObjectType] = true;
+				
+				// Cancel existing open dropdown
+				if (dropDownToCancel != -1) {
+					buttonsPressed.erase(dropDownToCancel);
+				}
 
 				// Button settings
 				if (ObjectType == MENBTN_TAGS) {
@@ -366,12 +395,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 					ShowHideGridReference(this, Utils::GridEnabled);
 				}
 			}
-		}
-
-		// Deselect object type
-		if (ObjectType == currentDropDownId) {
-			currentDropDownId = -1;
-		}
+		} 
 
 		// If screen object is a tag
 		if (ObjectType == SCREEN_TAG) {
@@ -502,7 +526,6 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		}
 	}
-	
 	
 	RequestRefresh();
 }

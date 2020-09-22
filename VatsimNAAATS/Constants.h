@@ -141,6 +141,9 @@ const int RECT8_WIDTH = 90;
 const int LIST_INBOUND = 300;
 const int LIST_OTHERS = 301;
 
+// Dropdown
+const int DROPDOWN = 800;
+
 // Screen
 const int SCREEN_TAG = 1;
 

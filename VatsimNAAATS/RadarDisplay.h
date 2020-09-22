@@ -51,6 +51,8 @@ class CRadarDisplay : public CRadarScreen
 		COtherList* otherList;
 		map<int, string> dropDownItems;
 		int currentDropDownId = -1;
+		int dropDownHover = -1;
+		int dropDownClicked = -1;
 		map<int, string> menuFields;
 		string asel;
 		map<string, pair<bool, POINT>> tagStatuses;

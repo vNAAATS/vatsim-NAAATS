@@ -52,7 +52,7 @@ map<int, int> CMenuBar::BuildToggleButtonData() {
 	return data;
 }
 
-void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData, map<int, string>* dropDownItems) {
+void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData, map<int, string>* dropDownItems, int idHover) {
 
 	// Brush to draw the bar
 	CBrush brush(ScreenBlue.ToCOLORREF());
@@ -357,37 +357,37 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 		else if (idx == 24) {
 			offsetX = RECT1_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
 			}
 			offsetX += btnWidth + 1;
 		}
 		else if (idx == 25) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
 			}
 				offsetX += (btnWidth * 1.41);
 			}
 		else if (idx == 26) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
 			}
 		}
 		else if (idx == 27) {
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
 			}
 		}
 
@@ -478,7 +478,7 @@ CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 	return button;
 }
 
-CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems) {
+CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems, int idHover) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -498,13 +498,26 @@ CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT t
 
 	// Check if pressed
 	if (isOpen) {
+		// Draw text
 		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
-		CRect area(dropDown.left, dropDown.bottom, dropDown.right, dropDown.bottom + (dropDownItems->size() * 18));
+		CRect area(dropDown.left, dropDown.bottom, dropDown.right, dropDown.bottom + (dropDownItems->size() * 20));
 		dc->FillSolidRect(area, ScreenBlue.ToCOLORREF());
-		/*
+		dc->Draw3dRect(area, BevelDark.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+		// Draw text
+		FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+
+		// Draw text
+		int offsetY = 2;
 		for (auto kv : *dropDownItems) {
-			
-		}*/
+			CRect object(area.left, area.top + offsetY, area.right, area.top + offsetY + 20);
+			if (idHover == kv.first)
+				dc->FillSolidRect(object, ButtonPressed.ToCOLORREF());
+			dc->TextOutA(area.left + 2, area.top + offsetY + 2, kv.second.c_str());
+			screen->AddScreenObject(DROPDOWN, to_string(kv.first).c_str(), object, false, "");	
+			offsetY += 20;
+		}
 	}
 	else {
 		// Button
