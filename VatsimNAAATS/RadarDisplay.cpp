@@ -85,10 +85,8 @@ void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
 		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos) {
-
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
-
 		}
 
 		string componentName;
@@ -125,9 +123,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	RadarArea.bottom = GetChatArea().bottom;
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
-		// Draw menu bar first
-		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons);
-
 		// Get first aircraft
 		CRadarTarget ac;
 		ac = GetPlugIn()->RadarTargetSelectFirst();
@@ -246,10 +241,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
 
-		// Draw Lists
-		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
-		otherList->DrawList(&g, &dc, this, &otherAircraft);
-
 		// RBL draw
 		if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
@@ -261,6 +252,13 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
+
+		// Draw menu bar
+		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, & menuButtons, & buttonsPressed, & toggleButtons, & dropDownItems);
+
+		// Draw Lists
+		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
+		otherList->DrawList(&g, &dc, this, &otherAircraft);
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
@@ -308,6 +306,39 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 {
 	// Left button actions
 	if (Button == BUTTON_LEFT) {
+		// If screen object is a dropdown
+
+		// Dropdown unclicker
+		bool unclicked = false;
+		if (ObjectType == currentDropDownId) {
+			currentDropDownId = -1;
+			unclicked = true;
+		}
+
+		if (ObjectType == MENDRP_AREASEL) {
+			if (currentDropDownId != -1) 
+				buttonsPressed.erase(currentDropDownId);
+			currentDropDownId = MENDRP_AREASEL;
+			dropDownItems[800] = "Test1";
+			dropDownItems[801] = "Test2";
+			dropDownItems[802] = "Test3";
+		}
+		else if (ObjectType == MENDRP_OVERLAYS) {
+			if (currentDropDownId != -1)
+				buttonsPressed.erase(currentDropDownId);
+			currentDropDownId = MENDRP_OVERLAYS;
+		}
+		else if (ObjectType == MENDRP_TCKCTRL) {
+			if (currentDropDownId != -1)
+				buttonsPressed.erase(currentDropDownId);
+			currentDropDownId = MENDRP_TCKCTRL;
+		}
+		else if (ObjectType == MENDRP_TYPESEL) {
+			if (currentDropDownId != -1)
+				buttonsPressed.erase(currentDropDownId);
+			currentDropDownId = MENDRP_TYPESEL;
+		}
+
 		// If menu button is being unpressed
 		if (buttonsPressed.find(ObjectType) != buttonsPressed.end()) {
 			buttonsPressed.erase(ObjectType);
@@ -323,7 +354,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		}
 		else if (menuButtons.find(ObjectType) != menuButtons.end()) { // If being pressed
-			if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
+			if (buttonsPressed.find(ObjectType) == buttonsPressed.end() && !unclicked) {
 				buttonsPressed[ObjectType] = true;
 
 				// Button settings
@@ -336,6 +367,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 					ShowHideGridReference(this, Utils::GridEnabled);
 				}
 			}
+		}
+
+		// Redundancy, may fix in the future
+		if (ObjectType == currentDropDownId) {
+			currentDropDownId = -1;
 		}
 
 		// If screen object is a tag

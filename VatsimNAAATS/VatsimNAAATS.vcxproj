@@ -195,6 +195,7 @@
     <ClCompile Include="NAAATS.cpp" />
     <ClCompile Include="OtherList.cpp" />
     <ClCompile Include="Overlays.cpp" />
+    <ClCompile Include="PathRenderer.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="PIVTool.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="OtherList.h" />
     <ClInclude Include="Overlays.h" />
+    <ClInclude Include="PathRenderer.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PIVTool.h" />
     <ClInclude Include="RadarDisplay.h" />

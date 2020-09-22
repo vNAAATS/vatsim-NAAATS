@@ -52,7 +52,7 @@ map<int, int> CMenuBar::BuildToggleButtonData() {
 	return data;
 }
 
-void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData) {
+void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData, map<int, string>* dropDownItems) {
 
 	// Brush to draw the bar
 	CBrush brush(ScreenBlue.ToCOLORREF());
@@ -220,6 +220,10 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 			break;
 		}
 
+		// Render zulu time
+		FontSelector::SelectNormalFont(30, dc);
+		dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, Utils::ParseZuluTime(true).c_str());
+
 		if (idx == 4)
 		{
 			offsetX = 10;
@@ -353,47 +357,43 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 		else if (idx == 24) {
 			offsetX = RECT1_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
 			}
 			offsetX += btnWidth + 1;
 		}
 		else if (idx == 25) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
 			}
 				offsetX += (btnWidth * 1.41);
 			}
 		else if (idx == 26) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
 			}
 		}
 		else if (idx == 27) {
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems);
 			}
 		}
 
 		dc->RestoreDC(sDC);
 		idx++;
 	}
-
-	// Fnally render the zulu time
-	FontSelector::SelectNormalFont(30, dc);
-	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, Utils::ParseZuluTime(true).c_str());
 
 	// Delete object
 	DeleteObject(&brush);
@@ -478,7 +478,7 @@ CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 	return button;
 }
 
-CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen) {
+CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -499,50 +499,36 @@ CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT t
 	// Check if pressed
 	if (isOpen) {
 		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
-		// Button bevel
-		dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
-		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
-		// Button triangle
-		SolidBrush brush(Grey);
-		// Coz GDI+ doesn't like GDI
-		Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
-		Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
-			Point(rectangle.X + 12, rectangle.Y + 4),
-			Point(rectangle.X + 7.5, rectangle.Y + 14) };
-		g->FillPolygon(&brush, points, 3);
-
-		// Clean up
-		DeleteObject(&brush);
+		CRect area(dropDown.left, dropDown.bottom, dropDown.right, dropDown.bottom + (dropDownItems->size() * 18));
+		dc->FillSolidRect(area, ScreenBlue.ToCOLORREF());
+		/*
+		for (auto kv : *dropDownItems) {
+			
+		}*/
 	}
 	else {
 		// Button
 		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
-		// Button bevel
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		// Button
-		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
-		// Button bevel
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		// Button triangle
-		SolidBrush brush(TextWhite);
-		// Coz GDI+ doesn't like GDI
-		Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
-		Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
-			Point(rectangle.X + 12, rectangle.Y + 4),
-			Point(rectangle.X + 7.5, rectangle.Y + 14) };
-		g->FillPolygon(&brush, points, 3);
-
-		// Clean up
-		DeleteObject(&brush);
 	}
+
+	// Button triangle
+	SolidBrush brush(Grey);
+	// Coz GDI+ doesn't like GDI
+	Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+	Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
+		Point(rectangle.X + 12, rectangle.Y + 4),
+		Point(rectangle.X + 7.5, rectangle.Y + 14) };
+	g->FillPolygon(&brush, points, 3);
+	// Button bevel
+	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(button, -1, -1);
+	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	
 	// Restore device context
 	dc->RestoreDC(sDC);
+
+	// Clean up
+	DeleteObject(&brush);
 
 	// Add object and return dropdown
 	screen->AddScreenObject(kv.first, "", button, false, "");

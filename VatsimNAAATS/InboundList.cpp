@@ -38,19 +38,19 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 		dc->TextOutA(rectangle.X, rectangle.Y, string("Inbound (" + to_string(inboundAircraft->size()) + ")").c_str());
 	}
 	
+	// Text
+	FontSelector::SelectATCFont(18, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
 
 	// Make inbound lines
 	int offsetY = 14;
 	int offsetX = 18;
 	int idx = 0;
+
 	for (vector<pair<CRadarTarget, bool>>::iterator ac = inboundAircraft->begin(); ac != inboundAircraft->end(); ac++) {
 		// Get the aircraft
 		CFlightPlan fp(screen->GetPlugIn()->FlightPlanSelect(ac->first.GetCallsign()));
-
-		// Text
-		FontSelector::SelectATCFont(18, dc);
-		dc->SetTextColor(TextWhite.ToCOLORREF());
-		dc->SetTextAlign(TA_LEFT);
 
 		// Direction arrow (Shanwick)
 		if (ac->second == false) {
