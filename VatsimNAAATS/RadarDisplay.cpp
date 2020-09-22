@@ -311,7 +311,6 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		// Dropdown unclicker
 		bool unclicked = false;
 		if (ObjectType == currentDropDownId) {
-			currentDropDownId = -1;
 			unclicked = true;
 		}
 
@@ -369,7 +368,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		}
 
-		// Redundancy, may fix in the future
+		// Deselect object type
 		if (ObjectType == currentDropDownId) {
 			currentDropDownId = -1;
 		}

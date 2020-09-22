@@ -149,6 +149,10 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 	InflateRect(rect9, -1, -1);
 	dc->Draw3dRect(rect9, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
+	// Render zulu time
+	FontSelector::SelectNormalFont(30, dc);
+	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, Utils::ParseZuluTime(true).c_str());
+
 	// Create buttons
 	// TODO: comment
 	int offsetX = 128;
@@ -219,10 +223,6 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 			btnWidth = 78 + (BTN_PAD_SIDE * 2);
 			break;
 		}
-
-		// Render zulu time
-		FontSelector::SelectNormalFont(30, dc);
-		dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, Utils::ParseZuluTime(true).c_str());
 
 		if (idx == 4)
 		{
