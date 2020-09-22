@@ -144,11 +144,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 						// Shanwick
 						for (int i = 0; i < rte.GetPointsNumber(); i++) {
 							// Add to inbound aircraft list
+							bool breakLoop = false;
 							if (std::find(pointsShanwick.begin(), pointsShanwick.end(), rte.GetPointName(i)) != pointsShanwick.end()) {
 								inboundAircraft.push_back(make_pair(ac, false));
 								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								breakLoop = true;
 								break;
 							}
+							if (breakLoop) break;
 						}
 					}
 				}
@@ -158,13 +161,15 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 						// Gander
 						for (int i = 0; i < rte.GetPointsNumber(); i++) {
 							// Add to inbound aircraft list
+							bool breakLoop = false;
 							if (std::find(pointsGander.begin(), pointsGander.end(), rte.GetPointName(i)) != pointsGander.end()) {
 								inboundAircraft.push_back(make_pair(ac, true));
 								direction = true;
 								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								breakLoop = true;
 								break;
 							}
-
+							if (breakLoop) break;
 						}
 					}
 				}
