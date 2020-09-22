@@ -55,20 +55,15 @@ void Utils::LoadPluginData(CPlugIn* plugin) {
 
 	// Grid
 	stra = plugin->GetDataFromSettings(SET_GRID.c_str());
-	if (stra != NULL && stra == "true") {
-		GridEnabled = true;
+	if (stra != NULL) {
+		GridEnabled = (stra[0] == 't');
 	}
-	else {
-		GridEnabled = false;
-	}
+	
 
 	// Tags
 	stra = plugin->GetDataFromSettings(SET_TAGS.c_str());
-	if (stra != NULL && stra == "true") {
-		TagsEnabled = true;
-	}
-	else {
-		TagsEnabled = false;
+	if (stra != NULL) {
+		TagsEnabled = (stra[0] == 't');
 	}
 
 	// Show a user message saying that the plugin was loaded successfully

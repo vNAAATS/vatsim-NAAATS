@@ -20,7 +20,6 @@ CRadarDisplay::CRadarDisplay()
 	otherList = new COtherList({ 200, 150 });
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
-	buttonsPressed.insert(make_pair(MENBTN_TAGS, true));
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 }
 
@@ -29,7 +28,22 @@ CRadarDisplay::~CRadarDisplay()
 
 }
 
-// SHow and hide the grid reference and waypoints
+void CRadarDisplay::PopulateProgramData() {
+	// Lists
+	inboundList->MoveList({ Utils::InboundX, Utils::InboundY }, true);
+	otherList->MoveList({ Utils::OthersX, Utils::OthersY });
+
+	// Buttons
+	if (Utils::TagsEnabled && buttonsPressed.find(MENBTN_TAGS) == buttonsPressed.end()) {
+		buttonsPressed[MENBTN_TAGS] = true;
+	}
+	if (Utils::GridEnabled && buttonsPressed.find(MENBTN_GRID) == buttonsPressed.end()) {
+		buttonsPressed[MENBTN_GRID] = true;
+	}
+
+}
+
+// Show and hide the grid reference and waypoints
 void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 	if (show) {
 		screen->GetPlugIn()->SelectScreenSectorfile(screen);
@@ -40,18 +54,22 @@ void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 			gridName = string(grid.GetName());
 		}
 
-		/*CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
+		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
-		while (freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos) {
+			
+			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
+			freetextName = string(freetext.GetName());
+			
+		}
+
+		string componentName;
+		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos) {
+			componentName = freetext.GetComponentName(0);
+			screen->ShowSectorFileElement(freetext, componentName.c_str(), true);
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
 		}
-
-		while (freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-			screen->ShowSectorFileElement(freetext, "", true);
-		}*/
 
 		screen->ShowSectorFileElement(grid, "", true);
 	}
@@ -64,18 +82,22 @@ void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 			gridName = string(grid.GetName());
 		}
 
-		/*CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
+		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
-		while (freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos) {
+
+			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
+			freetextName = string(freetext.GetName());
+
+		}
+
+		string componentName;
+		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos) {
+			componentName = freetext.GetComponentName(0);
+			screen->ShowSectorFileElement(freetext, componentName.c_str(), false);
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
 		}
-
-		while (freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-			screen->ShowSectorFileElement(freetext, "", false);
-		}*/
 
 		screen->ShowSectorFileElement(grid, "", false);
 	}
@@ -471,4 +493,6 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 		return;
 
 	Utils::LoadPluginData(this->GetPlugIn());
+
+	PopulateProgramData();
 }

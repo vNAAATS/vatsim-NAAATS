@@ -48,6 +48,12 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Overlays.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WebHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VatsimNAAATS.def">
@@ -107,6 +113,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SepTool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Overlays.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WebHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

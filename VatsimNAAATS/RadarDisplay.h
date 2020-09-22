@@ -19,6 +19,7 @@ class CRadarDisplay : public CRadarScreen
 
 		// Custom methods
 		void ShowHideGridReference(CRadarScreen* screen, bool show);		
+		void PopulateProgramData();
 
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
@@ -32,6 +33,8 @@ class CRadarDisplay : public CRadarScreen
 
 		inline void OnAsrContentToBeClosed(void)
 		{
+			// Manually call save
+			OnAsrContentToBeSaved();
 			delete this;
 		}
 
