@@ -39,12 +39,6 @@
     <ClCompile Include="OtherList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PIVTool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SepTool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -55,6 +49,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PathRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConflictDetection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -112,12 +109,6 @@
     <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PIVTool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SepTool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Overlays.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -125,6 +116,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PathRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConflictDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

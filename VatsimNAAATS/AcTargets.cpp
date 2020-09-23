@@ -98,6 +98,8 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 			break;
 		}
 
+		// TODO: fix to not use route, but instead a straight line prediction
+
 		// Get aircraft point at that time
 		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
 

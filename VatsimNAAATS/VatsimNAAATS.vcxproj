@@ -190,6 +190,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AcTargets.cpp" />
+    <ClCompile Include="ConflictDetection.cpp" />
     <ClCompile Include="InboundList.cpp" />
     <ClCompile Include="MenuBar.cpp" />
     <ClCompile Include="NAAATS.cpp" />
@@ -197,9 +198,7 @@
     <ClCompile Include="Overlays.cpp" />
     <ClCompile Include="PathRenderer.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="PIVTool.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
-    <ClCompile Include="SepTool.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
     <ClCompile Include="WebHandler.cpp" />
@@ -211,6 +210,7 @@
   <ItemGroup>
     <ClInclude Include="..\lib\include\EuroScopePlugIn.h" />
     <ClInclude Include="AcTargets.h" />
+    <ClInclude Include="ConflictDetection.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="InboundList.h" />
     <ClInclude Include="MenuBar.h" />
@@ -220,10 +220,8 @@
     <ClInclude Include="Overlays.h" />
     <ClInclude Include="PathRenderer.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PIVTool.h" />
     <ClInclude Include="RadarDisplay.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="SepTool.h" />
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
