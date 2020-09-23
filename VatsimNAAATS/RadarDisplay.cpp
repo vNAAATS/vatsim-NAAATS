@@ -30,14 +30,14 @@ CRadarDisplay::~CRadarDisplay()
 
 void CRadarDisplay::PopulateProgramData() {
 	// Lists
-	inboundList->MoveList({ Utils::InboundX, Utils::InboundY }, true);
-	otherList->MoveList({ Utils::OthersX, Utils::OthersY });
+	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY }, true);
+	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
 	// Buttons
-	if (Utils::TagsEnabled && buttonsPressed.find(MENBTN_TAGS) == buttonsPressed.end()) {
+	if (CUtils::TagsEnabled && buttonsPressed.find(MENBTN_TAGS) == buttonsPressed.end()) {
 		buttonsPressed[MENBTN_TAGS] = true;
 	}
-	if (Utils::GridEnabled && buttonsPressed.find(MENBTN_GRID) == buttonsPressed.end()) {
+	if (CUtils::GridEnabled && buttonsPressed.find(MENBTN_GRID) == buttonsPressed.end()) {
 		buttonsPressed[MENBTN_GRID] = true;
 	}
 
@@ -278,15 +278,15 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		inboundList->MoveList(Area, Released);
 
 		// To save
-		Utils::InboundX = Area.left;
-		Utils::InboundY = Area.top;
+		CUtils::InboundX = Area.left;
+		CUtils::InboundY = Area.top;
 	}
 
 	if (ObjectType == LIST_OTHERS) {
 		otherList->MoveList(Area);
 
-		Utils::OthersX = Area.left;
-		Utils::OthersY = Area.top;
+		CUtils::OthersX = Area.left;
+		CUtils::OthersY = Area.top;
 	}
 
 	if (ObjectType == SCREEN_TAG) {
@@ -373,12 +373,12 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 			// Button settings
 			if (ObjectType == MENBTN_TAGS) {
-				Utils::TagsEnabled = false;
+				CUtils::TagsEnabled = false;
 			}
 			else if (ObjectType == MENBTN_GRID) {
 				// Grid is off
-				Utils::GridEnabled = false;
-				ShowHideGridReference(this, Utils::GridEnabled);
+				CUtils::GridEnabled = false;
+				ShowHideGridReference(this, CUtils::GridEnabled);
 			}
 		}
 		else if (menuButtons.find(ObjectType) != menuButtons.end() && string(sObjectId) == "") { // If being pressed
@@ -392,12 +392,12 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 				// Button settings
 				if (ObjectType == MENBTN_TAGS) {
-					Utils::TagsEnabled = true;
+					CUtils::TagsEnabled = true;
 				}
 				else if (ObjectType == MENBTN_GRID) {
 					// Grid is on
-					Utils::GridEnabled = true;
-					ShowHideGridReference(this, Utils::GridEnabled);
+					CUtils::GridEnabled = true;
+					ShowHideGridReference(this, CUtils::GridEnabled);
 				}
 			}
 		} 
@@ -547,7 +547,7 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 
 void CRadarDisplay::OnAsrContentToBeSaved(void)
 {
-	Utils::SavePluginData(this->GetPlugIn());
+	CUtils::SavePluginData(this->GetPlugIn());
 }
 
 void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
@@ -555,7 +555,7 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 	if (!Loaded)
 		return;
 
-	Utils::LoadPluginData(this->GetPlugIn());
+	CUtils::LoadPluginData(this->GetPlugIn());
 
 	PopulateProgramData();
 }

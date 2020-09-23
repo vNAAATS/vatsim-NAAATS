@@ -166,7 +166,7 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 
 	// Render zulu time
 	FontSelector::SelectNormalFont(30, dc);
-	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, Utils::ParseZuluTime(true).c_str());
+	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, CUtils::ParseZuluTime(true).c_str());
 
 	// Create buttons
 	// TODO: comment

@@ -140,7 +140,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
 
 		// Get distance TODO: put in utils class
-		int radius = Utils::GetDistanceBetweenPoints(acPoint, haloPoint);
+		int radius = CUtils::GetDistanceBetweenPoints(acPoint, haloPoint);
 
 		// Draw halo
 		Rect temp(acPoint.x - radius, acPoint.y - radius, radius * 2, radius * 2);
@@ -312,7 +312,7 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	int speedGS = ac1.GetGS();
 
 	// Calculate time
-	int time = Utils::GetTimeBetweenPoints(distanceNM, speedGS);
+	int time = CUtils::GetTimeDistanceSpeed(distanceNM, speedGS);
 
 	// Now get points in screen pixels
 	POINT t1Point = screen->ConvertCoordFromPositionToPixel(t1Pos);
@@ -323,7 +323,7 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	dc->LineTo(t2Point);
 
 	// Now draw the text
-	POINT midpoint = Utils::GetMidPoint(t1Point, t2Point);
+	POINT midpoint = CUtils::GetMidPoint(t1Point, t2Point);
 
 	FontSelector::SelectMonoFont(14, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());

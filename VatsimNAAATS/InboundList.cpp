@@ -71,7 +71,7 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 		offsetX += 70;
 
 		// Draw estimated time
-		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, Utils::ParseZuluTime(false, &fp, epVec->at(idx).second).c_str());
+		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, CUtils::ParseZuluTime(false, &fp, epVec->at(idx).second).c_str());
 		offsetX += 45;
 
 		// Draw altitude

@@ -4,17 +4,17 @@
 #include "RadarDisplay.h"
 
 // Default values
-int Utils::InboundX = 500;
-int Utils::InboundY = 150;
-int Utils::OthersX = 200;
-int Utils::OthersY = 150;
-int Utils::AltFiltLow = 0;
-int Utils::AltFiltHigh = 700;
-bool Utils::GridEnabled = false;
-bool Utils::TagsEnabled = true;
+int CUtils::InboundX = 500;
+int CUtils::InboundY = 150;
+int CUtils::OthersX = 200;
+int CUtils::OthersY = 150;
+int CUtils::AltFiltLow = 0;
+int CUtils::AltFiltHigh = 700;
+bool CUtils::GridEnabled = false;
+bool CUtils::TagsEnabled = true;
 
 // Save plugin data
-void Utils::SavePluginData(CPlugIn* plugin) {
+void CUtils::SavePluginData(CPlugIn* plugin) {
 
 	// Inbound list
 	plugin->SaveDataToSettings(SET_INBNDX.c_str(), "X position of Inbound list.", to_string(InboundX).c_str());
@@ -32,7 +32,7 @@ void Utils::SavePluginData(CPlugIn* plugin) {
 }
 
 // Load plugin data
-void Utils::LoadPluginData(CPlugIn* plugin) {
+void CUtils::LoadPluginData(CPlugIn* plugin) {
 	// Strings to parse data
 	const char* stra;
 	const char* strb;
@@ -70,7 +70,7 @@ void Utils::LoadPluginData(CPlugIn* plugin) {
 	plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " loaded successfully.").c_str(), false, false, false, false, false);
 }
 
-string Utils::ParseZuluTime(bool delimit, CFlightPlan* fp, int ep) {
+string CUtils::ParseZuluTime(bool delimit, CFlightPlan* fp, int ep) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);
 	int deltaMinutes = 0;
@@ -132,18 +132,23 @@ string Utils::ParseZuluTime(bool delimit, CFlightPlan* fp, int ep) {
 	}
 }
 
-int Utils::GetDistanceBetweenPoints(POINT p1, POINT p2) {
+int CUtils::GetDistanceBetweenPoints(POINT p1, POINT p2) {
 	// Get distance
 	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
 }
 
-POINT Utils::GetMidPoint(POINT p1, POINT p2) {
+POINT CUtils::GetMidPoint(POINT p1, POINT p2) {
 	// Return midpoint
 	return { (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 };
 }
 
-int Utils::GetTimeBetweenPoints(int distanceNM, int speedGS) {
+int CUtils::GetTimeDistanceSpeed(int distanceNM, int speedGS) {
 	// Get time in minutes
 	double temp = (float)distanceNM / (float)speedGS;
 	return ((float)distanceNM / speedGS) * 60;
+}
+
+int CUtils::GetDistanceSpeedTime(int speedGS, int timeMin) {
+	// Get distance in NM
+	return (float)speedGS * (float)timeMin;
 }

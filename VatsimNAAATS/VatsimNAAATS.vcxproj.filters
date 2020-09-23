@@ -45,13 +45,13 @@
     <ClCompile Include="Overlays.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WebHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PathRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConflictDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DataHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -112,13 +112,13 @@
     <ClInclude Include="Overlays.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WebHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PathRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConflictDetection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

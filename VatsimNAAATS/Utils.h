@@ -7,7 +7,7 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
-class Utils {
+class CUtils {
 	public:
 		// Variables to save
 		static int InboundX;
@@ -34,5 +34,8 @@ class Utils {
 		static POINT GetMidPoint(POINT p1, POINT p2);
 
 		// Time (minutes) based on distance and speed
-		static int GetTimeBetweenPoints(int distanceNM, int speedGS);
+		static int GetTimeDistanceSpeed(int distanceNM, int speedGS);
+
+		// Distance (nm) based on speed and time
+		static int GetDistanceSpeedTime(int speedGS, int timeMin);
 };

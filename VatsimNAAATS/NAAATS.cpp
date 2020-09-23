@@ -12,7 +12,7 @@ CNAAATSPlugin::CNAAATSPlugin() : CPlugIn(COMPATIBILITY_CODE, PLUGIN_NAME.c_str()
 }
 
 CNAAATSPlugin::~CNAAATSPlugin() {
-	Utils::SavePluginData(this);
+	CUtils::SavePluginData(this);
 }
 
 CRadarScreen* CNAAATSPlugin::OnRadarScreenCreated(const char* sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated) 

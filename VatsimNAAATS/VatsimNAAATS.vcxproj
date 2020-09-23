@@ -201,7 +201,7 @@
     <ClCompile Include="RadarDisplay.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
-    <ClCompile Include="WebHandler.cpp" />
+    <ClCompile Include="DataHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\VatsimNAAATS.rc2" />
@@ -226,7 +226,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="VatsimNAAATS.h" />
-    <ClInclude Include="WebHandler.h" />
+    <ClInclude Include="DataHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VatsimNAAATS.rc" />
