@@ -187,3 +187,34 @@ const string SET_ALTFILT_LOW = "AltFiltLow";
 const string SET_ALTFILT_HIGH = "AltFiltHigh";
 const string SET_GRID = "GridEnabled";
 const string SET_TAGS = "TagsEnabled";
+
+/// ENUMS
+// Path type enum
+enum class PathType {
+    RTE,
+    PIV,
+    SEP,
+    TCK
+};
+
+// Track direction enum
+enum class TrackDirection {
+    UNKNOWN,
+    WEST,
+    EAST
+};
+
+// Type of overlay
+enum class OverlayType {
+    TCKS_ALL,
+    TCKS_EAST,
+    TCKS_WEST,
+    TCKS_SEL
+};
+
+// Conflict status
+enum class ConflictStatus {
+    OK,
+    WARNING,
+    CRITICAL
+};
