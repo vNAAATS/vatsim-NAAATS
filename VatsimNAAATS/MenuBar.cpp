@@ -7,6 +7,15 @@
 
 using namespace Colours;
 
+map<int, string> CMenuBar::DropDownSelections = {
+	{ MENDRP_AREASEL, "" }, 
+	{ MENDRP_TCKCTRL, "" },
+	{ MENDRP_OVERLAYS, "" },
+	{ MENDRP_TYPESEL, "" }
+};
+
+int CMenuBar::CurrentDropDown = -1;
+
 map<int, string> CMenuBar::BuildButtonData() {
 	map<int, string> data;
 
@@ -75,7 +84,7 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 	InflateRect(rect1, -1, -1);
 	dc->Draw3dRect(rect1, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
-	// Render time
+	// Calculate date
 	time_t now = time(0);
 	tm* date = gmtime(&now);
 	string strDate;
@@ -85,6 +94,7 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 	strDate += "-";
 	strDate += to_string(1900 + date->tm_year);
 	int sDC = dc->SaveDC();
+
 	// Font stuff
 	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
@@ -357,37 +367,37 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 		else if (idx == 24) {
 			offsetX = RECT1_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover, 400 + idx);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover, 400 + idx);
 			}
 			offsetX += btnWidth + 1;
 		}
 		else if (idx == 25) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover, 400 + idx);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, btnWidth - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover, 400 + idx);
 			}
-				offsetX += (btnWidth * 1.41);
-			}
+			offsetX += (btnWidth * 1.41);
+		}
 		else if (idx == 26) {
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover, 400 + idx);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 40) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover, 400 + idx);
 			}
 		}
 		else if (idx == 27) {
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
 			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, true, dropDownItems, idHover, 400 + idx);
 			}
 			else {
-				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover);
+				DrawDropDown(dc, g, screen, { offsetX, offsetY + 8 }, kv, (btnWidth + 75) - 15, MENBAR_BTN_HEIGHT / 1.5, BTN_PAD_TOP, { 0, 0 }, false, dropDownItems, idHover, 400 + idx);
 			}
 		}
 
@@ -478,7 +488,7 @@ CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 	return button;
 }
 
-CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems, int idHover) {
+CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems, int idHover, int dpId) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -488,10 +498,17 @@ CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT t
 	// Fill
 	dc->FillSolidRect(dropDown, ScreenBlue.ToCOLORREF());
 
+	// Select font
+	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+
 	// Dropdown bevel
 	dc->Draw3dRect(dropDown, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(dropDown, -1, -1);
 	dc->Draw3dRect(dropDown, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Write selected text
+	dc->TextOutA(dropDown.left + 2, dropDown.top + 1, DropDownSelections.at(dpId).c_str());
 
 	// Create dropdown button
 	CRect button(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
@@ -500,13 +517,9 @@ CRect CMenuBar::DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT t
 	if (isOpen) {
 		// Draw text
 		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
-		CRect area(dropDown.left, dropDown.bottom, dropDown.right, dropDown.bottom + (dropDownItems->size() * 20));
+		CRect area(dropDown.left, dropDown.bottom, dropDown.right, dropDown.bottom + (dropDownItems->size() * 20) + 2);
 		dc->FillSolidRect(area, ScreenBlue.ToCOLORREF());
 		dc->Draw3dRect(area, BevelDark.ToCOLORREF(), BevelDark.ToCOLORREF());
-
-		// Draw text
-		FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
-		dc->SetTextColor(TextWhite.ToCOLORREF());
 
 		// Draw text
 		int offsetY = 2;

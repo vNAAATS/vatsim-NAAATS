@@ -13,6 +13,13 @@ using namespace Gdiplus;
 class CMenuBar
 {
 	public:
+		// TODO: Refactor all dropdown stuff into this file
+		// Selections for dropdown
+		static map<int, string> DropDownSelections;
+
+		// Current drop down id
+		static int CurrentDropDown;
+
 		// Button data
 		static map<int, string> BuildButtonData();
 
@@ -26,6 +33,6 @@ class CMenuBar
 		static CRect DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive);
 		
 		// Render a drop down
-		static CRect DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems, int idHover);
+		static CRect DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, map<int, string>* dropDownItems, int idHover, int dpId);
 };
 

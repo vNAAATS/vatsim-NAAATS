@@ -40,7 +40,7 @@ class Utils {
 				int minRemainder = minutes % 60;
 
 				// Get number of hours
-				hours = (minutes - minRemainder) / 60;
+				hours += (minutes - minRemainder) / 60;
 
 				// Reassign number of minutes
 				minutes = minRemainder;

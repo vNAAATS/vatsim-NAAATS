@@ -315,6 +315,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		int dropDownToCancel = -1;
 		// If screen object is a dropdown
 		if (ObjectType == MENDRP_AREASEL) {
+			dropDownItems.clear();
 			dropDownToCancel = currentDropDownId;
 			currentDropDownId = MENDRP_AREASEL;
 			dropDownHover = -1;
@@ -323,28 +324,32 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			dropDownItems[802] = "BDBX";
 		}
 		else if (ObjectType == MENDRP_TCKCTRL) {
+			dropDownItems.clear();
 			dropDownToCancel = currentDropDownId;		
 			currentDropDownId = MENDRP_TCKCTRL;
 			dropDownHover = -1;
 		}
 		else if (ObjectType == MENDRP_OVERLAYS) {
+			dropDownItems.clear();
 			dropDownToCancel = currentDropDownId;
 			currentDropDownId = MENDRP_OVERLAYS;
 			dropDownHover = -1;
 		}
 		else if (ObjectType == MENDRP_TYPESEL) {
+			dropDownItems.clear();
 			dropDownToCancel = currentDropDownId;
 			currentDropDownId = MENDRP_TYPESEL;
 			dropDownHover = -1;
 			dropDownItems[800] = "Delivery";
 			dropDownItems[801] = "OCA Enroute";
-			dropDownItems[802] = "All";
+			dropDownItems[802] = "Multi-role";
 		}
 
 		// If item is a drop down menu item
 		bool brk = false;
 		for (auto kv : dropDownItems) {
 			if (atoi(sObjectId) == kv.first) {
+				CMenuBar::DropDownSelections[currentDropDownId] = kv.second;
 				dropDownClicked = atoi(sObjectId);
 				dropDownHover = -1;
 				buttonsPressed.erase(currentDropDownId);
@@ -355,7 +360,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// Clear dropdown items if so
-		if (brk) dropDownItems.clear();;
+		if (brk) dropDownItems.clear();
 
 		// If menu button is being unpressed
 		if (buttonsPressed.find(ObjectType) != buttonsPressed.end() && string(sObjectId) == "") {
