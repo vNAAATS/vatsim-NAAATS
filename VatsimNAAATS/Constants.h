@@ -109,8 +109,9 @@ const string PLUGIN_VERSION = "v0.1a";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
-// Sector file constants
+// Sector file & geo constants
 const int SECTELEMENT_COORD_IDX = 7;
+const int RADIUS_EARTH_NM = 3440.1;
 
 // Screen details
 #define DISPLAY_NAME "vNAAATS Display"

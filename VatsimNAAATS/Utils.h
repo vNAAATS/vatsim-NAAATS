@@ -38,4 +38,13 @@ class CUtils {
 
 		// Distance (nm) based on speed and time
 		static int GetDistanceSpeedTime(int speedGS, int timeMin);
+
+		// Degrees to radians
+		static double ToRadians(double degrees);
+
+		// Radians to degrees
+		static double ToDegrees(double radians);
+
+		// Get a point based on distance and a heading
+		static pair<double, double> GetPointDistanceBearing(pair<double, double> position, int distanceNM, int heading);
 };

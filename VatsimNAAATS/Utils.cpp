@@ -1,4 +1,6 @@
+#define _USE_MATH_DEFINES
 #include "pch.h"
+#include<cmath>
 #include "Utils.h"
 #include "Constants.h"
 #include "RadarDisplay.h"
@@ -151,4 +153,35 @@ int CUtils::GetTimeDistanceSpeed(int distanceNM, int speedGS) {
 int CUtils::GetDistanceSpeedTime(int speedGS, int timeMin) {
 	// Get distance in NM
 	return (float)speedGS * (float)timeMin;
+}
+
+double CUtils::ToRadians(double degrees) {
+	return (M_PI / 180) * degrees;
+}
+
+double CUtils::ToDegrees(double radians) {
+	return (180 / M_PI) * radians;
+}
+
+pair<double, double> CUtils::GetPointDistanceBearing(pair<double, double> position, int distanceNM, int heading) {
+	double bearing = CUtils::ToRadians((float)heading);
+
+	// Convert coordinates to radians
+	double lat = CUtils::ToRadians(position.first);
+	double lon = CUtils::ToRadians(position.second);
+
+	// Get distance to radius in NM
+	double distanceToRadius = distanceNM / RADIUS_EARTH_NM;
+
+	// Calculate lat
+	double newLat = asin(sin(lat) * cos(distanceToRadius)
+		+ cos(lat) * sin(distanceToRadius) * cos(bearing));
+
+	// Calculate lon
+	double newLon = lon + atan2(
+		sin(bearing) * sin(distanceToRadius) * cos(lat),
+		cos(distanceToRadius) - sin(lat) * sin(newLat));
+
+	// Return
+	return make_pair(CUtils::ToDegrees(newLat), CUtils::ToDegrees(newLon))
 }
