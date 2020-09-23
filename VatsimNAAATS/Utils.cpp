@@ -70,7 +70,7 @@ void Utils::LoadPluginData(CPlugIn* plugin) {
 	plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " loaded successfully.").c_str(), false, false, false, false, false);
 }
 
-string Utils::ParseZuluTime(bool delimit, CFlightPlan* fp = nullptr, int ep = -1) {
+string Utils::ParseZuluTime(bool delimit, CFlightPlan* fp, int ep) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);
 	int deltaMinutes = 0;

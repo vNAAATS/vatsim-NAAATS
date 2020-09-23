@@ -321,11 +321,13 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 			offsetY = 30;
 		}
 		else if (idx < 18) {
-			if (pressedData->find(kv.first) != pressedData->end()) {
-				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
-			}
-			else {
-				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+			if (kv.first != MENBTN_MTT) {
+				if (pressedData->find(kv.first) != pressedData->end()) {
+					DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+				}
+				else {
+					DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
+				}
 			}
 			offsetX += btnWidth + 1;
 		}
