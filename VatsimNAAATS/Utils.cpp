@@ -72,6 +72,12 @@ void CUtils::LoadPluginData(CPlugIn* plugin) {
 	plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " loaded successfully.").c_str(), false, false, false, false, false);
 }
 
+// Calculate Mach
+int CUtils::GetMach(int groundSpeed, int speedSound) {
+	double result = ((double)groundSpeed / (double)speedSound) * 100.0;
+	return (int)result;
+}
+
 string CUtils::ParseZuluTime(bool delimit, CFlightPlan* fp, int ep) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);
@@ -152,7 +158,7 @@ int CUtils::GetTimeDistanceSpeed(int distanceNM, int speedGS) {
 
 int CUtils::GetDistanceSpeedTime(int speedGS, int timeMin) {
 	// Get distance in NM
-	return (float)speedGS * (float)timeMin;
+	return (float)speedGS * ((float)timeMin / 60.0);
 }
 
 double CUtils::ToRadians(double degrees) {
@@ -163,15 +169,15 @@ double CUtils::ToDegrees(double radians) {
 	return (180 / M_PI) * radians;
 }
 
-pair<double, double> CUtils::GetPointDistanceBearing(pair<double, double> position, int distanceNM, int heading) {
+CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, int heading) {
 	double bearing = CUtils::ToRadians((float)heading);
 
 	// Convert coordinates to radians
-	double lat = CUtils::ToRadians(position.first);
-	double lon = CUtils::ToRadians(position.second);
+	double lat = CUtils::ToRadians(position.m_Latitude);
+	double lon = CUtils::ToRadians(position.m_Longitude);
 
 	// Get distance to radius in NM
-	double distanceToRadius = distanceNM / RADIUS_EARTH_NM;
+	double distanceToRadius = (float)distanceNM / (float)RADIUS_EARTH_NM;
 
 	// Calculate lat
 	double newLat = asin(sin(lat) * cos(distanceToRadius)
@@ -182,6 +188,78 @@ pair<double, double> CUtils::GetPointDistanceBearing(pair<double, double> positi
 		sin(bearing) * sin(distanceToRadius) * cos(lat),
 		cos(distanceToRadius) - sin(lat) * sin(newLat));
 
+	/// Convert values to sector file format
+	// Latitude
+	int degrees = floor(CUtils::ToDegrees(newLat));
+	double minutes = (CUtils::ToDegrees(newLat) - (double)degrees) * 60;
+	double seconds = (minutes - floor(minutes)) * 60;
+	string degreesFormatted;
+	string minutesFormatted;
+	string secondsFormatted;
+	if (degrees < 10) { // Format degrees
+		degreesFormatted = "N" + to_string(0) + to_string(0) + to_string(degrees);
+	}
+	else if (degrees < 100) {
+		degreesFormatted = "N" + to_string(0) + to_string(degrees);
+	}
+	else {
+		degreesFormatted = "N" + to_string(degrees);
+	}
+	if (minutes < 10) { // Format minutes
+		minutesFormatted = to_string(0) + to_string((int)minutes);
+	}
+	else if (minutes == 0) { 
+		minutesFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		minutesFormatted = to_string((int)minutes);
+	}
+	if (seconds < 10 && seconds > 0) { // Format seconds
+		secondsFormatted = to_string(0) + to_string(seconds);
+	}
+	else if (minutes == 0) {
+		secondsFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		secondsFormatted = to_string(seconds);
+	}
+	string latitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
+	// Longitude
+	degrees = floor(CUtils::ToDegrees(newLon));
+	minutes = (CUtils::ToDegrees(newLon) - (double)degrees) * 60;
+	seconds = (minutes - floor(minutes)) * 60;
+	degreesFormatted = "";
+	if (abs(degrees) < 10) { // Format degrees
+		degreesFormatted = "W" + to_string(0) + to_string(0) + to_string(abs(degrees));
+	}
+	else if (abs(degrees) < 100) {
+		degreesFormatted = "W" + to_string(0) + to_string(abs(degrees));
+	}
+	else {
+		degreesFormatted = "W" + to_string(abs(degrees));
+	}
+	if (minutes < 10) { // Format minutes
+		minutesFormatted = to_string(0) + to_string((int)minutes);
+	}
+	else if (minutes == 0) {
+		minutesFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		minutesFormatted = to_string((int)minutes);
+	}
+	if (seconds < 10 && seconds > 0) { // Format seconds
+		secondsFormatted = to_string(0) + to_string(seconds);
+	}
+	else if (seconds == 0) {
+		secondsFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		secondsFormatted = to_string(seconds);
+	}
+	string longitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
+
 	// Return
-	return make_pair(CUtils::ToDegrees(newLat), CUtils::ToDegrees(newLon))
+	CPosition pos;
+	pos.LoadFromStrings(longitude.c_str(), latitude.c_str());
+	return pos;
 }

@@ -98,10 +98,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 			break;
 		}
 
-		// TODO: fix to not use route, but instead a straight line prediction
-
 		// Get aircraft point at that time
-		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
+		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min);
+		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
 		// Draw leader
 		CPen pen(PS_SOLID, 1, Colours::TargetOrange.ToCOLORREF());
@@ -137,9 +136,10 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 
 		// Get aircraft point at that time
-		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(fp.GetPositionPredictions().GetPosition(min));
+		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min);
+		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
-		// Get distance TODO: put in utils class
+		// Get distance
 		int radius = CUtils::GetDistanceBetweenPoints(acPoint, haloPoint);
 
 		// Draw halo
@@ -231,7 +231,13 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	offsetX += 50;
 
 	// Mach
-	text = "M" + to_string(acFP.GetFlightPlanData().PerformanceGetMach(target->GetPosition().GetPressureAltitude(), target->GetVerticalSpeed()));
+	int gs = target->GetGS();
+	if (atoi(text.c_str()) > 500) {
+		text = "M" + to_string(CUtils::GetMach(gs, 573));
+	}
+	else {
+		text = "M" + to_string(acFP.GetFlightPlanData().PerformanceGetMach(target->GetPosition().GetPressureAltitude(), target->GetVerticalSpeed()));
+	}
 	dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 	offsetX = 0;
 	offsetY += 25;

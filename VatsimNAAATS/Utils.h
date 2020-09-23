@@ -21,8 +21,9 @@ class CUtils {
 
 		static void SavePluginData(CPlugIn* plugin);
 		static void LoadPluginData(CPlugIn* plugin);
-
-		// TODO: Cleanup into cpp file
+		
+		// Calculate Mach
+		static int GetMach(int groundSpeed, int speedSound);
 
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, CFlightPlan* fp = nullptr, int ep = -1);
@@ -46,5 +47,5 @@ class CUtils {
 		static double ToDegrees(double radians);
 
 		// Get a point based on distance and a heading
-		static pair<double, double> GetPointDistanceBearing(pair<double, double> position, int distanceNM, int heading);
+		static CPosition GetPointDistanceBearing(CPosition position, int distanceNM, int heading);
 };
