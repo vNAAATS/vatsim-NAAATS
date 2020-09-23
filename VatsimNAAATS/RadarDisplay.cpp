@@ -5,6 +5,7 @@
 #include "MenuBar.h"
 #include "InboundList.h"
 #include "Constants.h"
+#include "PathRenderer.h"
 #include "Utils.h"
 #include <gdiplus.h>
 
@@ -432,6 +433,21 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	}
 	
 	if (Button == BUTTON_RIGHT) {
+		if (ObjectType == SCREEN_TAG) {
+			// Set the ASEL
+			asel = sObjectId;
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
+			GetPlugIn()->SetASELAircraft(fp);
+
+			// Set route drawing
+			if (!CPathRenderer::RouteDrawASEL) {
+				CPathRenderer::RouteDrawASEL = true;
+			}
+			else {
+				CPathRenderer::RouteDrawASEL = false;
+			}
+		}
+
 		if (ObjectType == MENBTN_HALO) {
 			// Get the toggle button
 			auto cycle = toggleButtons.find(MENBTN_HALO);

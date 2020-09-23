@@ -2,6 +2,7 @@
 #include "Styles.h"
 #include "AcTargets.h"
 #include "Utils.h"
+#include "PathRenderer.h"
 
 using namespace Colours;
 
@@ -149,6 +150,13 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Cleanup
 		DeleteObject(&pen);
+	}
+
+	// If path to be rendered
+	if (CPathRenderer::RouteDrawASEL) {
+		if (screen->GetPlugIn()->RadarTargetSelectASEL().GetCallsign() == fp.GetCallsign()) {
+			CPathRenderer::RenderRoutePath(dc, screen, target);
+		}
 	}
 
 	// Restore context
