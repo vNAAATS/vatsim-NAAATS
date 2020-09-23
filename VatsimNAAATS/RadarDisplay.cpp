@@ -254,8 +254,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// Draw menu bar and reset dropdown click
-		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons, &dropDownItems, dropDownHover);
-		dropDownClicked = -1;
+		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons);
+		CMenuBar::dropDownClicked = -1;
 
 		// Draw Lists
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
@@ -302,7 +302,7 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 {
 	// Dropdown
 	if (ObjectType == DROPDOWN) {
-		dropDownHover = atoi(sObjectId);
+		CMenuBar::dropDownHover = atoi(sObjectId);
 	}
 
 	RequestRefresh();
@@ -315,60 +315,60 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		int dropDownToCancel = -1;
 		// If screen object is a dropdown
 		if (ObjectType == MENDRP_AREASEL) {
-			dropDownItems.clear();
-			dropDownToCancel = currentDropDownId;
-			currentDropDownId = MENDRP_AREASEL;
-			dropDownHover = -1;
-			dropDownItems[800] = "EGGX";
-			dropDownItems[801] = "CZQX";
-			dropDownItems[802] = "BDBX";
+			CMenuBar::dropDownItems.clear();
+			dropDownToCancel = CMenuBar::currentDropDownId;
+			CMenuBar::currentDropDownId = MENDRP_AREASEL;
+			CMenuBar::dropDownHover = -1;
+			CMenuBar::dropDownItems[800] = "EGGX";
+			CMenuBar::dropDownItems[801] = "CZQX";
+			CMenuBar::dropDownItems[802] = "BDBX";
 		}
 		else if (ObjectType == MENDRP_TCKCTRL) {
-			dropDownItems.clear();
-			dropDownToCancel = currentDropDownId;		
-			currentDropDownId = MENDRP_TCKCTRL;
-			dropDownHover = -1;
+			CMenuBar::dropDownItems.clear();
+			dropDownToCancel = CMenuBar::currentDropDownId;
+			CMenuBar::currentDropDownId = MENDRP_TCKCTRL;
+			CMenuBar::dropDownHover = -1;
 		}
 		else if (ObjectType == MENDRP_OVERLAYS) {
-			dropDownItems.clear();
-			dropDownToCancel = currentDropDownId;
-			currentDropDownId = MENDRP_OVERLAYS;
-			dropDownHover = -1;
+			CMenuBar::dropDownItems.clear();
+			dropDownToCancel = CMenuBar::currentDropDownId;
+			CMenuBar::currentDropDownId = MENDRP_OVERLAYS;
+			CMenuBar::dropDownHover = -1;
 		}
 		else if (ObjectType == MENDRP_TYPESEL) {
-			dropDownItems.clear();
-			dropDownToCancel = currentDropDownId;
-			currentDropDownId = MENDRP_TYPESEL;
-			dropDownHover = -1;
-			dropDownItems[800] = "Delivery";
-			dropDownItems[801] = "OCA Enroute";
-			dropDownItems[802] = "Multi-role";
+			CMenuBar::dropDownItems.clear();
+			dropDownToCancel = CMenuBar::currentDropDownId;
+			CMenuBar::currentDropDownId = MENDRP_TYPESEL;
+			CMenuBar::dropDownHover = -1;
+			CMenuBar::dropDownItems[800] = "Delivery";
+			CMenuBar::dropDownItems[801] = "OCA Enroute";
+			CMenuBar::dropDownItems[802] = "Multi-role";
 		}
 
 		// If item is a drop down menu item
 		bool brk = false;
-		for (auto kv : dropDownItems) {
+		for (auto kv : CMenuBar::dropDownItems) {
 			if (atoi(sObjectId) == kv.first) {
-				CMenuBar::DropDownSelections[currentDropDownId] = kv.second;
-				dropDownClicked = atoi(sObjectId);
-				dropDownHover = -1;
-				buttonsPressed.erase(currentDropDownId);
-				currentDropDownId = -1;
+				CMenuBar::dropDownSelections[CMenuBar::currentDropDownId] = kv.second;
+				CMenuBar::dropDownClicked = atoi(sObjectId);
+				CMenuBar::dropDownHover = -1;
+				buttonsPressed.erase(CMenuBar::currentDropDownId);
+				CMenuBar::currentDropDownId = -1;
 				brk = true;
 				break;
 			}
 		}
 
 		// Clear dropdown items if so
-		if (brk) dropDownItems.clear();
+		if (brk) CMenuBar::dropDownItems.clear();
 
 		// If menu button is being unpressed
 		if (buttonsPressed.find(ObjectType) != buttonsPressed.end() && string(sObjectId) == "") {
 			buttonsPressed.erase(ObjectType);
 
-			if (ObjectType == currentDropDownId) {
-				currentDropDownId = -1;
-				dropDownHover = -1;
+			if (ObjectType == CMenuBar::currentDropDownId) {
+				CMenuBar::currentDropDownId = -1;
+				CMenuBar::dropDownHover = -1;
 			}
 
 			// Button settings
