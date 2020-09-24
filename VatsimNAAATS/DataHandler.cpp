@@ -10,7 +10,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		// Destination
 		TCHAR dllpath[2048];
 		GetCurrentDirectory(2048, dllpath);
-		string dest = string(dllpath) + "\\plugindata\\tracks.json";
+		string dest = string(dllpath) + "\\tracks.json";
 
 		// Convert URL & destination to LPCSTR type
 		LPCSTR lpcURL = TrackURL.c_str();

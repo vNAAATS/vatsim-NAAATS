@@ -142,6 +142,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		if (t >= 120) {
 			// Start thread
 			CDataHandler::PopulateLatestTrackData(GetPlugIn());
+			twoMinuteTimer = clock();
 		}
 
 		// List of entry points
