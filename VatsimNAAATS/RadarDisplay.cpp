@@ -138,12 +138,12 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		int hdg;
 
 		// Two minute actions
-		double t = (double)(clock() - twoMinuteTimer) / ((double)CLOCKS_PER_SEC);
+		/*double t = (double)(clock() - twoMinuteTimer) / ((double)CLOCKS_PER_SEC);
 		if (t >= 120) {
 			// Start thread
 			CDataHandler::PopulateLatestTrackData(GetPlugIn());
 			twoMinuteTimer = clock();
-		}
+		}*/
 
 		// List of entry points
 		vector<pair<string, int>> epVec;

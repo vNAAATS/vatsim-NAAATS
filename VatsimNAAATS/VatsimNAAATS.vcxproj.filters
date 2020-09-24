@@ -54,7 +54,7 @@
     <ClCompile Include="DataHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FlightPlanWindow.cpp">
+    <ClCompile Include="WindowRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -127,7 +127,7 @@
     <ClInclude Include="Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FlightPlanWindow.h">
+    <ClInclude Include="WindowRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

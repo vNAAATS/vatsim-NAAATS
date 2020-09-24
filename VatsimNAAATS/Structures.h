@@ -5,8 +5,8 @@
 
 // Describes a NAT track
 struct CTrack {
-	char Identifier;
-	int TMI;
+	string Identifier;
+	string TMI;
 	vector<string> Route;
 	vector<CPosition> RouteRaw;
 	vector<int> FlightLevels;

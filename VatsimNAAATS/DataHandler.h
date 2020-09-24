@@ -2,6 +2,8 @@
 #include "vector"
 #include "Structures.h"
 #include "EuroScopePlugIn.h"
+#include "Overlays.h"
+#include <json.hpp>
 
 using namespace std;
 using namespace EuroScopePlugIn;
