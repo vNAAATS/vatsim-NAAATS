@@ -27,7 +27,7 @@ map<int, string> CMenuBar::BuildButtonData() {
 	data[MENBTN_SETUP] = "Setup";
 	data[MENBTN_NOTEPAD] = "NotePad";
 	data[MENBTN_ADSC] = "Contracts";
-	data[MENBTN_FREQUENCY] = "Frequency";
+	data[MENBTN_TCKINFO] = "Track Info";
 	data[MENBTN_MISC] = "Misc";
 	data[MENBTN_MESSAGE] = "Message";
 	data[MENBTN_TAGS] = "Tags";
@@ -188,7 +188,7 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 		case MENBTN_DETAILED:
 			btnWidth = 65 + (BTN_PAD_SIDE * 2);
 			break;
-		case MENBTN_FREQUENCY:
+		case MENBTN_TCKINFO:
 			btnWidth = 70 + (BTN_PAD_SIDE * 2);
 			break;
 		case MENBTN_MISC:

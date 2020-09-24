@@ -8,6 +8,7 @@ struct CTrack {
 	char Identifier;
 	int TMI;
 	vector<string> Route;
+	vector<CPosition> RouteRaw;
 	vector<int> FlightLevels;
 	CTrackDirection Direction;
 };

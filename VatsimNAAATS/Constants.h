@@ -152,7 +152,7 @@ const int SCREEN_TAG = 1;
 const int MENBTN_SETUP = 400;
 const int MENBTN_NOTEPAD = 401;
 const int MENBTN_ADSC = 402;
-const int MENBTN_FREQUENCY = 403;
+const int MENBTN_TCKINFO = 403;
 const int MENBTN_MISC = 404;
 const int MENBTN_MESSAGE = 405;
 const int MENBTN_TAGS = 406;
@@ -215,6 +215,13 @@ enum class COverlayType {
 
 // Conflict status
 enum class CConflictStatus {
+    OK,
+    WARNING,
+    CRITICAL
+};
+
+// Message type
+enum class CMessageType {
     OK,
     WARNING,
     CRITICAL
