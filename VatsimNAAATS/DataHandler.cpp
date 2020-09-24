@@ -6,11 +6,11 @@
 // Include dependency
 using json = nlohmann::json;
 
-string CDataHandler::TrackURL = "http://localhost:33224/data";
+string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
-	const char* responseCString = "";
+	string responseString;;
 	try {
 		// Convert URL to LPCSTR type
 		LPCSTR lpcURL = TrackURL.c_str();
@@ -24,9 +24,8 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		hr = pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
 		// Put data into string
 		for (int i = 0; i < bytesRead; i++) {
-			responseCString += tempBuffer[i];
+			responseString += tempBuffer[i];
 		}
-
 		// If failed
 		if (FAILED(hr)) {
 			// Show user message
@@ -40,7 +39,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	}
 	
 	// Now we parse the json
-	auto jsonArray = json::parse(responseCString);
+	auto jsonArray = json::parse(responseString);
 	for (int i = 0; i < jsonArray.size(); i++) {
 		// Compile track
 		CTrack track;
