@@ -222,6 +222,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RadarDisplay.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Structures.h" />
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />

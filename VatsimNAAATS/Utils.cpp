@@ -72,18 +72,46 @@ void CUtils::LoadPluginData(CPlugIn* plugin) {
 	plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " loaded successfully.").c_str(), false, false, false, false, false);
 }
 
-// Calculate Mach
+bool CUtils::GetAircraftDirection(int heading) {
+	if ((heading <= 359) && (heading >= 181)) {
+		return false; // Westbound
+	}
+	else if ((heading >= 1) && (heading <= 179)) {
+
+		return true; // Eastbound
+	}
+}
+
+bool CUtils::IsEntryExitPoint(string pointName, bool side) {
+	if (side) { // Gander
+		if (find(pointsGander.begin(), pointsGander.end(), pointName) != pointsGander.end()) {
+			return true; // Match
+		}
+		else {
+			return false; // No match
+		}
+	}
+	else { // Shanwick
+		if (find(pointsShanwick.begin(), pointsShanwick.end(), pointName) != pointsShanwick.end()) {
+			return true; // Match
+		}
+		else {
+			return false; // No match
+		}
+	}
+}
+
 int CUtils::GetMach(int groundSpeed, int speedSound) {
 	double result = ((double)groundSpeed / (double)speedSound) * 100.0;
 	return (int)result;
 }
 
-string CUtils::ParseZuluTime(bool delimit, CFlightPlan* fp, int ep) {
+string CUtils::ParseZuluTime(bool delimit, CFlightPlan* fp, int fix) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);
 	int deltaMinutes = 0;
-	if (ep != -1) {
-		deltaMinutes = fp->GetExtractedRoute().GetPointDistanceInMinutes(ep);
+	if (fix != -1) {
+		deltaMinutes = fp->GetExtractedRoute().GetPointDistanceInMinutes(fix);
 	}
 	int hours = zuluTime->tm_hour;
 	int minutes = zuluTime->tm_min + deltaMinutes;
@@ -158,6 +186,8 @@ int CUtils::GetTimeDistanceSpeed(int distanceNM, int speedGS) {
 
 int CUtils::GetDistanceSpeedTime(int speedGS, int timeMin) {
 	// Get distance in NM
+	float mins = ((float)timeMin / 60.0);
+	float gs = (float)speedGS;
 	return (float)speedGS * ((float)timeMin / 60.0);
 }
 
@@ -189,10 +219,13 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 		cos(distanceToRadius) - sin(lat) * sin(newLat));
 
 	/// Convert values to sector file format
+	newLat = CUtils::ToDegrees(newLat);
+	newLon = CUtils::ToDegrees(newLon);
 	// Latitude
-	int degrees = floor(CUtils::ToDegrees(newLat));
-	double minutes = (CUtils::ToDegrees(newLat) - (double)degrees) * 60;
+	int degrees = (int)floor(newLat);
+	double minutes = (newLat - (double)degrees) * 60;
 	double seconds = (minutes - floor(minutes)) * 60;
+	degrees = abs(degrees); // Get absolute value
 	string degreesFormatted;
 	string minutesFormatted;
 	string secondsFormatted;
@@ -225,14 +258,14 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 	}
 	string latitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
 	// Longitude
-	degrees = floor(CUtils::ToDegrees(newLon));
-	minutes = (CUtils::ToDegrees(newLon) - (double)degrees) * 60;
+	degrees = (int)ceil(newLon);
+	minutes = (newLon - (double)degrees) * 60;
 	seconds = (minutes - floor(minutes)) * 60;
-	degreesFormatted = "";
-	if (abs(degrees) < 10) { // Format degrees
+	degrees = abs(degrees); // Get absolute value
+	if (degrees < 10) { // Format degrees
 		degreesFormatted = "W" + to_string(0) + to_string(0) + to_string(abs(degrees));
 	}
-	else if (abs(degrees) < 100) {
+	else if (degrees < 100) {
 		degreesFormatted = "W" + to_string(0) + to_string(abs(degrees));
 	}
 	else {

@@ -6,7 +6,7 @@
 
 using namespace Colours;
 
-void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, int hdg, bool tagsOn, map<int, int>* toggleData, bool halo, bool ptl) {
+void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, int>* toggleData, bool halo, bool ptl) {
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 
@@ -39,7 +39,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 
 	// Rotate the graphics object and set the middle to the aircraft position
-	g->RotateTransform(hdg);
+	g->RotateTransform(target->GetTrackHeading());
 	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 
 	// This is the icon
@@ -100,7 +100,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 
 		// Get aircraft point at that time
+		string cs = target->GetCallsign();
 		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min);
+		int hdg = target->GetPosition().GetReportedHeading();
 		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
 		// Draw leader
@@ -153,9 +155,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 
 	// If path to be rendered
-	if (CPathRenderer::RouteDrawASEL) {
-		if (screen->GetPlugIn()->RadarTargetSelectASEL().GetCallsign() == fp.GetCallsign()) {
-			CPathRenderer::RenderRoutePath(dc, screen, target);
+	if (CPathRenderer::RouteDrawTarget != "") {
+		if (CPathRenderer::RouteDrawTarget == fp.GetCallsign()) {
+			CPathRenderer::RenderPath(dc, g, screen, CPathType::RTE);
 		}
 	}
 

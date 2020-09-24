@@ -231,11 +231,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, true, &toggleButtons, halo, ptl);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &toggleButtons, halo, ptl);
 					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction);
 				}
 				else {
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, hdg, false, &toggleButtons, halo, ptl);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &toggleButtons, halo, ptl);
 				}
 			}
 
@@ -440,11 +440,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			// Set route drawing
-			if (!CPathRenderer::RouteDrawASEL) {
-				CPathRenderer::RouteDrawASEL = true;
+			if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
+				CPathRenderer::GetRoute(this, fp.GetCallsign());
 			}
 			else {
-				CPathRenderer::RouteDrawASEL = false;
+				CPathRenderer::ClearCurrentRoute();
 			}
 		}
 

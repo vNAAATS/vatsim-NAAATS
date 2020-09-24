@@ -3,26 +3,18 @@
 #include <string>
 #include <map>
 #include "Constants.h"
+#include "Structures.h"
 
 using namespace std;
-
-// Describes a NAT track
-struct Track {
-	char Identifier;
-	int TMI;
-	vector<string> Route;
-	vector<int> FlightLevels;
-	TrackDirection Direction;
-};
 
 class COverlays
 {
 	public:
 		// Current NAT tracks
-		static map<char, Track> CurrentTracks;
+		static map<char, CTrack> CurrentTracks;
 
 		// Display a particular overlay
-		static void ShowOverlay(OverlayType type);
+		static void ShowOverlay(COverlayType type);
 };
 
 

@@ -191,7 +191,7 @@ const string SET_TAGS = "TagsEnabled";
 
 /// ENUMS
 // Path type enum
-enum class PathType {
+enum class CPathType {
     RTE,
     PIV,
     SEP,
@@ -199,14 +199,14 @@ enum class PathType {
 };
 
 // Track direction enum
-enum class TrackDirection {
+enum class CTrackDirection {
     UNKNOWN,
     WEST,
     EAST
 };
 
 // Type of overlay
-enum class OverlayType {
+enum class COverlayType {
     TCKS_ALL,
     TCKS_EAST,
     TCKS_WEST,
@@ -214,7 +214,7 @@ enum class OverlayType {
 };
 
 // Conflict status
-enum class ConflictStatus {
+enum class CConflictStatus {
     OK,
     WARNING,
     CRITICAL

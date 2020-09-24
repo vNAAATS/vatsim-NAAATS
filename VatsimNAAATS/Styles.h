@@ -92,28 +92,4 @@ class FontSelector
 			// Cleanup
 			DeleteObject(font);
 		}
-
-		static void SelectMonoFontRotate(int size, int angle, CDC* dc) {
-			HFONT font;
-			LOGFONT lFont;
-
-			// Clear out
-			memset(&lFont, 0, sizeof(LOGFONT));
-			// Get the face
-			strcpy_s(lFont.lfFaceName, _T("Lucida Console"));
-			// Size
-			lFont.lfHeight = size;
-			// Normal weight
-			lFont.lfWeight = FW_SEMIBOLD;
-			// Rotate
-			lFont.lfEscapement = angle;
-			// Finally create the font
-			font = ::CreateFontIndirect(&lFont);
-
-			// Select font
-			dc->SelectObject(CFont::FromHandle(font));
-
-			// Cleanup
-			DeleteObject(font);
-		}
 };

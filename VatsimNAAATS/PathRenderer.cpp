@@ -1,70 +1,125 @@
 #include "pch.h"
 #include "PathRenderer.h"
 
-CRadarTarget CPathRenderer::pivTarget;
+CRadarTarget CPathRenderer::PivTarget;
 
-bool CPathRenderer::RouteDrawASEL = false;
+string CPathRenderer::RouteDrawTarget;
 
-void CPathRenderer::RenderRoutePath(CDC* dc, CRadarScreen* screen, CRadarTarget* asel) {
+vector<CRoutePosition> CPathRenderer::RouteToDraw;
 
-	// Route and flight plan
-	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(asel->GetCallsign());
-	CFlightPlanExtractedRoute route = fpData.GetExtractedRoute();
+void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type) {
 
 	// Save context
 	int iDC = dc->SaveDC();
 
-	// Pen
+	// Pen & brush
 	CPen pen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
 	dc->SelectObject(pen);
+	SolidBrush brush(TargetOrange);
 
-	bool direction = false;
-	// If coming from Gander
-	if ((asel->GetTrackHeading() >= 1) && (asel->GetTrackHeading() <= 179)) {
-		direction = true;
-	}
+	// Font
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
 
-	// Loop through to find the waypoints
-	bool beginRouteDraw = false;
-	for (int i = 0; i < route.GetPointsNumber(); i++) {
-		string name = route.GetPointName(i);
-		if (direction) {
-			// Find the points
-			if (std::find(pointsGander.begin(), pointsGander.end(), name) != pointsGander.end()) {
-				if (beginRouteDraw) {
-					beginRouteDraw = false;
-				}
-				else {
-					beginRouteDraw = true;
-				}
-			}
-			else {
-				if (beginRouteDraw) {
-					dc->MoveTo(screen->ConvertCoordFromPositionToPixel(route.GetPointPosition(i - 1)));
-					dc->LineTo(screen->ConvertCoordFromPositionToPixel(route.GetPointPosition(i)));
-				}
-			}
-			// Find the points
-			if (std::find(pointsShanwick.begin(), pointsShanwick.end(), name) != pointsShanwick.end()) {
-				if (beginRouteDraw) {
-					beginRouteDraw = false;
-				}
-				else {
-					beginRouteDraw = true;
-				}
-			}
-			else {
-				if (beginRouteDraw) {
-					dc->MoveTo(screen->ConvertCoordFromPositionToPixel(route.GetPointPosition(i)));
-					dc->LineTo(screen->ConvertCoordFromPositionToPixel(route.GetPointPosition(i + 1)));
-				}
+	// Draw route if route draw selected
+	if (type == CPathType::RTE) {
+		// Get AC position and move to
+		POINT acPosition = screen->ConvertCoordFromPositionToPixel(screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str()).GetPosition().GetPosition());
+		dc->MoveTo(acPosition);
+		if (!RouteToDraw.empty()) {// Failsafe
+			for (auto i = RouteToDraw.begin(); i != RouteToDraw.end(); i++) {
+				// Get point, text rectangle & define y offset
+				string text = i->Fix; // To get TextExtent
+				POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
+				CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+				int offsetY = 0;
+
+				// Draw dot
+				Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+				g->FillEllipse(&brush, pointRect);
+
+				// Print text for fix
+				dc->TextOutA(box.left, box.top, text.c_str());
+				offsetY += 14;
+
+				// Print text for estimate
+				text = i->Estimate;
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
+
+				// Print text for flight level
+				text = to_string(i->FlightLevel);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+
+				// Draw line
+				dc->LineTo(point);
 			}
 		}
 	}
-
 	// Cleanup
 	DeleteObject(pen);
+	DeleteObject(&brush);
 
 	// Restore context
 	dc->RestoreDC(iDC);
+}
+
+void CPathRenderer::GetRoute(CRadarScreen* screen, string callsign) {
+	// Set callsign and get radar target
+	RouteDrawTarget = callsign;
+	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str());
+
+	// Route and flight plan
+	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign());
+	CFlightPlanExtractedRoute route = fpData.GetExtractedRoute();
+
+	// Vector to store the final route
+	vector<CRoutePosition> returnRoute;
+
+	// Get the index of the nearest point and the exit point
+	int nearestPoint = route.GetPointsCalculatedIndex();
+
+	// Get the points in the route
+	for (int i = nearestPoint; i < route.GetPointsNumber(); i++) {
+		string pointName = route.GetPointName(i); // Debug
+		// Aircraft direction
+		bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+
+		// Store whether to cancel route draw
+		bool breakLoop = false;
+		if (CUtils::IsEntryExitPoint(string(route.GetPointName(i)), direction ? false : true)) {
+			breakLoop = true;
+		}
+
+		// Create position
+		CRoutePosition position;
+		position.Fix = string(route.GetPointName(i));
+		position.PositionRaw = route.GetPointPosition(i);
+		position.Estimate = CUtils::ParseZuluTime(false, &fpData, i);
+		position.FlightLevel = route.GetPointCalculatedProfileAltitude(i) / 100;
+
+		// Add the position
+		returnRoute.push_back(position);
+
+		// Break the loop if end of route
+		if (breakLoop) break;
+	}
+
+	// Set route draw
+	RouteToDraw = returnRoute;
+}
+
+int CPathRenderer::ClearCurrentRoute() {
+	// Test if route is already empty
+	if (!RouteToDraw.empty()) {
+		// Clear it and return success code
+		RouteToDraw.clear();
+		RouteDrawTarget = "";
+		return 0;
+	}
+	else {
+		// Vector was already empty so return fail code
+		return 1;
+	}
 }
