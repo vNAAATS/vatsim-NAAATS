@@ -71,6 +71,7 @@ void CPathRenderer::GetRoute(CRadarScreen* screen, string callsign) {
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str());
 
 	// Route and flight plan
+	// TODO: get NAT track route and interpolate it
 	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign());
 	CFlightPlanExtractedRoute route = fpData.GetExtractedRoute();
 

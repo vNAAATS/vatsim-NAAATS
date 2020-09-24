@@ -39,7 +39,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 
 	// Rotate the graphics object and set the middle to the aircraft position
-	g->RotateTransform(target->GetTrackHeading());
+	g->RotateTransform(target->GetPosition().GetReportedHeading());
 	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 
 	// This is the icon
@@ -100,9 +100,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 
 		// Get aircraft point at that time
-		string cs = target->GetCallsign();
 		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min);
-		int hdg = target->GetPosition().GetReportedHeading();
 		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
 		// Draw leader

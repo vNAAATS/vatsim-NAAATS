@@ -40,7 +40,7 @@ class CRadarDisplay : public CRadarScreen
 
 	private:
 		POINT mousePointer;
-		clock_t buttonClickTimer;
+		clock_t twoMinuteTimer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
 		map<int, int> toggleButtons;

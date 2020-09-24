@@ -6,7 +6,9 @@
 #include "InboundList.h"
 #include "Constants.h"
 #include "PathRenderer.h"
+#include "DataHandler.h"
 #include "Utils.h"
+#include <thread> 
 #include <gdiplus.h>
 
 
@@ -22,6 +24,7 @@ CRadarDisplay::CRadarDisplay()
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+	twoMinuteTimer = clock();
 }
 
 CRadarDisplay::~CRadarDisplay() 
@@ -42,6 +45,8 @@ void CRadarDisplay::PopulateProgramData() {
 		buttonsPressed[MENBTN_GRID] = true;
 	}
 
+	// Tracks TODO: thread
+	CDataHandler::PopulateLatestTrackData(GetPlugIn());
 }
 
 // Show and hide the grid reference and waypoints
@@ -131,6 +136,13 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Get entry time and heading
 		int entryMinutes;
 		int hdg;
+
+		// Two minute actions
+		double t = (double)(clock() - twoMinuteTimer) / ((double)CLOCKS_PER_SEC);
+		if (t >= 120) {
+			// Start thread
+			CDataHandler::PopulateLatestTrackData(GetPlugIn());
+		}
 
 		// List of entry points
 		vector<pair<string, int>> epVec;
@@ -402,6 +414,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				}
 			}
 		} 
+
+		// If button is the flight plan button
+		if (ObjectType == MENBTN_FLIGHTPLAN) {
+
+		}
 
 		// If screen object is a tag
 		if (ObjectType == SCREEN_TAG) {

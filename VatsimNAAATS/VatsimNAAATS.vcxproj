@@ -191,6 +191,7 @@
   <ItemGroup>
     <ClCompile Include="AcTargets.cpp" />
     <ClCompile Include="ConflictDetection.cpp" />
+    <ClCompile Include="FlightPlanWindow.cpp" />
     <ClCompile Include="InboundList.cpp" />
     <ClCompile Include="MenuBar.cpp" />
     <ClCompile Include="NAAATS.cpp" />
@@ -212,6 +213,7 @@
     <ClInclude Include="AcTargets.h" />
     <ClInclude Include="ConflictDetection.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="FlightPlanWindow.h" />
     <ClInclude Include="InboundList.h" />
     <ClInclude Include="MenuBar.h" />
     <ClInclude Include="NAAATS.h" />
