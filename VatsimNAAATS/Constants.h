@@ -195,7 +195,7 @@ enum class CPathType {
     RTE,
     PIV,
     SEP,
-    TCK
+    TCKS
 };
 
 // Track direction enum

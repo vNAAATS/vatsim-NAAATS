@@ -35,21 +35,46 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	}
 	catch (exception & e) {
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to load NAT Track data: " + string(e.what())).c_str(), true, true, true, true, true);
-		const char* err = e.what();
+		return 1;
 	}
 	
 	// Now we parse the json
 	auto jsonArray = json::parse(responseString);
 	for (int i = 0; i < jsonArray.size(); i++) {
-		// Compile track
+		// Make track
 		CTrack track;
+
+		// Identifier
 		track.Identifier = jsonArray[i].at("id");
+
+		// TMI
 		track.TMI = jsonArray[i].at("tmi");
+
 		// Direction
-		//if (jsonArray[i].at("direction"))
-		//track.Direction = 
+		if (jsonArray[i].at("direction") == 0) {
+			track.Direction = CTrackDirection::UNKNOWN;
+		}
+		else if (jsonArray[i].at("direction") == 1) {
+			track.Direction = CTrackDirection::WEST;
+		}
+		else {
+			track.Direction = CTrackDirection::EAST;
+		}
+
+		// Route
+		for (int j = 0; j < jsonArray[i].at("route").size(); j++) {
+			track.Route.push_back(jsonArray[i].at("route")[j].at("name"));
+			track.RouteRaw.push_back(CUtils::PositionFromLatLon(jsonArray[i].at("route")[j].at("latitude"), jsonArray[i].at("route")[j].at("longitude")));
+		}
+
+		// Flight levels
+		for (int j = 0; j < jsonArray[i].at("flightLevels").size(); j++) {
+			track.FlightLevels.push_back((int)jsonArray[i].at("flightLevels")[j]);
+		}
+
+		// Push track to tracks array
+		COverlays::CurrentTracks.insert(make_pair(track.Identifier, track));
 	}
 	
-
 	return 0;
 }

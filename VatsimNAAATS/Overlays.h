@@ -4,17 +4,21 @@
 #include <map>
 #include "Constants.h"
 #include "Structures.h"
+#include "PathRenderer.h"
 
 using namespace std;
 
 class COverlays
 {
 	public:
-		// Current NAT tracks
-		static map<char, CTrack> CurrentTracks;
+		// Current overlay type
+		static COverlayType CurrentType;
 
-		// Display a particular overlay
-		static void ShowOverlay(COverlayType type);
+		// Current NAT tracks
+		static map<string, CTrack> CurrentTracks;
+
+		// Display the currently selected overlay
+		static void ShowCurrentOverlay(CDC* dc, Graphics* g, CRadarScreen* screen);
 };
 
 

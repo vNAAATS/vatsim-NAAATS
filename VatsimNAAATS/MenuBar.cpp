@@ -19,8 +19,6 @@ int CMenuBar::currentDropDownId = -1;
 int CMenuBar::dropDownHover = -1;
 int CMenuBar::dropDownClicked = -1;
 
-int CMenuBar::currentDropDown = -1;
-
 map<int, string> CMenuBar::BuildButtonData() {
 	map<int, string> data;
 

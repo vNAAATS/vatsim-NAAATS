@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "PathRenderer.h"
+#include "Overlays.h"
 
 CRadarTarget CPathRenderer::PivTarget;
 
@@ -10,20 +11,20 @@ vector<CRoutePosition> CPathRenderer::RouteToDraw;
 void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type) {
 
 	// Save context
-	int iDC = dc->SaveDC();
+	int iDC = dc->SaveDC();	
 
-	// Pen & brush
-	CPen pen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
-	dc->SelectObject(pen);
-	SolidBrush brush(TargetOrange);
-
-	// Font
-	FontSelector::SelectMonoFont(12, dc);
-	dc->SetTextColor(TargetOrange.ToCOLORREF());
-	dc->SetTextAlign(TA_LEFT);
-
-	// Draw route if route draw selected
+	// Draw route path if route type
 	if (type == CPathType::RTE) {
+		// Pen & brush
+		CPen pen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
+		dc->SelectObject(pen);
+		SolidBrush brush(TargetOrange);
+
+		// Font
+		FontSelector::SelectMonoFont(12, dc);
+		dc->SetTextColor(TargetOrange.ToCOLORREF());
+		dc->SetTextAlign(TA_LEFT);
+
 		// Get AC position and move to
 		POINT acPosition = screen->ConvertCoordFromPositionToPixel(screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str()).GetPosition().GetPosition());
 		dc->MoveTo(acPosition);
@@ -56,11 +57,52 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 				dc->LineTo(point);
 			}
 		}
-	}
-	// Cleanup
-	DeleteObject(pen);
-	DeleteObject(&brush);
 
+		// Cleanup
+		DeleteObject(pen);
+		DeleteObject(&brush);
+	}
+	else if (type == CPathType::TCKS) { // Draw tracks if the type is tracks
+		// Pen
+		CPen pen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+		dc->SelectObject(pen);
+
+		// Font
+		FontSelector::SelectMonoFont(14, dc);
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+		dc->SetTextAlign(TA_CENTER);
+
+		// Loop tracks
+		for (auto kv : COverlays::CurrentTracks) {
+			// Show eastbound/eastbound only if that type is selected
+			if (COverlays::CurrentType == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
+				continue;
+			}
+			else if (COverlays::CurrentType == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
+				continue;
+			}
+
+			// Move to start and draw 
+			POINT firstPointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
+			dc->MoveTo(firstPointCoord);
+			string id = kv.first;
+			if (kv.second.Direction == CTrackDirection::EAST) {
+				dc->TextOutA(firstPointCoord.x - 12, firstPointCoord.y - 5, id.c_str());
+			}
+			else {
+				dc->TextOutA(firstPointCoord.x + 12, firstPointCoord.y - 5, id.c_str());
+			}
+			
+			// Draw lines
+			for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
+				dc->LineTo(screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]));
+			}
+		}
+
+		// Cleanup
+		DeleteObject(pen);
+	}
+	
 	// Restore context
 	dc->RestoreDC(iDC);
 }

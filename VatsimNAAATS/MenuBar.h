@@ -21,9 +21,6 @@ class CMenuBar
 		static int dropDownHover;
 		static int dropDownClicked;
 
-		// Current drop down id
-		static int currentDropDown;
-
 		// Button data
 		static map<int, string> BuildButtonData();
 

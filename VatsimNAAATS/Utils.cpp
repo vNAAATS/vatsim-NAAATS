@@ -101,6 +101,83 @@ bool CUtils::IsEntryExitPoint(string pointName, bool side) {
 	}
 }
 
+CPosition CUtils::PositionFromLatLon(double lat, double lon) {
+	// Latitude
+	int degrees = (int)floor(lat);
+	double minutes = (lat - (double)degrees) * 60;
+	double seconds = (minutes - floor(minutes)) * 60;
+	degrees = abs(degrees); // Get absolute value
+	string degreesFormatted;
+	string minutesFormatted;
+	string secondsFormatted;
+	if (degrees < 10) { // Format degrees
+		degreesFormatted = "N" + to_string(0) + to_string(0) + to_string(degrees);
+	}
+	else if (degrees < 100) {
+		degreesFormatted = "N" + to_string(0) + to_string(degrees);
+	}
+	else {
+		degreesFormatted = "N" + to_string(degrees);
+	}
+	if (minutes < 10) { // Format minutes
+		minutesFormatted = to_string(0) + to_string((int)minutes);
+	}
+	else if (minutes == 0) {
+		minutesFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		minutesFormatted = to_string((int)minutes);
+	}
+	if (seconds < 10 && seconds > 0) { // Format seconds
+		secondsFormatted = to_string(0) + to_string(seconds);
+	}
+	else if (minutes == 0) {
+		secondsFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		secondsFormatted = to_string(seconds);
+	}
+	string latitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
+	// Longitude
+	degrees = (int)ceil(lon);
+	minutes = (lon - (double)degrees) * 60;
+	seconds = (minutes - floor(minutes)) * 60;
+	degrees = abs(degrees); // Get absolute value
+	if (degrees < 10) { // Format degrees
+		degreesFormatted = "W" + to_string(0) + to_string(0) + to_string(abs(degrees));
+	}
+	else if (degrees < 100) {
+		degreesFormatted = "W" + to_string(0) + to_string(abs(degrees));
+	}
+	else {
+		degreesFormatted = "W" + to_string(abs(degrees));
+	}
+	if (minutes < 10) { // Format minutes
+		minutesFormatted = to_string(0) + to_string((int)minutes);
+	}
+	else if (minutes == 0) {
+		minutesFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		minutesFormatted = to_string((int)minutes);
+	}
+	if (seconds < 10 && seconds > 0) { // Format seconds
+		secondsFormatted = to_string(0) + to_string(seconds);
+	}
+	else if (seconds == 0) {
+		secondsFormatted = to_string(0) + to_string(0);
+	}
+	else {
+		secondsFormatted = to_string(seconds);
+	}
+	string longitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
+
+	// Return
+	CPosition pos;
+	pos.LoadFromStrings(longitude.c_str(), latitude.c_str());
+	return pos;
+}
+
 int CUtils::GetMach(int groundSpeed, int speedSound) {
 	double result = ((double)groundSpeed / (double)speedSound) * 100.0;
 	return (int)result;
@@ -221,78 +298,7 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 	/// Convert values to sector file format
 	newLat = CUtils::ToDegrees(newLat);
 	newLon = CUtils::ToDegrees(newLon);
-	// Latitude
-	int degrees = (int)floor(newLat);
-	double minutes = (newLat - (double)degrees) * 60;
-	double seconds = (minutes - floor(minutes)) * 60;
-	degrees = abs(degrees); // Get absolute value
-	string degreesFormatted;
-	string minutesFormatted;
-	string secondsFormatted;
-	if (degrees < 10) { // Format degrees
-		degreesFormatted = "N" + to_string(0) + to_string(0) + to_string(degrees);
-	}
-	else if (degrees < 100) {
-		degreesFormatted = "N" + to_string(0) + to_string(degrees);
-	}
-	else {
-		degreesFormatted = "N" + to_string(degrees);
-	}
-	if (minutes < 10) { // Format minutes
-		minutesFormatted = to_string(0) + to_string((int)minutes);
-	}
-	else if (minutes == 0) { 
-		minutesFormatted = to_string(0) + to_string(0);
-	}
-	else {
-		minutesFormatted = to_string((int)minutes);
-	}
-	if (seconds < 10 && seconds > 0) { // Format seconds
-		secondsFormatted = to_string(0) + to_string(seconds);
-	}
-	else if (minutes == 0) {
-		secondsFormatted = to_string(0) + to_string(0);
-	}
-	else {
-		secondsFormatted = to_string(seconds);
-	}
-	string latitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
-	// Longitude
-	degrees = (int)ceil(newLon);
-	minutes = (newLon - (double)degrees) * 60;
-	seconds = (minutes - floor(minutes)) * 60;
-	degrees = abs(degrees); // Get absolute value
-	if (degrees < 10) { // Format degrees
-		degreesFormatted = "W" + to_string(0) + to_string(0) + to_string(abs(degrees));
-	}
-	else if (degrees < 100) {
-		degreesFormatted = "W" + to_string(0) + to_string(abs(degrees));
-	}
-	else {
-		degreesFormatted = "W" + to_string(abs(degrees));
-	}
-	if (minutes < 10) { // Format minutes
-		minutesFormatted = to_string(0) + to_string((int)minutes);
-	}
-	else if (minutes == 0) {
-		minutesFormatted = to_string(0) + to_string(0);
-	}
-	else {
-		minutesFormatted = to_string((int)minutes);
-	}
-	if (seconds < 10 && seconds > 0) { // Format seconds
-		secondsFormatted = to_string(0) + to_string(seconds);
-	}
-	else if (seconds == 0) {
-		secondsFormatted = to_string(0) + to_string(0);
-	}
-	else {
-		secondsFormatted = to_string(seconds);
-	}
-	string longitude = degreesFormatted + "." + minutesFormatted + "." + secondsFormatted;
-
+	
 	// Return
-	CPosition pos;
-	pos.LoadFromStrings(longitude.c_str(), latitude.c_str());
-	return pos;
+	return PositionFromLatLon(lat, lon);
 }

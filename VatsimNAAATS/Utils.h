@@ -21,12 +21,14 @@ class CUtils {
 
 		static void SavePluginData(CPlugIn* plugin);
 		static void LoadPluginData(CPlugIn* plugin);
-		
+
 		// Get the aircraft direction
 		static bool GetAircraftDirection(int heading);
 
 		// Check if point is a Gander/Shanwick border point (true = Gander, false = Shanwick)
 		static bool IsEntryExitPoint(string pointName, bool direction);
+
+		static CPosition PositionFromLatLon(double lat, double lon);
 
 		// Calculate Mach
 		static int GetMach(int groundSpeed, int speedSound);

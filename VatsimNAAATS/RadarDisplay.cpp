@@ -129,6 +129,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	RadarArea.bottom = GetChatArea().bottom;
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
+		// Draw overlays if enabled
+		if (buttonsPressed.find(MENBTN_OVERLAYS) != buttonsPressed.end()) {
+			COverlays::ShowCurrentOverlay(&dc, &g, this);
+		}
+
 		// Get first aircraft
 		CRadarTarget ac;
 		ac = GetPlugIn()->RadarTargetSelectFirst();
@@ -140,9 +145,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Two minute actions
 		/*double t = (double)(clock() - twoMinuteTimer) / ((double)CLOCKS_PER_SEC);
 		if (t >= 120) {
-			// Start thread
-			CDataHandler::PopulateLatestTrackData(GetPlugIn());
-			twoMinuteTimer = clock();
+
 		}*/
 
 		// List of entry points
@@ -348,6 +351,10 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			dropDownToCancel = CMenuBar::currentDropDownId;
 			CMenuBar::currentDropDownId = MENDRP_OVERLAYS;
 			CMenuBar::dropDownHover = -1;
+			CMenuBar::dropDownItems[800] = "ALL_TCKS";
+			CMenuBar::dropDownItems[801] = "TCKS_EAST";
+			CMenuBar::dropDownItems[802] = "TCKS_WEST";
+			//CMenuBar::dropDownItems[803] = "OCA_TCKSSEL";
 		}
 		else if (ObjectType == MENDRP_TYPESEL) {
 			CMenuBar::dropDownItems.clear();
@@ -364,6 +371,21 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		for (auto kv : CMenuBar::dropDownItems) {
 			if (atoi(sObjectId) == kv.first) {
 				CMenuBar::dropDownSelections[CMenuBar::currentDropDownId] = kv.second;
+				// If an overlay
+				if (CMenuBar::currentDropDownId == MENDRP_OVERLAYS) {
+					if (atoi(sObjectId) == 800) {
+						COverlays::CurrentType = COverlayType::TCKS_ALL;
+					}
+					else if (atoi(sObjectId) == 801) {
+						COverlays::CurrentType = COverlayType::TCKS_EAST;
+					}
+					else if (atoi(sObjectId) == 802) {
+						COverlays::CurrentType = COverlayType::TCKS_WEST;
+					}
+					else if (atoi(sObjectId) == 803) {
+						// TODO: implement when ownership is done
+					}
+				}
 				CMenuBar::dropDownClicked = atoi(sObjectId);
 				CMenuBar::dropDownHover = -1;
 				buttonsPressed.erase(CMenuBar::currentDropDownId);
