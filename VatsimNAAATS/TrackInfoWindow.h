@@ -22,6 +22,12 @@ class CTrackInfoWindow
 		// Buttons for window
 		map<int, pair<string, bool>> WindowButtons;
 
+		// Window functions to do
+		bool NATDataRefresh;
+
+		// Window messages to display
+		string MsgDataRefresh = "";
+
 	private:
 		// Top left point of window
 		POINT topLeft;

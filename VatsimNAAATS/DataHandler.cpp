@@ -2,6 +2,7 @@
 #include "DataHandler.h"
 #include <iostream>
 #include <fstream>
+#include <WinInet.h>
 
 // Include dependency
 using json = nlohmann::json;
@@ -14,6 +15,9 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	try {
 		// Convert URL to LPCSTR type
 		LPCSTR lpcURL = TrackURL.c_str();
+
+		// Delete cache data
+		DeleteUrlCacheEntry(lpcURL);
 
 		// Download data
 		CComPtr<IStream> pStream;

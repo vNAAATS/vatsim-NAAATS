@@ -3,6 +3,7 @@
 #include "Styles.h"
 #include "Constants.h"
 #include "Overlays.h"
+#include "DataHandler.h"
 
 using namespace Colours;
 
@@ -38,7 +39,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_TCKINFO_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_TCKINFO_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 6), string("Track Info - TMI: " + COverlays::CurrentTMI).c_str());
+	dc->TextOutA(titleRect.left + (WINSZ_TCKINFO_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Track Info - TMI: " + COverlays::CurrentTMI).c_str());
 
 	// Create button bar
 	CRect buttonBarRect(windowRect.left, windowRect.bottom - 50, windowRect.left + WINSZ_TCKINFO_WIDTH, windowRect.bottom);
@@ -53,39 +54,54 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	// Close button
 	DrawButton(dc, screen, "Close", { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(WINBTN_CLOSE).second, WINBTN_CLOSE, "TCKINFO");
 
-	// Set offsets for line drawing
-	int offsetX = 20;
-	int offsetY = 30;
 	// Draw lines
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
+
+	// Refresh NAT data if clicked
+	if (NATDataRefresh) {
+		int status = CDataHandler::PopulateLatestTrackData(screen->GetPlugIn());
+		// Show data 
+		if (status == 0) {
+			MsgDataRefresh = "Refresh successful.";
+		}
+		else {
+			MsgDataRefresh = "Failed to refresh.";
+		}
+		NATDataRefresh = false;
+	}
+
+	// Show refresh message 
+	dc->TextOutA(((windowRect.right + windowRect.left) / 2) + 10, buttonBarRect.top + 16, MsgDataRefresh.c_str());
+
+	// Set offsets for line drawing
+	int offsetX = 25;
+	int offsetY = 25;
+	// TODO: implement scroll
+	// Draw lines
 	for (auto kv : COverlays::CurrentTracks) {
 		dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, "TCK");
-		offsetX += dc->GetTextExtent("TCK").cx + 38;
+		offsetX += dc->GetTextExtent("TCK").cx + 35;
 		// Output route
 		for (int i = 0; i < kv.second.Route.size(); i++) {
 			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.second.Route[i].c_str());
-			if (i == kv.second.Route.size() - 2) {
-				offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 5;
-			}
-			else {
-				offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 5;
-			}
+			offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 5;
 		}
 		// Reset offsets
 		offsetY += 20;
-		offsetX = 17;
+		offsetX = 24;
 		// Output track ID
 		dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.first.c_str());
-		offsetX += dc->GetTextExtent(kv.first.c_str()).cx + 45;
+		offsetX += dc->GetTextExtent(kv.first.c_str()).cx + 43;
 		// Output flight levels
 		for (int i = 0; i < kv.second.FlightLevels.size(); i++) {
 			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, to_string(kv.second.FlightLevels[i] / 100).c_str());
 			offsetX += dc->GetTextExtent(to_string(kv.second.FlightLevels[i] / 100).c_str()).cx + 5;
 		}
-		// Reset x offset
-		offsetX = 10;
+
+		// Reset x offset and increment y offset
+		offsetX = 25;
 		offsetY += 25;
 	}
 

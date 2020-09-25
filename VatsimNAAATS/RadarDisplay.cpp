@@ -725,10 +725,11 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 	// Shared close button for windows
 	if (ObjectType == WINBTN_CLOSE) {
 		if (string(sObjectId) == "TCKINFO") {
-			// Unpress the button on screen
+			// Unpress button and reset window state
 			trackWindow->WindowButtons.find(WINBTN_CLOSE)->second.second = false;
+			trackWindow->MsgDataRefresh = "";
 			// Unpress track info window button
-			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end() && !aselDetailed) {
+			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
 				buttonsPressed.erase(MENBTN_TCKINFO);
 			}
 		}
@@ -737,7 +738,8 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 	// Track info window refresh button
 	if (string(sObjectId) == "TCKINFO") {
 		if (ObjectType == WINBTN_TCKINFO_REFRESH) {
-			// Press button on screen
+			// Unpress button on screen
+			trackWindow->NATDataRefresh = true;
 			trackWindow->WindowButtons.find(WINBTN_TCKINFO_REFRESH)->second.second = false;
 		}
 	}
