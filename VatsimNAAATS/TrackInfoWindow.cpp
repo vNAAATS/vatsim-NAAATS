@@ -8,6 +8,9 @@ using namespace Colours;
 
 CTrackInfoWindow::CTrackInfoWindow(POINT topLeftPt) {
 	topLeft = topLeftPt;
+
+	WindowButtons[WINBTN_TCKINFO_REFRESH] = make_pair("Refresh NAT Data", false);
+	WindowButtons[WINBTN_CLOSE] = make_pair("Close", false);
 }
 
 POINT CTrackInfoWindow::GetTopLeft() {
@@ -34,6 +37,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	// Create titlebar
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_TCKINFO_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_TCKINFO_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 6), string("Track Info - TMI: " + COverlays::CurrentTMI).c_str());
 
 	// Create button bar
@@ -45,9 +49,9 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 
 	/// Draw buttons
 	// Refresh button
-	DrawButton(dc, screen, "Refresh NAT Data", { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, false);
+	DrawButton(dc, screen, "Refresh NAT Data", { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, WindowButtons.at(WINBTN_TCKINFO_REFRESH).second, WINBTN_TCKINFO_REFRESH, "TCKINFO");
 	// Close button
-	DrawButton(dc, screen, "Close", { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, false);
+	DrawButton(dc, screen, "Close", { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(WINBTN_CLOSE).second, WINBTN_CLOSE, "TCKINFO");
 
 	// Set offsets for line drawing
 	int offsetX = 20;
@@ -63,7 +67,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 		for (int i = 0; i < kv.second.Route.size(); i++) {
 			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.second.Route[i].c_str());
 			if (i == kv.second.Route.size() - 2) {
-				offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 12;
+				offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 5;
 			}
 			else {
 				offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 5;
@@ -87,14 +91,13 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 
 	// Create borders
 	dc->DrawEdge(windowRect, EDGE_SUNKEN, BF_RECT);
-	dc->Draw3dRect(windowRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
 	InflateRect(windowRect, 1, 1);
 	dc->Draw3dRect(windowRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
 	InflateRect(windowRect, 1, 1);
 	dc->DrawEdge(windowRect, EDGE_RAISED, BF_RECT);
 
 	// Add screen object
-	screen->AddScreenObject(WIN_TRACKINFO, "", titleRect, true, "");
+	screen->AddScreenObject(WINDOW, "TCKINFO", titleRect, true, "");
 
 	// Cleanup
 	DeleteObject(darkerBrush);
@@ -109,7 +112,7 @@ void CTrackInfoWindow::MoveWindow(CRect area) {
 	topLeft = { area.left, area.top };
 }
 
-CRect CTrackInfoWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, bool isPressed)
+CRect CTrackInfoWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, bool isPressed, int type, string id)
 {
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -152,6 +155,6 @@ CRect CTrackInfoWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, P
 	DeleteObject(&btnPressed);
 
 	// Add object and return the rectangle
-	//screen->AddScreenObject(kv.first, "", button, false, "");
+	screen->AddScreenObject(type, id.c_str(), button, false, "");
 	return button;
 }

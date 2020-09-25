@@ -381,7 +381,8 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		kv->second.second = { Area.left - acPosPix.x, Area.top - acPosPix.y };
 	}
 
-	if (ObjectType == WIN_TRACKINFO) {
+	if (ObjectType == WINDOW) {
+		if (string(sObjectId) == "TCKINFO")
 		trackWindow->MoveWindow(Area);
 
 		CUtils::TrackWindowX = Area.left;
@@ -694,6 +695,54 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 	}
 	
+	RequestRefresh();
+}
+
+void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
+{
+	// Shared close button for windows
+	if (ObjectType == WINBTN_CLOSE) {
+		if (string(sObjectId) == "TCKINFO") {
+			// Press button on screen
+			trackWindow->WindowButtons.find(WINBTN_CLOSE)->second.second = true;
+		}
+	}
+
+	// Track info window refresh button
+	if (string(sObjectId) == "TCKINFO") {
+		if (ObjectType == WINBTN_TCKINFO_REFRESH) {
+			// Press button on screen
+			trackWindow->WindowButtons.find(WINBTN_TCKINFO_REFRESH)->second.second = true;
+		}
+	}
+
+	// Refresh
+	RequestRefresh();
+}
+
+void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
+{
+	// Shared close button for windows
+	if (ObjectType == WINBTN_CLOSE) {
+		if (string(sObjectId) == "TCKINFO") {
+			// Unpress the button on screen
+			trackWindow->WindowButtons.find(WINBTN_CLOSE)->second.second = false;
+			// Unpress track info window button
+			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end() && !aselDetailed) {
+				buttonsPressed.erase(MENBTN_TCKINFO);
+			}
+		}
+	}
+
+	// Track info window refresh button
+	if (string(sObjectId) == "TCKINFO") {
+		if (ObjectType == WINBTN_TCKINFO_REFRESH) {
+			// Press button on screen
+			trackWindow->WindowButtons.find(WINBTN_TCKINFO_REFRESH)->second.second = false;
+		}
+	}
+
+	// Refresh
 	RequestRefresh();
 }
 

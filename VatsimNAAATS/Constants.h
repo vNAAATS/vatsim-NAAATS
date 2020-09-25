@@ -162,7 +162,11 @@ const int DRP_TYPE_MULTI = 803;
 
 // Screen
 const int SCREEN_TAG = 1;
-const int WIN_TRACKINFO = 104;
+const int WINDOW = 100;
+
+// Window specific buttons
+const int WINBTN_CLOSE = 101;
+const int WINBTN_TCKINFO_REFRESH = 102;
 
 // Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;
