@@ -54,7 +54,7 @@
     <ClCompile Include="DataHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WindowRenderer.cpp">
+    <ClCompile Include="TrackInfoWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -127,7 +127,7 @@
     <ClInclude Include="Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WindowRenderer.h">
+    <ClInclude Include="TrackInfoWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

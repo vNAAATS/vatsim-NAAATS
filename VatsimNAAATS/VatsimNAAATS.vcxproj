@@ -199,10 +199,10 @@
     <ClCompile Include="PathRenderer.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
+    <ClCompile Include="TrackInfoWindow.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
     <ClCompile Include="DataHandler.cpp" />
-    <ClCompile Include="WindowRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\VatsimNAAATS.rc2" />
@@ -226,10 +226,10 @@
     <ClInclude Include="Structures.h" />
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TrackInfoWindow.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="VatsimNAAATS.h" />
     <ClInclude Include="DataHandler.h" />
-    <ClInclude Include="WindowRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VatsimNAAATS.rc" />

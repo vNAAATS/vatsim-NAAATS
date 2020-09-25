@@ -14,6 +14,8 @@ class CUtils {
 		static int InboundY;
 		static int OthersX;
 		static int OthersY;
+		static int TrackWindowX;
+		static int TrackWindowY;
 		static int AltFiltLow;
 		static int AltFiltHigh;
 		static bool GridEnabled;
@@ -23,6 +25,7 @@ class CUtils {
 		static int AreaSelection;
 		static int SelectedOverlay;
 		static int PosType;
+
 
 		// Load/save methods
 		static void SavePluginData(CPlugIn* plugin);

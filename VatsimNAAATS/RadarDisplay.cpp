@@ -19,8 +19,9 @@ using namespace EuroScopePlugIn;
 CRadarDisplay::CRadarDisplay() 
 {
 	ShowHideGridReference(this, false);
-	inboundList = new CInboundList({ 500, 150 });
-	otherList = new COtherList({ 200, 150 });
+	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
+	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
+	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
@@ -29,7 +30,8 @@ CRadarDisplay::CRadarDisplay()
 
 CRadarDisplay::~CRadarDisplay() 
 {
-
+	delete inboundList;
+	delete otherList;
 }
 
 void CRadarDisplay::PopulateProgramData() {
@@ -339,6 +341,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Draw Lists
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
 		otherList->DrawList(&g, &dc, this, &otherAircraft);
+
+		// Draw track window info if button pressed
+		if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
+			trackWindow->RenderWindow(&dc, &g, this);
+		}
 	}
 	
 	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
@@ -372,6 +379,13 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		auto kv = tagStatuses.find(sObjectId);
 		POINT acPosPix = ConvertCoordFromPositionToPixel(GetPlugIn()->RadarTargetSelect(sObjectId).GetPosition().GetPosition());
 		kv->second.second = { Area.left - acPosPix.x, Area.top - acPosPix.y };
+	}
+
+	if (ObjectType == WIN_TRACKINFO) {
+		trackWindow->MoveWindow(Area);
+
+		CUtils::TrackWindowX = Area.left;
+		CUtils::TrackWindowY = Area.top;
 	}
 
 	RequestRefresh();
@@ -493,11 +507,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				ShowHideGridReference(this, CUtils::GridEnabled);
 			}
 			else if (ObjectType == MENBTN_OVERLAYS) {
-				// Overlays are enabled
+				// Overlays are disabled
 				CUtils::OverlayEnabled = false;
 			}
 			else if (ObjectType == MENBTN_QCKLOOK) {
-				// Quick look is on
+				// Quick look is off
 				CUtils::QckLookEnabled = false;
 			}
 		}

@@ -5,6 +5,7 @@
 #include "InboundList.h"
 #include "OtherList.h"
 #include "EuroScopePlugIn.h"
+#include "TrackInfoWindow.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -46,13 +47,14 @@ class CRadarDisplay : public CRadarScreen
 		map<int, int> toggleButtons;
 		bool aselDetailed;	
 		vector<pair<CRadarTarget, bool>> inboundAircraft;
-		vector<CRadarTarget> otherAircraft;
-		CInboundList* inboundList;
-		COtherList* otherList;
+		vector<CRadarTarget> otherAircraft;		
 		map<int, string> menuFields;
 		string asel;
 		map<string, pair<bool, POINT>> tagStatuses;
 		string aircraftSel1 = ""; // For use in conflict tools
 		string aircraftSel2 = ""; // "
+		CInboundList* inboundList;
+		COtherList* otherList;
+		CTrackInfoWindow* trackWindow = nullptr;
 };
 

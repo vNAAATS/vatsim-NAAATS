@@ -50,6 +50,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 
 			// TMI
 			track.TMI = jsonArray[i].at("tmi");
+			COverlays::CurrentTMI = jsonArray[i].at("tmi");
 
 			// Direction
 			if (jsonArray[i].at("direction") == 0) {
@@ -77,7 +78,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 			COverlays::CurrentTracks.insert(make_pair(track.Identifier, track));
 		}
 		// Everything succeeded, show to user
-		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + COverlays::CurrentTracks.begin()->second.TMI + ".").c_str(), false, false, false, false, false);
+		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + COverlays::CurrentTMI + ".").c_str(), false, false, false, false, false);
 		return 0;
 	}
 	catch (exception & e) {

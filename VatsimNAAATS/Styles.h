@@ -8,6 +8,7 @@ using namespace Gdiplus;
 // Colours for the program
 namespace Colours {
 	const Color TextWhite(255, 255, 255);
+	const Color Black(0, 0, 0);
 	const Color Grey(237, 237, 237);
 	const Color TargetOrange(255, 128, 0);
 	const Color LightGreen(81, 188, 161);
@@ -17,6 +18,7 @@ namespace Colours {
 	const Color GreenBevelLight(76, 191, 196);
 	const Color GreenBevelDark(33, 120, 144);
 	const Color ButtonPressed(45, 69, 90);
+	const Color WindowBorder(187, 214, 238);
 }
 
 // Fonts

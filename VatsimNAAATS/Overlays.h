@@ -17,6 +17,9 @@ class COverlays
 		// Current NAT tracks
 		static map<string, CTrack> CurrentTracks;
 
+		// Current TMI
+		static string CurrentTMI;
+
 		// Display the currently selected overlay
 		static void ShowCurrentOverlay(CDC* dc, Graphics* g, CRadarScreen* screen);
 };

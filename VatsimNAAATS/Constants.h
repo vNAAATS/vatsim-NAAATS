@@ -137,6 +137,11 @@ const int RECT6_WIDTH = 100;
 const int RECT7_WIDTH = 270;
 const int RECT8_WIDTH = 90;
 
+// Window sizes
+const int WINSZ_TITLEBAR_HEIGHT = 20;
+const int WINSZ_TCKINFO_WIDTH = 450;
+const int WINSZ_TCKINFO_HEIGHT = 250;
+
 /// OBJECTS
 // Lists
 const int LIST_INBOUND = 300;
@@ -157,6 +162,7 @@ const int DRP_TYPE_MULTI = 803;
 
 // Screen
 const int SCREEN_TAG = 1;
+const int WIN_TRACKINFO = 104;
 
 // Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;
