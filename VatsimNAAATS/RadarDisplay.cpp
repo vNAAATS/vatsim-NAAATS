@@ -38,10 +38,10 @@ void CRadarDisplay::PopulateProgramData() {
 	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
 	// Dropdown values
-	CMenuBar::dropDownSelections.find(MENDRP_AREASEL)->second = to_string(CUtils::AreaSelection);
+	CMenuBar::dropDownSelections.find(MENDRP_AREASEL)->second = CMenuBar::ParseDropDownId(CUtils::AreaSelection, MENDRP_AREASEL);
 	CMenuBar::dropDownSelections.find(MENDRP_TCKCTRL)->second = string("None");
-	CMenuBar::dropDownSelections.find(MENDRP_OVERLAYS)->second = to_string(CUtils::SelectedOverlay);
-	CMenuBar::dropDownSelections.find(MENDRP_TYPESEL)->second = to_string(CUtils::PosType);
+	CMenuBar::dropDownSelections.find(MENDRP_OVERLAYS)->second = CMenuBar::ParseDropDownId(CUtils::SelectedOverlay, MENDRP_OVERLAYS);
+	CMenuBar::dropDownSelections.find(MENDRP_TYPESEL)->second = CMenuBar::ParseDropDownId(CUtils::PosType, MENDRP_TYPESEL);
 
 	// Buttons
 	if (CUtils::TagsEnabled && buttonsPressed.find(MENBTN_TAGS) == buttonsPressed.end()) {
@@ -57,8 +57,20 @@ void CRadarDisplay::PopulateProgramData() {
 		buttonsPressed[MENBTN_QCKLOOK] = true;
 	}
 
-
-	// Tracks
+	// Parse track ID
+	if (CUtils::SelectedOverlay == DRP_OVL_ALL) {
+		COverlays::CurrentType = COverlayType::TCKS_ALL;
+	}
+	else if (CUtils::SelectedOverlay == DRP_OVL_EAST) {
+		COverlays::CurrentType = COverlayType::TCKS_EAST;
+	}
+	else if (CUtils::SelectedOverlay == DRP_OVL_WEST) {
+		COverlays::CurrentType = COverlayType::TCKS_WEST;
+	}
+	else {
+		COverlays::CurrentType = COverlayType::TCKS_SEL;
+	}
+	// download the tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
 }
 
@@ -295,7 +307,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			CMenuBar::dropDownHover = -1;
 			CMenuBar::dropDownItems[DRP_TYPE_DEL] = "Delivery";
 			CMenuBar::dropDownItems[DRP_TYPE_ENR] = "OCA Enroute";
-			CMenuBar::dropDownItems[DRP_TPE_MULTI] = "Multi-role";
+			CMenuBar::dropDownItems[DRP_TYPE_MULTI] = "Multi-role";
 		}
 
 		// If item is a drop down menu item

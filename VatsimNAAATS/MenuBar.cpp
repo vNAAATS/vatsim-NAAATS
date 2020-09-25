@@ -66,6 +66,45 @@ map<int, int> CMenuBar::BuildToggleButtonData() {
 	return data;
 }
 
+string CMenuBar::ParseDropDownId(int id, int type) {
+	if (type == MENDRP_AREASEL) {
+		if (id == DRP_AREA_EGGX) {
+			return string("EGGX");
+		}
+		else if (id == DRP_AREA_CZQX) {
+			return string("CZQX");
+		}
+		else {
+			return string("BDBX");
+		}
+	}
+	else if (type == MENDRP_OVERLAYS) {
+		if (id == DRP_OVL_ALL) {
+			return string("ALL_TCKS");
+		}
+		else if (id == DRP_OVL_EAST) {
+			return string("TCKS_EAST");
+		}
+		else if (id == DRP_OVL_WEST) {
+			return string("TCKS_WEST");
+		}
+		else {
+			return string("TCKS_SEL");
+		}
+	}
+	else if (type == MENDRP_TYPESEL) {
+		if (id == DRP_TYPE_DEL) {
+			return string("Delivery");
+		}
+		else if (id == DRP_TYPE_ENR) {
+			return string("OCA Enroute");
+		}
+		else {
+			return string("Multi-Role");
+		}
+	}
+}
+
 void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData) {
 
 	// Brush to draw the bar

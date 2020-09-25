@@ -153,7 +153,7 @@ const int DRP_OVL_WEST = 803;
 const int DRP_OVL_SEL = 804;
 const int DRP_TYPE_DEL = 801;
 const int DRP_TYPE_ENR = 802;
-const int DRP_TPE_MULTI = 803;
+const int DRP_TYPE_MULTI = 803;
 
 // Screen
 const int SCREEN_TAG = 1;

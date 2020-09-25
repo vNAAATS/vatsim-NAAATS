@@ -28,6 +28,8 @@ class CMenuBar
 		// Toggle button data
 		static map<int, int> BuildToggleButtonData();
 
+		static string ParseDropDownId(int id, int type);
+
 		// Render the menu bar
 		static void DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData);
 
