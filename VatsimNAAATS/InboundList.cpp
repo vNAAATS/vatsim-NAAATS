@@ -106,7 +106,7 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 	dc->RestoreDC(sDC);
 
 	// Get object area and add object to screen
-	CRect area(topLeft.x, topLeft.y, topLeft.x + LIST_INBOUND_WIDTH, topLeft.y + 14);
+	CRect area(topLeft.x, topLeft.y, topLeft.x + LIST_INBOUND_WIDTH, topLeft.y + ((idx + 1) * 18));
 	screen->AddScreenObject(LIST_INBOUND, "", area, true, "");
 
 	return rectangle;

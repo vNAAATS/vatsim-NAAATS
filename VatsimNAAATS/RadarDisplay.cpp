@@ -80,14 +80,14 @@ void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 		screen->GetPlugIn()->SelectScreenSectorfile(screen);
 		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
 		string gridName = string(grid.GetName());
-		while (gridName != "CZQO Positional Grid Reference") {
+		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
 			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
 			gridName = string(grid.GetName());
 		}
 
 		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
 			
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
@@ -95,7 +95,7 @@ void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 		}
 
 		string componentName;
-		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos || freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
 			componentName = freetext.GetComponentName(0);
 			screen->ShowSectorFileElement(freetext, componentName.c_str(), true);
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
@@ -108,20 +108,20 @@ void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
 		screen->GetPlugIn()->SelectScreenSectorfile(screen);
 		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
 		string gridName = string(grid.GetName());
-		while (gridName != "CZQO Positional Grid Reference") {
+		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
 			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
 			gridName = string(grid.GetName());
 		}
 
 		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
 		}
 
 		string componentName;
-		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos || freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
 			componentName = freetext.GetComponentName(0);
 			screen->ShowSectorFileElement(freetext, componentName.c_str(), false);
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
@@ -163,9 +163,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CRadarTarget ac;
 		ac = GetPlugIn()->RadarTargetSelectFirst();
 
-		// Get entry time and heading
+		// Get entry time and direction
 		int entryMinutes;
-		int hdg;
+		bool direction;
 
 		// Two minute actions
 		/*double t = (double)(clock() - twoMinuteTimer) / ((double)CLOCKS_PER_SEC);
@@ -184,15 +184,138 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// Route
 			CFlightPlanExtractedRoute rte = fp.GetExtractedRoute();
 
-			// Time and heading
+			// Time and direction
 			entryMinutes = fp.GetSectorEntryMinutes();
-			hdg = ac.GetPosition().GetReportedHeading();
-			
+			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
-			// TODO: Refactor aircraft display procedure
+			// Parse inbound
+			if (entryMinutes >= 0 && entryMinutes < 60) {
+				// If not there then add the status
+				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
+					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
+					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+				}
 
+				// If going westbound
+				if (!direction && entryMinutes > 0) {
+					if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "CZQX") {
+						int i;
+						for (i = 0; i < rte.GetPointsNumber(); i++) {
+							// Find out if 30 west is in their flight plan
+							if (rte.GetPointPosition(i).m_Longitude == -30.0) {
+								// Test flight time
+								if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
+									// Add if within
+									inboundAircraft.push_back(make_pair(ac, false));
+									epVec.push_back(make_pair(rte.GetPointName(i), i));
+									break;
+								}
+							}
+						}
+						if (i == rte.GetPointsNumber()) {
+							// Add to 'others' list
+							otherAircraft.push_back(ac);
+						}
+					}
+					else {
+						int i;
+						for (i = 0; i < rte.GetPointsNumber(); i++) {
+							// They are coming from land so check entry points
+							if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
+								inboundAircraft.push_back(make_pair(ac, false));
+								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								break;
+							}
+						}
+						if (i == rte.GetPointsNumber()) {
+							// Add to 'others' list
+							otherAircraft.push_back(ac);
+						}
+					}
+				}
+				else if (direction && entryMinutes > 0) {
+					if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "EGGX") {
+						int i;
+						for (i = 0; i < rte.GetPointsNumber(); i++) {
+							// Find out if 30 west is in their flight plan
+							if (rte.GetPointPosition(i).m_Longitude == -30.0) {
+								// Test flight time
+								if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
+									// Add if within
+									inboundAircraft.push_back(make_pair(ac, true));
+									epVec.push_back(make_pair(rte.GetPointName(i), i));
+									break;
+								}
+							}
+						}
+						if (i == rte.GetPointsNumber()) {
+							// Add to 'others' list
+							otherAircraft.push_back(ac);
+						}
+					}
+					else {
+						int i;
+						// They are coming from land so check entry points
+						for (i = 0; i < rte.GetPointsNumber(); i++) {
+							if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
+								inboundAircraft.push_back(make_pair(ac, true));
+								epVec.push_back(make_pair(rte.GetPointName(i), i));
+								break;
+							}
+						}
+						if (i == rte.GetPointsNumber()) {
+							// Add to 'others' list
+							otherAircraft.push_back(ac);
+						}
+					}
+				}
 
+				// Store whether detailed tags are enabled
+				bool detailedEnabled = false;
 
+				// Now we check if all the tags are selected as detailed				
+				if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) {
+					detailedEnabled = true; // Set detailed on
+
+					// Unpress detailed if not already
+					if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
+						buttonsPressed.erase(MENBTN_DETAILED);
+					}
+				}
+
+				// Check if only one is set to detailed
+				if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) {
+					if (fp.GetCallsign() == asel) {
+						detailedEnabled = true; // Set detailed on
+					}
+
+					// Unpress quick look if not already
+					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
+						buttonsPressed.erase(MENBTN_QCKLOOK);
+					}
+				}
+
+				bool ptl = false;
+				bool halo = false;
+				// Set PTL and HALO if they are on
+				if (buttonsPressed.find(MENBTN_PTL) != buttonsPressed.end()) {
+					ptl = true;
+				}
+				if (buttonsPressed.find(MENBTN_HALO) != buttonsPressed.end()) {
+					halo = true;
+				}
+
+				// Draw the tag and target with the information if tags are turned on
+				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+					auto kv = tagStatuses.find(fp.GetCallsign());
+					kv->second.first = detailedEnabled; // Set detailed on
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &toggleButtons, halo, ptl);
+					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction);
+				}
+				else {
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &toggleButtons, halo, ptl);
+				}
+			}
 
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}

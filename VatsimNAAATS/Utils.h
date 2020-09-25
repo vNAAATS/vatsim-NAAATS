@@ -28,6 +28,9 @@ class CUtils {
 		static void SavePluginData(CPlugIn* plugin);
 		static void LoadPluginData(CPlugIn* plugin);
 
+		// Convert other types of coordinates to NN/WW format
+		static string ConvertCoordinatesToSlashFormat(string coordinateString);
+
 		// Get the aircraft direction
 		static bool GetAircraftDirection(int heading);
 
