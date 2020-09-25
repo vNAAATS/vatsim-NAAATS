@@ -37,6 +37,12 @@ void CRadarDisplay::PopulateProgramData() {
 	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY }, true);
 	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
+	// Dropdown values
+	CMenuBar::dropDownSelections.find(MENDRP_AREASEL)->second = to_string(CUtils::AreaSelection);
+	CMenuBar::dropDownSelections.find(MENDRP_TCKCTRL)->second = string("None");
+	CMenuBar::dropDownSelections.find(MENDRP_OVERLAYS)->second = to_string(CUtils::SelectedOverlay);
+	CMenuBar::dropDownSelections.find(MENDRP_TYPESEL)->second = to_string(CUtils::PosType);
+
 	// Buttons
 	if (CUtils::TagsEnabled && buttonsPressed.find(MENBTN_TAGS) == buttonsPressed.end()) {
 		buttonsPressed[MENBTN_TAGS] = true;
@@ -44,6 +50,13 @@ void CRadarDisplay::PopulateProgramData() {
 	if (CUtils::GridEnabled && buttonsPressed.find(MENBTN_GRID) == buttonsPressed.end()) {
 		buttonsPressed[MENBTN_GRID] = true;
 	}
+	if (CUtils::OverlayEnabled && buttonsPressed.find(MENBTN_OVERLAYS) == buttonsPressed.end()) {
+		buttonsPressed[MENBTN_OVERLAYS] = true;
+	}
+	if (CUtils::QckLookEnabled && buttonsPressed.find(MENBTN_QCKLOOK) == buttonsPressed.end()) {
+		buttonsPressed[MENBTN_QCKLOOK] = true;
+	}
+
 
 	// Tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
@@ -162,98 +175,12 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// Time and heading
 			entryMinutes = fp.GetSectorEntryMinutes();
 			hdg = ac.GetPosition().GetReportedHeading();
-			// Get direction
-			bool direction = false;
-			// Aircraft to render
-			if (entryMinutes >= 0 && entryMinutes <= 90) {
-				// If not there
-				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
-					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
-					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
-				}
-				
-				// Get inbound aircraft and flight direction	
-				if ((hdg <= 359) && (hdg >= 181)) {
-					if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
-						// Shanwick
-						for (int i = 0; i < rte.GetPointsNumber(); i++) {
-							// Add to inbound aircraft list
-							bool breakLoop = false;
-							if (std::find(pointsShanwick.begin(), pointsShanwick.end(), rte.GetPointName(i)) != pointsShanwick.end()) {
-								inboundAircraft.push_back(make_pair(ac, false));
-								epVec.push_back(make_pair(rte.GetPointName(i), i));
-								breakLoop = true;
-								break;
-							}
-							if (breakLoop) break;
-						}
-					}
-				}
-				else if ((hdg >= 1) && (hdg <= 179)) {
-					direction = true;
-					if (fp.GetSectorEntryMinutes() > 0 && fp.GetSectorEntryMinutes() <= 90) {
-						// Gander
-						for (int i = 0; i < rte.GetPointsNumber(); i++) {
-							// Add to inbound aircraft list
-							bool breakLoop = false;
-							if (std::find(pointsGander.begin(), pointsGander.end(), rte.GetPointName(i)) != pointsGander.end()) {
-								inboundAircraft.push_back(make_pair(ac, true));
-								direction = true;
-								epVec.push_back(make_pair(rte.GetPointName(i), i));
-								breakLoop = true;
-								break;
-							}
-							if (breakLoop) break;
-						}
-					}
-				}
+			
 
-				// Store whether detailed tags are enabled
-				bool detailedEnabled = false; 
+			// TODO: Refactor aircraft display procedure
 
-				// Now we check if all the tags are selected as detailed				
-				if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) {
-					detailedEnabled = true; // Set detailed on
 
-					// Unpress detailed if not already
-					if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
-						buttonsPressed.erase(MENBTN_DETAILED);
-					}
-				}
 
-				// Check if only one is set to detailed
-				if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) {
-					if (fp.GetCallsign() == asel) {
-						detailedEnabled = true; // Set detailed on
-					}
-
-					// Unpress quick look if not already
-					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
-						buttonsPressed.erase(MENBTN_QCKLOOK);
-					}
-				}
-
-				bool ptl = false;
-				bool halo = false;
-				// Set PTL and HALO if they are on
-				if (buttonsPressed.find(MENBTN_PTL) != buttonsPressed.end()) {
-					ptl = true;
-				}
-				if (buttonsPressed.find(MENBTN_HALO) != buttonsPressed.end()) {
-					halo = true;
-				}
-
-				// Draw the tag and target with the information if tags are turned on
-				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
-					auto kv = tagStatuses.find(fp.GetCallsign());
-					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &toggleButtons, halo, ptl);
-					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction);
-				}
-				else {
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &toggleButtons, halo, ptl);
-				}
-			}
 
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
@@ -336,14 +263,19 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			dropDownToCancel = CMenuBar::currentDropDownId;
 			CMenuBar::currentDropDownId = MENDRP_AREASEL;
 			CMenuBar::dropDownHover = -1;
-			CMenuBar::dropDownItems[800] = "EGGX";
-			CMenuBar::dropDownItems[801] = "CZQX";
-			CMenuBar::dropDownItems[802] = "BDBX";
+			CMenuBar::dropDownItems[DRP_AREA_EGGX] = "EGGX";
+			CMenuBar::dropDownItems[DRP_AREA_CZQX] = "CZQX";
+			CMenuBar::dropDownItems[DRP_AREA_BDBX] = "BDBX";
 		}
 		else if (ObjectType == MENDRP_TCKCTRL) {
 			CMenuBar::dropDownItems.clear();
 			dropDownToCancel = CMenuBar::currentDropDownId;
 			CMenuBar::currentDropDownId = MENDRP_TCKCTRL;
+			int idx = 0;
+			for (auto kv : COverlays::CurrentTracks) {
+				idx++;
+				CMenuBar::dropDownItems[800 + idx] = string(string("TCK ") + kv.first);				
+			}
 			CMenuBar::dropDownHover = -1;
 		}
 		else if (ObjectType == MENDRP_OVERLAYS) {
@@ -351,19 +283,19 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			dropDownToCancel = CMenuBar::currentDropDownId;
 			CMenuBar::currentDropDownId = MENDRP_OVERLAYS;
 			CMenuBar::dropDownHover = -1;
-			CMenuBar::dropDownItems[800] = "ALL_TCKS";
-			CMenuBar::dropDownItems[801] = "TCKS_EAST";
-			CMenuBar::dropDownItems[802] = "TCKS_WEST";
-			//CMenuBar::dropDownItems[803] = "OCA_TCKSSEL";
+			CMenuBar::dropDownItems[DRP_OVL_ALL] = "ALL_TCKS";
+			CMenuBar::dropDownItems[DRP_OVL_EAST] = "TCKS_EAST";
+			CMenuBar::dropDownItems[DRP_OVL_WEST] = "TCKS_WEST";
+			//CMenuBar::dropDownItems[DRP_OVL_SEL] = "OCA_TCKSSEL";
 		}
 		else if (ObjectType == MENDRP_TYPESEL) {
 			CMenuBar::dropDownItems.clear();
 			dropDownToCancel = CMenuBar::currentDropDownId;
 			CMenuBar::currentDropDownId = MENDRP_TYPESEL;
 			CMenuBar::dropDownHover = -1;
-			CMenuBar::dropDownItems[800] = "Delivery";
-			CMenuBar::dropDownItems[801] = "OCA Enroute";
-			CMenuBar::dropDownItems[802] = "Multi-role";
+			CMenuBar::dropDownItems[DRP_TYPE_DEL] = "Delivery";
+			CMenuBar::dropDownItems[DRP_TYPE_ENR] = "OCA Enroute";
+			CMenuBar::dropDownItems[DRP_TPE_MULTI] = "Multi-role";
 		}
 
 		// If item is a drop down menu item
@@ -371,18 +303,27 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		for (auto kv : CMenuBar::dropDownItems) {
 			if (atoi(sObjectId) == kv.first) {
 				CMenuBar::dropDownSelections[CMenuBar::currentDropDownId] = kv.second;
+				if (CMenuBar::currentDropDownId == MENDRP_AREASEL) {
+					CUtils::AreaSelection = atoi(sObjectId);
+				}
+				else if (CMenuBar::currentDropDownId == MENDRP_OVERLAYS) {
+					CUtils::SelectedOverlay = atoi(sObjectId);
+				}
+				else if (CMenuBar::currentDropDownId == MENDRP_TYPESEL) {
+					CUtils::PosType = atoi(sObjectId);
+				}
 				// If an overlay
 				if (CMenuBar::currentDropDownId == MENDRP_OVERLAYS) {
-					if (atoi(sObjectId) == 800) {
+					if (atoi(sObjectId) == DRP_OVL_ALL) {
 						COverlays::CurrentType = COverlayType::TCKS_ALL;
 					}
-					else if (atoi(sObjectId) == 801) {
+					else if (atoi(sObjectId) == DRP_OVL_EAST) {
 						COverlays::CurrentType = COverlayType::TCKS_EAST;
 					}
-					else if (atoi(sObjectId) == 802) {
+					else if (atoi(sObjectId) == DRP_OVL_WEST) {
 						COverlays::CurrentType = COverlayType::TCKS_WEST;
 					}
-					else if (atoi(sObjectId) == 803) {
+					else if (atoi(sObjectId) == DRP_OVL_SEL) {
 						// TODO: implement when ownership is done
 					}
 				}
@@ -416,6 +357,14 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				CUtils::GridEnabled = false;
 				ShowHideGridReference(this, CUtils::GridEnabled);
 			}
+			else if (ObjectType == MENBTN_OVERLAYS) {
+				// Overlays are enabled
+				CUtils::OverlayEnabled = false;
+			}
+			else if (ObjectType == MENBTN_QCKLOOK) {
+				// Quick look is on
+				CUtils::QckLookEnabled = false;
+			}
 		}
 		else if (menuButtons.find(ObjectType) != menuButtons.end() && string(sObjectId) == "") { // If being pressed
 			if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
@@ -434,6 +383,14 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 					// Grid is on
 					CUtils::GridEnabled = true;
 					ShowHideGridReference(this, CUtils::GridEnabled);
+				}
+				else if (ObjectType == MENBTN_OVERLAYS) {
+					// Overlays are enabled
+					CUtils::OverlayEnabled = true;
+				}
+				else if (ObjectType == MENBTN_QCKLOOK) {
+					// Quick look is on
+					CUtils::QckLookEnabled = true;
 				}
 			}
 		} 
@@ -611,7 +568,9 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 	if (!Loaded)
 		return;
 
+	// Load the plugin data
 	CUtils::LoadPluginData(this->GetPlugIn());
 
+	// Populate it
 	PopulateProgramData();
 }

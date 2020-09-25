@@ -14,6 +14,8 @@ map<int, string> CMenuBar::dropDownSelections = {
 	{ MENDRP_TYPESEL, "" }
 };
 
+map<int, string> CMenuBar::selectedTracks;
+
 map<int, string> CMenuBar::dropDownItems;
 int CMenuBar::currentDropDownId = -1;
 int CMenuBar::dropDownHover = -1;

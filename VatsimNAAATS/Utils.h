@@ -18,7 +18,13 @@ class CUtils {
 		static int AltFiltHigh;
 		static bool GridEnabled;
 		static bool TagsEnabled;
+		static bool QckLookEnabled;
+		static bool OverlayEnabled;
+		static int AreaSelection;
+		static int SelectedOverlay;
+		static int PosType;
 
+		// Load/save methods
 		static void SavePluginData(CPlugIn* plugin);
 		static void LoadPluginData(CPlugIn* plugin);
 
@@ -28,6 +34,7 @@ class CUtils {
 		// Check if point is a Gander/Shanwick border point (true = Gander, false = Shanwick)
 		static bool IsEntryExitPoint(string pointName, bool direction);
 
+		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);
 
 		// Calculate Mach

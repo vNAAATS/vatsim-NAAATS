@@ -144,6 +144,16 @@ const int LIST_OTHERS = 301;
 
 // Dropdown
 const int DROPDOWN = 800;
+const int DRP_AREA_EGGX = 801;
+const int DRP_AREA_CZQX = 802;
+const int DRP_AREA_BDBX = 803;
+const int DRP_OVL_ALL = 801;
+const int DRP_OVL_EAST = 802;
+const int DRP_OVL_WEST = 803;
+const int DRP_OVL_SEL = 804;
+const int DRP_TYPE_DEL = 801;
+const int DRP_TYPE_ENR = 802;
+const int DRP_TPE_MULTI = 803;
 
 // Screen
 const int SCREEN_TAG = 1;
@@ -188,6 +198,11 @@ const string SET_ALTFILT_LOW = "AltFiltLow";
 const string SET_ALTFILT_HIGH = "AltFiltHigh";
 const string SET_GRID = "GridEnabled";
 const string SET_TAGS = "TagsEnabled";
+const string SET_QCKLOOK = "QckLookEnabled";
+const string SET_OVERLAY = "OverlayEnabled";
+const string SET_AREASEL = "SelectedArea";
+const string SET_OVERLAYSEL = "SelectedOverlay";
+const string SET_POSTYPESEL = "SelectedPosType";
 
 /// ENUMS
 // Path type enum

@@ -14,6 +14,11 @@ int CUtils::AltFiltLow = 0;
 int CUtils::AltFiltHigh = 700;
 bool CUtils::GridEnabled = false;
 bool CUtils::TagsEnabled = true;
+bool CUtils::QckLookEnabled = false;
+bool CUtils::OverlayEnabled = false;
+int CUtils::AreaSelection = 802;
+int CUtils::SelectedOverlay = 800;
+int CUtils::PosType = 802;
 
 // Save plugin data
 void CUtils::SavePluginData(CPlugIn* plugin) {
@@ -29,8 +34,15 @@ void CUtils::SavePluginData(CPlugIn* plugin) {
 	// Altitude filter (TODO)
 
 	// Misc display settings
-	plugin->SaveDataToSettings(SET_GRID.c_str(), "Grid turned on/off.", GridEnabled ? "true" : "false");
-	plugin->SaveDataToSettings(SET_TAGS.c_str(), "Tags turned on/off.", TagsEnabled ? "true" : "false");
+	plugin->SaveDataToSettings(SET_GRID.c_str(), "Grid enabled/disabled.", GridEnabled ? "true" : "false");
+	plugin->SaveDataToSettings(SET_TAGS.c_str(), "Tags enabled/disabled.", TagsEnabled ? "true" : "false");
+	plugin->SaveDataToSettings(SET_OVERLAY.c_str(), "Overlay enabled/disabled.", QckLookEnabled ? "true" : "false");
+	plugin->SaveDataToSettings(SET_QCKLOOK.c_str(), "Quick Look enabled/disabled.", OverlayEnabled ? "true" : "false");
+
+	// Dropdown values
+	plugin->SaveDataToSettings(SET_AREASEL.c_str(), "Selected area ownership.", to_string(AreaSelection).c_str());
+	plugin->SaveDataToSettings(SET_OVERLAYSEL.c_str(), "Selected overlay.", to_string(SelectedOverlay).c_str());
+	plugin->SaveDataToSettings(SET_POSTYPESEL.c_str(), "Selected position type.", to_string(PosType).c_str());
 }
 
 // Load plugin data
@@ -55,17 +67,46 @@ void CUtils::LoadPluginData(CPlugIn* plugin) {
 		OthersY = stoi(strb);
 	}
 
-	// Grid
+	// Grid enabled
 	stra = plugin->GetDataFromSettings(SET_GRID.c_str());
 	if (stra != NULL) {
 		GridEnabled = (stra[0] == 't');
 	}
 	
-
-	// Tags
+	// Tags enabled
 	stra = plugin->GetDataFromSettings(SET_TAGS.c_str());
 	if (stra != NULL) {
 		TagsEnabled = (stra[0] == 't');
+	}
+
+	// Quick look enabled
+	stra = plugin->GetDataFromSettings(SET_QCKLOOK.c_str());
+	if (stra != NULL) {
+		QckLookEnabled = (stra[0] == 't');
+	}
+
+	// Overlay enabled
+	stra = plugin->GetDataFromSettings(SET_OVERLAY.c_str());
+	if (stra != NULL) {
+		OverlayEnabled = (stra[0] == 't');
+	}
+
+	// Area selection
+	stra = plugin->GetDataFromSettings(SET_AREASEL.c_str());
+	if (stra != NULL) {
+		AreaSelection = stoi(stra);
+	}
+
+	// Overlay selection
+	stra = plugin->GetDataFromSettings(SET_OVERLAYSEL.c_str());
+	if (stra != NULL) {
+		SelectedOverlay = stoi(stra);
+	}
+
+	// Position type selection
+	stra = plugin->GetDataFromSettings(SET_POSTYPESEL.c_str());
+	if (stra != NULL) {
+		PosType = stoi(stra);
 	}
 
 	// Show a user message saying that the plugin was loaded successfully

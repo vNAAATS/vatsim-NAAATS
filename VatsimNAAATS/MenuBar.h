@@ -17,6 +17,7 @@ class CMenuBar
 		// Dropdowns
 		static map<int, string> dropDownSelections;
 		static map<int, string> dropDownItems;
+		static map<int, string> selectedTracks;
 		static int currentDropDownId;
 		static int dropDownHover;
 		static int dropDownClicked;
