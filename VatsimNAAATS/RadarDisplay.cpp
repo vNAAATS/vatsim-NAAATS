@@ -45,7 +45,7 @@ void CRadarDisplay::PopulateProgramData() {
 		buttonsPressed[MENBTN_GRID] = true;
 	}
 
-	// Tracks TODO: thread
+	// Tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
 }
 

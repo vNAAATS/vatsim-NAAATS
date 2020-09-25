@@ -69,7 +69,7 @@ void CUtils::LoadPluginData(CPlugIn* plugin) {
 	}
 
 	// Show a user message saying that the plugin was loaded successfully
-	plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " loaded successfully.").c_str(), false, false, false, false, false);
+	plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
 }
 
 bool CUtils::GetAircraftDirection(int heading) {
@@ -300,5 +300,5 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 	newLon = CUtils::ToDegrees(newLon);
 	
 	// Return
-	return PositionFromLatLon(lat, lon);
+	return PositionFromLatLon(newLat, newLon);
 }
