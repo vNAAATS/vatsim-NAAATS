@@ -75,11 +75,10 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 
 			// Push track to tracks array
 			COverlays::CurrentTracks.insert(make_pair(track.Identifier, track));
-
-			// Everything succeeded, show to user
-			plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + COverlays::CurrentTracks.begin()->second.TMI + ".").c_str(), false, false, false, false, false);
-			return 0;
 		}
+		// Everything succeeded, show to user
+		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + COverlays::CurrentTracks.begin()->second.TMI + ".").c_str(), false, false, false, false, false);
+		return 0;
 	}
 	catch (exception & e) {
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse NAT track data: " + string(e.what())).c_str(), true, true, true, true, true);
