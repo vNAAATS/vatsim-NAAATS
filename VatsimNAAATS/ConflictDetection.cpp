@@ -2,7 +2,8 @@
 #include "ConflictDetection.h"
 
 /*CConflictStatus CConflictDetection::DetectStatusNow(CRadarTarget* targetA, CRadarTarget* targetB) {
-
+	CPosition position1 = targetA->GetPosition().GetPosition();
+	CPosition position2 = targetB->GetPosition().GetPosition();
 }
 
 CConflictStatus CConflictDetection::DetectStatusNow(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare) {

@@ -104,6 +104,7 @@ DeleteObject(pen);
 	dc->RestoreDC(iDC);
 }
 
+// TODO: Refactor when implementing flight plan window
 pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen, string callsign, bool piv) {
 	// Set callsign and get radar target
 	if (piv) {

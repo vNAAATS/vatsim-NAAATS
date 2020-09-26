@@ -47,8 +47,7 @@ class FontSelector
 			DeleteObject(font);
 		}
 
-		static void SelectATCFont(int size, CDC* dc)
-		{
+		static void SelectATCFont(int size, CDC* dc) {
 			CFont font;
 			LOGFONT lFont;
 
@@ -72,8 +71,7 @@ class FontSelector
 			DeleteObject(font);
 		}
 
-		static void SelectMonoFont(int size, CDC* dc)
-		{
+		static void SelectMonoFont(int size, CDC* dc) {
 			CFont font;
 			LOGFONT lFont;
 
