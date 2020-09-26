@@ -12,20 +12,20 @@ using namespace EuroScopePlugIn;
 class CPathRenderer
 {
 	public:
-		// Target to compare ASEL against for PIV
-		static string PivTarget;
-
 		// Target for route draw
 		static string RouteDrawTarget;
 
 		// Route to draw
-		static vector<CRoutePosition> RouteToDraw;
+		static pair<bool, vector<CRoutePosition>> RouteToDraw;
 
 		// Render a path
 		static void RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type);
 
 		// Get a route
-		static void GetRoute(CRadarScreen* screen, string callsign);
+		static pair<bool, vector<CRoutePosition>> GetRoute(CRadarScreen* screen, string callsign, bool piv);
+
+		// Is on a NAT track
+		static string OnNatTrack(CRadarScreen* screen, string callsign);
 
 		// Clear route
 		static int ClearCurrentRoute();

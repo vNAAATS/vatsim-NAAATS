@@ -21,6 +21,9 @@ bool CUtils::OverlayEnabled = false;
 int CUtils::AreaSelection = 802;
 int CUtils::SelectedOverlay = 800;
 int CUtils::PosType = 802;
+int CUtils::SepMinimaVertical = 1000;
+int CUtils::SepMinimaLateral = 60;
+int CUtils::SepMinimaLongitudinal = 10;
 
 // Save plugin data
 void CUtils::SavePluginData(CPlugIn* plugin) {
@@ -226,10 +229,13 @@ int CUtils::GetMach(int groundSpeed, int speedSound) {
 	return (int)result;
 }
 
-string CUtils::ParseZuluTime(bool delimit, CFlightPlan* fp, int fix) {
+string CUtils::ParseZuluTime(bool delimit, int deltaTime, CFlightPlan* fp, int fix) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);
 	int deltaMinutes = 0;
+	if (deltaTime != -1) {
+		deltaMinutes = deltaTime;
+	}
 	if (fix != -1) {
 		deltaMinutes = fp->GetExtractedRoute().GetPointDistanceInMinutes(fix);
 	}
@@ -300,8 +306,8 @@ POINT CUtils::GetMidPoint(POINT p1, POINT p2) {
 
 int CUtils::GetTimeDistanceSpeed(int distanceNM, int speedGS) {
 	// Get time in minutes
-	double temp = (float)distanceNM / (float)speedGS;
-	return ((float)distanceNM / speedGS) * 60;
+	int temp = ((float)distanceNM / (float)speedGS) * 60;
+	return ((float)distanceNM / (float)speedGS) * 60;
 }
 
 int CUtils::GetDistanceSpeedTime(int speedGS, int timeMin) {

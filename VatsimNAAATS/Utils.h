@@ -25,6 +25,9 @@ class CUtils {
 		static int AreaSelection;
 		static int SelectedOverlay;
 		static int PosType;
+		static int SepMinimaVertical;
+		static int SepMinimaLateral;
+		static int SepMinimaLongitudinal;
 
 
 		// Load/save methods
@@ -47,7 +50,7 @@ class CUtils {
 		static int GetMach(int groundSpeed, int speedSound);
 
 		// Parse zulu time
-		static string ParseZuluTime(bool delimit, CFlightPlan* fp = nullptr, int ep = -1);
+		static string ParseZuluTime(bool delimit, int deltaTime = -1, CFlightPlan* fp = nullptr, int ep = -1);
 
 		// Distance between two points in screen coordinates
 		static int GetDistanceBetweenPoints(POINT p1, POINT p2);
