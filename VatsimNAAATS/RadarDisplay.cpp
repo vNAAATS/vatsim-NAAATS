@@ -245,7 +245,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
 										// Add if within
 										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
-											rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
+											rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
 										break;
 									}
 								}
@@ -262,7 +262,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
 									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
-										rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
+										rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
 									break;
 								}
 							}

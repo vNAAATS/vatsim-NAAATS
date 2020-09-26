@@ -75,18 +75,19 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	// Show refresh message 
 	dc->TextOutA(((windowRect.right + windowRect.left) / 2) + 10, buttonBarRect.top + 16, MsgDataRefresh.c_str());
 
-	// Set offsets for line drawing
+	// Set offsets for line drawing and spacer size
 	int offsetX = 25;
 	int offsetY = 25;
+	string spacer = "SPACE"; // To use GetTextExtent() for a consistent sized spacer
 	// TODO: implement scroll
 	// Draw lines
 	for (auto kv : COverlays::CurrentTracks) {
 		dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, "TCK");
-		offsetX += dc->GetTextExtent("TCK").cx + 35;
+		offsetX += dc->GetTextExtent("TCK").cx + 37;
 		// Output route
 		for (int i = 0; i < kv.second.Route.size(); i++) {
 			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.second.Route[i].c_str());
-			offsetX += (int)dc->GetTextExtent(kv.second.Route[i].c_str()).cx + 5;
+			offsetX += (int)dc->GetTextExtent(spacer.c_str()).cx;
 		}
 		// Reset offsets
 		offsetY += 20;
