@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "InboundList.h"
+#include "Structures.h"
 #include "OtherList.h"
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
@@ -43,13 +44,13 @@ class CRadarDisplay : public CRadarScreen
 
 	private:
 		POINT mousePointer;
-		clock_t twoMinuteTimer;
+		clock_t fiveSecondTimer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
 		map<int, int> toggleButtons;
 		bool aselDetailed;	
-		vector<pair<CRadarTarget, bool>> inboundAircraft;
-		vector<CRadarTarget> otherAircraft;		
+		vector<CListAircraft> inboundAircraft;
+		vector<string> otherAircraft;		
 		map<int, string> menuFields;
 		string asel;
 		map<string, pair<bool, POINT>> tagStatuses;

@@ -16,27 +16,13 @@ POINT CInboundList::GetTopLeft() {
 	return topLeft;
 }
 
-Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<pair<CRadarTarget, bool>>* inboundAircraft, vector<pair<string, int>>* epVec)
+Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CListAircraft>* inboundAircraft)
 {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
 	// Make rectangle
 	Rect rectangle(topLeft.x, topLeft.y, LIST_INBOUND_WIDTH, 500);
-
-	/// Make "Inbound" text
-	// Font
-	FontSelector::SelectMonoFont(15, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
-	dc->SetTextAlign(TA_LEFT);
-
-	// Don't show size if none
-	if (inboundAircraft->size() == 0) {
-		dc->TextOutA(rectangle.X, rectangle.Y, "Inbound");
-	} 
-	else {
-		dc->TextOutA(rectangle.X, rectangle.Y, string("Inbound (" + to_string(inboundAircraft->size()) + ")").c_str());
-	}
 	
 	// Text
 	FontSelector::SelectATCFont(18, dc);
@@ -48,12 +34,9 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 	int offsetX = 18;
 	int idx = 0;
 
-	for (vector<pair<CRadarTarget, bool>>::iterator ac = inboundAircraft->begin(); ac != inboundAircraft->end(); ac++) {
-		// Get the aircraft
-		CFlightPlan fp(screen->GetPlugIn()->FlightPlanSelect(ac->first.GetCallsign()));
-
+	for (vector<CListAircraft>::iterator ac = inboundAircraft->begin(); ac != inboundAircraft->end(); ac++) {
 		// Direction arrow (Shanwick)
-		if (ac->second == false) {
+		if (ac->Direction == false) {
 			SolidBrush brush(TextWhite);
 			Point points[3] = { Point(rectangle.X + 10, rectangle.Y + (offsetY + 4)),
 				Point(rectangle.X + 10, rectangle.Y + (offsetY + 4) + 10),
@@ -61,32 +44,33 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 			g->FillPolygon(&brush, points, 3);
 		}
 		// Draw callsign
-		string line = string(fp.GetCallsign());
+		string line = string(ac->Callsign);
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 140;
 
 		// Draw entry point
-		line = epVec->at(idx).first;		
+		line = ac->Point;		
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 70;
 
 		// Draw estimated time
-		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, CUtils::ParseZuluTime(false, &fp, epVec->at(idx).second).c_str());
+		line = ac->Estimate;
+		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 45;
 
 		// Draw altitude
 		//line = to_string(fp.GetControllerAssignedData().GetClearedAltitude());
-		line = to_string(fp.GetFinalAltitude() / 100);
+		line = to_string(ac->FinalAltitude / 100);
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());		
 		offsetX += 50;
 
 		// Draw destination
-		line = string(fp.GetFlightPlanData().GetDestination());
+		line = string(ac->Destination);
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 45;
 
 		// Direction arrow (Gander)
-		if (ac->second == true) {
+		if (ac->Direction == true) {
 			SolidBrush brush(TextWhite);
 			Point points[3] = { Point(rectangle.X + offsetX, rectangle.Y + (offsetY + 4)),
 				Point(rectangle.X + offsetX, rectangle.Y + (offsetY + 4) + 10),
@@ -100,6 +84,19 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<p
 
 		// Increment
 		idx++;
+	}
+
+	/// Make "Inbound" text
+	// Font
+	FontSelector::SelectMonoFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+	// Draw header but don't show size if none
+	if (inboundAircraft->size() == 0) {
+		dc->TextOutA(rectangle.X, rectangle.Y, "Inbound");
+	}
+	else {
+		dc->TextOutA(rectangle.X, rectangle.Y, string("Inbound (" + to_string(inboundAircraft->size()) + ")").c_str());
 	}
 
 	// Restore device context

@@ -14,7 +14,7 @@ POINT COtherList::GetTopLeft() {
 }
 
 // TODO: implement expand/retract button
-Rect COtherList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CRadarTarget>* otherAircraft) {
+Rect COtherList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<string>* otherAircraft) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -45,14 +45,14 @@ Rect COtherList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CRa
 	int offsetX = 0;
 	int idx = 1;
 
-	for (vector<CRadarTarget>::iterator ac = otherAircraft->begin(); ac != otherAircraft->end(); ac++) {
+	for (vector<string>::iterator cs = otherAircraft->begin(); cs != otherAircraft->end(); cs++) {
 		// Draw number
 		string line = to_string(idx);
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 35;
 
 		// Draw callsign
-		line = string(ac->GetCallsign());
+		line = *cs;
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 
 		// Offset the y index and reset the X offset

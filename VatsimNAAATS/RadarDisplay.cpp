@@ -25,7 +25,7 @@ CRadarDisplay::CRadarDisplay()
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
-	twoMinuteTimer = clock();
+	fiveSecondTimer = clock();
 }
 
 CRadarDisplay::~CRadarDisplay() 
@@ -146,10 +146,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// Graphics object
 	Graphics g(hDC);
 
-	// Clean up old lists
-	inboundAircraft.clear();
-	otherAircraft.clear();
+	// 1 second timer
+	double fiveSecT = (double)(clock() - fiveSecondTimer) / ((double)CLOCKS_PER_SEC);
 
+	// Clear lists if not empty and time is greater than 1 second
+	if (fiveSecT >= 5 && !inboundAircraft.empty()) {
+		inboundAircraft.clear();
+	}
+	if (fiveSecT >= 5 && !otherAircraft.empty()) {
+		otherAircraft.clear();
+	}
+	
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
 	RadarArea.top = RadarArea.top - 1;
@@ -169,15 +176,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		int entryMinutes;
 		bool direction;
 
-		// Two minute actions
-		/*double t = (double)(clock() - twoMinuteTimer) / ((double)CLOCKS_PER_SEC);
-		if (t >= 120) {
-
-		}*/
-
-		// List of entry points
-		vector<pair<string, int>> epVec;
-
 		// Loop all aircraft
 		while (ac.IsValid()) {
 			// Flight plan
@@ -190,7 +188,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			entryMinutes = fp.GetSectorEntryMinutes();
 			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
-			// Parse inbound
+			// Parse inbound & other			
 			if (entryMinutes >= 0 && entryMinutes < 60) {
 				// If not there then add the status
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
@@ -198,76 +196,80 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
 				}
 
-				// If going westbound
-				if (!direction && entryMinutes > 0) {
-					if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "CZQX") {
-						int i;
-						for (i = 0; i < rte.GetPointsNumber(); i++) {
-							// Find out if 30 west is in their flight plan
-							if (rte.GetPointPosition(i).m_Longitude == -30.0) {
-								// Test flight time
-								if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
+				if (fiveSecT >= 5) {
+					// If going westbound
+					if (!direction && entryMinutes > 0) {
+						if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "CZQX") {
+							int i;
+							for (i = 0; i < rte.GetPointsNumber(); i++) {
+								// Find out if 30 west is in their flight plan
+								if (rte.GetPointPosition(i).m_Longitude == -30.0) {
+									// Test flight time
+									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
+										// Add if within
+										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(), 
+												rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
+										break;
+									}
+								}
+							}
+							if (i == rte.GetPointsNumber()) {
+								// Add to 'others' list
+								otherAircraft.push_back(ac.GetCallsign());
+							}
+						}
+						else {
+							int i;
+							for (i = 0; i < rte.GetPointsNumber(); i++) {
+								// They are coming from land so check entry points
+								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
-									inboundAircraft.push_back(make_pair(ac, false));
-									epVec.push_back(make_pair(rte.GetPointName(i), i));
+									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+										rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
 									break;
 								}
 							}
-						}
-						if (i == rte.GetPointsNumber()) {
-							// Add to 'others' list
-							otherAircraft.push_back(ac);
+							if (i == rte.GetPointsNumber()) {
+								// Add to 'others' list
+								otherAircraft.push_back(ac.GetCallsign());
+							}
 						}
 					}
-					else {
-						int i;
-						for (i = 0; i < rte.GetPointsNumber(); i++) {
+					else if (direction && entryMinutes > 0) {
+						if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "EGGX") {
+							int i;
+							for (i = 0; i < rte.GetPointsNumber(); i++) {
+								// Find out if 30 west is in their flight plan
+								if (rte.GetPointPosition(i).m_Longitude == -30.0) {
+									// Test flight time
+									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
+										// Add if within
+										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+											rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
+										break;
+									}
+								}
+							}
+							if (i == rte.GetPointsNumber()) {
+								// Add to 'others' list
+								otherAircraft.push_back(ac.GetCallsign());
+							}
+						}
+						else {
 							// They are coming from land so check entry points
-							if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
-								inboundAircraft.push_back(make_pair(ac, false));
-								epVec.push_back(make_pair(rte.GetPointName(i), i));
-								break;
-							}
-						}
-						if (i == rte.GetPointsNumber()) {
-							// Add to 'others' list
-							otherAircraft.push_back(ac);
-						}
-					}
-				}
-				else if (direction && entryMinutes > 0) {
-					if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "EGGX") {
-						int i;
-						for (i = 0; i < rte.GetPointsNumber(); i++) {
-							// Find out if 30 west is in their flight plan
-							if (rte.GetPointPosition(i).m_Longitude == -30.0) {
-								// Test flight time
-								if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
+							int i;
+							for (i = 0; i < rte.GetPointsNumber(); i++) {
+								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
-									inboundAircraft.push_back(make_pair(ac, true));
-									epVec.push_back(make_pair(rte.GetPointName(i), i));
+									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+										rte.GetPointName(i), CUtils::ParseZuluTime(false, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
 									break;
 								}
 							}
-						}
-						if (i == rte.GetPointsNumber()) {
-							// Add to 'others' list
-							otherAircraft.push_back(ac);
-						}
-					}
-					else {
-						int i;
-						// They are coming from land so check entry points
-						for (i = 0; i < rte.GetPointsNumber(); i++) {
-							if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
-								inboundAircraft.push_back(make_pair(ac, true));
-								epVec.push_back(make_pair(rte.GetPointName(i), i));
-								break;
+							if (i == rte.GetPointsNumber()) {
+								// Add to 'others' list
+								otherAircraft.push_back(ac.GetCallsign());
 							}
-						}
-						if (i == rte.GetPointsNumber()) {
-							// Add to 'others' list
-							otherAircraft.push_back(ac);
 						}
 					}
 				}
@@ -338,18 +340,18 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons);
 		CMenuBar::dropDownClicked = -1;
 
-		// Draw Lists
-		inboundList->DrawList(&g, &dc, this, &inboundAircraft, &epVec);
+		// Check the lists are not empty first, then draw
+		inboundList->DrawList(&g, &dc, this, &inboundAircraft);
 		otherList->DrawList(&g, &dc, this, &otherAircraft);
 
 		// Draw track window info if button pressed
 		if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
 			trackWindow->RenderWindow(&dc, &g, this);
 		}
-	}
-	
-	if (Phase == REFRESH_PHASE_AFTER_LISTS) {
-		
+		// Finally, reset the clock if time has been exceeded
+		if (fiveSecT >= 5) {
+			fiveSecondTimer = clock();
+		}
 	}
 
 	// De-allocation

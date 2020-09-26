@@ -20,3 +20,23 @@ struct CRoutePosition {
 	string Estimate;
 	int FlightLevel;
 };
+
+// Aircraft displayed on list (inbound at the moment)
+struct CListAircraft {
+	CListAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
+		Callsign = cs;
+		FinalAltitude = fA;
+		ClearedLevel = cL;
+		Point = pt;
+		Estimate = est;
+		Destination = dest;
+		Direction = direction;
+	}
+	string Callsign;
+	int FinalAltitude;
+	int ClearedLevel;
+	string Point;
+	string Estimate;
+	string Destination;
+	bool Direction;
+};

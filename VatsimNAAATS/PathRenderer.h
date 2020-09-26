@@ -13,7 +13,7 @@ class CPathRenderer
 {
 	public:
 		// Target to compare ASEL against for PIV
-		static CRadarTarget PivTarget;
+		static string PivTarget;
 
 		// Target for route draw
 		static string RouteDrawTarget;

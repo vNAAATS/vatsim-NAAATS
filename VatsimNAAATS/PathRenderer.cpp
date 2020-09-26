@@ -2,7 +2,7 @@
 #include "PathRenderer.h"
 #include "Overlays.h"
 
-CRadarTarget CPathRenderer::PivTarget;
+string CPathRenderer::PivTarget;
 
 string CPathRenderer::RouteDrawTarget;
 
