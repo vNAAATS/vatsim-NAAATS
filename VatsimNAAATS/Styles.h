@@ -26,7 +26,7 @@ class FontSelector
 {
 	public:
 		static void SelectNormalFont(int size, CDC* dc) {
-			HFONT font;
+			CFont font;
 			LOGFONT lFont;
 
 			// Clear out
@@ -38,10 +38,10 @@ class FontSelector
 			// Normal weight
 			lFont.lfWeight = FW_SEMIBOLD;
 			// Finally create the font
-			font = ::CreateFontIndirect(&lFont);
+			font.CreateFontIndirect(&lFont);
 
-			// Select font
-			dc->SelectObject(CFont::FromHandle(font));
+			// Select the object
+			dc->SelectObject(&font);
 
 			// Cleanup
 			DeleteObject(font);
@@ -49,7 +49,7 @@ class FontSelector
 
 		static void SelectATCFont(int size, CDC* dc)
 		{
-			HFONT font;
+			CFont font;
 			LOGFONT lFont;
 
 			// Get font
@@ -63,10 +63,10 @@ class FontSelector
 			// Normal weight
 			lFont.lfWeight = FW_REGULAR;
 			// Finally create the font
-			font = ::CreateFontIndirect(&lFont);
+			font.CreateFontIndirect(&lFont);
 
-			// Select font
-			dc->SelectObject(CFont::FromHandle(font));
+			// Select the object
+			dc->SelectObject(&font);
 
 			// Cleanup
 			DeleteObject(font);
@@ -74,7 +74,7 @@ class FontSelector
 
 		static void SelectMonoFont(int size, CDC* dc)
 		{
-			HFONT font;
+			CFont font;
 			LOGFONT lFont;
 
 			// Clear out
@@ -86,10 +86,10 @@ class FontSelector
 			// Normal weight
 			lFont.lfWeight = FW_SEMIBOLD;
 			// Finally create the font
-			font = ::CreateFontIndirect(&lFont);
+			font.CreateFontIndirect(&lFont);
 
-			// Select font
-			dc->SelectObject(CFont::FromHandle(font));
+			// Select the object
+			dc->SelectObject(&font);
 
 			// Cleanup
 			DeleteObject(font);
