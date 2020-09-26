@@ -357,6 +357,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// De-allocation
 	dc.Detach();
 	g.ReleaseHDC(hDC);
+	dc.DeleteDC();
 }
 
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)

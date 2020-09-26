@@ -65,7 +65,7 @@ Rect COtherList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<str
 
 
 	// Get object area and add object to screen
-	CRect area(topLeft.x, topLeft.y, topLeft.x + 110, topLeft.y + (idx * 18));
+	CRect area(topLeft.x, topLeft.y, topLeft.x + 110, topLeft.y + 14);
 	screen->AddScreenObject(LIST_OTHERS, "", area, true, "");
 
 	// Return the rectangle
