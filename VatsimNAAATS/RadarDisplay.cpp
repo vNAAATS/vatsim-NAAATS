@@ -763,7 +763,7 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 
 void CRadarDisplay::OnAsrContentToBeSaved(void)
 {
-	CUtils::SavePluginData(this->GetPlugIn());
+	CUtils::SavePluginData(this);
 }
 
 void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
@@ -772,7 +772,7 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 		return;
 
 	// Load the plugin data
-	CUtils::LoadPluginData(this->GetPlugIn());
+	CUtils::LoadPluginData(this);
 
 	// Populate it
 	PopulateProgramData();

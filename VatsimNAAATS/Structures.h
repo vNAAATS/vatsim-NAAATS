@@ -40,3 +40,10 @@ struct CListAircraft {
 	string Destination;
 	bool Direction;
 };
+
+// Describes a longitudinal separation situation
+struct CSepInfoLong {
+	int DistanceAsTime;
+	bool DistanceDecreasing;
+	CTrackLongStatus Status;
+};

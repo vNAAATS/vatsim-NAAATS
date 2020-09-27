@@ -31,8 +31,8 @@ class CUtils {
 
 
 		// Load/save methods
-		static void SavePluginData(CPlugIn* plugin);
-		static void LoadPluginData(CPlugIn* plugin);
+		static void SavePluginData(CRadarScreen* screen);
+		static void LoadPluginData(CRadarScreen* screen);
 
 		// Convert other types of coordinates to NN/WW format
 		static string ConvertCoordinatesToSlashFormat(string coordinateString);

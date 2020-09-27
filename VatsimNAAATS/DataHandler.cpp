@@ -43,6 +43,11 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	}
 	
 	try {
+		// Clear old tracks
+		if (!COverlays::CurrentTracks.empty()) {
+			COverlays::CurrentTracks.clear();
+		}
+		
 		// Now we parse the json
 		auto jsonArray = json::parse(responseString);
 		for (int i = 0; i < jsonArray.size(); i++) {

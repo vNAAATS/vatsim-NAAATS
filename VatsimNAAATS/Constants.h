@@ -245,6 +245,14 @@ enum class CConflictStatus {
     CRITICAL
 };
 
+// Longitudinal trackstatus 
+enum class CTrackLongStatus {
+    NONE,
+    INTERSECTING,
+    RECIPROCAL,
+    SAME
+};
+
 // Message type
 enum class CMessageType {
     OK,
