@@ -72,4 +72,7 @@ class CUtils {
 
 		// Get a point based on distance and a heading
 		static CPosition GetPointDistanceBearing(CPosition position, int distanceNM, int heading);
+
+		// Get the n-vector (normal to earth's surface) from lat/lon
+		CLatLon GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2);
 };

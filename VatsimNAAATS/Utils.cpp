@@ -325,6 +325,10 @@ double CUtils::ToDegrees(double radians) {
 	return (180 / M_PI) * radians;
 }
 
+template <typename T> int sign(T val) {
+	return (T(0) < val) - (val < T(0));
+}
+
 CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, int heading) {
 	double bearing = CUtils::ToRadians((float)heading);
 
@@ -351,3 +355,25 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 	// Return
 	return PositionFromLatLon(newLat, newLon);
 }
+
+CLatLon CUtils::GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2) {
+	// Get points
+	CNVector pos1 = position1.ToNVector();
+	CNVector pos2 = position2.ToNVector();
+
+	// Great circles
+	CNVector circle1 = pos1.GreatCircle(bearing1);
+	CNVector circle2 = pos2.GreatCircle(bearing2);
+
+	// Two candidate positions to choose
+	CNVector int1 = circle1.Cross(circle2);
+	CNVector int2 = circle2.Cross(circle1);
+
+	// Pick position
+	CNVector intersection;
+
+	// Direction
+	int direction1 = sign(circle1.Cross(pos1).Dot(int1));
+	int direction2 = sign(circle2.Cross(pos2).Dot(int1));
+}
+
