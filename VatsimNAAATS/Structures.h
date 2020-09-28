@@ -184,5 +184,10 @@ struct CNVector {
 
 		return CLatLon(lat, lon);
 	}
+
+	// Add the vector
+	CNVector Plus(CNVector v) {
+		return CNVector(x + v.x, y + v.y, z + v.z);
+	}
 };
 

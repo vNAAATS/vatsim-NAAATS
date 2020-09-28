@@ -356,6 +356,7 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 	return PositionFromLatLon(newLat, newLon);
 }
 
+// Get the intersection between two vectors from points and bearings
 CLatLon CUtils::GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2) {
 	// Get points
 	CNVector pos1 = position1.ToNVector();
@@ -372,8 +373,23 @@ CLatLon CUtils::GetIntersectionFromPointBearing(CLatLon position1, CLatLon posit
 	// Pick position
 	CNVector intersection;
 
-	// Direction
+	// Get positive or negative signs for both possible directions
 	int direction1 = sign(circle1.Cross(pos1).Dot(int1));
 	int direction2 = sign(circle2.Cross(pos2).Dot(int1));
+
+	// Pick the intersection
+	switch (direction1 + direction2) {
+		case 2: // Both are positive, so both point to the first intersection
+			intersection = int1;
+			break;
+		case -2: // Both are negative, so both point to the second intersection
+			intersection = int2;
+			break;
+		case 0: // The directions are opposite, so the intersection is the point further away (need to check if this is always true)
+			intersection = pos1.Plus(pos2).Dot(int1) > 0 ? int2 : int1;
+	}
+
+	// Return the latitude and longitude
+	return CNVector(intersection.x, intersection.y, intersection.z).ToLatLon();
 }
 
