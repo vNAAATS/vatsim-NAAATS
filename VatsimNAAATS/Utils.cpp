@@ -329,6 +329,34 @@ template <typename T> int sign(T val) {
 	return (T(0) < val) - (val < T(0));
 }
 
+// Convert to vector normal
+CNVector CUtils::ToNVector(double Lat, double Lon) {
+	// Lat/lon to radians
+	double lat = CUtils::ToRadians(Lat);
+	double lon = CUtils::ToRadians(Lon);
+
+	// Trig values
+	double sinLat = sin(lat);
+	double cosLat = cos(lat);
+	double sinLon = sin(lon);
+	double cosLon = cos(lon);
+
+	// Return values
+	double x = cosLat * cosLon;
+	double y = cosLat * sinLon;
+	double z = sinLat;
+
+	// Return
+	return CNVector(x, y, z);
+}
+
+double CUtils::GetGeneralTheta(double hdg1, double hdg2) {
+	// Get theta
+	double theta = abs(hdg2 - hdg1);
+
+	// If the angle is obtuse, the aircraft are approaching, so minus 180
+}
+
 CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, int heading) {
 	double bearing = CUtils::ToRadians((float)heading);
 
@@ -359,8 +387,8 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 // Get the intersection between two vectors from points and bearings
 CLatLon CUtils::GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2) {
 	// Get points
-	CNVector pos1 = position1.ToNVector();
-	CNVector pos2 = position2.ToNVector();
+	CNVector pos1 = ToNVector(position1.Lat, position1.Lon);
+	CNVector pos2 = ToNVector(position2.Lat, position2.Lon);
 
 	// Great circles
 	CNVector circle1 = pos1.GreatCircle(bearing1);

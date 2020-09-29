@@ -309,7 +309,7 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	// Save context
 	int iDC = dc->SaveDC();
 
-	// Make orange pen
+	// Make white pen
 	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
 	dc->SelectObject(whitePen);
 
@@ -349,4 +349,47 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 
 	// Clean up
 	DeleteObject(whitePen);
+}
+
+void CAcTargets::PathInterceptVector(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2) {
+	
+}
+
+
+void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2) {
+	// Save context
+	int iDC = dc->SaveDC();
+
+	// Make white pen
+	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+	dc->SelectObject(whitePen);
+
+	// Make brush
+	SolidBrush white(TextWhite.ToCOLORREF());
+
+	// Radar targets
+	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
+	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(target2.c_str());
+
+	// Positions
+	CPosition t1Pos = ac1.GetPosition().GetPosition();
+	CPosition t2Pos = ac2.GetPosition().GetPosition();
+
+	// Get intersection and convert to CPosition
+	CLatLon intersection = CUtils::GetIntersectionFromPointBearing(CLatLon(t1Pos.m_Latitude, t1Pos.m_Longitude), CLatLon(t2Pos.m_Latitude, t2Pos.m_Longitude), ac1.GetTrackHeading(), ac2.GetTrackHeading());
+	CPosition intPosition = CUtils::PositionFromLatLon(intersection.Lat, intersection.Lon);
+
+	// Get screen coordinates and draw dot (temp)
+	POINT intScreenPos = screen->ConvertCoordFromPositionToPixel(intPosition);
+	// Draw dot
+	Rect drawPoint(intScreenPos.x - 3, intScreenPos.y - 3, 6, 6);
+	g->FillEllipse(&white, drawPoint);
+
+
+	// Restore context
+	dc->RestoreDC(iDC);
+
+	// Clean up
+	DeleteObject(whitePen);
+	DeleteObject(&white);
 }

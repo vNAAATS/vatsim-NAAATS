@@ -3,6 +3,7 @@
 #include "EuroScopePlugIn.h"
 #include <chrono>
 #include <cmath>
+#include "Structures.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -70,9 +71,15 @@ class CUtils {
 		// Radians to degrees
 		static double ToDegrees(double radians);
 
+		// Convert lat/lon to n-vector
+		static CNVector CUtils::ToNVector(double Lat, double Lon);
+		
+		// General solution to get the angle between two intersecting paths
+		static double GetGeneralTheta(double hdg1, double hdg2);
+
 		// Get a point based on distance and a heading
 		static CPosition GetPointDistanceBearing(CPosition position, int distanceNM, int heading);
 
 		// Get the n-vector (normal to earth's surface) from lat/lon
-		CLatLon GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2);
+		static CLatLon GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2);
 };

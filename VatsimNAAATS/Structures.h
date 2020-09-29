@@ -1,8 +1,8 @@
 #pragma once
+#include <cmath>
 #include <string>
 #include <vector>
 #include "Constants.h"
-#include "Utils.h"
 
 // Describes a NAT track
 struct CTrack {
@@ -60,25 +60,9 @@ struct CLatLon {
 		Lon = lon;
 	}
 
-	// Convert to vector normal
-	CNVector ToNVector() {
-		// Lat/lon to radians
-		double lat = CUtils::ToRadians(Lat);
-		double lon = CUtils::ToRadians(Lon);
-
-		// Trig values
-		double sinLat = sin(lat);
-		double cosLat = cos(lat);
-		double sinLon = sin(lon);
-		double cosLon = cos(lon);
-
-		// Return values
-		double x = cosLat * cosLon;
-		double y = cosLat * sinLon;
-		double z = sinLat;
-
-		// Return
-		return CNVector(x, y, z);
+	// Convert degrees to radians (can't use Utils.h because circular dependency)
+	double ToRadians(double degrees) {
+		return (M_PI / 180) * degrees;
 	}
 };
 
@@ -141,9 +125,14 @@ struct CNVector {
 	// Default constructor
 	CNVector() {}
 
+	// Radians (can't do a circular Utils include)
+	double ToRadians(double degrees) {
+		return (M_PI / 180) * degrees;
+	}
+
 	// Get the vector normal to great circle from heading
 	CNVector GreatCircle(double bearing) {
-		double theta = CUtils::ToRadians(bearing);
+		double theta = ToRadians(bearing);
 		// 3d vector for this nvector
 		C3DVector vec(x, y, z);
 		// North pole n vector
@@ -154,8 +143,8 @@ struct CNVector {
 		C3DVector north = vec.Cross(east);
 
 		// Calculate return vector
-		C3DVector eastVal = east.Times(cos(theta) / east.Length);
-		C3DVector northVal = north.Times(sin(theta) / north.Length);
+		C3DVector eastVal = east.Times(cos(theta) / east.Length());
+		C3DVector northVal = north.Times(sin(theta) / north.Length());
 		C3DVector circle = northVal.Minus(eastVal);
 
 		return CNVector(circle.x, circle.y, circle.z);
@@ -177,12 +166,16 @@ struct CNVector {
 		return (x * v.x) + (y * v.y) + (z * v.z);
 	}
 
+	double ToDegrees(double radians) {
+		return (180 / M_PI) * radians;
+	}
+
 	// Convert to lat/lon
 	CLatLon ToLatLon() {
 		double lat = atan2(z, sqrt((x * x) + (y * y)));
 		double lon = atan2(y, x);
 
-		return CLatLon(lat, lon);
+		return CLatLon(ToDegrees(lat), ToDegrees(lon));
 	}
 
 	// Add the vector

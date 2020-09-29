@@ -330,8 +330,20 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				CAcTargets::RangeBearingLine(&g, &dc, this, aircraftSel1, aircraftSel2);
 			}
 		}
-		else {
-			// Reset
+
+		// SEP draw
+		if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+			// If both aircraft selected then draw
+			if (aircraftSel1 != "" && aircraftSel2 != "") {
+				CAcTargets::SeparationVectorIntercept(&g, &dc, this, aircraftSel1, aircraftSel2);
+			}
+		}
+
+		// Clear ASELs if none of the range/separation tools are pressed
+		if (buttonsPressed.find(MENBTN_PIV) == buttonsPressed.end()
+			&& buttonsPressed.find(MENBTN_RBL) == buttonsPressed.end()
+			&& buttonsPressed.find(MENBTN_SEP) == buttonsPressed.end()) {
+			// Reset ASELs if none enabled
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
@@ -561,7 +573,9 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			// RBL (if active)
-			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end() 
+				|| buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()
+				|| buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
 				if (aircraftSel1 == "") {
 					aircraftSel1 = asel;
 				}
@@ -579,6 +593,51 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		// Detailed button
 		if (ObjectType == MENBTN_DETAILED) {
 			aselDetailed = true;
+		}
+
+		// If the button is the PIV button
+		if (ObjectType == MENBTN_PIV) {
+			// Erase RBL (if active)
+			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_RBL);
+			}
+			// Erase SEP (if active)
+			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_SEP);
+			}
+			// Reset ASELs
+			aircraftSel1 = "";
+			aircraftSel2 = "";
+		}
+
+		// If the button is the RBL button
+		if (ObjectType == MENBTN_RBL) {
+			// Erase PIV (if active)
+			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_RBL);
+			}
+			// Erase SEP (if active)
+			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_SEP);
+			}
+			// Reset ASELs
+			aircraftSel1 = "";
+			aircraftSel2 = "";
+		}
+
+		// If the button is the SEP button
+		if (ObjectType == MENBTN_SEP) {
+			// Erase RBL (if active)
+			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_RBL);
+			}
+			// Erase PIV (if active)
+			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_SEP);
+			}
+			// Reset ASELs
+			aircraftSel1 = "";
+			aircraftSel2 = "";
 		}
 	}
 	

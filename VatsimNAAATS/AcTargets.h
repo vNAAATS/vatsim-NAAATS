@@ -20,4 +20,10 @@ class CAcTargets
 
 		// Range bearing line tool
 		static void RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2);
+
+		// Range bearing line tool
+		static void PathInterceptVector(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2);
+
+		// Range bearing line tool
+		static void SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2);
 };
