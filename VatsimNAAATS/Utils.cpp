@@ -355,6 +355,10 @@ double CUtils::GetGeneralTheta(double hdg1, double hdg2) {
 	double theta = abs(hdg2 - hdg1);
 
 	// If the angle is obtuse, the aircraft are approaching, so minus 180
+	if (theta > 90) return theta - 180;
+
+	// Otherwise just return theta
+	return theta;
 }
 
 CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, int heading) {

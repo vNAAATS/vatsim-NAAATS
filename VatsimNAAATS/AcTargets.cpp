@@ -379,11 +379,14 @@ void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* s
 	CLatLon intersection = CUtils::GetIntersectionFromPointBearing(CLatLon(t1Pos.m_Latitude, t1Pos.m_Longitude), CLatLon(t2Pos.m_Latitude, t2Pos.m_Longitude), ac1.GetTrackHeading(), ac2.GetTrackHeading());
 	CPosition intPosition = CUtils::PositionFromLatLon(intersection.Lat, intersection.Lon);
 
-	// Get screen coordinates and draw dot (temp)
+	// Get screen coordinates and draw line (temp)
 	POINT intScreenPos = screen->ConvertCoordFromPositionToPixel(intPosition);
+
+	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(t1Pos));
+	dc->LineTo(intScreenPos);
 	// Draw dot
-	Rect drawPoint(intScreenPos.x - 3, intScreenPos.y - 3, 6, 6);
-	g->FillEllipse(&white, drawPoint);
+	/*Rect drawPoint(intScreenPos.x - 3, intScreenPos.y - 3, 6, 6);
+	g->FillEllipse(&white, drawPoint);*/
 
 
 	// Restore context
