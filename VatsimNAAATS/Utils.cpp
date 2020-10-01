@@ -368,9 +368,10 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 	return PositionFromLatLon(newLat, newLon);
 }
 
-// Get the intersection between two vectors from points and bearings
-// This algorithm utilises Euclidean geometry. If this creates inaccuracies, I will re-do the algorithm in non-Euclidian terms.
-CLatLon CUtils::GetIntersectionFromPointBearing(CPosition position1, CPosition position2, double bearing1, double bearing2) {
+// Get the intersection between two vectors from two screen coordinates and bearings
+// This algorithm utilises Euclidean geometry, taking advantage of the available conversions between lat/lon and screen coordinates to get accurate points. 
+// If this creates inaccuracies, I will re-do the algorithm in non-Euclidian terms.
+POINT CUtils::GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2) {
 	/* We solve the linear system using Cramer's rule: 
 	 * ax1 - y1 = b 
 	 * cx2 - y2 = d
@@ -378,54 +379,34 @@ CLatLon CUtils::GetIntersectionFromPointBearing(CPosition position1, CPosition p
 	 * 
 	 * Cramer's rule in terms of this solution: 
 	 * Ax = b => xi = det(Ai)/det(A) | i = 1, 2
+	 * 
+	 * We use trigonometry to convert the bearings into positive and negative slopes:
+	 * slope = 1 / tan(bearing) where bearing is in radians
 	 */
-
-	/// Convert our bearings into slopes
-	// Bearing 1
-	double slope1 = 0.0;
-	if (bearing1 > 180) bearing1 -= 180;
-	if (bearing1 == 90) slope1 = 0;
-	if (bearing1 == 180 || bearing1 == 0) slope1 = 0;
-	if (bearing1 != 0 && bearing1 != 90 && bearing1 != 180) {
-		if (bearing1 < 90) {
-			slope1 = sin(ToRadians(90 - bearing1)) / sin(ToRadians(180 - bearing1));
-		}
-		else {
-			slope1 = -(sin(ToRadians(90 - bearing1)) / sin(ToRadians(180 - bearing1)));
-		}
-	}
-	// Bearing 2
-	double slope2 = 0.0;
-	if (bearing2 > 180) bearing2 -= 180;
-	if (bearing2 == 90) slope2 = 0;
-	if (bearing2 == 180 || bearing2 == 0) slope2 = 0;
-	if (bearing2 != 0 && bearing2 != 90 && bearing2 != 180) {
-		if (bearing2 < 90) {
-			slope2 = sin(ToRadians(90 - bearing2)) / sin(ToRadians(180 - bearing2));
-		}
-		else {
-			slope2 = -(sin(ToRadians(90 - bearing2)) / sin(ToRadians(180 - bearing2)));
-		}
-	}
+	
+	// Get the slopes
+	double slope1 = 1.0 / tan(ToRadians(bearing1));
+	double slope2 = 1.0 / tan(ToRadians(bearing2));
 
 	// Get our b and d values
-	double b = (slope1 * ToRadians(position1.m_Longitude)) + ToRadians(position1.m_Latitude);
-	double d = (slope2 * ToRadians(position2.m_Longitude)) + ToRadians(position2.m_Latitude);
+	double b = (slope1 * position1.x) + position1.y;
+	double d = (slope2 * position2.x) + position2.y;
 
 	// Calculate determinents using the coefficient matrix:
-	// [hdgA1]    [1]
-	// [bearing2] [1]
+	// [slope1][1]
+	// [slope2][1]
 	// and the answer matrix:
 	// [b]
+	// [d]
 	double determinent = slope1 - slope2;
 	double detX = b - d;
 	double detY = (slope1 * d) - (slope2 * b);
 
 	// From the determinents, get our new X and Y values
-	double newX = detX / determinent;
-	double newY = detY / determinent;
+	int newX = round(detX / determinent);
+	int newY = round(detY / determinent);
 
-	// Return the latitude and longitude
-	return CLatLon(ToDegrees(newX), ToDegrees(newY));
+	// Return the screen coordinates
+	return POINT({ newX, newY });
 }
 

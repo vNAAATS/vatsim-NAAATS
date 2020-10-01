@@ -78,5 +78,5 @@ class CUtils {
 		static CPosition GetPointDistanceBearing(CPosition position, int distanceNM, int heading);
 
 		// Get intersection of two vectors
-		static CLatLon GetIntersectionFromPointBearing(CPosition position1, CPosition position2, double bearing1, double bearing2);
+		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
 };

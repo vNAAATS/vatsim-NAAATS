@@ -371,19 +371,18 @@ void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* s
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(target2.c_str());
 
-	// Positions
-	CPosition t1Pos = ac1.GetPosition().GetPosition();
-	CPosition t2Pos = ac2.GetPosition().GetPosition();
+	// Positions as screen coordinates
+	POINT t1Pos = screen->ConvertCoordFromPositionToPixel(ac1.GetPosition().GetPosition());
+	POINT t2Pos = screen->ConvertCoordFromPositionToPixel(ac2.GetPosition().GetPosition());
 
 	// Get the intercept
-	CLatLon intercept = CUtils::GetIntersectionFromPointBearing(t1Pos, t2Pos, ac1.GetPosition().GetReportedHeading(), ac2.GetPosition().GetReportedHeading());
-	CPosition interceptPos = CUtils::PositionFromLatLon(intercept.Lat, intercept.Lon);
+	POINT intercept = CUtils::GetIntersectionFromPointBearing(t1Pos, t2Pos, ac1.GetPosition().GetReportedHeading(), ac2.GetPosition().GetReportedHeading());
 
 	// Draw lines
-	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(t1Pos));
-	dc->LineTo(screen->ConvertCoordFromPositionToPixel(interceptPos));
-	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(t2Pos));
-	dc->LineTo(screen->ConvertCoordFromPositionToPixel(interceptPos));
+	dc->MoveTo(t1Pos);
+	dc->LineTo(intercept);
+	dc->MoveTo(t2Pos);
+	dc->LineTo(intercept);
 
 	// Restore context
 	dc->RestoreDC(iDC);
