@@ -70,9 +70,6 @@ class CUtils {
 
 		// Radians to degrees
 		static double ToDegrees(double radians);
-
-		// Convert lat/lon to n-vector
-		static CNVector CUtils::ToNVector(double Lat, double Lon);
 		
 		// General solution to get the angle between two intersecting paths
 		static double GetGeneralTheta(double hdg1, double hdg2);
@@ -80,6 +77,6 @@ class CUtils {
 		// Get a point based on distance and a heading
 		static CPosition GetPointDistanceBearing(CPosition position, int distanceNM, int heading);
 
-		// Get the n-vector (normal to earth's surface) from lat/lon
-		static CLatLon GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2);
+		// Get intersection of two vectors
+		static CLatLon GetIntersectionFromPointBearing(CPosition position1, CPosition position2, double bearing1, double bearing2);
 };

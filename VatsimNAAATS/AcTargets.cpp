@@ -375,24 +375,19 @@ void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* s
 	CPosition t1Pos = ac1.GetPosition().GetPosition();
 	CPosition t2Pos = ac2.GetPosition().GetPosition();
 
-	// Get intersection and convert to CPosition
-	CLatLon intersection = CUtils::GetIntersectionFromPointBearing(CLatLon(t1Pos.m_Latitude, t1Pos.m_Longitude), CLatLon(t2Pos.m_Latitude, t2Pos.m_Longitude), ac1.GetTrackHeading(), ac2.GetTrackHeading());
-	CPosition intPosition = CUtils::PositionFromLatLon(intersection.Lat, intersection.Lon);
+	// Get the intercept
+	CLatLon intercept = CUtils::GetIntersectionFromPointBearing(t1Pos, t2Pos, ac1.GetPosition().GetReportedHeading(), ac2.GetPosition().GetReportedHeading());
+	CPosition interceptPos = CUtils::PositionFromLatLon(intercept.Lat, intercept.Lon);
 
-	// Get screen coordinates and draw line (temp)
-	POINT intScreenPos = screen->ConvertCoordFromPositionToPixel(intPosition);
-
+	// Draw lines
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(t1Pos));
-	dc->LineTo(intScreenPos);
-	// Draw dot
-	/*Rect drawPoint(intScreenPos.x - 3, intScreenPos.y - 3, 6, 6);
-	g->FillEllipse(&white, drawPoint);*/
-
+	dc->LineTo(screen->ConvertCoordFromPositionToPixel(interceptPos));
+	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(t2Pos));
+	dc->LineTo(screen->ConvertCoordFromPositionToPixel(interceptPos));
 
 	// Restore context
 	dc->RestoreDC(iDC);
 
 	// Clean up
 	DeleteObject(whitePen);
-	DeleteObject(&white);
 }

@@ -329,27 +329,7 @@ template <typename T> int sign(T val) {
 	return (T(0) < val) - (val < T(0));
 }
 
-// Convert to vector normal
-CNVector CUtils::ToNVector(double Lat, double Lon) {
-	// Lat/lon to radians
-	double lat = CUtils::ToRadians(Lat);
-	double lon = CUtils::ToRadians(Lon);
-
-	// Trig values
-	double sinLat = sin(lat);
-	double cosLat = cos(lat);
-	double sinLon = sin(lon);
-	double cosLon = cos(lon);
-
-	// Return values
-	double x = cosLat * cosLon;
-	double y = cosLat * sinLon;
-	double z = sinLat;
-
-	// Return
-	return CNVector(x, y, z);
-}
-
+// This algorithm is a general solution to get the angle of intersection to any given path
 double CUtils::GetGeneralTheta(double hdg1, double hdg2) {
 	// Get theta
 	double theta = abs(hdg2 - hdg1);
@@ -389,39 +369,63 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, in
 }
 
 // Get the intersection between two vectors from points and bearings
-CLatLon CUtils::GetIntersectionFromPointBearing(CLatLon position1, CLatLon position2, double bearing1, double bearing2) {
-	// Get points
-	CNVector pos1 = ToNVector(position1.Lat, position1.Lon);
-	CNVector pos2 = ToNVector(position2.Lat, position2.Lon);
+// This algorithm utilises Euclidean geometry. If this creates inaccuracies, I will re-do the algorithm in non-Euclidian terms.
+CLatLon CUtils::GetIntersectionFromPointBearing(CPosition position1, CPosition position2, double bearing1, double bearing2) {
+	/* We solve the linear system using Cramer's rule: 
+	 * ax1 - y1 = b 
+	 * cx2 - y2 = d
+	 * to find our intercept. (Origin is 0,0 to lat/lon)
+	 * 
+	 * Cramer's rule in terms of this solution: 
+	 * Ax = b => xi = det(Ai)/det(A) | i = 1, 2
+	 */
 
-	// Great circles
-	CNVector circle1 = pos1.GreatCircle(bearing1);
-	CNVector circle2 = pos2.GreatCircle(bearing2);
-
-	// Two candidate positions to choose
-	CNVector int1 = circle1.Cross(circle2);
-	CNVector int2 = circle2.Cross(circle1);
-
-	// Pick position
-	CNVector intersection;
-
-	// Get positive or negative signs for both possible directions
-	int direction1 = sign(circle1.Cross(pos1).Dot(int1));
-	int direction2 = sign(circle2.Cross(pos2).Dot(int1));
-
-	// Pick the intersection
-	switch (direction1 + direction2) {
-		case 2: // Both are positive, so both point to the first intersection
-			intersection = int1;
-			break;
-		case -2: // Both are negative, so both point to the second intersection
-			intersection = int2;
-			break;
-		case 0: // The directions are opposite, so the intersection is the point further away (need to check if this is always true)
-			intersection = pos1.Plus(pos2).Dot(int1) > 0 ? int2 : int1;
+	/// Convert our bearings into slopes
+	// Bearing 1
+	double slope1 = 0.0;
+	if (bearing1 > 180) bearing1 -= 180;
+	if (bearing1 == 90) slope1 = 0;
+	if (bearing1 == 180 || bearing1 == 0) slope1 = 0;
+	if (bearing1 != 0 && bearing1 != 90 && bearing1 != 180) {
+		if (bearing1 < 90) {
+			slope1 = sin(ToRadians(90 - bearing1)) / sin(ToRadians(180 - bearing1));
+		}
+		else {
+			slope1 = -(sin(ToRadians(90 - bearing1)) / sin(ToRadians(180 - bearing1)));
+		}
+	}
+	// Bearing 2
+	double slope2 = 0.0;
+	if (bearing2 > 180) bearing2 -= 180;
+	if (bearing2 == 90) slope2 = 0;
+	if (bearing2 == 180 || bearing2 == 0) slope2 = 0;
+	if (bearing2 != 0 && bearing2 != 90 && bearing2 != 180) {
+		if (bearing2 < 90) {
+			slope2 = sin(ToRadians(90 - bearing2)) / sin(ToRadians(180 - bearing2));
+		}
+		else {
+			slope2 = -(sin(ToRadians(90 - bearing2)) / sin(ToRadians(180 - bearing2)));
+		}
 	}
 
+	// Get our b and d values
+	double b = (slope1 * ToRadians(position1.m_Longitude)) + ToRadians(position1.m_Latitude);
+	double d = (slope2 * ToRadians(position2.m_Longitude)) + ToRadians(position2.m_Latitude);
+
+	// Calculate determinents using the coefficient matrix:
+	// [hdgA1]    [1]
+	// [bearing2] [1]
+	// and the answer matrix:
+	// [b]
+	double determinent = slope1 - slope2;
+	double detX = b - d;
+	double detY = (slope1 * d) - (slope2 * b);
+
+	// From the determinents, get our new X and Y values
+	double newX = detX / determinent;
+	double newY = detY / determinent;
+
 	// Return the latitude and longitude
-	return CNVector(intersection.x, intersection.y, intersection.z).ToLatLon();
+	return CLatLon(ToDegrees(newX), ToDegrees(newY));
 }
 
