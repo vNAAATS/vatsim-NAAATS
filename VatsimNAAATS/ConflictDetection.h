@@ -25,7 +25,7 @@ class CConflictDetection
 
 		// Separation calculators
 		static pair<bool, int> LateralSeparation(CRadarTarget* targetA, CRadarTarget* targetB); // Implement gentle slope and 9-5 separation
-		static CSepInfoLong LongitudinalSeparation(CRadarTarget* targetA, CRadarTarget* targetB); // Implement recprocal, intersecting and same separation
+		static CSepStatus LongitudinalSeparation(CRadarTarget* targetA, CRadarTarget* targetB); // Implement recprocal, intersecting and same separation
 		static pair<bool, int> VerticalSeparation(CRadarTarget* targetA, CRadarTarget* targetB); // 1000ft below FL410, 2000ft above 410, supersonic 4000ft anywhere
 };
 

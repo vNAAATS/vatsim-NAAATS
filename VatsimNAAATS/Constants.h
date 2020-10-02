@@ -246,10 +246,11 @@ enum class CConflictStatus {
 };
 
 // Longitudinal trackstatus 
-enum class CTrackLongStatus {
-    NONE,
+enum class CTrackStatus {
+    NA,
     INTERSECTING,
     RECIPROCAL,
+    OPPOSITE,
     SAME
 };
 

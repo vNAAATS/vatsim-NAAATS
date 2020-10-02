@@ -3,6 +3,7 @@
 #include "AcTargets.h"
 #include "Utils.h"
 #include "PathRenderer.h"
+#include "ConflictDetection.h"
 
 using namespace Colours;
 
@@ -39,7 +40,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 
 	// Rotate the graphics object and set the middle to the aircraft position
-	g->RotateTransform(target->GetPosition().GetReportedHeading());
+	g->RotateTransform(target->GetTrackHeading());
 	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 
 	// This is the icon
@@ -100,7 +101,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 
 		// Get aircraft point at that time
-		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min);
+		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
 		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
 		// Draw leader
@@ -137,7 +138,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 
 		// Get aircraft point at that time
-		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min);
+		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
 		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
 		// Get distance
@@ -359,6 +360,8 @@ void CAcTargets::PathInterceptVector(Graphics* g, CDC* dc, CRadarScreen* screen,
 void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2) {
 	// Save context
 	int iDC = dc->SaveDC();
+
+	CConflictDetection::LongitudinalSeparation(&screen->GetPlugIn()->RadarTargetSelect(target1.c_str()), &screen->GetPlugIn()->RadarTargetSelect(target2.c_str()));
 
 	// Make white pen
 	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());

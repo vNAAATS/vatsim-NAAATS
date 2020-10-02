@@ -310,21 +310,23 @@ int CUtils::GetTimeDistanceSpeed(int distanceNM, int speedGS) {
 	return ((float)distanceNM / (float)speedGS) * 60;
 }
 
-int CUtils::GetDistanceSpeedTime(int speedGS, int timeMin) {
-	// Get distance in NM
-	float mins = ((float)timeMin / 60.0);
-	float gs = (float)speedGS;
-	return (float)speedGS * ((float)timeMin / 60.0);
+double CUtils::GetDistanceSpeedTime(int speedGS, int timeSec) {
+	// Get distance in metres
+	return ((float)speedGS * 0.514444) * ((float)timeSec);
 }
 
 double CUtils::ToRadians(double degrees) {
-	return (M_PI / 180) * degrees;
+	return degrees / 180.0 * M_PI;
 }
 
 double CUtils::ToDegrees(double radians) {
-	return (180 / M_PI) * radians;
+	return radians / M_PI * 180.0;
 }
 
+double CUtils::MetresToNauticalMiles(double metres) {
+	return double(metres * 0.00053996);
+}
+ 
 template <typename T> int sign(T val) {
 	return (T(0) < val) - (val < T(0));
 }
@@ -341,31 +343,24 @@ double CUtils::GetGeneralTheta(double hdg1, double hdg2) {
 	return theta;
 }
 
-CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceNM, int heading) {
-	double bearing = CUtils::ToRadians((float)heading);
+CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceMetres, int heading) {
 
-	// Convert coordinates to radians
-	double lat = CUtils::ToRadians(position.m_Latitude);
-	double lon = CUtils::ToRadians(position.m_Longitude);
+	// Get distance in nautical miles
+	double distance = MetresToNauticalMiles(distanceMetres) / 60 * M_PI / 180;
 
-	// Get distance to radius in NM
-	double distanceToRadius = (float)distanceNM / (float)RADIUS_EARTH_NM;
+	// Convert track heading and coordinates to radians
+	double track = ToRadians(heading);
+	double lat = ToRadians(position.m_Latitude);
+	double lon = ToRadians(position.m_Longitude);
 
 	// Calculate lat
-	double newLat = asin(sin(lat) * cos(distanceToRadius)
-		+ cos(lat) * sin(distanceToRadius) * cos(bearing));
+	double newLat = asin(sin(lat) * cos(distance) + cos(lat) * sin(distance) * cos(track));
 
 	// Calculate lon
-	double newLon = lon + atan2(
-		sin(bearing) * sin(distanceToRadius) * cos(lat),
-		cos(distanceToRadius) - sin(lat) * sin(newLat));
-
-	/// Convert values to sector file format
-	newLat = CUtils::ToDegrees(newLat);
-	newLon = CUtils::ToDegrees(newLon);
+	double newLon = cos(newLat) == 0 ? lon : fmod(lon + asin(sin(track) * sin(distance) / cos(newLat)) + M_PI, 2 * M_PI) - M_PI;
 	
 	// Return
-	return PositionFromLatLon(newLat, newLon);
+	return PositionFromLatLon(CUtils::ToDegrees(newLat), CUtils::ToDegrees(newLon));
 }
 
 // Get the intersection between two vectors from two screen coordinates and bearings

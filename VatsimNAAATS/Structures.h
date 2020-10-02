@@ -42,11 +42,21 @@ struct CListAircraft {
 	bool Direction;
 };
 
-// Describes a longitudinal separation situation
-struct CSepInfoLong {
+// General aircraft
+struct CAircraftStatus {
+	string Callsign;
+	int Altitude;
+	int GroundSpeed;
+	int Heading;
+	CPosition Position;
+};
+
+// Describes a separation status
+struct CSepStatus {
 	int DistanceAsTime;
+	int AltDifference;
 	bool DistanceDecreasing;
-	CTrackLongStatus Status;
+	CTrackStatus TrackStatus;
 };
 
 // Describes a lat/lon

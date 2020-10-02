@@ -62,15 +62,18 @@ class CUtils {
 		// Time (minutes) based on distance and speed
 		static int GetTimeDistanceSpeed(int distanceNM, int speedGS);
 
-		// Distance (nm) based on speed and time
-		static int GetDistanceSpeedTime(int speedGS, int timeMin);
+		// Distance (metres) based on speed and time
+		static double GetDistanceSpeedTime(int speedGS, int timeMin);
+
+		// Metres to nautical miles
+		static double MetresToNauticalMiles(double metres);
 
 		// Degrees to radians
 		static double ToRadians(double degrees);
 
 		// Radians to degrees
 		static double ToDegrees(double radians);
-		
+
 		// General solution to get the angle between two intersecting paths
 		static double GetGeneralTheta(double hdg1, double hdg2);
 
