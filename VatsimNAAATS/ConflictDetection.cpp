@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "ConflictDetection.h"
 
-/*CConflictStatus CConflictDetection::DetectStatusNow(CRadarTarget* targetA, CRadarTarget* targetB) {
+/*CSepStatus CConflictDetection::DetectStatusNow(CRadarTarget* targetA, CRadarTarget* targetB) {
 	
-}
+}*/
 
-/CConflictStatus CConflictDetection::DetectStatusNow(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare) {
+/*CConflictStatus CConflictDetection::DetectStatusNow(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare) {
 
 }
 
@@ -25,19 +25,20 @@ vector<CConflictStatus> CConflictDetection::PredictStatusFutureVector(CRadarTarg
 
 }*/
 
-/*static pair<bool, int> LateralSeparation(CRadarTarget* targetA, CRadarTarget* targetB) { // Target A in front, target B following
-
-}*/
-
-CSepStatus CConflictDetection::LongitudinalSeparation(CRadarTarget* targetA, CRadarTarget* targetB) { // Target A in front, target B behind (direction irrelevant)
+CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircraftStatus aircraftA, CAircraftStatus aircraftB, bool currentPointInTime) {
 	// Get aircraft headings, altitudes and speeds
-	double hdgA = targetA->GetTrackHeading();
-	double hdgB = targetB->GetTrackHeading();
-	int altA = targetA->GetPosition().GetPressureAltitude();
-	int altB = targetB->GetPosition().GetPressureAltitude();
-	int gsA = targetA->GetGS();
-	int gsB = targetB->GetGS();
-	
+	double hdgA = aircraftA.Heading;
+	double hdgB = aircraftB.Heading;
+	int altA = aircraftA.Altitude;
+	int altB = aircraftB.Altitude;
+	int gsA = aircraftA.GroundSpeed;
+	int gsB = aircraftB.GroundSpeed;
+
+	// Very first thing to do is to check whether we need the separation at a specific point in space (N/A type)
+	if (currentPointInTime) {
+
+	}
+
 	// TODO run check to make sure that they are, in fact, on same tracks
 	// First check if aircraft are on same tracks
 	if (!(hdgB > hdgA + 4) && !(hdgB < hdgA - 4)) {
@@ -47,27 +48,27 @@ CSepStatus CConflictDetection::LongitudinalSeparation(CRadarTarget* targetA, CRa
 		bool direction = CUtils::GetAircraftDirection(hdgA);
 		bool isAcAInFront = false;
 		if (direction) { // Switch the direction to get the aircraft in front
-			if (targetA->GetPosition().GetPosition().m_Longitude > targetB->GetPosition().GetPosition().m_Longitude) isAcAInFront = true;
+			if (aircraftA.Position.m_Longitude > aircraftB.Position.m_Longitude) isAcAInFront = true;
 		}
 		else {
-			if (targetA->GetPosition().GetPosition().m_Longitude < targetB->GetPosition().GetPosition().m_Longitude) isAcAInFront = true;
+			if (aircraftA.Position.m_Longitude < aircraftB.Position.m_Longitude) isAcAInFront = true;
 		}
 
 		// Check if on a suitable line of latitude
-		double latA = targetA->GetPosition().GetPosition().m_Latitude;
-		double latB = targetB->GetPosition().GetPosition().m_Latitude;
+		double latA = aircraftA.Position.m_Latitude;
+		double latB = aircraftB.Position.m_Latitude;
 
 		// Assign values
-		acA.Callsign = isAcAInFront ? targetA->GetCallsign() : targetB->GetCallsign();
-		acB.Callsign = isAcAInFront ? targetB->GetCallsign() : targetA->GetCallsign();
-		acA.Altitude = isAcAInFront ? altA : altB;
-		acB.Altitude = isAcAInFront ? altB : altA;
-		acA.Heading = isAcAInFront ? hdgA : hdgB;
-		acB.Heading = isAcAInFront ? hdgB : hdgA;
-		acA.GroundSpeed = isAcAInFront ? gsA : gsB;
-		acB.GroundSpeed = isAcAInFront ? gsB : gsA;
-		acA.Position = isAcAInFront ? targetA->GetPosition().GetPosition() : targetB->GetPosition().GetPosition();
-		acB.Position = isAcAInFront ? targetB->GetPosition().GetPosition() : targetA->GetPosition().GetPosition();
+		acA.Callsign = isAcAInFront ? aircraftA.Callsign : aircraftB.Callsign;
+		acB.Callsign = isAcAInFront ? aircraftB.Callsign : aircraftA.Callsign;;
+		acA.Altitude = isAcAInFront ? aircraftA.Altitude : aircraftB.Altitude;
+		acB.Altitude = isAcAInFront ? aircraftB.Altitude : aircraftA.Altitude;
+		acA.Heading = isAcAInFront ? aircraftA.Heading : aircraftB.Heading;
+		acB.Heading = isAcAInFront ? aircraftB.Heading : aircraftA.Heading;
+		acA.GroundSpeed = isAcAInFront ? aircraftA.GroundSpeed : aircraftB.GroundSpeed;
+		acB.GroundSpeed = isAcAInFront ? aircraftB.GroundSpeed : aircraftA.GroundSpeed;
+		acA.Position = isAcAInFront ? aircraftA.Position : aircraftB.Position;
+		acB.Position = isAcAInFront ? aircraftB.Position : aircraftA.Position;
 
 		// Create a status object
 		CSepStatus status;
@@ -75,7 +76,7 @@ CSepStatus CConflictDetection::LongitudinalSeparation(CRadarTarget* targetA, CRa
 		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed);
 		status.TrackStatus = CTrackStatus::SAME;
 		status.DistanceDecreasing = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acA.GroundSpeed);
-			- CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
+		-CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
 
 		// Return the status
 		return status;
@@ -84,17 +85,48 @@ CSepStatus CConflictDetection::LongitudinalSeparation(CRadarTarget* targetA, CRa
 		// Opposite direction, we don't care about direction so just assign to status
 		CSepStatus status;
 		status.AltDifference = altA > altB ? altA - altB : altB - altA;
-		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(targetA->GetPosition().GetPosition().DistanceTo(targetB->GetPosition().GetPosition()), gsA + gsB);
+		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(aircraftA.Position.DistanceTo(aircraftB.Position), gsA + gsB);
 		status.DistanceDecreasing = true; // Fix this to pick up scenarios where aircraft are heading in opposite directions away from each other
 		status.TrackStatus = CTrackStatus::OPPOSITE;
 
 		// Return the status
 		return status;
 	}
+	else { // The paths are intersecting, check whether the intercept is behind either aircraft (i.e. they will never meet)
+		// Screen coordinates and direction of aircraft
+		POINT p1 = screen->ConvertCoordFromPositionToPixel(aircraftA.Position);
+		POINT p2 = screen->ConvertCoordFromPositionToPixel(aircraftB.Position);
+		bool dir1 = CUtils::GetAircraftDirection(aircraftA.Heading);
+		bool dir2 = CUtils::GetAircraftDirection(aircraftB.Heading);
 
-	// If not on same track, the paths are intercepting, check if they will ever meet
+		// Get intercept
+		CPosition intercept = screen->ConvertCoordFromPixelToPosition(CUtils::GetIntersectionFromPointBearing(p1, p2, aircraftA.Heading, aircraftB.Heading));
+
+		// Store result of check
+		bool isValidIntercept = true;
+
+		// Now check the coordinates against each aircraft, if point is behind the aircraft then there is no upcoming intersect
+		if (dir1) {
+			if (aircraftA.Position.m_Longitude > intercept.m_Longitude) {
+				isValidIntercept = false;
+			}
+		}
+		else {
+			if (aircraftA.Position.m_Longitude < intercept.m_Longitude) {
+				isValidIntercept = false;
+			}
+		}
+		if (dir2) {
+			if (aircraftB.Position.m_Longitude > intercept.m_Longitude) {
+				isValidIntercept = false;
+			}
+		}
+		else {
+			if (aircraftB.Position.m_Longitude < intercept.m_Longitude) {
+				isValidIntercept = false;
+			}
+		}
+	}
+	// Return the default status with N/A type if no detected special relationship between aircraft
+
 }
-
-/*static pair<bool, int> VerticalSeparation(CRadarTarget* targetA, CRadarTarget* targetB) { // Target A in front, target B following
-
-}*/

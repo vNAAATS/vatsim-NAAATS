@@ -42,8 +42,16 @@ struct CListAircraft {
 	bool Direction;
 };
 
-// General aircraft
+// General aircraft status
 struct CAircraftStatus {
+	CAircraftStatus() {}; // Default constructor
+	CAircraftStatus(string cs, int alt, int gs, int hdg, CPosition pos) {
+		Callsign = cs;
+		Altitude = alt;
+		GroundSpeed = gs;
+		Heading = hdg;
+		Position = pos;
+	}
 	string Callsign;
 	int Altitude;
 	int GroundSpeed;
