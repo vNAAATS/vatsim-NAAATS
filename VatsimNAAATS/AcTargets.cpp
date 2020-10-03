@@ -368,9 +368,14 @@ void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* s
 	// Make brush
 	SolidBrush white(TextWhite.ToCOLORREF());
 
-	// Radar targets
+	// Radar targets & aircraft objects
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(target2.c_str());
+	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
+	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+
+	// Detect the separation status
+	CConflictDetection::DetectStatus(screen, &status1, &status2);
 
 	// Positions as screen coordinates
 	POINT t1Pos = screen->ConvertCoordFromPositionToPixel(ac1.GetPosition().GetPosition());

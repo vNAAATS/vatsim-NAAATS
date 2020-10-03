@@ -6,7 +6,7 @@ CConflictStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraft
 	CSepStatus sepStatus = GetSeparationStatus(screen, acA, acB);
 
 	// Are RVSM
-	bool rvsm = acA->Altitude <= 41000 || acB->Altitude <= 41000;
+	bool rvsm = !(acA->Altitude >= 41000 || acB->Altitude >= 41000);
 
 	// Check altitude
 	bool verticallySeparated = true;

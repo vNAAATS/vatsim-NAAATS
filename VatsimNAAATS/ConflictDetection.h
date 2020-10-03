@@ -24,9 +24,16 @@ class CConflictDetection
 
 		// Detect a conflict status between two aircraft (current or future)
 		static CConflictStatus DetectStatus(CRadarScreen* screen, CAircraftStatus* acA, CAircraftStatus* acB);
+		
+		// Probe
+		// SepTool
+		// PIVTool
+		// STCA (run every 30s)
 
+	private: 
 		// Get separation status
 		static CSepStatus GetSeparationStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB);
+		// Mach number technique
 		static int MachNumberTechnique(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB, string point);
 };
 
