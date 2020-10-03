@@ -63,7 +63,6 @@ struct CAircraftStatus {
 struct CSepStatus {
 	int DistanceAsTime;
 	int AltDifference;
-	bool DistanceDecreasing;
 	CTrackStatus TrackStatus;
 };
 

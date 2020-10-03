@@ -11,8 +11,16 @@ using namespace EuroScopePlugIn;
 class CConflictDetection
 {
 	public:
+		// Separation values
+		const int SEPV_LOW = 1000;
+		const int SEPV_HIGH = 2000;
+		const int SEPV_SUPERSONIC = 4000;
+		const int SEPLAT_NONREDUCED = 60;
+		const int SEPLAT_REDUCED = 23;
+		const int SEPLON_REDUCED = 5;
+
 		// Detect the current conflict status between two aircraft
-		static CConflictStatus DetectStatusNow(CRadarTarget* targetA, CRadarTarget* targetB); // Compare with single aircraft
+		static CConflictStatus DetectStatusNow(CRadarScreen* screen, CRadarTarget* targetA, CRadarTarget* targetB); // Compare with single aircraft
 		static CConflictStatus DetectStatusNow(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare); // Compare with multiple aircraft
 		
 		// Return status predictions on the route path for a requested timeframe (one status per minute)
@@ -24,6 +32,6 @@ class CConflictDetection
 		static vector<CConflictStatus> PredictStatusFutureVector(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare); // Compare with multiple aircraft
 		
 		// Get separation status
-		static CSepStatus GetSeparationStatus(CRadarScreen* screen, CAircraftStatus aircraftA, CAircraftStatus aircraftB, bool currentPointInTime);
+		static CSepStatus GetSeparationStatus(CRadarScreen* screen, CAircraftStatus aircraftA, CAircraftStatus aircraftB);
 };
 

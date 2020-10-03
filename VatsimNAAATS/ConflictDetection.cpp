@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "ConflictDetection.h"
 
-/*CSepStatus CConflictDetection::DetectStatusNow(CRadarTarget* targetA, CRadarTarget* targetB) {
+CSepStatus CConflictDetection::DetectStatusNow(CRadarScreen* screen, CRadarTarget* targetA, CRadarTarget* targetB) {
 	
-}*/
+}
 
 /*CConflictStatus CConflictDetection::DetectStatusNow(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare) {
 
@@ -25,7 +25,7 @@ vector<CConflictStatus> CConflictDetection::PredictStatusFutureVector(CRadarTarg
 
 }*/
 
-CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircraftStatus aircraftA, CAircraftStatus aircraftB, bool currentPointInTime) {
+CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircraftStatus aircraftA, CAircraftStatus aircraftB) {
 	// Get aircraft headings, altitudes and speeds
 	double hdgA = aircraftA.Heading;
 	double hdgB = aircraftB.Heading;
@@ -33,11 +33,6 @@ CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircra
 	int altB = aircraftB.Altitude;
 	int gsA = aircraftA.GroundSpeed;
 	int gsB = aircraftB.GroundSpeed;
-
-	// Very first thing to do is to check whether we need the separation at a specific point in space (N/A type)
-	if (currentPointInTime) {
-
-	}
 
 	// TODO run check to make sure that they are, in fact, on same tracks
 	// First check if aircraft are on same tracks
@@ -73,9 +68,8 @@ CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircra
 		// Create a status object
 		CSepStatus status;
 		status.AltDifference = acA.Altitude > acB.Altitude ? acA.Altitude - acB.Altitude : acB.Altitude - acA.Altitude;
-		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed);
+		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed);			
 		status.TrackStatus = CTrackStatus::SAME;
-		status.DistanceDecreasing = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acA.GroundSpeed);
 		-CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
 
 		// Return the status
@@ -86,7 +80,6 @@ CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircra
 		CSepStatus status;
 		status.AltDifference = altA > altB ? altA - altB : altB - altA;
 		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(aircraftA.Position.DistanceTo(aircraftB.Position), gsA + gsB);
-		status.DistanceDecreasing = true; // Fix this to pick up scenarios where aircraft are heading in opposite directions away from each other
 		status.TrackStatus = CTrackStatus::OPPOSITE;
 
 		// Return the status
@@ -126,7 +119,25 @@ CSepStatus CConflictDetection::GetSeparationStatus(CRadarScreen* screen, CAircra
 				isValidIntercept = false;
 			}
 		}
-	}
-	// Return the default status with N/A type if no detected special relationship between aircraft
 
+		// Create status if valid intercept
+		if (isValidIntercept) {
+			CSepStatus status;
+			status.AltDifference = altA > altB ? altA - altB : altB - altA;
+			status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(aircraftA.Position.DistanceTo(aircraftB.Position), aircraftA.GroundSpeed) : CUtils::GetTimeDistanceSpeed(aircraftA.Position.DistanceTo(aircraftB.Position), aircraftB.GroundSpeed);
+			status.TrackStatus = CTrackStatus::INTERSECTING;
+
+			// Return the status
+			return status;
+		}
+	}
+
+	// Return the default status with N/A type
+	CSepStatus status;
+	status.AltDifference = altA > altB ? altA - altB : altB - altA;
+	status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(aircraftA.Position.DistanceTo(aircraftB.Position), aircraftA.GroundSpeed) : CUtils::GetTimeDistanceSpeed(aircraftA.Position.DistanceTo(aircraftB.Position), aircraftB.GroundSpeed);
+	status.TrackStatus = CTrackStatus::NA;
+
+	// Return the status
+	return status;
 }
