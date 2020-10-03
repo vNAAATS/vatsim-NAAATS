@@ -75,7 +75,7 @@ class CUtils {
 		static double ToDegrees(double radians);
 
 		// General solution to get the angle between two intersecting paths
-		static double GetGeneralTheta(double hdg1, double hdg2);
+		static double GetPathAngle(double hdg1, double hdg2);
 
 		// Get a point based on distance and a heading
 		static CPosition GetPointDistanceBearing(CPosition position, int distanceNM, int heading);

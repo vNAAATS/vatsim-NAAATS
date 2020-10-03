@@ -12,26 +12,21 @@ class CConflictDetection
 {
 	public:
 		// Separation values
-		const int SEPV_LOW = 1000;
-		const int SEPV_HIGH = 2000;
-		const int SEPV_SUPERSONIC = 4000;
-		const int SEPLAT_NONREDUCED = 60;
-		const int SEPLAT_REDUCED = 23;
-		const int SEPLON_REDUCED = 5;
+		static const int SEPV_LOW = 1000;
+		static const int SEPV_HIGH = 2000;
+		static const int SEPV_SUPERSONIC = 4000;
+		static const int SEPLAT_NONREDUCED = 60;
+		static const int SEPLAT_REDUCED = 23;
+		static const int SEPLON_REDUCED = 5;
+		static const int SEPLON_REDUCEDWARN = 8;
+		static const int SEPLON_NONRED_SAMEANDX = 15;
+		static const int SEPLON_NONRED_MNT = 10;
 
-		// Detect the current conflict status between two aircraft
-		static CConflictStatus DetectStatusNow(CRadarScreen* screen, CRadarTarget* targetA, CRadarTarget* targetB); // Compare with single aircraft
-		static CConflictStatus DetectStatusNow(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare); // Compare with multiple aircraft
-		
-		// Return status predictions on the route path for a requested timeframe (one status per minute)
-		static vector<CConflictStatus> PredictStatusFuturePath(CRadarTarget* targetA, CRadarTarget* targetB); // Compare with single aircraft
-		static vector<CConflictStatus> PredictStatusFuturePath(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare); // Compare with multiple aircraft
+		// Detect a conflict status between two aircraft (current or future)
+		static CConflictStatus DetectStatus(CRadarScreen* screen, CAircraftStatus* acA, CAircraftStatus* acB);
 
-		// Return status predictions on a straight line vector for a requested timeframe (one status per minute)
-		static vector<CConflictStatus> PredictStatusFutureVector(CRadarTarget* targetA, CRadarTarget* targetB); // Compare with single aircraft
-		static vector<CConflictStatus> PredictStatusFutureVector(CRadarTarget* target, vector<CRadarTarget*>* targetsToCompare); // Compare with multiple aircraft
-		
 		// Get separation status
-		static CSepStatus GetSeparationStatus(CRadarScreen* screen, CAircraftStatus aircraftA, CAircraftStatus aircraftB);
+		static CSepStatus GetSeparationStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB);
+		static int MachNumberTechnique(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB, string point);
 };
 

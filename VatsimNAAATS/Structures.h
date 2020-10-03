@@ -62,6 +62,7 @@ struct CAircraftStatus {
 // Describes a separation status
 struct CSepStatus {
 	int DistanceAsTime;
+	int DistanceAsNM;
 	int AltDifference;
 	CTrackStatus TrackStatus;
 };

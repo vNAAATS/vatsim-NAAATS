@@ -332,7 +332,7 @@ template <typename T> int sign(T val) {
 }
 
 // This algorithm is a general solution to get the angle of intersection to any given path
-double CUtils::GetGeneralTheta(double hdg1, double hdg2) {
+double CUtils::GetPathAngle(double hdg1, double hdg2) {
 	// Get theta
 	double theta = abs(hdg2 - hdg1);
 

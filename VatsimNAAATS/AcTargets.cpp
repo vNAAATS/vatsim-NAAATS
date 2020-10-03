@@ -379,10 +379,6 @@ void CAcTargets::SeparationVectorIntercept(Graphics* g, CDC* dc, CRadarScreen* s
 	// Get the intercept
 	POINT intercept = CUtils::GetIntersectionFromPointBearing(t1Pos, t2Pos, ac1.GetPosition().GetReportedHeading(), ac2.GetPosition().GetReportedHeading());
 
-	CConflictDetection::GetSeparationStatus(screen,
-		CAircraftStatus(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition()),
-		CAircraftStatus(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition()), false);
-
 	// Draw lines
 	dc->MoveTo(t1Pos);
 	dc->LineTo(intercept);
