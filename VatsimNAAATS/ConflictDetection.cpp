@@ -20,10 +20,10 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	CPosition originalPos1 = status1.Position;
 	CPosition originalPos2 = status2.Position;
 
-	// Now we need to run the predictions, getting the statuses and time distance between aircraft every 60 seconds until the distance begins to increase
+	// Now we need to run the predictions, getting the statuses and time distance between aircraft every 30 seconds until the distance begins to increase
 	bool foundClosestPoint = false;
 	vector<CSepStatus> statuses;
-	int time = 0; // Time flag, we += 60 each time the loop goes around
+	int time = 0; // Time flag, we += 30 each time the loop goes around
 	while (!foundClosestPoint) {
 		// If this is the first status
 		if (statuses.empty()) {
@@ -60,10 +60,11 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 			}
 		}
 
-		// Add 60 seconds
-		time += 60;
+		// Add 30 seconds
+		time += 30;
 	}
 
+	SolidBrush brush(TextWhite);
 	// Draw line for aircraft A
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(originalPos1));
 	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
@@ -105,6 +106,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	DeleteObject(whitePen);
 	DeleteObject(yellowPen);
 	DeleteObject(redPen);
+	DeleteObject(&brush);
 }
 
 CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB) {

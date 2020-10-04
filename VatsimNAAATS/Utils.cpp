@@ -360,7 +360,10 @@ CPosition CUtils::GetPointDistanceBearing(CPosition position, int distanceMetres
 	double newLon = cos(newLat) == 0 ? lon : fmod(lon + asin(sin(track) * sin(distance) / cos(newLat)) + M_PI, 2 * M_PI) - M_PI;
 	
 	// Return
-	return PositionFromLatLon(CUtils::ToDegrees(newLat), CUtils::ToDegrees(newLon));
+	CPosition newPos;
+	newPos.m_Latitude = CUtils::ToDegrees(newLat);
+	newPos.m_Longitude = CUtils::ToDegrees(newLon);
+	return newPos;
 }
 
 // Get the intersection between two vectors from two screen coordinates and bearings
