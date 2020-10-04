@@ -23,13 +23,6 @@ namespace Colours {
 	const Color CriticalRed(195, 67, 67);
 }
 
-// Font familes
-namespace FontFamilies {
-	constexpr WCHAR* NormalFont = L"Arial";
-	constexpr WCHAR* ATCFont = L"vNAAATS";
-	constexpr WCHAR* MonoFont = L"Lucida Console";
-}
-
 // Fonts
 class FontSelector 
 {

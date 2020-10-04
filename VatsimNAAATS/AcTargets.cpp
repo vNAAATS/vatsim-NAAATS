@@ -341,7 +341,7 @@ void CAcTargets::RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, st
 	POINT midpoint = CUtils::GetMidPoint(t1Point, t2Point);
 
 	FontSelector::SelectMonoFont(14, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextColor(TargetOrange.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(midpoint.x, midpoint.y - 4, to_string(time).c_str());
 

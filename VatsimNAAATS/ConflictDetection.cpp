@@ -7,6 +7,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 
 	// Make pens
 	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+	CPen whiteDottedPen(PS_DOT, 1, TextWhite.ToCOLORREF());
 	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
 	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
 
@@ -46,10 +47,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 
 			// Compare the distance in NM to the previous status, if greater, then the previous status was the point of closest approach
 			if (status.DistanceAsNM > statuses.back().DistanceAsNM) {
-				// Add status, draw line between points and finish
-				//dc->SelectObject(whitePen);
-				//dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
-				//dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
+				// Found closest point
 				foundClosestPoint = true;
 				break;
 			}
@@ -94,11 +92,22 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 		dc->LineTo(screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second));
 	}
 
+	// Draw line between points and finish and label
+	dc->SelectObject(whiteDottedPen);
+	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
+	dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
+	POINT midpoint = CUtils::GetMidPoint(screen->ConvertCoordFromPositionToPixel(status1.Position), screen->ConvertCoordFromPositionToPixel(status2.Position));
+	FontSelector::SelectMonoFont(14, dc);
+	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+	dc->TextOutA(midpoint.x, midpoint.y - 4, string(to_string(statuses.back().DistanceAsTime) + "/" + to_string(statuses.back().AltDifference)).c_str());
+
 	// Restore context
 	dc->RestoreDC(iDC);
 
 	// Clean up
 	DeleteObject(whitePen);
+	DeleteObject(whiteDottedPen);
 	DeleteObject(yellowPen);
 	DeleteObject(redPen);
 }
