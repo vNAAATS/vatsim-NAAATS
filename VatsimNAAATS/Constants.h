@@ -142,6 +142,10 @@ const int WINSZ_TITLEBAR_HEIGHT = 20;
 const int WINSZ_TCKINFO_WIDTH = 450;
 const int WINSZ_TCKINFO_HEIGHT = 250;
 
+// Conflict
+const int SEPTOOL_TIME = 2700; // 45 minutes
+const int STCA_TIME = 480; // 8 minutes
+
 /// OBJECTS
 // Lists
 const int LIST_INBOUND = 300;

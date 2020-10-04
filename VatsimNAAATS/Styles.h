@@ -19,8 +19,15 @@ namespace Colours {
 	const Color GreenBevelDark(33, 120, 144);
 	const Color ButtonPressed(45, 69, 90);
 	const Color WindowBorder(187, 214, 238);
-	const Color WarningYellow(166, 161, 81);
-	const Color CriticalRed(180, 21, 21);
+	const Color WarningYellow(221, 213, 88);
+	const Color CriticalRed(195, 67, 67);
+}
+
+// Font familes
+namespace FontFamilies {
+	constexpr WCHAR* NormalFont = L"Arial";
+	constexpr WCHAR* ATCFont = L"vNAAATS";
+	constexpr WCHAR* MonoFont = L"Lucida Console";
 }
 
 // Fonts
@@ -31,9 +38,8 @@ class FontSelector
 			CFont font;
 			LOGFONT lFont;
 
-			// Clear out
+			// Get face
 			memset(&lFont, 0, sizeof(LOGFONT));
-			// Get the face
 			strcpy_s(lFont.lfFaceName, _T("Arial"));
 			// Size
 			lFont.lfHeight = size;
@@ -46,18 +52,16 @@ class FontSelector
 			dc->SelectObject(&font);
 
 			// Cleanup
-			DeleteObject(font);
+			font.DeleteObject();
 		}
 
 		static void SelectATCFont(int size, CDC* dc) {
 			CFont font;
 			LOGFONT lFont;
 
-			// Get font
+			// Get face
 			AddFontResourceEx("vNAAATS.ttf", FR_PRIVATE, 0);
-			// Clear out
 			memset(&lFont, 0, sizeof(LOGFONT));
-			// Get the face
 			strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
 			// Size
 			lFont.lfHeight = size;
@@ -70,16 +74,15 @@ class FontSelector
 			dc->SelectObject(&font);
 
 			// Cleanup
-			DeleteObject(font);
+			font.DeleteObject();
 		}
 
 		static void SelectMonoFont(int size, CDC* dc) {
 			CFont font;
 			LOGFONT lFont;
 
-			// Clear out
-			memset(&lFont, 0, sizeof(LOGFONT));
 			// Get the face
+			memset(&lFont, 0, sizeof(LOGFONT));
 			strcpy_s(lFont.lfFaceName, _T("Lucida Console"));
 			// Size
 			lFont.lfHeight = size;
@@ -92,6 +95,6 @@ class FontSelector
 			dc->SelectObject(&font);
 
 			// Cleanup
-			DeleteObject(font);
+			font.DeleteObject();
 		}
 };

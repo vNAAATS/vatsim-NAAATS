@@ -23,8 +23,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	// Now we need to run the predictions, getting the statuses and time distance between aircraft every 30 seconds until the distance begins to increase
 	bool foundClosestPoint = false;
 	vector<CSepStatus> statuses;
-	int time = 0; // Time flag, we += 30 each time the loop goes around
-	while (!foundClosestPoint) {
+	for (int time = 0; time < SEPTOOL_TIME; time += 30) {
 		// If this is the first status
 		if (statuses.empty()) {
 			// Get the original status and add it
@@ -59,12 +58,8 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 				statuses.push_back(status);
 			}
 		}
-
-		// Add 30 seconds
-		time += 30;
 	}
 
-	SolidBrush brush(TextWhite);
 	// Draw line for aircraft A
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(originalPos1));
 	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
@@ -106,7 +101,6 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	DeleteObject(whitePen);
 	DeleteObject(yellowPen);
 	DeleteObject(redPen);
-	DeleteObject(&brush);
 }
 
 CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB) {
@@ -218,7 +212,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 	/// Conflict status detection
 	// Are RVSM
-	bool rvsm = !(aircraftA->Altitude >= 41000 || aircraftB->Altitude >= 41000);
+	bool rvsm = aircraftA->Altitude <= 41000 || aircraftB->Altitude <= 41000;
 
 	// Check altitude
 	bool verticallySeparated = true;
@@ -238,13 +232,13 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 	/// Check separation (eventually base it on equipment code, therefore adding a use for the CTrackStatus flag)
 	/// Separation currently fixed to: Lateral = 23NM, Longitudinal = 5 minutes overall inside the OCA
-	if (status.DistanceAsTime < SEPLON_REDUCEDWARN && status.DistanceAsTime > SEPLON_REDUCED) {
+	if (status.DistanceAsTime <= SEPLON_REDUCEDWARN && status.DistanceAsTime > SEPLON_REDUCED) {
 		// Distance not met, so check altitude
 		if (!verticallySeparated) {
 			conflictStatus = CConflictStatus::WARNING;
 		}
 	}
-	else if (status.DistanceAsTime < SEPLON_REDUCED) {
+	else if (status.DistanceAsTime <= SEPLON_REDUCED) {
 		// Distance not met, so check altitude
 		if (!verticallySeparated) {
 			conflictStatus = CConflictStatus::CRITICAL;
