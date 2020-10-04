@@ -65,6 +65,8 @@ struct CSepStatus {
 	int DistanceAsNM;
 	int AltDifference;
 	CTrackStatus TrackStatus;
+	CConflictStatus ConflictStatus;
+	pair<CPosition, CPosition> AircraftLocations;
 };
 
 // Describes a lat/lon

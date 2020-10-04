@@ -8,6 +8,7 @@
 #include "PathRenderer.h"
 #include "DataHandler.h"
 #include "Utils.h"
+#include "ConflictDetection.h"
 #include <thread> 
 #include <gdiplus.h>
 
@@ -335,7 +336,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
-				CAcTargets::SeparationVectorIntercept(&g, &dc, this, aircraftSel1, aircraftSel2);
+				CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
 			}
 		}
 

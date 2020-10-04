@@ -63,7 +63,7 @@ class CUtils {
 		static int GetTimeDistanceSpeed(int distanceNM, int speedGS);
 
 		// Distance (metres) based on speed and time
-		static double GetDistanceSpeedTime(int speedGS, int timeMin);
+		static double GetDistanceSpeedTime(int speedGS, int timeSec);
 
 		// Metres to nautical miles
 		static double MetresToNauticalMiles(double metres);
