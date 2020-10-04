@@ -20,10 +20,10 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	CPosition originalPos1 = status1.Position;
 	CPosition originalPos2 = status2.Position;
 
-	// Now we need to run the predictions, getting the statuses and time distance between aircraft every 30 seconds until the distance begins to increase
+	// Now we need to run the predictions, getting the statuses and time distance between aircraft every 60 seconds until the distance begins to increase
 	bool foundClosestPoint = false;
 	vector<CSepStatus> statuses;
-	int time = 0; // Time flag, we += 30 each time the loop goes around
+	int time = 0; // Time flag, we += 60 each time the loop goes around
 	while (!foundClosestPoint) {
 		// If this is the first status
 		if (statuses.empty()) {
@@ -40,14 +40,17 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 			int distance1 = CUtils::GetDistanceSpeedTime(status1.GroundSpeed, time);
 			int distance2 = CUtils::GetDistanceSpeedTime(status2.GroundSpeed, time);
 			status1.Position = CUtils::GetPointDistanceBearing(originalPos1, distance1, status1.Heading);
-			status2.Position = CUtils::GetPointDistanceBearing(originalPos2, distance1, status2.Heading);
+			status2.Position = CUtils::GetPointDistanceBearing(originalPos2, distance2, status2.Heading);
 
 			// Detect the status and select the pen
 			CSepStatus status = DetectStatus(screen, &status1, &status2);
 
 			// Compare the distance in NM to the previous status, if greater, then the previous status was the point of closest approach
 			if (status.DistanceAsNM > statuses.back().DistanceAsNM) {
-				// Add status and finish
+				// Add status, draw line between points and finish
+				//dc->SelectObject(whitePen);
+				//dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
+				//dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
 				foundClosestPoint = true;
 				break;
 			}
@@ -57,13 +60,13 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 			}
 		}
 
-		// Add 30 seconds
-		time += 30;
+		// Add 60 seconds
+		time += 60;
 	}
 
 	// Draw line for aircraft A
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(originalPos1));
-	for (vector<CSepStatus>::iterator status = statuses.begin(); status != statuses.end(); status++) {
+	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
 		// Select pen
 		if (status->ConflictStatus == CConflictStatus::OK) {
 			dc->SelectObject(whitePen);
@@ -80,7 +83,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 
 	// Draw line for aircraft B
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(originalPos2));
-	for (vector<CSepStatus>::iterator status = statuses.begin(); status != statuses.end(); status++) {
+	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
 		// Select pen
 		if (status->ConflictStatus == CConflictStatus::OK) {
 			dc->SelectObject(whitePen);
