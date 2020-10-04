@@ -310,6 +310,21 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					halo = true;
 				}
 
+				// RBL draw
+				if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+					if (aircraftSel1 != "" && aircraftSel2 != "") {
+						CAcTargets::RangeBearingLine(&g, &dc, this, aircraftSel1, aircraftSel2);
+					}
+				}
+
+				// SEP draw
+				if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+					// If both aircraft selected then draw
+					if (aircraftSel1 != "" && aircraftSel2 != "") {
+						CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
+					}
+				}
+
 				// Draw the tag and target with the information if tags are turned on
 				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
 					auto kv = tagStatuses.find(fp.GetCallsign());
@@ -322,23 +337,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 			}
 
+			// Select the next target
 			ac = GetPlugIn()->RadarTargetSelectNext(ac);
 		}
 
-		// RBL draw
-		if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-			if (aircraftSel1 != "" && aircraftSel2 != "") {
-				CAcTargets::RangeBearingLine(&g, &dc, this, aircraftSel1, aircraftSel2);
-			}
-		}
-
-		// SEP draw
-		if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-			// If both aircraft selected then draw
-			if (aircraftSel1 != "" && aircraftSel2 != "") {
-				CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
-			}
-		}
 
 		// Clear ASELs if none of the range/separation tools are pressed
 		if (buttonsPressed.find(MENBTN_PIV) == buttonsPressed.end()
