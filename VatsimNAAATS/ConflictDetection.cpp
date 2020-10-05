@@ -177,25 +177,6 @@ void CConflictDetection::PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
 	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
 	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
-	pair<bool, vector<CRoutePosition>> route1 = CPathRenderer::GetRoute(screen, status1.Callsign);
-	pair<bool, vector<CRoutePosition>> route2 = CPathRenderer::GetRoute(screen, status2.Callsign);
-
-	/// Now we loop for intercepts
-	CPosition previousPos1; // Get the 1st route position as the aircraft position if it is
-	if (route1.first) {
-		previousPos1 = status1.Position;
-	}
-	// Iterate through first loop
-	for (vector<CRoutePosition>::iterator route1Pos = route1.second.begin(); route1Pos != route1.second.end(); route1Pos++) {
-		CPosition previousPos2; // Get the 1st route position as the aircraft position if it is
-		if (route2.first) {
-			previousPos2 = status2.Position;
-		}
-		// Iterate through second route looking for intersects
-		for (vector<CRoutePosition>::iterator route2Pos = route1.second.begin(); route2Pos != route1.second.end(); route2Pos++) {
-
-		}
-	}
 }
 
 CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB) {
@@ -346,3 +327,11 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	// Return the status
 	return status;
 }
+
+/*CAircraftStatus CConflictDetection::GetStatusAlongRoute(CRadarScreen* screen, string callsign, int timeMinutes) {
+	// Get the route
+	pair<bool, vector<CRoutePosition>> route = CPathRenderer::GetRoute(screen, callsign);
+
+	// Get the current time
+	string zulu = CUtils::ParseZuluTime(false);
+}*/

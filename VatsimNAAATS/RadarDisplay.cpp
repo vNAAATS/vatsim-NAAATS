@@ -662,6 +662,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			// Set route drawing
 			if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
 				CPathRenderer::RouteToDraw = CPathRenderer::GetRoute(this, fp.GetCallsign());
+				CPathRenderer::RouteDrawTarget = fp.GetCallsign();
 			}
 			else {
 				CPathRenderer::ClearCurrentRoute();

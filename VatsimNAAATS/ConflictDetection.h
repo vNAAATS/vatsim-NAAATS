@@ -40,8 +40,13 @@ class CConflictDetection
 		static const int SEPLON_REDUCEDWARN = 8;
 		static const int SEPLON_NONRED_SAMEANDX = 15;
 		static const int SEPLON_NONRED_MNT = 10;
+
 		// Detect a conflict status between two aircraft (current or future)
 		static CSepStatus DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB);
+
+		// Get an aircraft's status along its route
+		static CAircraftStatus GetStatusAlongRoute(CRadarScreen* screen, string callsign, int timeSeconds);
+
 		// Mach number technique
 		static int MachNumberTechnique(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB, string point);
 };

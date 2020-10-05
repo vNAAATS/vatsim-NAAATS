@@ -19,6 +19,7 @@ struct CRoutePosition {
 	string Fix;
 	CPosition PositionRaw;
 	string Estimate;
+	int DistanceFromLastPoint;
 	int FlightLevel;
 };
 

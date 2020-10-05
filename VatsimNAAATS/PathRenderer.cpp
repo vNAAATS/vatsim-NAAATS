@@ -49,6 +49,10 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 				// Print text for flight level
 				text = to_string(i->FlightLevel);
 				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
+
+				text = to_string(i->DistanceFromLastPoint);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
 
 				// Draw line
 				dc->LineTo(point);
@@ -106,12 +110,8 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 
 // TODO: Refactor when implementing flight plan window
 pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen, string callsign) {
-
-	// Set route draw target
-	RouteDrawTarget = callsign;
-
 	// Get target
-	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str());
+	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
 	// Route and flight plan
 	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign());
@@ -159,30 +159,36 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 					if (totalDistance == 0) {
 						// Calculate distance from aircraft
 						totalDistance += target.GetPosition().GetPosition().DistanceTo(track.RouteRaw[i]);
+						position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(track.RouteRaw[i]);
 					}
 					else {
 						// Calculate distance point to point
-						totalDistance += track.RouteRaw[i-1].DistanceTo(track.RouteRaw[i]);
+						totalDistance += track.RouteRaw[i - 1].DistanceTo(track.RouteRaw[i]);
+						position.DistanceFromLastPoint = track.RouteRaw[i - 1].DistanceTo(track.RouteRaw[i]);
 					}
 					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
 				}
 				else {
 					position.Estimate = "--";
+					position.DistanceFromLastPoint = 0;
 				}
 			} else if (track.Direction == CTrackDirection::EAST) { // If heading westbound, check if the aircraft is past the point
 				if (target.GetPosition().GetPosition().m_Longitude < track.RouteRaw[i].m_Longitude) {
 					if (totalDistance == 0) {
 						// Calculate distance from aircraft
 						totalDistance += target.GetPosition().GetPosition().DistanceTo(track.RouteRaw[i]);
+						position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(track.RouteRaw[i]);
 					}
 					else {
 						// Calculate distance point to point
 						totalDistance += track.RouteRaw[i - 1].DistanceTo(track.RouteRaw[i]);
+						position.DistanceFromLastPoint = track.RouteRaw[i - 1].DistanceTo(track.RouteRaw[i]);
 					}
 					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
 				}
 				else {
 					position.Estimate = "--";
+					position.DistanceFromLastPoint = 0;
 				}
 			}
 
@@ -211,6 +217,7 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 		if (point == -1) startAtAircraft = true;
 
 		// Get the points in the route
+		int counter = 0; // Counter flag
 		for (int i = point == -1 ? route.GetPointsCalculatedIndex() : point; i < route.GetPointsNumber(); i++) {
 			
 			// Store whether to cancel route draw
@@ -226,11 +233,31 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 			position.Estimate = fpData.GetExtractedRoute().GetPointDistanceInMinutes(i) != -1 ? CUtils::ParseZuluTime(false, -1, &fpData, i) : "--";
 			position.FlightLevel = route.GetPointCalculatedProfileAltitude(i) / 100;
 
+			// Get the distance from the last point
+			if (counter > 0) {
+				position.DistanceFromLastPoint = route.GetPointPosition(i - 1).DistanceTo(route.GetPointPosition(i));
+			}
+			else { // Last point is the aircraft
+				position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(route.GetPointPosition(i));
+			}
+
+			// Check if it is a passed point
+			if (position.Estimate == "--") {
+				position.DistanceFromLastPoint = 0;
+			}
+			else if (counter > 0 && returnRoute.back().Estimate == "--") {
+				position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(route.GetPointPosition(i));
+			}
+
 			// Check if position is within the longitudinal bounds
 			if (position.PositionRaw.m_Longitude >= -65 && position.PositionRaw.m_Longitude <= -5) {
 				// Add the position
 				returnRoute.push_back(position);
 			}
+
+			// Increment counter
+			counter++;
+
 			// Break the loop if end of route
 			if (breakLoop) break;
 		}
