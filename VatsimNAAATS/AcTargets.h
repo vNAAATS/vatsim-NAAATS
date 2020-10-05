@@ -17,7 +17,4 @@ class CAcTargets
 
 		// Render tags
 		static POINT DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction);
-
-		// Range bearing line tool
-		static void RangeBearingLine(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2);
 };

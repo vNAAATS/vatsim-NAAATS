@@ -15,6 +15,9 @@ using namespace EuroScopePlugIn;
 class CConflictDetection
 {
 	public:
+		// Range Bearing Line tool
+		static void RBLTool(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2);
+
 		// Separation vector tool
 		static void SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB);
 

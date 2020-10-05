@@ -313,7 +313,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				// RBL draw
 				if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
 					if (aircraftSel1 != "" && aircraftSel2 != "") {
-						CAcTargets::RangeBearingLine(&g, &dc, this, aircraftSel1, aircraftSel2);
+						CConflictDetection::RBLTool(&g, &dc, this, aircraftSel1, aircraftSel2);
 					}
 				}
 

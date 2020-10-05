@@ -1,6 +1,59 @@
 #include "pch.h"
 #include "ConflictDetection.h"
 
+void CConflictDetection::RBLTool(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2) {
+	// Save context
+	int iDC = dc->SaveDC();
+
+	// Make pens
+	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
+	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
+
+	// Positions
+	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
+	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(target2.c_str());
+	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
+	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+
+	// Get status
+	CSepStatus status = DetectStatus(screen, &status1, &status2);
+
+	// Now get points in screen pixels
+	POINT t1Point = screen->ConvertCoordFromPositionToPixel(status1.Position);
+	POINT t2Point = screen->ConvertCoordFromPositionToPixel(status2.Position);
+
+	// Select pen
+	if (status.ConflictStatus == CConflictStatus::OK) {
+		dc->SelectObject(whitePen);
+	}
+	else if (status.ConflictStatus == CConflictStatus::WARNING) {
+		dc->SelectObject(yellowPen);
+	}
+	else {
+		dc->SelectObject(redPen);
+	}
+
+	// Draw the line
+	dc->MoveTo(t1Point);
+	dc->LineTo(t2Point);
+
+	// Now draw the text
+	POINT midpoint = CUtils::GetMidPoint(t1Point, t2Point);
+
+	FontSelector::SelectATCFont(15, dc);
+	dc->SetTextColor(WarningYellow.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+	dc->SetTextCharacterExtra(2);
+	dc->TextOutA(midpoint.x, midpoint.y, string(to_string(status.DistanceAsTime) + "/" + to_string(status.AltDifference)).c_str());
+
+	// Restore context
+	dc->RestoreDC(iDC);
+
+	// Clean up
+	DeleteObject(whitePen);
+}
+
 void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
 	// Save context
 	int iDC = dc->SaveDC();
@@ -97,10 +150,11 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
 	dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
 	POINT midpoint = CUtils::GetMidPoint(screen->ConvertCoordFromPositionToPixel(status1.Position), screen->ConvertCoordFromPositionToPixel(status2.Position));
-	FontSelector::SelectMonoFont(14, dc);
-	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	FontSelector::SelectATCFont(15, dc);
+	dc->SetTextColor(WarningYellow.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(midpoint.x, midpoint.y - 4, string(to_string(statuses.back().DistanceAsTime) + "/" + to_string(statuses.back().AltDifference)).c_str());
+	dc->SetTextCharacterExtra(2);
+	dc->TextOutA(midpoint.x, midpoint.y , string(to_string(statuses.back().DistanceAsTime) + "/" + to_string(statuses.back().AltDifference)).c_str());
 
 	// Restore context
 	dc->RestoreDC(iDC);
