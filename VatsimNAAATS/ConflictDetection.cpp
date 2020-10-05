@@ -177,6 +177,16 @@ void CConflictDetection::PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
 	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
 	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+
+	// Aircraft statuses along route
+	PIVLocations1 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude);
+	PIVLocations2 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude);
+
+	int length = PIVLocations1.size() < PIVLocations2.size() ? (int)PIVLocations1.size() : PIVLocations2.size();
+
+	for (int i = 0; i < length; i++) {
+		
+	}
 }
 
 CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB) {
@@ -328,10 +338,60 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	return status;
 }
 
-/*CAircraftStatus CConflictDetection::GetStatusAlongRoute(CRadarScreen* screen, string callsign, int timeMinutes) {
+vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude) {
 	// Get the route
-	pair<bool, vector<CRoutePosition>> route = CPathRenderer::GetRoute(screen, callsign);
+	vector<CRoutePosition> route = CPathRenderer::GetRoute(screen, callsign).second;
 
-	// Get the current time
-	string zulu = CUtils::ParseZuluTime(false);
-}*/
+	// Status vector
+	vector<CAircraftStatus> statuses;
+
+	// Aircraft position
+	CPosition acPos = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetPosition();
+
+	// Iterate
+	int counter = 0; // Counter to check if not first pass
+	CPosition prevPos; // Previous position
+	for (auto i = route.begin(); i != route.end(); i++) {
+		if (i->Estimate == "--") { // If fix has been passed then continue
+			continue;
+		}
+
+		// Get the time
+		int time = CUtils::GetTimeDistanceSpeed(i->DistanceFromLastPoint, groundSpeed);
+
+		// Get the heading
+		int heading;
+		if (counter == 0) { // If the position is the aircraft's location then get that direction
+			heading = acPos.DirectionTo(i->PositionRaw);
+			prevPos = acPos;
+			counter++;
+		}
+		else {
+			// Get the direction from point to point
+			heading = prevPos.DirectionTo(i->PositionRaw);
+		}
+
+		// Iterate through the times and get the points
+		for (int j = 0; j < time; j++) {
+			CAircraftStatus status;
+			status.Callsign = callsign;
+			status.Altitude = altitude;
+			status.GroundSpeed = groundSpeed;
+			status.Heading = heading;
+			if (statuses.empty()) {
+				status.Position = acPos;
+			}
+			else {
+				status.Position = CUtils::GetPointDistanceBearing(prevPos, ((i->DistanceFromLastPoint * 1852) / time) * j, heading);
+			}
+			// Add status
+			statuses.push_back(status);
+		}
+
+		// Reassign previous position variable
+		prevPos = i->PositionRaw;
+	}
+
+	// Return
+	return statuses;
+}

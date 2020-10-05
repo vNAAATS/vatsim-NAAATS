@@ -16,6 +16,11 @@ using namespace EuroScopePlugIn;
 class CConflictDetection
 {
 	public:
+		// PIV
+		static vector<CAircraftStatus> PIVLocations1;
+		static vector<CAircraftStatus> PIVLocations2;
+		static vector<CSepStatus> PIVSeparationStatuses;
+
 		// Range Bearing Line tool
 		static void RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2);
 
@@ -45,7 +50,7 @@ class CConflictDetection
 		static CSepStatus DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB);
 
 		// Get an aircraft's status along its route
-		static CAircraftStatus GetStatusAlongRoute(CRadarScreen* screen, string callsign, int timeSeconds);
+		static vector<CAircraftStatus> GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude);
 
 		// Mach number technique
 		static int MachNumberTechnique(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB, string point);
