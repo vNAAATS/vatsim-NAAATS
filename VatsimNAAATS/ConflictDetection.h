@@ -4,6 +4,7 @@
 #include "Constants.h"
 #include "Utils.h"
 #include "Structures.h"
+#include "PathRenderer.h"
 #include "Styles.h"
 #include <gdiplus.h>
 
@@ -16,12 +17,13 @@ class CConflictDetection
 {
 	public:
 		// Range Bearing Line tool
-		static void RBLTool(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2);
+		static void RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2);
 
 		// Separation vector tool
 		static void SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB);
 
-		// PIVTool
+		// Path Intercept Vector tool
+		static void PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB);
 
 		// Probe
 		

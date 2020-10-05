@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "ConflictDetection.h"
 
-void CConflictDetection::RBLTool(Graphics* g, CDC* dc, CRadarScreen* screen, string target1, string target2) {
+void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2) {
 	// Save context
 	int iDC = dc->SaveDC();
 
@@ -164,6 +164,38 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	DeleteObject(whiteDottedPen);
 	DeleteObject(yellowPen);
 	DeleteObject(redPen);
+}
+
+void CConflictDetection::PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
+	// Make pens
+	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
+	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
+
+	// Radar targets, aircraft objects and routes
+	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
+	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
+	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
+	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+	pair<bool, vector<CRoutePosition>> route1 = CPathRenderer::GetRoute(screen, status1.Callsign);
+	pair<bool, vector<CRoutePosition>> route2 = CPathRenderer::GetRoute(screen, status2.Callsign);
+
+	/// Now we loop for intercepts
+	CPosition previousPos1; // Get the 1st route position as the aircraft position if it is
+	if (route1.first) {
+		previousPos1 = status1.Position;
+	}
+	// Iterate through first loop
+	for (vector<CRoutePosition>::iterator route1Pos = route1.second.begin(); route1Pos != route1.second.end(); route1Pos++) {
+		CPosition previousPos2; // Get the 1st route position as the aircraft position if it is
+		if (route2.first) {
+			previousPos2 = status2.Position;
+		}
+		// Iterate through second route looking for intersects
+		for (vector<CRoutePosition>::iterator route2Pos = route1.second.begin(); route2Pos != route1.second.end(); route2Pos++) {
+
+		}
+	}
 }
 
 CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB) {

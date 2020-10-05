@@ -6,7 +6,7 @@ string CPathRenderer::RouteDrawTarget;
 
 pair<bool, vector<CRoutePosition>> CPathRenderer::RouteToDraw;
 
-void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type) {
+void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type, vector<CSepStatus>* pivA, vector<CSepStatus>* pivB) {
 
 	// Save context
 	int iDC = dc->SaveDC();	
@@ -66,38 +66,38 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 
 		// Font
 		FontSelector::SelectMonoFont(14, dc);
-dc->SetTextColor(TextWhite.ToCOLORREF());
-dc->SetTextAlign(TA_CENTER);
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+		dc->SetTextAlign(TA_CENTER);
 
-// Loop tracks
-for (auto kv : COverlays::CurrentTracks) {
-	// Show eastbound/eastbound only if that type is selected
-	if (COverlays::CurrentType == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
-		continue;
-	}
-	else if (COverlays::CurrentType == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
-		continue;
-	}
+		// Loop tracks
+		for (auto kv : COverlays::CurrentTracks) {
+			// Show eastbound/eastbound only if that type is selected
+			if (COverlays::CurrentType == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
+				continue;
+			}
+			else if (COverlays::CurrentType == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
+				continue;
+			}
 
-	// Move to start and draw 
-	POINT firstPointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
-	dc->MoveTo(firstPointCoord);
-	string id = kv.first;
-	if (kv.second.Direction == CTrackDirection::EAST) {
-		dc->TextOutA(firstPointCoord.x - 12, firstPointCoord.y - 5, id.c_str());
-	}
-	else {
-		dc->TextOutA(firstPointCoord.x + 12, firstPointCoord.y - 5, id.c_str());
-	}
+			// Move to start and draw 
+			POINT firstPointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
+			dc->MoveTo(firstPointCoord);
+			string id = kv.first;
+			if (kv.second.Direction == CTrackDirection::EAST) {
+				dc->TextOutA(firstPointCoord.x - 12, firstPointCoord.y - 5, id.c_str());
+			}
+			else {
+				dc->TextOutA(firstPointCoord.x + 12, firstPointCoord.y - 5, id.c_str());
+			}
 
-	// Draw lines
-	for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
-		dc->LineTo(screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]));
-	}
-}
+			// Draw lines
+			for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
+				dc->LineTo(screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]));
+			}
+		}
 
-// Cleanup
-DeleteObject(pen);
+		// Cleanup
+		DeleteObject(pen);
 	}
 
 	// Restore context
@@ -105,20 +105,15 @@ DeleteObject(pen);
 }
 
 // TODO: Refactor when implementing flight plan window
-pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen, string callsign, bool piv) {
-	// Set callsign and get radar target
-	if (piv) {
-		//PivTarget = callsign;
-	}
-	else {
-		RouteDrawTarget = callsign;
-	}
+pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen, string callsign) {
+
+	// Set route draw target
+	RouteDrawTarget = callsign;
 
 	// Get target
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str());
 
 	// Route and flight plan
-	// TODO: get NAT track route and interpolate it
 	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign());
 	CFlightPlanExtractedRoute route = fpData.GetExtractedRoute();
 
@@ -231,9 +226,11 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 			position.Estimate = fpData.GetExtractedRoute().GetPointDistanceInMinutes(i) != -1 ? CUtils::ParseZuluTime(false, -1, &fpData, i) : "--";
 			position.FlightLevel = route.GetPointCalculatedProfileAltitude(i) / 100;
 
-			// Add the position
-			returnRoute.push_back(position);
-
+			// Check if position is within the longitudinal bounds
+			if (position.PositionRaw.m_Longitude >= -65 && position.PositionRaw.m_Longitude <= -5) {
+				// Add the position
+				returnRoute.push_back(position);
+			}
 			// Break the loop if end of route
 			if (breakLoop) break;
 		}

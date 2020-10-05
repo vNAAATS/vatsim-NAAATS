@@ -313,7 +313,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				// RBL draw
 				if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
 					if (aircraftSel1 != "" && aircraftSel2 != "") {
-						CConflictDetection::RBLTool(&g, &dc, this, aircraftSel1, aircraftSel2);
+						CConflictDetection::RBLTool(&dc, &g, this, aircraftSel1, aircraftSel2);
 					}
 				}
 
@@ -322,6 +322,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					// If both aircraft selected then draw
 					if (aircraftSel1 != "" && aircraftSel2 != "") {
 						CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
+					}
+				}
+
+				// PIV draw
+				if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+					// If both aircraft selected then draw
+					if (aircraftSel1 != "" && aircraftSel2 != "") {
+						CConflictDetection::PIVTool(&dc, &g, this, aircraftSel1, aircraftSel2);
 					}
 				}
 
@@ -653,7 +661,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 			// Set route drawing
 			if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
-				CPathRenderer::RouteToDraw = CPathRenderer::GetRoute(this, fp.GetCallsign(), false);
+				CPathRenderer::RouteToDraw = CPathRenderer::GetRoute(this, fp.GetCallsign());
 			}
 			else {
 				CPathRenderer::ClearCurrentRoute();

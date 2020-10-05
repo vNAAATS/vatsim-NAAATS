@@ -19,10 +19,10 @@ class CPathRenderer
 		static pair<bool, vector<CRoutePosition>> RouteToDraw;
 
 		// Render a path
-		static void RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type);
+		static void RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPathType type, vector<CSepStatus>* pivA = nullptr, vector<CSepStatus>* pivB = nullptr);
 
 		// Get a route
-		static pair<bool, vector<CRoutePosition>> GetRoute(CRadarScreen* screen, string callsign, bool piv);
+		static pair<bool, vector<CRoutePosition>> GetRoute(CRadarScreen* screen, string callsign);
 
 		// Is on a NAT track
 		static string OnNatTrack(CRadarScreen* screen, string callsign);

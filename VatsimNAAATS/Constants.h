@@ -223,7 +223,6 @@ const string SET_POSTYPESEL = "SelectedPosType";
 enum class CPathType {
     RTE,
     PIV,
-    SEP,
     TCKS
 };
 
@@ -239,6 +238,7 @@ enum class COverlayType {
     TCKS_ALL,
     TCKS_EAST,
     TCKS_WEST,
+    TCKS_ACTV,
     TCKS_SEL
 };
 

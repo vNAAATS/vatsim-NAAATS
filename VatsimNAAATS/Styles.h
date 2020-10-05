@@ -46,6 +46,7 @@ class FontSelector
 
 			// Cleanup
 			font.DeleteObject();
+			DeleteObject(&lFont);
 		}
 
 		static void SelectATCFont(int size, CDC* dc) {
@@ -68,6 +69,7 @@ class FontSelector
 
 			// Cleanup
 			font.DeleteObject();
+			DeleteObject(&lFont);
 		}
 
 		static void SelectMonoFont(int size, CDC* dc) {
@@ -89,5 +91,6 @@ class FontSelector
 
 			// Cleanup
 			font.DeleteObject();
+			DeleteObject(&lFont);
 		}
 };
