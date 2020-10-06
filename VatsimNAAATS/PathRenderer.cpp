@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "PathRenderer.h"
 #include "Overlays.h"
+#include "ConflictDetection.h"
 
 string CPathRenderer::RouteDrawTarget;
 
@@ -11,17 +12,17 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 	// Save context
 	int iDC = dc->SaveDC();	
 
+	// Font
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
 	// Draw route path if route type
 	if (type == CPathType::RTE) {
 		// Pen & brush
 		CPen pen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
 		dc->SelectObject(pen);
 		SolidBrush brush(TargetOrange);
-
-		// Font
-		FontSelector::SelectMonoFont(12, dc);
-		dc->SetTextColor(TargetOrange.ToCOLORREF());
-		dc->SetTextAlign(TA_LEFT);
 
 		// Get AC position and move to
 		dc->MoveTo(screen->ConvertCoordFromPositionToPixel(RouteToDraw.first != true ? RouteToDraw.second[0].PositionRaw : (screen->GetPlugIn()->RadarTargetSelect(RouteDrawTarget.c_str()).GetPosition().GetPosition())));
@@ -49,10 +50,6 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 				// Print text for flight level
 				text = to_string(i->FlightLevel);
 				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
-				offsetY += 14;
-
-				text = to_string(i->DistanceFromLastPoint);
-				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
 
 				// Draw line
 				dc->LineTo(point);
@@ -61,6 +58,112 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 
 		// Cleanup
 		DeleteObject(pen);
+		DeleteObject(&brush);
+	}
+	else if (type == CPathType::PIV) {
+		// Pens & brush
+		CPen pen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
+		CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
+		CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
+		dc->SelectObject(pen);
+		SolidBrush brush(TargetOrange);
+
+		// Set extra character spacing (workaround for a bug I need to fix)
+		dc->SetTextCharacterExtra(2);
+
+		// Get first AC position and draw
+		dc->MoveTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute1.first != true ? CConflictDetection::PIVRoute1.second[0].PositionRaw 
+			: (screen->GetPlugIn()->RadarTargetSelect(CConflictDetection::PIVLocations1.at(0).Callsign.c_str()).GetPosition().GetPosition())));
+		if (!CConflictDetection::PIVRoute1.second.empty()) {// Failsafe
+			for (auto i = CConflictDetection::PIVRoute1.second.begin(); i != CConflictDetection::PIVRoute1.second.end(); i++) {
+				// Get point, text rectangle & define y offset
+				string text = i->Fix; // To get TextExtent
+				POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
+				CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+				int offsetY = 0;
+
+				// Draw dot
+				Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+				g->FillEllipse(&brush, pointRect);
+
+				// Print text for fix
+				dc->TextOutA(box.left, box.top, text.c_str());
+				offsetY += 14;
+
+				// Print text for estimate
+				text = i->Estimate;
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
+
+				// Print text for flight level
+				text = to_string(i->FlightLevel);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			}
+		}
+
+		// Get second AC position and draw
+		dc->MoveTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute2.first != true ? CConflictDetection::PIVRoute2.second[0].PositionRaw
+			: (screen->GetPlugIn()->RadarTargetSelect(CConflictDetection::PIVLocations2.at(0).Callsign.c_str()).GetPosition().GetPosition())));
+		if (!CConflictDetection::PIVRoute2.second.empty()) {// Failsafe
+			for (auto i = CConflictDetection::PIVRoute2.second.begin(); i != CConflictDetection::PIVRoute2.second.end(); i++) {
+				// Get point, text rectangle & define y offset
+				string text = i->Fix; // To get TextExtent
+				POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
+				CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+				int offsetY = 0;
+
+				// Draw dot
+				Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+				g->FillEllipse(&brush, pointRect);
+
+				// Print text for fix
+				dc->TextOutA(box.left, box.top, text.c_str());
+				offsetY += 14;
+
+				// Print text for estimate
+				text = i->Estimate;
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
+
+				// Print text for flight level
+				text = to_string(i->FlightLevel);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			}
+		}
+
+		// Draw conflicts
+		POINT ac1 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVSeparationStatuses.begin()->AircraftLocations.first);
+		POINT ac2 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVSeparationStatuses.begin()->AircraftLocations.second);
+		int idx = 0; // Array index
+		for (auto i = CConflictDetection::PIVSeparationStatuses.begin(); i != CConflictDetection::PIVSeparationStatuses.end(); i++) {
+			// Select pen
+			if (i->ConflictStatus == CConflictStatus::OK) {
+				dc->SelectObject(pen);
+			}
+			else if (i->ConflictStatus == CConflictStatus::WARNING) {
+				dc->SelectObject(yellowPen);
+			}
+			else {
+				dc->SelectObject(redPen);
+			}
+			// Draw lines
+			dc->MoveTo(ac1);
+			dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(idx).Position));
+			dc->MoveTo(ac2);
+			dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(idx).Position));
+
+			// Reset points
+			ac1 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(idx).Position);
+			ac2 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(idx).Position);
+
+			// Increment
+			idx++;
+		}
+
+		// Cleanup
+		DeleteObject(pen);
+		DeleteObject(yellowPen);
+		DeleteObject(redPen);
 		DeleteObject(&brush);
 	}
 	else if (type == CPathType::TCKS) { // Draw tracks if the type is tracks

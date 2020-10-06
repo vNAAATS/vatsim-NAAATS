@@ -329,7 +329,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
 					// If both aircraft selected then draw
 					if (aircraftSel1 != "" && aircraftSel2 != "") {
-						CConflictDetection::PIVTool(&dc, &g, this, aircraftSel1, aircraftSel2);
+						// Render
+						CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
 					}
 				}
 
@@ -583,7 +584,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
 
-			// RBL (if active)
+			// Probing tools
 			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end() 
 				|| buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()
 				|| buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
@@ -593,6 +594,10 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				else if (aircraftSel2 == "") {
 					aircraftSel2 = asel;
 				}
+			}
+
+			if (fp.GetCallsign() == aircraftSel2 && buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+				CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
 			}
 		}
 

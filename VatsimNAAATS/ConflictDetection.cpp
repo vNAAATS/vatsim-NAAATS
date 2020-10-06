@@ -1,6 +1,12 @@
 #include "pch.h"
 #include "ConflictDetection.h"
 
+vector<CAircraftStatus> CConflictDetection::PIVLocations1;
+vector<CAircraftStatus> CConflictDetection::PIVLocations2;
+pair<bool, vector<CRoutePosition>> CConflictDetection::PIVRoute1;
+pair<bool, vector<CRoutePosition>> CConflictDetection::PIVRoute2;
+vector<CSepStatus> CConflictDetection::PIVSeparationStatuses;
+
 void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2) {
 	// Save context
 	int iDC = dc->SaveDC();
@@ -166,12 +172,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	DeleteObject(redPen);
 }
 
-void CConflictDetection::PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
-	// Make pens
-	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
-	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
-	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
-
+void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string targetB) {
 	// Radar targets, aircraft objects and routes
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
@@ -179,13 +180,13 @@ void CConflictDetection::PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
 
 	// Aircraft statuses along route
-	PIVLocations1 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude);
-	PIVLocations2 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude);
+	PIVLocations1 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude, 1);
+	PIVLocations2 = GetStatusesAlongRoute(screen, status2.Callsign, status2.GroundSpeed, status2.Altitude, 2);
 
 	int length = PIVLocations1.size() < PIVLocations2.size() ? (int)PIVLocations1.size() : PIVLocations2.size();
 
 	for (int i = 0; i < length; i++) {
-		
+		PIVSeparationStatuses.push_back(DetectStatus(screen, &PIVLocations1.at(i), &PIVLocations2.at(i)));
 	}
 }
 
@@ -338,9 +339,16 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	return status;
 }
 
-vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude) {
+vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude, int pivID) {
 	// Get the route
-	vector<CRoutePosition> route = CPathRenderer::GetRoute(screen, callsign).second;
+	pair<bool, vector<CRoutePosition>> route = CPathRenderer::GetRoute(screen, callsign);
+
+	if (pivID == 1) {
+		PIVRoute1 = route;
+	}
+	else {
+		PIVRoute2 = route;
+	}
 
 	// Status vector
 	vector<CAircraftStatus> statuses;
@@ -351,7 +359,7 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* 
 	// Iterate
 	int counter = 0; // Counter to check if not first pass
 	CPosition prevPos; // Previous position
-	for (auto i = route.begin(); i != route.end(); i++) {
+	for (auto i = route.second.begin(); i != route.second.end(); i++) {
 		if (i->Estimate == "--") { // If fix has been passed then continue
 			continue;
 		}

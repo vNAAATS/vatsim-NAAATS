@@ -19,6 +19,8 @@ class CConflictDetection
 		// PIV
 		static vector<CAircraftStatus> PIVLocations1;
 		static vector<CAircraftStatus> PIVLocations2;
+		static pair<bool, vector<CRoutePosition>> PIVRoute1;
+		static pair<bool, vector<CRoutePosition>> PIVRoute2;
 		static vector<CSepStatus> PIVSeparationStatuses;
 
 		// Range Bearing Line tool
@@ -28,7 +30,7 @@ class CConflictDetection
 		static void SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB);
 
 		// Path Intercept Vector tool
-		static void PIVTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB);
+		static void PIVTool(CRadarScreen* screen, string targetA, string targetB);
 
 		// Probe
 		
@@ -50,7 +52,7 @@ class CConflictDetection
 		static CSepStatus DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB);
 
 		// Get an aircraft's status along its route
-		static vector<CAircraftStatus> GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude);
+		static vector<CAircraftStatus> GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude, int pivID);
 
 		// Mach number technique
 		static int MachNumberTechnique(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB, string point);
