@@ -20,4 +20,6 @@ vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on t
 - Automatic Mach Number Technique distance calculation between two aircraft given a point
 - Saving of data
 
-Deleaker helps me find critical memory leaks in this C++ project. Go check them out here! http://deleaker.com/
+![logo](https://resources.ganderoceanic.com/media/img/brand/bnr/small_bnr.png)
+
+Deleaker helps me find critical memory leaks in this C++ project. Go check it out here! http://deleaker.com/
