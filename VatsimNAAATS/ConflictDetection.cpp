@@ -65,8 +65,8 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	int iDC = dc->SaveDC();
 
 	// Make pens
-	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
-	CPen whiteDottedPen(PS_DOT, 1, TextWhite.ToCOLORREF());
+	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
+	CPen orangeDottedPen(PS_DOT, 1, TargetOrange.ToCOLORREF());
 	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
 	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
 
@@ -122,7 +122,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
 		// Select pen
 		if (status->ConflictStatus == CConflictStatus::OK) {
-			dc->SelectObject(whitePen);
+			dc->SelectObject(orangePen);
 		}
 		else if (status->ConflictStatus == CConflictStatus::WARNING) {
 			dc->SelectObject(yellowPen);
@@ -139,7 +139,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
 		// Select pen
 		if (status->ConflictStatus == CConflictStatus::OK) {
-			dc->SelectObject(whitePen);
+			dc->SelectObject(orangePen);
 		}
 		else if (status->ConflictStatus == CConflictStatus::WARNING) {
 			dc->SelectObject(yellowPen);
@@ -152,7 +152,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	}
 
 	// Draw line between points and finish and label
-	dc->SelectObject(whiteDottedPen);
+	dc->SelectObject(orangeDottedPen);
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
 	dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
 	POINT midpoint = CUtils::GetMidPoint(screen->ConvertCoordFromPositionToPixel(status1.Position), screen->ConvertCoordFromPositionToPixel(status2.Position));
@@ -166,8 +166,8 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	dc->RestoreDC(iDC);
 
 	// Clean up
-	DeleteObject(whitePen);
-	DeleteObject(whiteDottedPen);
+	DeleteObject(orangePen);
+	DeleteObject(orangeDottedPen);
 	DeleteObject(yellowPen);
 	DeleteObject(redPen);
 }
@@ -183,6 +183,7 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	PIVLocations1 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude, 1);
 	PIVLocations2 = GetStatusesAlongRoute(screen, status2.Callsign, status2.GroundSpeed, status2.Altitude, 2);
 
+	// Get the length
 	int length = PIVLocations1.size() < PIVLocations2.size() ? (int)PIVLocations1.size() : PIVLocations2.size();
 
 	for (int i = 0; i < length; i++) {

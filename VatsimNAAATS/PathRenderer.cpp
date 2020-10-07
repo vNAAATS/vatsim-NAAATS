@@ -74,6 +74,7 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 		// Get first AC position and draw
 		dc->MoveTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute1.first != true ? CConflictDetection::PIVRoute1.second[0].PositionRaw 
 			: (screen->GetPlugIn()->RadarTargetSelect(CConflictDetection::PIVLocations1.at(0).Callsign.c_str()).GetPosition().GetPosition())));
+		POINT lastLinkedPoint1 = { 0, 0 }; // So that we can link up the aircraft target with the last drawn route point
 		if (!CConflictDetection::PIVRoute1.second.empty()) {// Failsafe
 			for (auto i = CConflictDetection::PIVRoute1.second.begin(); i != CConflictDetection::PIVRoute1.second.end(); i++) {
 				// Get point, text rectangle & define y offset
@@ -98,12 +99,19 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 				// Print text for flight level
 				text = to_string(i->FlightLevel);
 				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+
+				// Draw the line between points if there is no estimate (point is behind the aircraft)
+				if (i->Estimate == "--") {
+					dc->LineTo(point);
+					lastLinkedPoint1 = point;
+				}
 			}
 		}
 
 		// Get second AC position and draw
 		dc->MoveTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute2.first != true ? CConflictDetection::PIVRoute2.second[0].PositionRaw
 			: (screen->GetPlugIn()->RadarTargetSelect(CConflictDetection::PIVLocations2.at(0).Callsign.c_str()).GetPosition().GetPosition())));
+		POINT lastLinkedPoint2 = { 0, 0 }; // So that we can link up the aircraft target with the last drawn route point
 		if (!CConflictDetection::PIVRoute2.second.empty()) {// Failsafe
 			for (auto i = CConflictDetection::PIVRoute2.second.begin(); i != CConflictDetection::PIVRoute2.second.end(); i++) {
 				// Get point, text rectangle & define y offset
@@ -128,7 +136,23 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 				// Print text for flight level
 				text = to_string(i->FlightLevel);
 				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+
+				// Draw the line between points if there is no estimate (point is behind the aircraft)
+				if (i->Estimate == "--") {
+					dc->LineTo(point);
+					lastLinkedPoint2 = point;
+				}
 			}
+		}
+
+		// Link last passed route point
+		if (lastLinkedPoint1.x != 0 && lastLinkedPoint2.y != 0) {
+			dc->MoveTo(lastLinkedPoint1);
+			dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVSeparationStatuses.begin()->AircraftLocations.first));
+		}
+		if (lastLinkedPoint2.x != 0 && lastLinkedPoint2.y != 0) {
+			dc->MoveTo(lastLinkedPoint2);
+			dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVSeparationStatuses.begin()->AircraftLocations.second));
 		}
 
 		// Draw conflicts
@@ -146,7 +170,7 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 			else {
 				dc->SelectObject(redPen);
 			}
-			// Draw lines
+			// Draw lines (we add one because the first index is the aircraft position)
 			dc->MoveTo(ac1);
 			dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(idx).Position));
 			dc->MoveTo(ac2);
@@ -158,6 +182,37 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 
 			// Increment
 			idx++;
+		}
+
+		// Now draw the remainder of the line for the longer aircraft
+		int length = CConflictDetection::PIVLocations1.size() > CConflictDetection::PIVLocations2.size() 
+			? (int)CConflictDetection::PIVLocations1.size() : CConflictDetection::PIVLocations2.size();
+		// Bool to hold which is longer
+		bool isLonger = CConflictDetection::PIVLocations1.size() > CConflictDetection::PIVLocations2.size()
+			? true : false;
+		POINT pointToDraw;
+		if (isLonger) {
+			pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(idx).Position);
+		}
+		else {
+			pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(idx).Position);
+		}
+		
+		// Iterate and draw
+		for (int i = idx - 1; i < length; i++) {
+			// Select orange pen
+			dc->SelectObject(pen);
+			if (isLonger) {
+				dc->MoveTo(pointToDraw);
+				dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position));
+				pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position);
+			}
+			else if (false) {
+				dc->MoveTo(pointToDraw);
+				dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position));
+				pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position);
+			}
+
 		}
 
 		// Cleanup

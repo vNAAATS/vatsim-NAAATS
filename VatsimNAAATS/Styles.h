@@ -19,7 +19,7 @@ namespace Colours {
 	const Color GreenBevelDark(33, 120, 144);
 	const Color ButtonPressed(45, 69, 90);
 	const Color WindowBorder(187, 214, 238);
-	const Color WarningYellow(221, 213, 79);
+	const Color WarningYellow(240, 231, 76);
 	const Color CriticalRed(195, 67, 67);
 }
 

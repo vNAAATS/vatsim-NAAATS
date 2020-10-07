@@ -157,6 +157,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	if (fiveSecT >= 5 && !otherAircraft.empty()) {
 		otherAircraft.clear();
 	}
+
+	// Redo the PIV calculations every 5 seconds
+	if (fiveSecT >= 5 && buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+		CConflictDetection::PIVLocations1.clear();
+		CConflictDetection::PIVLocations2.clear();
+		CConflictDetection::PIVSeparationStatuses.clear();
+		CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
+	}
 	
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
@@ -620,6 +628,13 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			// Erase SEP (if active)
 			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
 				buttonsPressed.erase(MENBTN_SEP);
+			}
+
+			// If PIV already active then clear everything
+			if (!CConflictDetection::PIVSeparationStatuses.empty()) {
+				CConflictDetection::PIVLocations1.clear();
+				CConflictDetection::PIVLocations2.clear();
+				CConflictDetection::PIVSeparationStatuses.clear();
 			}
 			// Reset ASELs
 			aircraftSel1 = "";
