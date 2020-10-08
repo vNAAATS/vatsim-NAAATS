@@ -141,6 +141,8 @@ const int RECT8_WIDTH = 90;
 const int WINSZ_TITLEBAR_HEIGHT = 20;
 const int WINSZ_TCKINFO_WIDTH = 450;
 const int WINSZ_TCKINFO_HEIGHT = 250;
+const int WINSZ_FLTPLN_WIDTH = 550;
+const int WINSZ_FLTPLN_HEIGHT = 600;
 
 // Conflict
 const int SEPTOOL_TIME = 2700; // 45 minutes
@@ -171,6 +173,16 @@ const int WINDOW = 100;
 // Window specific buttons
 const int WINBTN_CLOSE = 101;
 const int WINBTN_TCKINFO_REFRESH = 102;
+const int WINBTN_FLTPLN_COPY = 102;
+const int WINBTN_FLTPLN_COORD = 103;
+const int WINBTN_FLTPLN_MSG = 104;
+const int WINBTN_FLTPLN_VOXCLEAR = 105;
+const int WINBTN_FLTPLN_DELETE = 106;
+const int WINBTN_FLTPLN_PROBE = 107;
+const int WINBTN_FLTPLN_HIST = 108;
+const int WINBTN_FLTPLN_SAVE = 109;
+const int WINBTN_FLTPLN_ADS = 110;
+
 
 // Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;

@@ -7,15 +7,15 @@
 
 using namespace Colours;
 
-CTrackInfoWindow::CTrackInfoWindow(POINT topLeftPt) {
-	topLeft = topLeftPt;
+CTrackInfoWindow::CTrackInfoWindow(POINT topLeft) : CBaseWindow(topLeft) {
+	// Make buttons
+	MakeButtons();
+};
 
+
+void CTrackInfoWindow::MakeButtons() {
 	WindowButtons[WINBTN_TCKINFO_REFRESH] = make_pair("Refresh NAT Data", false);
 	WindowButtons[WINBTN_CLOSE] = make_pair("Close", false);
-}
-
-POINT CTrackInfoWindow::GetTopLeft() {
-	return topLeft;
 }
 
 void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -50,9 +50,9 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 
 	/// Draw buttons
 	// Refresh button
-	DrawButton(dc, screen, "Refresh NAT Data", { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, WindowButtons.at(WINBTN_TCKINFO_REFRESH).second, WINBTN_TCKINFO_REFRESH, "TCKINFO");
+	DrawButton(dc, screen, WindowButtons.at(WINBTN_TCKINFO_REFRESH).first, { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, WindowButtons.at(WINBTN_TCKINFO_REFRESH).second, WINBTN_TCKINFO_REFRESH, "TCKINFO");
 	// Close button
-	DrawButton(dc, screen, "Close", { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(WINBTN_CLOSE).second, WINBTN_CLOSE, "TCKINFO");
+	DrawButton(dc, screen, WindowButtons.at(WINBTN_CLOSE).first, { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(WINBTN_CLOSE).second, WINBTN_CLOSE, "TCKINFO");
 
 	// Draw lines
 	FontSelector::SelectNormalFont(16, dc);
@@ -122,56 +122,4 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 
 	// Restore device context
 	dc->RestoreDC(iDC);
-}
-
-
-void CTrackInfoWindow::MoveWindow(CRect area) {
-	topLeft = { area.left, area.top };
-}
-
-CRect CTrackInfoWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, bool isPressed, int type, string id)
-{
-	// Save context for later
-	int sDC = dc->SaveDC();
-
-	// Brushes
-	CBrush btnNormal(ScreenBlue.ToCOLORREF());
-
-	CBrush btnPressed(ButtonPressed.ToCOLORREF());
-
-	// Create rectangle
-	CRect button(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
-
-	// Check if pressed
-	if (isPressed) {
-		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
-		// Button bevel
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	}
-	else {
-		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
-		// Button bevel
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-		InflateRect(button, -1, -1);
-		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	}
-
-	// Draw text
-	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
-	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(button.left + (button.Width() / 2), button.top + vtcAlign, text.c_str());
-
-	// Restore device context
-	dc->RestoreDC(sDC);
-
-	// Delete objects
-	DeleteObject(&btnNormal);
-	DeleteObject(&btnPressed);
-
-	// Add object and return the rectangle
-	screen->AddScreenObject(type, id.c_str(), button, false, "");
-	return button;
 }

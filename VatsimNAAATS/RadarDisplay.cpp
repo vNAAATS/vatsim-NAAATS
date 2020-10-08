@@ -23,6 +23,7 @@ CRadarDisplay::CRadarDisplay()
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
+	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 });
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
@@ -376,9 +377,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		inboundList->DrawList(&g, &dc, this, &inboundAircraft);
 		otherList->DrawList(&g, &dc, this, &otherAircraft);
 
-		// Draw track window info if button pressed
+		// Draw track info window if button pressed
 		if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
 			trackWindow->RenderWindow(&dc, &g, this);
+		}
+
+		// Draw flight plan window window if button pressed
+		if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
+			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
 		// Finally, reset the clock if time has been exceeded
 		if (fiveSecT >= 5) {
@@ -420,10 +426,14 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		if (string(sObjectId) == "TCKINFO")
 		trackWindow->MoveWindow(Area);
 
+		if (string(sObjectId) == "FLTPLN")
+			fltPlnWindow->MoveWindow(Area);
+
 		CUtils::TrackWindowX = Area.left;
 		CUtils::TrackWindowY = Area.top;
 	}
 
+	// Refresh
 	RequestRefresh();
 }
 
@@ -434,6 +444,7 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 		CMenuBar::dropDownHover = atoi(sObjectId);
 	}
 
+	// Refresh
 	RequestRefresh();
 }
 
@@ -579,11 +590,6 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				}
 			}
 		} 
-
-		// If button is the flight plan button
-		if (ObjectType == MENBTN_FLIGHTPLAN) {
-
-		}
 
 		// If screen object is a tag
 		if (ObjectType == SCREEN_TAG) {

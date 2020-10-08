@@ -10,18 +10,17 @@ using namespace std;
 using namespace Gdiplus;
 using namespace EuroScopePlugIn;
 
-class CTrackInfoWindow : public CBaseWindow
+// Maybe make a base class for all the windows?
+class CFlightPlanWindow : public CBaseWindow
 {
 	public:
 		// Inherited methods
-		CTrackInfoWindow(POINT topLeft);
+		CFlightPlanWindow(POINT topLeft);
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		virtual void MakeButtons();
 
 		// Window functions to do
-		bool NATDataRefresh;
 
 		// Window messages to display
-		string MsgDataRefresh = "";
 };
 

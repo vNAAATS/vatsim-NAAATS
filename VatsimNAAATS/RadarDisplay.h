@@ -7,6 +7,7 @@
 #include "OtherList.h"
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
+#include "FlightPlanWindow.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -59,5 +60,6 @@ class CRadarDisplay : public CRadarScreen
 		CInboundList* inboundList;
 		COtherList* otherList;
 		CTrackInfoWindow* trackWindow = nullptr;
+		CFlightPlanWindow* fltPlnWindow = nullptr;
 };
 

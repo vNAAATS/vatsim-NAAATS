@@ -207,7 +207,7 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 				dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position));
 				pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position);
 			}
-			else if (false) {
+			else {
 				dc->MoveTo(pointToDraw);
 				dc->LineTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position));
 				pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position);
