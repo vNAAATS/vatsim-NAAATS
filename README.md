@@ -18,6 +18,7 @@ vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on t
 - Message window to view text/CPDLC requests and action them
 - Probe tool to detect conflicts down a track before issuing an oceanic clearance
 - Automatic Mach Number Technique distance calculation between two aircraft given a point
+- Controller scratchpad for general information
 - Saving of data
 
 ![logo](https://resources.ganderoceanic.com/media/img/brand/bnr/small_bnr.png)
