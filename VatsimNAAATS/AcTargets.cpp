@@ -221,7 +221,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// TODO: colour change based on status
 	FontSelector::SelectATCFont(16, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
-	dc->SetTextAlign(TA_LEFT);
+	dc->SetTextAlign(TA_CENTER);
 	string text;
 
 	// Offsets

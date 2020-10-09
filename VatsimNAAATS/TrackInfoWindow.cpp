@@ -45,7 +45,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	// Create button bar
 	CRect buttonBarRect(windowRect.left, windowRect.bottom - 50, windowRect.left + WINSZ_TCKINFO_WIDTH, windowRect.bottom);
 	dc->FillRect(buttonBarRect, &darkerBrush);
-	dc->DrawEdge(buttonBarRect, EDGE_RAISED, BF_TOP);
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 	InflateRect(buttonBarRect, -1, -1);
 	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 

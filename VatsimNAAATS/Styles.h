@@ -24,9 +24,43 @@ namespace Colours {
 }
 
 // Fonts
+namespace Fonts {
+	const string NormalFont = "Arial";
+	const string MonoFont = "Lucida Console";
+	const string ATCFont = "vNAAATS";
+}
+
+// Fonts
 class FontSelector 
 {
 	public:
+		static HFONT NormalFont(int size, int weight) {
+			// Create font
+			HFONT hFont = CreateFont(size, 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
+
+			// Return font
+			return hFont;
+		}
+
+		static HFONT ATCFont(int size, int weight) {
+			// Create font
+			HFONT hFont = CreateFont(size, 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("vNAAATS"));
+
+			// Return font
+			return hFont;
+		}
+
+		static HFONT MonoFont(int size, int weight) {
+			// Create font
+			HFONT hFont = CreateFont(size, 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Lucida Console"));
+
+			// Return font
+			return hFont;
+		}
+
 		static void SelectNormalFont(int size, CDC* dc) {
 			CFont font;
 			LOGFONT lFont;
