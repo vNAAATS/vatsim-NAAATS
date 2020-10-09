@@ -11,6 +11,7 @@
 #include "ConflictDetection.h"
 #include <thread> 
 #include <gdiplus.h>
+#include <ctype.h>
 
 
 using namespace Gdiplus;
@@ -167,6 +168,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
 	}
 	
+	// Check if the altitude filter is on
+	bool altFiltEnabled = false;
+	if (buttonsPressed.find(MENBTN_ALTFILT) != buttonsPressed.end()) altFiltEnabled = true;
+
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
 	RadarArea.top = RadarArea.top - 1;
@@ -188,6 +193,15 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Loop all aircraft
 		while (ac.IsValid()) {
+			// Very first thing we do is check their altitude, if they are outside the filter, skip them
+			if (altFiltEnabled) {
+				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
+					// Select the next target
+					ac = GetPlugIn()->RadarTargetSelectNext(ac);
+					continue;
+				}
+			}
+
 			// Flight plan
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(ac.GetCallsign());
 
@@ -343,7 +357,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					}
 				}
 
-				// Draw the tag and target with the information if tags are turned on
+				// Draw the tag and target with the information if tags are turned on and within altitude filter
 				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
@@ -686,6 +700,18 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
+
+		// If a text entry
+		if (ObjectType == TXT_ENTRY) {
+			// If the low altitude filter
+			if (string(sObjectId) == "ALTFILT_LOW") {
+				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_LOW, 000);
+			}
+			// If the high altitude filter
+			if (string(sObjectId) == "ALTFILT_HIGH") {
+				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_HIGH, 000);
+			}
+		}
 	}
 	
 	if (Button == BUTTON_RIGHT) {
@@ -860,7 +886,30 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 
 void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POINT Pt, RECT Area)
 {
-
+	// Set low alt filter
+	if (FunctionId == FUNC_ALTFILT_LOW) {
+		// Validation (range & type)
+		// Check if it is a string
+		bool isNumber = true;
+		for (int i = 0; i < strlen(sItemString); i++) { // Check if string
+			if (!isdigit(sItemString[i])) isNumber = false;
+		}
+		if (isNumber && (atoi(sItemString) < 1000 && atoi(sItemString) > 0)) {
+			CUtils::AltFiltLow = atoi(sItemString); // Return if in range
+		}
+		
+	}
+	// Set high alt filter
+	if (FunctionId == FUNC_ALTFILT_HIGH) {
+		// Validation (range & type)
+		bool isNumber = true;
+		for (int i = 0; i < strlen(sItemString); i++) { // Check if string
+			if (!isdigit(sItemString[i])) isNumber = false;
+		}
+		if (isNumber && (atoi(sItemString) < 999 && atoi(sItemString) > 0)) {
+			CUtils::AltFiltHigh = atoi(sItemString); // Return if in range
+		}
+	}
 }
 
 void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)

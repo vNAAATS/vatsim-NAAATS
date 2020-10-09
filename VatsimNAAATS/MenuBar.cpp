@@ -4,6 +4,8 @@
 #include "MenuBar.h"
 #include "Styles.h"
 #include "Utils.h"
+#include <iomanip>
+#include <sstream>
 
 using namespace Colours;
 
@@ -358,9 +360,16 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 			else {
 				DrawMenuBarButton(dc, screen, { offsetX, offsetY }, kv, btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, false, false);
 			}
-			// TODO: Make dynamic
+			// Format the text
 			offsetY += MENBAR_BTN_HEIGHT + 1;
-			DrawMenuBarButton(dc, screen, { offsetX, offsetY }, make_pair(428, "000-000"), btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
+			std::stringstream ss1;
+			ss1 << setfill('0') << setw(3) << CUtils::AltFiltLow;
+			string lowAlt = ss1.str();
+			std::stringstream ss2;
+			ss2 << setfill('0') << setw(3) << CUtils::AltFiltHigh;
+			string highAlt = ss2.str();
+			DrawMenuBarButton(dc, screen, { offsetX, offsetY }, make_pair(428, string(lowAlt + "-" + highAlt)), 
+				btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + 11;
 			offsetY = 30;
 		}
@@ -492,6 +501,14 @@ CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 			dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 			InflateRect(button, -1, -1);
 			dc->Draw3dRect(button, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+			/// Add screen objects for text
+			// Low
+			CSize rectSize = dc->GetTextExtent("000");
+			CRect lowRect(button.left + 14, button.top + vtcAlign, button.left + 16 + rectSize.cx, button.top + vtcAlign + rectSize.cy);
+			screen->AddScreenObject(TXT_ENTRY, "ALTFILT_LOW", lowRect, false, "");
+			// High
+			CRect highRect(button.right - 16 - rectSize.cx, button.top + vtcAlign, button.right - 14, button.top + vtcAlign + rectSize.cy);
+			screen->AddScreenObject(TXT_ENTRY, "ALTFILT_HIGH", highRect, false, "");
 		}
 		else if (isPosActive) {
 			dc->FillSolidRect(button, LightGreen.ToCOLORREF());
@@ -530,7 +547,9 @@ CRect CMenuBar::DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 	DeleteObject(&btnPressed);
 
 	// Add object and return the rectangle
-	screen->AddScreenObject(kv.first, "", button, false, "");
+	if (kv.first != 428) { // If not the altitude filter
+		screen->AddScreenObject(kv.first, "", button, false, "");
+	}
 	return button;
 }
 

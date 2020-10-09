@@ -149,23 +149,6 @@ const int SEPTOOL_TIME = 2700; // 45 minutes
 const int STCA_TIME = 480; // 8 minutes
 
 /// OBJECTS
-// Lists
-const int LIST_INBOUND = 300;
-const int LIST_OTHERS = 301;
-
-// Dropdown
-const int DROPDOWN = 800;
-const int DRP_AREA_EGGX = 801;
-const int DRP_AREA_CZQX = 802;
-const int DRP_AREA_BDBX = 803;
-const int DRP_OVL_ALL = 801;
-const int DRP_OVL_EAST = 802;
-const int DRP_OVL_WEST = 803;
-const int DRP_OVL_SEL = 804;
-const int DRP_TYPE_DEL = 801;
-const int DRP_TYPE_ENR = 802;
-const int DRP_TYPE_MULTI = 803;
-
 // Screen
 const int SCREEN_TAG = 1;
 const int WINDOW = 100;
@@ -183,6 +166,15 @@ const int WINBTN_FLTPLN_PROBE = 109;
 const int WINBTN_FLTPLN_HIST = 110;
 const int WINBTN_FLTPLN_SAVE = 111;
 const int WINBTN_FLTPLN_ADS = 112;
+
+// Text inputs and functions
+const int TXT_ENTRY = 200;
+const int FUNC_ALTFILT_LOW = 201;
+const int FUNC_ALTFILT_HIGH = 202;
+
+// Lists
+const int LIST_INBOUND = 300;
+const int LIST_OTHERS = 301;
 
 // Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;
@@ -214,6 +206,19 @@ const int MENDRP_TCKCTRL = 425;
 const int MENDRP_OVERLAYS = 426;
 const int MENDRP_TYPESEL = 427;
 const int MENTXT_ALTFILT = 428;
+
+// Dropdown
+const int DROPDOWN = 800;
+const int DRP_AREA_EGGX = 801;
+const int DRP_AREA_CZQX = 802;
+const int DRP_AREA_BDBX = 803;
+const int DRP_OVL_ALL = 801;
+const int DRP_OVL_EAST = 802;
+const int DRP_OVL_WEST = 803;
+const int DRP_OVL_SEL = 804;
+const int DRP_TYPE_DEL = 801;
+const int DRP_TYPE_ENR = 802;
+const int DRP_TYPE_MULTI = 803;
 
 /// SETTINGS VARIABLES
 const string SET_INBNDX = "InboundX";
