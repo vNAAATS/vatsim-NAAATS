@@ -77,7 +77,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	dc->TextOutA(((windowRect.right + windowRect.left) / 2) + 10, buttonBarRect.top + 16, MsgDataRefresh.c_str());
 	
 	// Get a rectangle for the content
-	int contentSize = (COverlays::CurrentTracks.size() * 45 * 4); // We minus 25 because 25 extra is always added on at the end of the loop
+	int contentSize = COverlays::CurrentTracks.size() * 45; // We minus 25 because 25 extra is always added on at the end of the loop
 	CRect scrollContent(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT, windowRect.right, windowRect.top + WINSZ_TITLEBAR_HEIGHT + contentSize);
 	/// Scroll bar mechanics
 	scrollWindowSize = WINSZ_TCKINFO_HEIGHT - (buttonBarRect.Height() + 3) -  (titleRect.Height() + 1); // Size of the window (which is also the size of the track for the scroll grip)
@@ -91,7 +91,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	int winScrollAreaSize = contentSize - scrollWindowSize; // Total scrollable area
 	double windowPosRatio = (double)scrollWindowSize / (double)winScrollAreaSize; // Ratio of window to scrollable area
 	trackScrollAreaSize = scrollWindowSize - gripSize; // Same as window, do to keep grip flying off end of track
-	double gripPosOnTrack = trackScrollAreaSize * windowPosRatio + gripPosDelta; // This is the location of the grip on the track
+	double gripPosOnTrack = trackScrollAreaSize * windowPosRatio + gripPosDelta - ((gripSize != scrollWindowSize) ? gripSize : 0); // This is the location of the grip on the track
 
 	// Now we draw the scroll track
 	CRect scrollBarTrack(windowRect.right - 13, windowRect.top + titleRect.Height(), windowRect.right, windowRect.bottom - (buttonBarRect.Height() + 2));
@@ -101,7 +101,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// And then the actual scroll grip
-	CRect scrollGrip(scrollBarTrack.left, scrollBarTrack.top + (gripPosOnTrack - gripSize), scrollBarTrack.right, scrollBarTrack.top + (gripPosOnTrack - gripSize) + gripSize);
+	CRect scrollGrip(scrollBarTrack.left, scrollBarTrack.top + gripPosOnTrack, scrollBarTrack.right, scrollBarTrack.top + gripPosOnTrack + gripSize);
 	dc->FillRect(scrollGrip, &darkerBrush);
 	dc->Draw3dRect(scrollGrip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(scrollGrip, -1, -1);
@@ -111,51 +111,44 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	screen->AddScreenObject(WIN_SCROLLBAR, "TCKINFO", scrollGrip, true, "");
 
 	// Now we need to get the clipped scroll area
-	double gripPositionRatio = gripPosOnTrack / trackScrollAreaSize;
-	double windowPosition = gripPositionRatio * winScrollAreaSize - scrollWindowSize;
+	double gripPositionRatio = gripPosOnTrack != 0.0 ? (gripPosOnTrack + gripSize) / trackScrollAreaSize : 0;
+	double windowPosition = gripPosOnTrack != 0.0 ? gripPositionRatio * winScrollAreaSize - scrollWindowSize : 0;
 	CRect clipContent(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + windowPosition, windowRect.right, windowRect.top + WINSZ_TITLEBAR_HEIGHT + scrollWindowSize + windowPosition);
-
 	// Set offsets for line drawing and spacer size
 	int offsetX = 25;
 	int offsetY = 25;
 	int contentOffsetY = 25;
 	string spacer = "SPACE"; // To use GetTextExtent() for a consistent sized spacer
 	// Draw lines
-	int idx = 0;
-	while (idx < 4) {
-		for (auto kv : COverlays::CurrentTracks) {
-			int content = (int)scrollContent.top + contentOffsetY;
-			if (windowRect.top + contentOffsetY >= clipContent.top && windowRect.top + contentOffsetY <= clipContent.bottom) {
-				dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, "TCK");
-				dc->TextOutA(windowRect.left + offsetX + 20, windowRect.top + offsetY, to_string(idx).c_str());
-				offsetX += dc->GetTextExtent("TCK").cx + 37;
-				// Output route
-				for (int i = 0; i < kv.second.Route.size(); i++) {
-					dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.second.Route[i].c_str());
-					offsetX += (int)dc->GetTextExtent(spacer.c_str()).cx;
-				}
-				// Reset offsets
-				offsetX = 24;
-				offsetY += 20;
+	for (auto kv : COverlays::CurrentTracks) {
+		int content = (int)scrollContent.top + contentOffsetY;
+		if (windowRect.top + contentOffsetY >= clipContent.top && windowRect.top + contentOffsetY <= clipContent.bottom) {
+			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, "TCK");
+			offsetX += dc->GetTextExtent("TCK").cx + 37;
+			// Output route
+			for (int i = 0; i < kv.second.Route.size(); i++) {
+				dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.second.Route[i].c_str());
+				offsetX += (int)dc->GetTextExtent(spacer.c_str()).cx;
 			}
-			contentOffsetY += 20;
-			if (windowRect.top + contentOffsetY >= clipContent.top && windowRect.top + contentOffsetY <= clipContent.bottom) {
-				// Output track ID
-				dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.first.c_str());
-				offsetX += dc->GetTextExtent(kv.first.c_str()).cx + 43;
-				// Output flight levels
-				for (int i = 0; i < kv.second.FlightLevels.size(); i++) {
-					dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, to_string(kv.second.FlightLevels[i] / 100).c_str());
-					offsetX += dc->GetTextExtent(to_string(kv.second.FlightLevels[i] / 100).c_str()).cx + 5;
-				}
-				// Reset x offset and increment y offset
-				offsetX = 25;
-				offsetY += 25;
-			}
-			contentOffsetY += 25;
+			// Reset offsets
+			offsetX = 24;
+			offsetY += 20;
 		}
-		offsetX = 25;
-		idx++;
+		contentOffsetY += 20;
+		if (windowRect.top + contentOffsetY >= clipContent.top && windowRect.top + contentOffsetY <= clipContent.bottom) {
+			// Output track ID
+			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, kv.first.c_str());
+			offsetX += dc->GetTextExtent(kv.first.c_str()).cx + 43;
+			// Output flight levels
+			for (int i = 0; i < kv.second.FlightLevels.size(); i++) {
+				dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, to_string(kv.second.FlightLevels[i] / 100).c_str());
+				offsetX += dc->GetTextExtent(to_string(kv.second.FlightLevels[i] / 100).c_str()).cx + 5;
+			}
+			// Reset x offset and increment y offset
+			offsetX = 25;
+			offsetY += 25;
+		}
+		contentOffsetY += 25;
 	}
 
 	// Create borders
