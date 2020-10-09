@@ -37,6 +37,8 @@ void CUtils::SavePluginData(CRadarScreen* screen) {
 	screen->SaveDataToAsr(SET_OTHERSY.c_str(), "Y position of Other list.", to_string(OthersY).c_str());
 
 	// Altitude filter (TODO)
+	screen->SaveDataToAsr(SET_ALTFILT_LOW.c_str(), "Lower level for altitude filter.", to_string(AltFiltLow).c_str());
+	screen->SaveDataToAsr(SET_ALTFILT_HIGH.c_str(), "Upper level for altitude filter.", to_string(AltFiltHigh).c_str());
 
 	// Misc display settings
 	screen->SaveDataToAsr(SET_GRID.c_str(), "Grid enabled/disabled.", GridEnabled ? "true" : "false");
@@ -72,6 +74,13 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 		OthersY = stoi(strb);
 	}
 
+	// Others list
+	stra = screen->GetDataFromAsr(SET_ALTFILT_LOW.c_str());
+	strb = screen->GetDataFromAsr(SET_ALTFILT_HIGH.c_str());
+	if (stra != NULL && strb != NULL) {
+		AltFiltLow = stoi(stra);
+		AltFiltHigh = stoi(strb);
+	}
 	// Grid enabled
 	stra = screen->GetDataFromAsr(SET_GRID.c_str());
 	if (stra != NULL) {
