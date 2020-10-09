@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "Styles.h"
 #include "AcTargets.h"
 #include "Utils.h"
 #include "PathRenderer.h"
@@ -221,7 +220,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// TODO: colour change based on status
 	FontSelector::SelectATCFont(16, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
-	dc->SetTextAlign(TA_CENTER);
+	dc->SetTextAlign(TA_LEFT);
 	string text;
 
 	// Offsets
@@ -230,7 +229,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	// Callsign
 	text = acFP.GetCallsign();
-	dc->TextOutA(tagRect.left, tagRect.top, text.c_str());
+	dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
 	offsetY += 15;
 
 	// Flight level

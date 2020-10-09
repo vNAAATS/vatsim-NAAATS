@@ -75,8 +75,12 @@ void CRadarDisplay::PopulateProgramData() {
 	else {
 		COverlays::CurrentType = COverlayType::TCKS_SEL;
 	}
-	// download the tracks
+
+	// Download the tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
+
+	// Initialise fonts
+	FontSelector::InitialiseFonts();
 }
 
 // Show and hide the grid reference and waypoints

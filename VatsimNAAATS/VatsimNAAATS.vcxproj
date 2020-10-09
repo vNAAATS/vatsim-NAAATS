@@ -202,6 +202,7 @@
     <ClCompile Include="PathRenderer.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
+    <ClCompile Include="Styles.cpp" />
     <ClCompile Include="TrackInfoWindow.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />

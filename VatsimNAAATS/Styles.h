@@ -24,107 +24,90 @@ namespace Colours {
 }
 
 // Fonts
-namespace Fonts {
-	const string NormalFont = "Arial";
-	const string MonoFont = "Lucida Console";
-	const string ATCFont = "vNAAATS";
-}
-
-// Fonts
-class FontSelector 
+class FontSelector
 {
-	public:
-		static HFONT NormalFont(int size, int weight) {
-			// Create font
-			HFONT hFont = CreateFont(size, 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
+public:
+	static void InitialiseFonts() {
+		LOGFONT lFont;
 
-			// Return font
-			return hFont;
+		// Get face for normal font
+		memset(&lFont, 0, sizeof(LOGFONT));
+		strcpy_s(lFont.lfFaceName, _T("Arial"));
+		// Normal weight
+		lFont.lfWeight = FW_SEMIBOLD;
+		// Size 16
+		lFont.lfHeight = 16;
+		normalFont16.CreateFontIndirect(&lFont);
+
+		// Get the face
+		strcpy_s(lFont.lfFaceName, _T("Lucida Console"));
+		// Normal weight
+		lFont.lfWeight = FW_SEMIBOLD;
+		// Size 12
+		lFont.lfHeight = 12;
+		monoFont12.CreateFontIndirect(&lFont);
+		// Size 14
+		lFont.lfHeight = 14;
+		monoFont14.CreateFontIndirect(&lFont);
+		// Size 15
+		lFont.lfHeight = 15;
+		monoFont15.CreateFontIndirect(&lFont);
+
+		// Get for ATC font
+		AddFontResourceEx("vNAAATS.ttf", FR_PRIVATE, 0);
+		strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
+		// Normal weight
+		lFont.lfWeight = FW_REGULAR;
+		// Size 15
+		lFont.lfHeight = 15;
+		atcFont15.CreateFontIndirect(&lFont);
+		// Size 16
+		lFont.lfHeight = 16;
+		atcFont16.CreateFontIndirect(&lFont);
+		// Size 18
+		lFont.lfHeight = 18;
+		atcFont18.CreateFontIndirect(&lFont);
+	}
+
+	static void SelectNormalFont(int size, CDC* dc) {
+		// Select font based on font size
+		if (size == 16) {
+			dc->SelectObject(normalFont16);
 		}
+	}
 
-		static HFONT ATCFont(int size, int weight) {
-			// Create font
-			HFONT hFont = CreateFont(size, 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("vNAAATS"));
-
-			// Return font
-			return hFont;
+	static void SelectMonoFont(int size, CDC* dc) {
+		// Select font based on font size
+		if (size == 12) {
+			dc->SelectObject(monoFont12);
 		}
-
-		static HFONT MonoFont(int size, int weight) {
-			// Create font
-			HFONT hFont = CreateFont(size, 0, 0, 0, weight, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-				CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Lucida Console"));
-
-			// Return font
-			return hFont;
+		else if (size == 14) {
+			dc->SelectObject(monoFont14);
 		}
-
-		static void SelectNormalFont(int size, CDC* dc) {
-			CFont font;
-			LOGFONT lFont;
-
-			// Get face
-			memset(&lFont, 0, sizeof(LOGFONT));
-			strcpy_s(lFont.lfFaceName, _T("Arial"));
-			// Size
-			lFont.lfHeight = size;
-			// Normal weight
-			lFont.lfWeight = FW_SEMIBOLD;
-			// Finally create the font
-			font.CreateFontIndirect(&lFont);
-
-			// Select the object
-			dc->SelectObject(&font);
-
-			// Cleanup
-			font.DeleteObject();
-			DeleteObject(&lFont);
+		else if (size == 15) {
+			dc->SelectObject(monoFont15);
 		}
+	}
 
-		static void SelectATCFont(int size, CDC* dc) {
-			CFont font;
-			LOGFONT lFont;
-
-			// Get face
-			AddFontResourceEx("vNAAATS.ttf", FR_PRIVATE, 0);
-			memset(&lFont, 0, sizeof(LOGFONT));
-			strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
-			// Size
-			lFont.lfHeight = size;
-			// Normal weight
-			lFont.lfWeight = FW_REGULAR;
-			// Finally create the font
-			font.CreateFontIndirect(&lFont);
-
-			// Select the object
-			dc->SelectObject(&font);
-
-			// Cleanup
-			font.DeleteObject();
-			DeleteObject(&lFont);
+	static void SelectATCFont(int size, CDC* dc) {
+		// Select font based on font size
+		if (size == 15) {
+			dc->SelectObject(atcFont15);
 		}
-
-		static void SelectMonoFont(int size, CDC* dc) {
-			CFont font;
-			LOGFONT lFont;
-
-			// Get the face
-			memset(&lFont, 0, sizeof(LOGFONT));
-			strcpy_s(lFont.lfFaceName, _T("Lucida Console"));
-			// Size
-			lFont.lfHeight = size;
-			// Normal weight
-			lFont.lfWeight = FW_SEMIBOLD;
-			// Finally create the font
-			font.CreateFontIndirect(&lFont);
-
-			// Select the object
-			dc->SelectObject(&font);
-
-			// Cleanup
-			font.DeleteObject();
-			DeleteObject(&lFont);
+		else if (size == 16) {
+			dc->SelectObject(atcFont16);
 		}
+		else if (size == 18) {
+			dc->SelectObject(atcFont18);
+		}
+	}
+
+	private:
+		static CFont normalFont16;
+		static CFont monoFont12;
+		static CFont monoFont14;
+		static CFont monoFont15;
+		static CFont atcFont15;
+		static CFont atcFont16;
+		static CFont atcFont18;
 };

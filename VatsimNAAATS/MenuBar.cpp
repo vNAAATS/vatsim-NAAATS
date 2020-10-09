@@ -341,8 +341,8 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 		}
 		else if (idx == 12) {
 			FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
-			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
 			dc->SetTextColor(TextWhite.ToCOLORREF());
+			offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
 			dc->TextOutA(offsetX, offsetY + BTN_PAD_TOP, "Pos Type");
 			offsetX += 75;
 			if (pressedData->find(kv.first) != pressedData->end()) {
