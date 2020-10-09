@@ -400,7 +400,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
 {
+	// Mouse pointer
 	mousePointer = Pt;
+	// Move inbound list
 	if (ObjectType == LIST_INBOUND) {
 		inboundList->MoveList(Area, Released);
 
@@ -409,6 +411,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		CUtils::InboundY = Area.top;
 	}
 
+	// Move other list
 	if (ObjectType == LIST_OTHERS) {
 		otherList->MoveList(Area);
 
@@ -416,12 +419,14 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		CUtils::OthersY = Area.top;
 	}
 
+	// Move tag
 	if (ObjectType == SCREEN_TAG) {
 		auto kv = tagStatuses.find(sObjectId);
 		POINT acPosPix = ConvertCoordFromPositionToPixel(GetPlugIn()->RadarTargetSelect(sObjectId).GetPosition().GetPosition());
 		kv->second.second = { Area.left - acPosPix.x, Area.top - acPosPix.y };
 	}
 
+	// Move window
 	if (ObjectType == WINDOW) {
 		if (string(sObjectId) == "TCKINFO")
 		trackWindow->MoveWindow(Area);
@@ -431,6 +436,11 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 		CUtils::TrackWindowX = Area.left;
 		CUtils::TrackWindowY = Area.top;
+	}
+
+	// Scrolling
+	if (ObjectType == WIN_SCROLLBAR) {
+		if (string(sObjectId) == "TCKINFO") trackWindow->Scroll(Area, mousePointer);
 	}
 
 	// Refresh

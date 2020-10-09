@@ -54,7 +54,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	InflateRect(buttonBarRect, -1, -1);
 	dc->Draw3dRect(buttonBarRect, WindowBorder.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 
-	/// Draw buttons
+	/// Draw top menu buttons
 	int offsetX = 30;
 	int offsetY = 6;
 	// Close button

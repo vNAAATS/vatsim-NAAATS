@@ -172,17 +172,17 @@ const int WINDOW = 100;
 
 // Window specific buttons
 const int WINBTN_CLOSE = 101;
-const int WINBTN_TCKINFO_REFRESH = 102;
-const int WINBTN_FLTPLN_COPY = 102;
-const int WINBTN_FLTPLN_COORD = 103;
-const int WINBTN_FLTPLN_MSG = 104;
-const int WINBTN_FLTPLN_VOXCLEAR = 105;
-const int WINBTN_FLTPLN_DELETE = 106;
-const int WINBTN_FLTPLN_PROBE = 107;
-const int WINBTN_FLTPLN_HIST = 108;
-const int WINBTN_FLTPLN_SAVE = 109;
-const int WINBTN_FLTPLN_ADS = 110;
-
+const int WIN_SCROLLBAR = 102;
+const int WINBTN_TCKINFO_REFRESH = 103;
+const int WINBTN_FLTPLN_COPY = 104;
+const int WINBTN_FLTPLN_COORD = 105;
+const int WINBTN_FLTPLN_MSG = 106;
+const int WINBTN_FLTPLN_VOXCLEAR = 107;
+const int WINBTN_FLTPLN_DELETE = 108;
+const int WINBTN_FLTPLN_PROBE = 109;
+const int WINBTN_FLTPLN_HIST = 110;
+const int WINBTN_FLTPLN_SAVE = 111;
+const int WINBTN_FLTPLN_ADS = 112;
 
 // Menu buttons, dropdowns & text fields
 const int MENBTN_SETUP = 400;

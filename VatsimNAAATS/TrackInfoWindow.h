@@ -18,10 +18,20 @@ class CTrackInfoWindow : public CBaseWindow
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		virtual void MakeButtons();
 
+		// Window methods
+		void Scroll(CRect area, POINT mousePtr);
+
 		// Window functions to do
 		bool NATDataRefresh;
 
 		// Window messages to display
 		string MsgDataRefresh = "";
+
+	private:
+		double trackScrollAreaSize;
+		double gripPosDelta = 0;
+		double gripSize;
+		CRect currentScrollPos = CRect(0, 0, 0, 0);
+		int scrollWindowSize;
 };
 
