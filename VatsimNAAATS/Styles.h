@@ -38,6 +38,9 @@ public:
 		// Size 16
 		lFont.lfHeight = 16;
 		normalFont16.CreateFontIndirect(&lFont);
+		// Size 30
+		lFont.lfHeight = 30;
+		normalFont30.CreateFontIndirect(&lFont);
 
 		// Get the face
 		strcpy_s(lFont.lfFaceName, _T("Lucida Console"));
@@ -104,6 +107,7 @@ public:
 
 	private:
 		static CFont normalFont16;
+		static CFont normalFont30;
 		static CFont monoFont12;
 		static CFont monoFont14;
 		static CFont monoFont15;

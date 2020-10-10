@@ -46,12 +46,14 @@ class CRadarDisplay : public CRadarScreen
 	private:
 		POINT mousePointer;
 		clock_t fiveSecondTimer;
+		clock_t tenSecondTimer;
 		map<int, string> menuButtons;
 		map<int, bool> buttonsPressed;
 		map<int, int> toggleButtons;
 		bool aselDetailed;	
 		vector<CListAircraft> inboundAircraft;
 		vector<string> otherAircraft;		
+		map<string, int> aircraftOnScreen;
 		map<int, string> menuFields;
 		string asel;
 		map<string, pair<bool, POINT>> tagStatuses;

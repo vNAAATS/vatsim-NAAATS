@@ -60,6 +60,19 @@ struct CAircraftStatus {
 	CPosition Position;
 };
 
+// STCA status
+struct CSTCAStatus {
+	CSTCAStatus() {}; // Default constructor
+	CSTCAStatus(string csA, string csB, CConflictStatus status) {
+		CallsignA = csA;
+		CallsignB = csB;
+		ConflictStatus = status;
+	}
+	string CallsignA;
+	string CallsignB;
+	CConflictStatus ConflictStatus;
+};
+
 // Describes a separation status
 struct CSepStatus {
 	int DistanceAsTime;

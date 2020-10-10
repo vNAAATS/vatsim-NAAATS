@@ -6,7 +6,12 @@
 
 using namespace Colours;
 
-void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, int>* toggleData, bool halo, bool ptl) {
+clock_t CAcTargets::twoSecondTimer = clock();
+
+void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, int>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
+	// 2 second timer
+	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
+
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 
@@ -16,8 +21,11 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Save context for later
 	int sDC = dc->SaveDC();
 
-	// Define a brush and a container for the target
-	SolidBrush brush(Colours::TargetOrange);
+	// Define brushes and a container for the target
+	SolidBrush orangeBrush(TargetOrange);
+	SolidBrush yellowBrush(WarningYellow);
+	SolidBrush redBrush(CriticalRed);
+	SolidBrush whiteBrush(TextWhite);
 	GraphicsContainer gContainer;
 
 	// Begin drawing
@@ -65,9 +73,28 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		Point(0,-8)
 	};
 
-	// Fill the polygon and finish
-	g->FillPolygon(&brush, points, 19);
-	g->EndContainer(gContainer);
+	// Fill the polygon with the appropriate colour and finish
+	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+		// Critical conflict status, so flash white and red every second
+		if (twoSecT >= 1) {
+			g->FillPolygon(&whiteBrush, points, 19);
+			g->EndContainer(gContainer);
+		}
+		else {
+			g->FillPolygon(&redBrush, points, 19);
+			g->EndContainer(gContainer);
+		}
+	}
+	else if (status->ConflictStatus == CConflictStatus::WARNING) {
+		// Warning status, turn target yellow
+		g->FillPolygon(&yellowBrush, points, 19);
+		g->EndContainer(gContainer);
+	}
+	else {
+		// No conflict, draw orange
+		g->FillPolygon(&orangeBrush, points, 19);
+		g->EndContainer(gContainer);
+	}
 
 	// Check if leader lines are selected
 	if (ptl) {
@@ -109,6 +136,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		dc->MoveTo(acPoint);
 		dc->LineTo(ptlPoint);
 
+		// Cleanup
 		DeleteObject(pen);
 	}
 
@@ -145,7 +173,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Draw halo
 		Rect temp(acPoint.x - radius, acPoint.y - radius, radius * 2, radius * 2);
-		Pen pen(&brush);
+		Pen pen(&orangeBrush);
 		g->DrawEllipse(&pen, temp);
 
 		// Cleanup
@@ -163,13 +191,19 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	dc->RestoreDC(sDC);
 
 	// Deallocate
-	DeleteObject(&brush);
+	DeleteObject(&orangeBrush);
+	DeleteObject(&yellowBrush);
+	DeleteObject(&redBrush);
+	DeleteObject(&whiteBrush);
 	DeleteObject(&points);
 	DeleteObject(&gContainer);
 	DeleteObject(&acPoint);
 }
 
-POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction) {
+POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {
+	// 2 second timer
+	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
+
 	// Get the aircraft's position and flight plan
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 	CFlightPlan acFP = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
@@ -184,7 +218,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
 		if (tagPosition->first == true) {
 			// Detailed
-			
+
 			if (direction) {
 				tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 66);
 			}
@@ -212,14 +246,33 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
 		}
 	}
-	
+
 	// TAG DEBUG
 	// dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
 	
-	// Pick atc font for callsign
-	// TODO: colour change based on status
+	// Pick text colour
+	COLORREF textColour;
+	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+		// Critical conflict status, so flash callsign white and red
+		if (twoSecT >= 1) {
+			textColour = TextWhite.ToCOLORREF();
+		}
+		else {
+			textColour = CriticalRed.ToCOLORREF();
+		}
+	}
+	else if (status->ConflictStatus == CConflictStatus::WARNING) {
+		// Warning status, turn tag yellow
+		textColour = WarningYellow.ToCOLORREF();
+	}
+	else {
+		// No conflict, tag orange
+		textColour = TargetOrange.ToCOLORREF();
+	}
+
+	// Pick font for callsign
 	FontSelector::SelectATCFont(16, dc);
-	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextColor(textColour);
 	dc->SetTextAlign(TA_LEFT);
 	string text;
 
@@ -233,6 +286,10 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	offsetY += 15;
 
 	// Flight level
+	if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
+		// Critical conflict status, so turn tag red
+		textColour = CriticalRed.ToCOLORREF();
+	}
 	FontSelector::SelectMonoFont(12, dc);
 	text = to_string(target->GetPosition().GetFlightLevel() / 100);
 	dc->TextOutA(tagRect.left, tagRect.top + offsetY, text.c_str());
@@ -260,7 +317,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		text = acFP.GetFlightPlanData().GetDestination();
 		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 	}
-	
+
 	/// Tag line
 	CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
 	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
@@ -301,6 +358,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	// Clean up
 	DeleteObject(orangePen);
+	DeleteObject(&textColour);
 
 	return { tagRect.left, tagRect.top };
 }

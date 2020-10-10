@@ -29,6 +29,7 @@ CRadarDisplay::CRadarDisplay()
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
+	tenSecondTimer = clock();
 }
 
 CRadarDisplay::~CRadarDisplay() 
@@ -153,8 +154,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// Graphics object
 	Graphics g(hDC);
 
-	// 1 second timer
+	// 5 second timer
 	double fiveSecT = (double)(clock() - fiveSecondTimer) / ((double)CLOCKS_PER_SEC);
+	// 10 second timer
+	double tenSecT = (double)(clock() - tenSecondTimer) / ((double)CLOCKS_PER_SEC);
 
 	// Clear lists if not empty and time is greater than 1 second
 	if (fiveSecT >= 5 && !inboundAircraft.empty()) {
@@ -202,6 +205,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
 					// Select the next target
 					ac = GetPlugIn()->RadarTargetSelectNext(ac);
+					if (aircraftOnScreen.find(ac.GetCallsign()) != aircraftOnScreen.end()) aircraftOnScreen.erase(ac.GetCallsign());
 					continue;
 				}
 			}
@@ -222,6 +226,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
 					tagStatuses.insert(make_pair(string(fp.GetCallsign()), pt));
+				}
+
+				// STCA
+				if (tenSecT >= 10) {
+					CConflictDetection::CheckSTCA(this, &ac, &aircraftOnScreen);
 				}
 
 				if (fiveSecT >= 5) {
@@ -361,16 +370,32 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					}
 				}
 
+				// Get STCA so it can be drawn
+				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK); // Create default
+				auto idx = CConflictDetection::CurrentSTCA.begin();
+				for (idx = CConflictDetection::CurrentSTCA.begin(); idx != CConflictDetection::CurrentSTCA.end(); idx++) {
+					if (ac.GetCallsign() == idx->CallsignA || ac.GetCallsign() == idx->CallsignB) {
+						stcaStatus = *idx;
+						break; // Break for optimisation
+					}
+				}
+
 				// Draw the tag and target with the information if tags are turned on and within altitude filter
 				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &toggleButtons, halo, ptl);
-					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &toggleButtons, halo, ptl, &stcaStatus);
+					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+					
 				}
 				else {
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &toggleButtons, halo, ptl);
+					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &toggleButtons, halo, ptl, &stcaStatus);
 				}
+			}
+			else { // If not there, and the aircraft was on the screen, then delete
+				if (aircraftOnScreen.find(ac.GetCallsign()) != aircraftOnScreen.end()) aircraftOnScreen.erase(ac.GetCallsign());
 			}
 
 			// Select the next target
@@ -404,9 +429,16 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
 			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
-		// Finally, reset the clock if time has been exceeded
+
+		// Finally, reset the clocks if time has been exceeded
 		if (fiveSecT >= 5) {
 			fiveSecondTimer = clock();
+		}
+		if (tenSecT >= 10) {
+			tenSecondTimer = clock();
+		}
+		if (double twoSecT = (double)(clock() - CAcTargets::twoSecondTimer) / ((double)CLOCKS_PER_SEC) >= 2) { // Ac target and tag colours
+			CAcTargets::twoSecondTimer = clock();
 		}
 	}
 

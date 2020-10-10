@@ -6,6 +6,7 @@ vector<CAircraftStatus> CConflictDetection::PIVLocations2;
 pair<bool, vector<CRoutePosition>> CConflictDetection::PIVRoute1;
 pair<bool, vector<CRoutePosition>> CConflictDetection::PIVRoute2;
 vector<CSepStatus> CConflictDetection::PIVSeparationStatuses;
+vector<CSTCAStatus> CConflictDetection::CurrentSTCA;
 
 void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2) {
 	// Save context
@@ -188,6 +189,68 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 
 	for (int i = 0; i < length; i++) {
 		PIVSeparationStatuses.push_back(DetectStatus(screen, &PIVLocations1.at(i), &PIVLocations2.at(i)));
+	}
+}
+
+void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft) {
+	// Status for target
+	CAircraftStatus targetAc(target->GetCallsign(), target->GetPosition().GetPressureAltitude(), 
+		target->GetGS(), target->GetTrackHeading(), target->GetPosition().GetPosition());
+
+	// Detect the status
+	for (auto i = onScreenAircraft->begin(); i != onScreenAircraft->end(); i++) {
+		if (i->first == targetAc.Callsign) continue;
+		CRadarTarget ac = screen->GetPlugIn()->RadarTargetSelect(i->first.c_str());
+
+		// Status for this aircraft
+		CAircraftStatus acTest(ac.GetCallsign(), ac.GetPosition().GetPressureAltitude(),
+			ac.GetGS(), ac.GetTrackHeading(), ac.GetPosition().GetPosition());
+
+		// Get the separation status
+		CSepStatus status = DetectStatus(screen, &targetAc, &acTest);
+
+		// Work out whether they already exist in the map
+		bool alreadyExist = false;
+		auto idx = CurrentSTCA.begin();
+		for (idx = CurrentSTCA.begin(); idx != CurrentSTCA.end(); idx++) {
+			if (targetAc.Callsign == idx->CallsignA || targetAc.Callsign == idx->CallsignB) {
+				alreadyExist = true;
+				break; // Break for optimisation
+			}
+		}
+
+		// Now we switch the status
+		switch (status.ConflictStatus) {
+			case CConflictStatus::WARNING:
+				// Check if they already exist
+				if (alreadyExist) {
+					// Set the flag if the flag is not warning
+					if (idx->ConflictStatus != CConflictStatus::WARNING) idx->ConflictStatus = CConflictStatus::WARNING;
+				}
+				else {
+					// Add if don't exist
+					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::WARNING));
+				}
+				break;
+			case CConflictStatus::CRITICAL:
+				// Check if they already exist
+				if (alreadyExist) {
+					// Set the flag if the flag is not critical
+					if (idx->ConflictStatus != CConflictStatus::CRITICAL) idx->ConflictStatus = CConflictStatus::CRITICAL;
+				}
+				else {
+					// Add if don't exist
+					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::CRITICAL));
+				}
+				break;
+			case CConflictStatus::OK:
+				// Check if they already exist
+				if (alreadyExist) {
+					// Erase if they do
+					CurrentSTCA.erase(idx);
+				}
+				break;
+		}
 	}
 }
 

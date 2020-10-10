@@ -4,6 +4,7 @@
 
 // Initialise font values here because otherwise we get lots of linker errors
 CFont FontSelector::normalFont16;
+CFont FontSelector::normalFont30;
 CFont FontSelector::monoFont12;
 CFont FontSelector::monoFont14;
 CFont FontSelector::monoFont15;

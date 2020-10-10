@@ -7,6 +7,7 @@
 #include "PathRenderer.h"
 #include "Styles.h"
 #include <gdiplus.h>
+#include <map>
 
 using namespace std;
 using namespace Colours;
@@ -23,6 +24,9 @@ class CConflictDetection
 		static pair<bool, vector<CRoutePosition>> PIVRoute2;
 		static vector<CSepStatus> PIVSeparationStatuses;
 
+		// STCA
+		static vector<CSTCAStatus> CurrentSTCA;
+
 		// Range Bearing Line tool
 		static void RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2);
 
@@ -32,9 +36,10 @@ class CConflictDetection
 		// Path Intercept Vector tool
 		static void PIVTool(CRadarScreen* screen, string targetA, string targetB);
 
+		// STCA (run every 10s)
+		static void CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft);
+
 		// Probe
-		
-		// STCA (run every 30s)
 
 	private: 
 		// Separation values
