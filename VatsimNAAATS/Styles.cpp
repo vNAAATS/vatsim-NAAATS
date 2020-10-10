@@ -11,3 +11,4 @@ CFont FontSelector::monoFont15;
 CFont FontSelector::atcFont15;
 CFont FontSelector::atcFont16;
 CFont FontSelector::atcFont18;
+bool FontSelector::fontsInitialised;

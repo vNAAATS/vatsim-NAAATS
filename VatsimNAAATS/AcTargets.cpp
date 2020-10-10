@@ -314,7 +314,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	// Mach
 	int gs = target->GetGS();
-	if (atoi(text.c_str()) > 500) {
+	if (atoi(text.c_str()) > 460) {
 		text = "M" + to_string(CUtils::GetMach(gs, 573));
 	}
 	else {

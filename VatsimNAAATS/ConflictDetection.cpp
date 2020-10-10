@@ -380,6 +380,12 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 			verticallySeparated = false;
 		}
 	}
+	// If either are supersonic
+	if (CUtils::GetMach(aircraftA->GroundSpeed, 573) >= 100 || CUtils::GetMach(aircraftB->GroundSpeed, 573) >= 100) {
+		if (status.AltDifference < 4000) { // Vertical sep needs to be greater than 4000
+			verticallySeparated = false;
+		}
+	}
 
 	// Conflict flag (OK default)
 	CConflictStatus conflictStatus = CConflictStatus::OK;

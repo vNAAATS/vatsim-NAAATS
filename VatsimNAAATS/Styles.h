@@ -27,7 +27,10 @@ namespace Colours {
 class FontSelector
 {
 public:
-	static void InitialiseFonts() {
+	static int InitialiseFonts() {
+		// So that fonts are only ever initialised once
+		if (fontsInitialised) return 0;
+
 		LOGFONT lFont;
 
 		// Get face for normal font
@@ -70,6 +73,10 @@ public:
 		// Size 18
 		lFont.lfHeight = 18;
 		atcFont18.CreateFontIndirect(&lFont);
+
+		// Initialised
+		fontsInitialised = true;
+		return 0;
 	}
 
 	static void SelectNormalFont(int size, CDC* dc) {
@@ -117,4 +124,5 @@ public:
 		static CFont atcFont15;
 		static CFont atcFont16;
 		static CFont atcFont18;
+		static bool fontsInitialised; // So that we don't try and re-initialise all the fonts
 };
