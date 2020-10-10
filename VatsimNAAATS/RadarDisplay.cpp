@@ -346,30 +346,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					halo = true;
 				}
 
-				// RBL draw
-				if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-					if (aircraftSel1 != "" && aircraftSel2 != "") {
-						CConflictDetection::RBLTool(&dc, &g, this, aircraftSel1, aircraftSel2);
-					}
-				}
-
-				// SEP draw
-				if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-					// If both aircraft selected then draw
-					if (aircraftSel1 != "" && aircraftSel2 != "") {
-						CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
-					}
-				}
-
-				// PIV draw
-				if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-					// If both aircraft selected then draw
-					if (aircraftSel1 != "" && aircraftSel2 != "") {
-						// Render
-						CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
-					}
-				}
-
 				// Get STCA so it can be drawn
 				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK); // Create default
 				auto idx = CConflictDetection::CurrentSTCA.begin();
@@ -425,9 +401,33 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			trackWindow->RenderWindow(&dc, &g, this);
 		}
 
-		// Draw flight plan window window if button pressed
+		// Draw flight plan window if button pressed
 		if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
 			fltPlnWindow->RenderWindow(&dc, &g, this);
+		}
+
+		// SEP draw
+		if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+			// If both aircraft selected then draw
+			if (aircraftSel1 != "" && aircraftSel2 != "") {
+				CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
+			}
+		}
+
+		// RBL draw
+		if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+			if (aircraftSel1 != "" && aircraftSel2 != "") {
+				CConflictDetection::RBLTool(&dc, &g, this, aircraftSel1, aircraftSel2);
+			}
+		}
+
+		// PIV draw
+		if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+			// If both aircraft selected then draw
+			if (aircraftSel1 != "" && aircraftSel2 != "") {
+				// Render
+				CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
+			}
 		}
 
 		// Finally, reset the clocks if time has been exceeded
@@ -711,7 +711,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		if (ObjectType == MENBTN_RBL) {
 			// Erase PIV (if active)
 			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_RBL);
+				buttonsPressed.erase(MENBTN_PIV);
 			}
 			// Erase SEP (if active)
 			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
@@ -730,7 +730,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 			// Erase PIV (if active)
 			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_SEP);
+				buttonsPressed.erase(MENBTN_PIV);
 			}
 			// Reset ASELs
 			aircraftSel1 = "";

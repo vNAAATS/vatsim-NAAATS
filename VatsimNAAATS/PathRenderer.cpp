@@ -68,9 +68,6 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 		dc->SelectObject(pen);
 		SolidBrush brush(TargetOrange);
 
-		// Set extra character spacing (workaround for a bug I need to fix)
-		dc->SetTextCharacterExtra(2);
-
 		// Get first AC position and draw
 		dc->MoveTo(screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute1.first != true ? CConflictDetection::PIVRoute1.second[0].PositionRaw 
 			: (screen->GetPlugIn()->RadarTargetSelect(CConflictDetection::PIVLocations1.at(0).Callsign.c_str()).GetPosition().GetPosition())));

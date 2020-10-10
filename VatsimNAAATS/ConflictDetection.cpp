@@ -13,7 +13,7 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	int iDC = dc->SaveDC();
 
 	// Make pens
-	CPen whitePen(PS_SOLID, 1, TextWhite.ToCOLORREF());
+	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
 	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
 	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
 
@@ -32,7 +32,7 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 
 	// Select pen
 	if (status.ConflictStatus == CConflictStatus::OK) {
-		dc->SelectObject(whitePen);
+		dc->SelectObject(orangePen);
 	}
 	else if (status.ConflictStatus == CConflictStatus::WARNING) {
 		dc->SelectObject(yellowPen);
@@ -48,8 +48,9 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	// Now draw the text
 	POINT midpoint = CUtils::GetMidPoint(t1Point, t2Point);
 
-	FontSelector::SelectATCFont(15, dc);
-	dc->SetTextColor(WarningYellow.ToCOLORREF());
+	// Font and colour
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->SetTextCharacterExtra(2);
 	dc->TextOutA(midpoint.x, midpoint.y, string(to_string(status.DistanceAsTime) + "/" + to_string(status.AltDifference)).c_str());
@@ -58,7 +59,7 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	dc->RestoreDC(iDC);
 
 	// Clean up
-	DeleteObject(whitePen);
+	DeleteObject(orangePen);
 }
 
 void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
@@ -152,13 +153,15 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 		dc->LineTo(screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second));
 	}
 
-	// Draw line between points and finish and label
+	// Draw line between points and finish
 	dc->SelectObject(orangeDottedPen);
 	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
 	dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
 	POINT midpoint = CUtils::GetMidPoint(screen->ConvertCoordFromPositionToPixel(status1.Position), screen->ConvertCoordFromPositionToPixel(status2.Position));
-	FontSelector::SelectATCFont(15, dc);
-	dc->SetTextColor(WarningYellow.ToCOLORREF());
+	
+	// Text label plus colour switching
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->SetTextCharacterExtra(2);
 	dc->TextOutA(midpoint.x, midpoint.y , string(to_string(statuses.back().DistanceAsTime) + "/" + to_string(statuses.back().AltDifference)).c_str());
