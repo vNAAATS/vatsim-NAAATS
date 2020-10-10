@@ -31,9 +31,29 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Begin drawing
 	gContainer = g->BeginContainer();
 
+	// Set text colour
+	COLORREF textColour;
+	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+		// Critical conflict status, so flash callsign white and red
+		if (twoSecT >= 1.1) {
+			textColour = TextWhite.ToCOLORREF();
+		}
+		else {
+			textColour = CriticalRed.ToCOLORREF();
+		}
+	}
+	else if (status->ConflictStatus == CConflictStatus::WARNING) {
+		// Warning status, turn tag yellow
+		textColour = WarningYellow.ToCOLORREF();
+	}
+	else {
+		// No conflict, tag orange
+		textColour = TargetOrange.ToCOLORREF();
+	}
+
 	// Draw the altitude
 	FontSelector::SelectMonoFont(12, dc);
-	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextColor(textColour);
 	dc->SetTextAlign(TA_CENTER);
 	string line;
 	if (tagsOn) {
@@ -76,7 +96,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Fill the polygon with the appropriate colour and finish
 	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
 		// Critical conflict status, so flash white and red every second
-		if (twoSecT >= 1) {
+		if (twoSecT >= 1.1) {
 			g->FillPolygon(&whiteBrush, points, 19);
 			g->EndContainer(gContainer);
 		}
@@ -254,19 +274,15 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	COLORREF textColour;
 	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
 		// Critical conflict status, so flash callsign white and red
-		if (twoSecT >= 1) {
+		if (twoSecT >= 1.1) {
 			textColour = TextWhite.ToCOLORREF();
 		}
 		else {
 			textColour = CriticalRed.ToCOLORREF();
 		}
 	}
-	else if (status->ConflictStatus == CConflictStatus::WARNING) {
-		// Warning status, turn tag yellow
-		textColour = WarningYellow.ToCOLORREF();
-	}
 	else {
-		// No conflict, tag orange
+		// No conflict or only warning, tag orange
 		textColour = TargetOrange.ToCOLORREF();
 	}
 
@@ -291,6 +307,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		textColour = CriticalRed.ToCOLORREF();
 	}
 	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(textColour);
 	text = to_string(target->GetPosition().GetFlightLevel() / 100);
 	dc->TextOutA(tagRect.left, tagRect.top + offsetY, text.c_str());
 	offsetX += 50;
@@ -320,7 +337,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	/// Tag line
 	CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
-	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
+	CPen orangePen(PS_SOLID, 1, textColour);
 	dc->SelectObject(orangePen);
 	int tagMiddle = tagRect.left + ((tagRect.right - tagRect.left) / 2);
 

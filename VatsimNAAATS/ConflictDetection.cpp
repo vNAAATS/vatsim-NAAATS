@@ -213,9 +213,9 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 		bool alreadyExist = false;
 		auto idx = CurrentSTCA.begin();
 		for (idx = CurrentSTCA.begin(); idx != CurrentSTCA.end(); idx++) {
-			if (targetAc.Callsign == idx->CallsignA || targetAc.Callsign == idx->CallsignB) {
+			if ((targetAc.Callsign == idx->CallsignB && acTest.Callsign == idx->CallsignA) || (targetAc.Callsign == idx->CallsignA && acTest.Callsign == idx->CallsignB)) {
 				alreadyExist = true;
-				break; // Break for optimisation
+				break;
 			}
 		}
 

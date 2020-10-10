@@ -437,7 +437,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		if (tenSecT >= 10) {
 			tenSecondTimer = clock();
 		}
-		if (double twoSecT = (double)(clock() - CAcTargets::twoSecondTimer) / ((double)CLOCKS_PER_SEC) >= 2) { // Ac target and tag colours
+		if (double twoSecT = (double)(clock() - CAcTargets::twoSecondTimer) / ((double)CLOCKS_PER_SEC) >= 2.2) { // Ac target and tag colours
 			CAcTargets::twoSecondTimer = clock();
 		}
 	}
