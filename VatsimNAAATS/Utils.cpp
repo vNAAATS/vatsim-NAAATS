@@ -238,6 +238,12 @@ int CUtils::GetMach(int groundSpeed, int speedSound) {
 	return (int)result;
 }
 
+string CUtils::PadWithZeros(int width, int number) {
+	std::stringstream ss;
+	ss << setfill('0') << setw(width) << number;
+	return ss.str();
+}
+
 string CUtils::ParseZuluTime(bool delimit, int deltaTime, CFlightPlan* fp, int fix) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);

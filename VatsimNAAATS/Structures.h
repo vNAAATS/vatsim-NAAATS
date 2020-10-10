@@ -78,6 +78,7 @@ struct CSepStatus {
 	int DistanceAsTime;
 	int DistanceAsNM;
 	int AltDifference;
+	bool IsDistanceClosing;
 	CTrackStatus TrackStatus;
 	CConflictStatus ConflictStatus;
 	pair<CPosition, CPosition> AircraftLocations;
@@ -105,20 +106,12 @@ struct CWinCheckBox {
 	CInputState State;
 };
 
-// Describes a lat/lon
-struct CLatLon {
-	double Lat;
-	double Lon;
-
-	// Constructor
-	CLatLon(double lat, double lon) {
-		Lat = lat;
-		Lon = lon;
+struct CAcFPStatus {
+	CAcFPStatus() {}; // Default constructor
+	CAcFPStatus(string cs, CFlightPlanMode mode) {
+		Callsign = cs;
+		Mode = mode;
 	}
-
-	// Convert degrees to radians (can't use Utils.h because circular dependency)
-	double ToRadians(double degrees) {
-		return (M_PI / 180) * degrees;
-	}
+	string Callsign;
+	CFlightPlanMode Mode;
 };
-

@@ -142,7 +142,10 @@ const int WINSZ_TITLEBAR_HEIGHT = 20;
 const int WINSZ_TCKINFO_WIDTH = 450;
 const int WINSZ_TCKINFO_HEIGHT = 250;
 const int WINSZ_FLTPLN_WIDTH = 540;
-const int WINSZ_FLTPLN_HEIGHT = 600;
+const int WINSZ_FLTPLN_HEIGHT_INIT = 170;
+const int WINSZ_FLTPLN_HEIGHT_DATA = 310;
+const int WINSZ_FLTPLN_HEIGHT_CPY = 600;
+const int WINSZ_FLTPLN_HEIGHT_XTRA = 600;
 
 // Conflict
 const int SEPTOOL_TIME = 2700; // 45 minutes
@@ -278,4 +281,14 @@ enum class CInputState {
     INACTIVE,
     ACTIVE,
     DISABLED
+};
+
+// Flight plan mode
+enum class CFlightPlanMode {
+    NOT_OWNED,
+    INIT,
+    DATA,
+    DATA_COPY,
+    CLEARANCE,
+    PROBE
 };

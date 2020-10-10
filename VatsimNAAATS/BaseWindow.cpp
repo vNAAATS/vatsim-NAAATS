@@ -59,7 +59,7 @@ void CBaseWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT t
 	screen->AddScreenObject(type, id.c_str(), button, false, "");
 }
 
-void CBaseWindow::DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinTextInput* obj, int type, string id) {
+void CBaseWindow::DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, bool canEdit, CWinTextInput* obj, int type, string id) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -67,6 +67,7 @@ void CBaseWindow::DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, in
 	
 	// Select font
 	FontSelector::SelectATCFont(14, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
 	// Create rectangle
@@ -88,17 +89,37 @@ void CBaseWindow::DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, in
 	}
 
 	// Draw text
-	dc->TextOutA(rect.left + (rect.Width() / 2), rect.top, obj->Content.c_str());
+	dc->TextOutA(rect.left + 3, rect.top + 2, obj->Content.c_str());
 
 	// Restore device context
 	dc->RestoreDC(sDC);
 
 	// Delete objects
 
-	// Add object and return the rectangle
-	screen->AddScreenObject(type, id.c_str(), rect, false, "");
+	// If editable, then add object and return the rectangle
+	if (canEdit) {
+		screen->AddScreenObject(type, id.c_str(), rect, false, "");
+	}
 }
 
 void CBaseWindow::DrawCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinCheckBox* obj, int type, string id) {
 
+}
+
+bool CBaseWindow::IsButton(int id) {
+	// If exists return true
+	if (WindowButtons.find(id) != WindowButtons.end()) return true;
+	return false; // It doesn't exist
+}
+
+bool CBaseWindow::IsTextInput(int id) {
+	// If exists return true
+	if (TextInputs.find(id) != TextInputs.end()) return true;
+	return false; // It doesn't exist
+}
+
+bool CBaseWindow::IsCheckBox(int id) {
+	// If exists return true
+	if (CheckBoxes.find(id) != CheckBoxes.end()) return true;
+	return false; // It doesn't exist
 }

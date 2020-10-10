@@ -58,7 +58,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	string line;
 	if (tagsOn) {
 		if (screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude() != 0) {
-			line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude() / 1000);
+			int alt = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetClearedAltitude();
+			alt = alt > 999 ? alt / 1000 : alt;
+			line = to_string(alt);
 		}
 		else {
 			line = to_string(screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign()).GetFinalAltitude() / 1000);

@@ -18,9 +18,10 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		virtual void MakeWindowItems();
 
-		// Window functions to do
-
-		// Window messages to display
+		// Fill data
+		void UpdateData(CRadarScreen* screen, CAcFPStatus status);
+		void OnCloseFlightPlanWindow();
+		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
 
 		// Button definitions
 		static const int BTN_CLOSE;

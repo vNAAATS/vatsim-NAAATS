@@ -3,6 +3,8 @@
 #include "EuroScopePlugIn.h"
 #include <chrono>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 #include "Structures.h"
 
 using namespace std;
@@ -49,6 +51,9 @@ class CUtils {
 
 		// Calculate Mach
 		static int GetMach(int groundSpeed, int speedSound);
+
+		// Pad zeroes
+		static string PadWithZeros(int width, int number);
 
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, int deltaTime = -1, CFlightPlan* fp = nullptr, int ep = -1);

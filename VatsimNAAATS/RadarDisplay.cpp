@@ -702,12 +702,21 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		} 
 
+		// If the flight plan window
+		if (ObjectType == MENBTN_FLIGHTPLAN) {
+			fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+		}
+
 		// If screen object is a tag
 		if (ObjectType == SCREEN_TAG) {
 			// Set the ASEL
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
+
+			if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
+				fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+			}			
 
 			// Probing tools
 			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end() 
@@ -788,15 +797,22 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			aircraftSel2 = "";
 		}
 
-		// If a text entry
+		// If a menu text entry
 		if (ObjectType == TXT_ENTRY) {
 			// If the low altitude filter
 			if (string(sObjectId) == "ALTFILT_LOW") {
-				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_LOW, 000);
+				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_LOW, "");
 			}
 			// If the high altitude filter
 			if (string(sObjectId) == "ALTFILT_HIGH") {
-				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_HIGH, 000);
+				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_HIGH, "");
+			}
+		}
+
+		// If a flight plan window text entry
+		if (ObjectType == WIN_FLTPLN) {
+			if (fltPlnWindow->IsTextInput(atoi(sObjectId))) {
+				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), "");
 			}
 		}
 	}
@@ -931,8 +947,10 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
 		// If not disabled, press
-		if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
-			fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
+		if (fltPlnWindow->IsButton(atoi(sObjectId))) {
+			if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
+				fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
+			}
 		}
 	}
 
@@ -969,9 +987,11 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 			}
 		}
 
-		// Finally unpress the button if not disabled
-		if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
-			fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
+		// Finally unpress the button if not disabled (and id is actually a button)
+		if (fltPlnWindow->IsButton(atoi(sObjectId))) {
+			if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
+				fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
+			}
 		}
 	}
 
@@ -1004,6 +1024,10 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 		if (isNumber && (atoi(sItemString) < 999 && atoi(sItemString) > 0)) {
 			CUtils::AltFiltHigh = atoi(sItemString); // Return if in range
 		}
+	}
+	// If it is a flight plan window text input
+	if (fltPlnWindow->IsTextInput(FunctionId) && string(sItemString) != "") {
+		fltPlnWindow->ChangeDataPoint(this, FunctionId, string(sItemString));
 	}
 }
 

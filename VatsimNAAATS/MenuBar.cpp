@@ -4,8 +4,6 @@
 #include "MenuBar.h"
 #include "Styles.h"
 #include "Utils.h"
-#include <iomanip>
-#include <sstream>
 
 using namespace Colours;
 
@@ -362,12 +360,8 @@ void CMenuBar::DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT top
 			}
 			// Format the text
 			offsetY += MENBAR_BTN_HEIGHT + 1;
-			std::stringstream ss1;
-			ss1 << setfill('0') << setw(3) << CUtils::AltFiltLow;
-			string lowAlt = ss1.str();
-			std::stringstream ss2;
-			ss2 << setfill('0') << setw(3) << CUtils::AltFiltHigh;
-			string highAlt = ss2.str();
+			string lowAlt = CUtils::PadWithZeros(3, CUtils::AltFiltLow);
+			string highAlt = CUtils::PadWithZeros(3, CUtils::AltFiltHigh);
 			DrawMenuBarButton(dc, screen, { offsetX, offsetY }, make_pair(428, string(lowAlt + "-" + highAlt)), 
 				btnWidth, MENBAR_BTN_HEIGHT, BTN_PAD_TOP, { 0, 0 }, true, true, false);
 			offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + 11;

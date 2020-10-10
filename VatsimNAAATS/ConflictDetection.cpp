@@ -310,7 +310,8 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed);	
 		status.DistanceAsNM = acA.Position.DistanceTo(acB.Position);
 		status.TrackStatus = CTrackStatus::SAME;
-		-CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
+		status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acA.GroundSpeed)
+			- CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
 	}
 	else if (!(abs(hdgA - hdgB) > (180 + 4)) && !(abs(hdgA - hdgB) < (180 - 4))) { // Check if on opposite tracks
 		// Opposite direction, we don't care about direction so just assign to status
@@ -318,6 +319,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 		status.AltDifference = altA > altB ? altA - altB : altB - altA;
 		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA + gsB);
 		status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
+		status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA + gsB) < 0 ? true : false;
 		status.TrackStatus = CTrackStatus::OPPOSITE;
 	}
 	else { // The paths are intersecting, check whether the intercept is behind either aircraft (i.e. they will never meet)
@@ -361,6 +363,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 			status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftB->GroundSpeed);
 			status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
 			status.TrackStatus = CUtils::GetPathAngle(hdgA, hdgB) < 45 ? CTrackStatus::RECIPROCAL : CTrackStatus::CROSSING;
+			status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA > gsB ? gsA : gsB) < 0 ? true : false;
 		}
 	}
 
@@ -404,6 +407,12 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 			conflictStatus = CConflictStatus::CRITICAL;
 		}
 	}
+
+	// TODO fix
+	// Check the relative speed, if opposite traffic moving away from each other then status is ok
+	/*if (!status.IsDistanceClosing && status.TrackStatus == CTrackStatus::OPPOSITE) {
+		CConflictStatus conflictStatus = CConflictStatus::OK;
+	}*/
 
 	// Assign conflict status
 	status.ConflictStatus = conflictStatus;
