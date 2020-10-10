@@ -77,6 +77,9 @@ public:
 		if (size == 16) {
 			dc->SelectObject(normalFont16);
 		}
+		else if (size == 30) {
+			dc->SelectObject(normalFont30);
+		}
 	}
 
 	static void SelectMonoFont(int size, CDC* dc) {

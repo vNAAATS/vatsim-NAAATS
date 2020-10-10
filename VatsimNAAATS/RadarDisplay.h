@@ -55,7 +55,7 @@ class CRadarDisplay : public CRadarScreen
 		vector<string> otherAircraft;		
 		map<string, int> aircraftOnScreen;
 		map<int, string> menuFields;
-		string asel;
+		string asel = "";
 		map<string, pair<bool, POINT>> tagStatuses;
 		string aircraftSel1 = ""; // For use in conflict tools
 		string aircraftSel2 = ""; // "

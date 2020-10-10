@@ -167,6 +167,57 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		otherAircraft.clear();
 	}
 
+	// Reset currently on screen list
+	if (tenSecT >= 10 && !aircraftOnScreen.empty()) {
+		// Loop on screen aircraft
+		auto idx = aircraftOnScreen.begin();
+		while(idx != aircraftOnScreen.end()) {
+			// Check if valid
+			CRadarTarget target = GetPlugIn()->RadarTargetSelect(idx->first.c_str());
+			if (!target.IsValid()) { // If not valid
+				// Erase aircraft selections if they are an asel
+				if (idx->first == aircraftSel1) { // We need to annul the selection and disable tool if activated
+					aircraftSel1 = "";
+					// Erase RBL (if active)
+					if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+						buttonsPressed.erase(MENBTN_RBL);
+					}
+					// Erase SEP (if active)
+					if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+						buttonsPressed.erase(MENBTN_SEP);
+					}
+					// Erase PIV (if active)
+					if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+						buttonsPressed.erase(MENBTN_PIV);
+					}
+				}
+				else if (idx->first == aircraftSel2) { // We need to annul the selection and disable tool if activated
+					aircraftSel2 = "";
+					// Erase RBL (if active)
+					if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+						buttonsPressed.erase(MENBTN_RBL);
+					}
+					// Erase SEP (if active)
+					if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+						buttonsPressed.erase(MENBTN_SEP);
+					}
+					// Erase PIV (if active)
+					if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+						buttonsPressed.erase(MENBTN_PIV);
+					}
+				}
+				if (idx->first == asel) {
+					asel = "";
+				}
+				// Finally erase the on screen reference
+				idx = aircraftOnScreen.erase(idx);
+			}
+			else {
+				++idx; // We increment here to avoid a vector overflow
+			}
+		}
+	}
+
 	// Redo the PIV calculations every 5 seconds
 	if (fiveSecT >= 5 && buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
 		CConflictDetection::PIVLocations1.clear();
