@@ -17,21 +17,16 @@ void CBaseWindow::MoveWindow(CRect area) {
 	topLeft = { area.left, area.top };
 }
 
-CRect CBaseWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, bool isPressed, int type, string id)
+void CBaseWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, CInputState state, int type, string id)
 {
 	// Save context for later
 	int sDC = dc->SaveDC();
-
-	// Brushes
-	CBrush btnNormal(ScreenBlue.ToCOLORREF());
-
-	CBrush btnPressed(ButtonPressed.ToCOLORREF());
 
 	// Create rectangle
 	CRect button(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
 
 	// Check if pressed
-	if (isPressed) {
+	if (state == CInputState::ACTIVE) {
 		dc->FillSolidRect(button, ButtonPressed.ToCOLORREF());
 		// Button bevel
 		dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
@@ -47,19 +42,63 @@ CRect CBaseWindow::DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT 
 	}
 
 	// Draw text
-	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
+	FontSelector::SelectNormalFont(16, dc);
+	if (state == CInputState::DISABLED) { // Disabled text colour
+		dc->SetTextColor(Disabled.ToCOLORREF());
+	}
+	else {
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+	}
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(button.left + (button.Width() / 2), button.top + vtcAlign, text.c_str());
 
 	// Restore device context
 	dc->RestoreDC(sDC);
 
-	// Delete objects
-	DeleteObject(&btnNormal);
-	DeleteObject(&btnPressed);
-
 	// Add object and return the rectangle
 	screen->AddScreenObject(type, id.c_str(), button, false, "");
-	return button;
+}
+
+void CBaseWindow::DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinTextInput* obj, int type, string id) {
+	// Save context for later
+	int sDC = dc->SaveDC();
+
+	// Brushes
+	
+	// Select font
+	FontSelector::SelectATCFont(14, dc);
+	dc->SetTextAlign(TA_LEFT);
+
+	// Create rectangle
+	CRect rect(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
+
+	// Draw rectangle
+	dc->FillSolidRect(rect, ScreenBlue.ToCOLORREF());
+	// Button bevel
+	dc->Draw3dRect(rect, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(rect, -1, -1);
+	dc->Draw3dRect(rect, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Select text colour
+	if (obj->State == CInputState::DISABLED) {
+		dc->SetTextColor(Disabled.ToCOLORREF());
+	}
+	else {
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+	}
+
+	// Draw text
+	dc->TextOutA(rect.left + (rect.Width() / 2), rect.top, obj->Content.c_str());
+
+	// Restore device context
+	dc->RestoreDC(sDC);
+
+	// Delete objects
+
+	// Add object and return the rectangle
+	screen->AddScreenObject(type, id.c_str(), rect, false, "");
+}
+
+void CBaseWindow::DrawCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinCheckBox* obj, int type, string id) {
+
 }

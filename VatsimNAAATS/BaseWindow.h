@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 #include <gdiplus.h>
+#include "Constants.h"
+#include "Structures.h"
 
 using namespace std;
 using namespace Gdiplus;
@@ -18,11 +20,15 @@ class CBaseWindow
 		POINT GetTopLeft();
 		void MoveWindow(CRect topleft);
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) = 0;
-		virtual void MakeButtons() = 0;
-		CRect DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, bool isPressed, int type, string id = "");
+		virtual void MakeWindowItems() = 0;
+		void DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, CInputState state, int type, string id);
+		void DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinTextInput* obj, int type, string id);
+		void DrawCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinCheckBox* obj, int type, string id);
 
-		// Buttons for window
-		map<int, pair<string, bool>> WindowButtons;
+		// Window items
+		map<int, pair<string, CInputState>> WindowButtons;
+		map<int, CWinTextInput> TextInputs;
+		map<int, CWinCheckBox> CheckBoxes;
 
 	protected:
 		// Top left point of window

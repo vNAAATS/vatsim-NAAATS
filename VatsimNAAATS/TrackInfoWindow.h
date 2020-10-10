@@ -16,7 +16,7 @@ class CTrackInfoWindow : public CBaseWindow
 		// Inherited methods
 		CTrackInfoWindow(POINT topLeft);
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		virtual void MakeButtons();
+		virtual void MakeWindowItems();
 
 		// Window methods
 		void Scroll(CRect area, POINT mousePtr);
@@ -26,6 +26,10 @@ class CTrackInfoWindow : public CBaseWindow
 
 		// Window messages to display
 		string MsgDataRefresh = "";
+
+		// Button definitions
+		static const int BTN_CLOSE;
+		static const int BTN_REFRESH;
 
 	private:
 		double trackScrollAreaSize;

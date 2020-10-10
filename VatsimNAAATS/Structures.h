@@ -83,6 +83,28 @@ struct CSepStatus {
 	pair<CPosition, CPosition> AircraftLocations;
 };
 
+// Describes a window text input
+struct CWinTextInput {
+	CWinTextInput() {}; // Default constructor
+	CWinTextInput(string lbl, string content, int width, CInputState state) {
+		Label = lbl;
+		Content = content;
+		Width = width;
+		State = state;
+	}
+	string Label;
+	string Content;
+	int Width;
+	CInputState State;
+};
+
+// Describes a window check box
+struct CWinCheckBox {
+	string Label;
+	bool IsChecked;
+	CInputState State;
+};
+
 // Describes a lat/lon
 struct CLatLon {
 	double Lat;

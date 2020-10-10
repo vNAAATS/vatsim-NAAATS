@@ -8,11 +8,14 @@ using namespace Gdiplus;
 // Colours for the program
 namespace Colours {
 	const Color TextWhite(255, 255, 255);
+	const Color Disabled(164, 185, 215);
 	const Color Black(0, 0, 0);
 	const Color Grey(237, 237, 237);
 	const Color TargetOrange(255, 128, 0);
 	const Color LightGreen(81, 188, 161);
 	const Color ScreenBlue(59, 110, 179);
+	const Color LightBackground(165, 199, 249);
+	const Color RouteBox(195, 219, 255);
 	const Color BevelLight(110, 149, 203);
 	const Color BevelDark(41, 80, 133);
 	const Color GreenBevelLight(76, 191, 196);
@@ -38,6 +41,9 @@ public:
 		strcpy_s(lFont.lfFaceName, _T("Arial"));
 		// Normal weight
 		lFont.lfWeight = FW_SEMIBOLD;
+		// Size 14
+		lFont.lfHeight = 15;
+		normalFont15.CreateFontIndirect(&lFont);
 		// Size 16
 		lFont.lfHeight = 16;
 		normalFont16.CreateFontIndirect(&lFont);
@@ -64,6 +70,9 @@ public:
 		strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
 		// Normal weight
 		lFont.lfWeight = FW_REGULAR;
+		// Size 14
+		lFont.lfHeight = 14;
+		atcFont14.CreateFontIndirect(&lFont);
 		// Size 15
 		lFont.lfHeight = 15;
 		atcFont15.CreateFontIndirect(&lFont);
@@ -81,7 +90,10 @@ public:
 
 	static void SelectNormalFont(int size, CDC* dc) {
 		// Select font based on font size
-		if (size == 16) {
+		if (size == 15) {
+			dc->SelectObject(normalFont15);
+		}
+		else if (size == 16) {
 			dc->SelectObject(normalFont16);
 		}
 		else if (size == 30) {
@@ -104,6 +116,9 @@ public:
 
 	static void SelectATCFont(int size, CDC* dc) {
 		// Select font based on font size
+		if (size == 14) {
+			dc->SelectObject(atcFont14);
+		}
 		if (size == 15) {
 			dc->SelectObject(atcFont15);
 		}
@@ -116,11 +131,13 @@ public:
 	}
 
 	private:
+		static CFont normalFont15;
 		static CFont normalFont16;
 		static CFont normalFont30;
 		static CFont monoFont12;
 		static CFont monoFont14;
 		static CFont monoFont15;
+		static CFont atcFont14;
 		static CFont atcFont15;
 		static CFont atcFont16;
 		static CFont atcFont18;

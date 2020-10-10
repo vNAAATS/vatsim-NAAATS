@@ -923,19 +923,16 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	// Shared close button for windows
-	if (ObjectType == WINBTN_CLOSE) {
-		if (string(sObjectId) == "TCKINFO") {
-			// Press button on screen
-			trackWindow->WindowButtons.find(WINBTN_CLOSE)->second.second = true;
-		}
+	// Track info window
+	if (ObjectType == WIN_TCKINFO) {
+		trackWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
 	}
 
-	// Track info window refresh button
-	if (string(sObjectId) == "TCKINFO") {
-		if (ObjectType == WINBTN_TCKINFO_REFRESH) {
-			// Press button on screen
-			trackWindow->WindowButtons.find(WINBTN_TCKINFO_REFRESH)->second.second = true;
+	// Flight plan window
+	if (ObjectType == WIN_FLTPLN) {
+		// If not disabled, press
+		if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
+			fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
 		}
 	}
 
@@ -945,25 +942,36 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 
 void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	// Shared close button for windows
-	if (ObjectType == WINBTN_CLOSE) {
-		if (string(sObjectId) == "TCKINFO") {
-			// Unpress button and reset window state
-			trackWindow->WindowButtons.find(WINBTN_CLOSE)->second.second = false;
+	// Track info window
+	if (ObjectType == WIN_TCKINFO) {
+		if (atoi(sObjectId) == CTrackInfoWindow::BTN_CLOSE) { // Close button
+			// Reset window state
 			trackWindow->MsgDataRefresh = "";
-			// Unpress track info window button
+			// Unpress track info window button to close window
 			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
 				buttonsPressed.erase(MENBTN_TCKINFO);
 			}
 		}
+		if (atoi(sObjectId) == CTrackInfoWindow::BTN_REFRESH) { // Refresh button
+			// Set data to refreshed so that text comes up
+			trackWindow->NATDataRefresh = true;
+		}
+		// Finally unpress the button
+		trackWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
 	}
 
-	// Track info window refresh button
-	if (string(sObjectId) == "TCKINFO") {
-		if (ObjectType == WINBTN_TCKINFO_REFRESH) {
-			// Unpress button on screen
-			trackWindow->NATDataRefresh = true;
-			trackWindow->WindowButtons.find(WINBTN_TCKINFO_REFRESH)->second.second = false;
+	// Flight plan window
+	if (ObjectType == WIN_FLTPLN) {
+		if (atoi(sObjectId) == CFlightPlanWindow::BTN_CLOSE) { // Close button
+			// If the close button then unpress flight plan window button to close window
+			if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_FLIGHTPLAN);
+			}
+		}
+
+		// Finally unpress the button if not disabled
+		if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
+			fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
 		}
 	}
 

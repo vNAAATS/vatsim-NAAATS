@@ -141,7 +141,7 @@ const int RECT8_WIDTH = 90;
 const int WINSZ_TITLEBAR_HEIGHT = 20;
 const int WINSZ_TCKINFO_WIDTH = 450;
 const int WINSZ_TCKINFO_HEIGHT = 250;
-const int WINSZ_FLTPLN_WIDTH = 550;
+const int WINSZ_FLTPLN_WIDTH = 540;
 const int WINSZ_FLTPLN_HEIGHT = 600;
 
 // Conflict
@@ -153,19 +153,10 @@ const int STCA_TIME = 480; // 8 minutes
 const int SCREEN_TAG = 1;
 const int WINDOW = 100;
 
-// Window specific buttons
-const int WINBTN_CLOSE = 101;
+// Window object handles (for buttons, etc)
+const int WIN_TCKINFO = 101;
+const int WIN_FLTPLN = 102;
 const int WIN_SCROLLBAR = 102;
-const int WINBTN_TCKINFO_REFRESH = 103;
-const int WINBTN_FLTPLN_COPY = 104;
-const int WINBTN_FLTPLN_COORD = 105;
-const int WINBTN_FLTPLN_MSG = 106;
-const int WINBTN_FLTPLN_VOXCLEAR = 107;
-const int WINBTN_FLTPLN_DELETE = 108;
-const int WINBTN_FLTPLN_PROBE = 109;
-const int WINBTN_FLTPLN_HIST = 110;
-const int WINBTN_FLTPLN_SAVE = 111;
-const int WINBTN_FLTPLN_ADS = 112;
 
 // Text inputs and functions
 const int TXT_ENTRY = 200;
@@ -280,4 +271,11 @@ enum class CMessageType {
     OK,
     WARNING,
     CRITICAL
+};
+
+// Button states
+enum class CInputState {
+    INACTIVE,
+    ACTIVE,
+    DISABLED
 };

@@ -13,7 +13,6 @@ using namespace Gdiplus;
 class CMenuBar
 {
 	public:
-		// TODO: Refactor all dropdown stuff into this file
 		// Dropdowns
 		static map<int, string> dropDownSelections;
 		static map<int, string> dropDownItems;
@@ -22,12 +21,14 @@ class CMenuBar
 		static int dropDownHover;
 		static int dropDownClicked;
 
+		// TODO: Major refactor
 		// Button data
 		static map<int, string> BuildButtonData();
 
 		// Toggle button data
 		static map<int, int> BuildToggleButtonData();
 
+		// Dropdown ids
 		static string ParseDropDownId(int id, int type);
 
 		// Render the menu bar

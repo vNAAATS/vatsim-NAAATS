@@ -7,15 +7,18 @@
 
 using namespace Colours;
 
+const int CTrackInfoWindow::BTN_CLOSE = 0;
+const int CTrackInfoWindow::BTN_REFRESH = 1;
+
 CTrackInfoWindow::CTrackInfoWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
-	MakeButtons();
+	MakeWindowItems();
 };
 
 
-void CTrackInfoWindow::MakeButtons() {
-	WindowButtons[WINBTN_TCKINFO_REFRESH] = make_pair("Refresh NAT Data", false);
-	WindowButtons[WINBTN_CLOSE] = make_pair("Close", false);
+void CTrackInfoWindow::MakeWindowItems() {
+	WindowButtons[BTN_REFRESH] = make_pair("Refresh NAT Data", CInputState::INACTIVE);
+	WindowButtons[BTN_CLOSE] = make_pair("Close", CInputState::INACTIVE);
 }
 
 void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -51,9 +54,9 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 
 	/// Draw buttons
 	// Refresh button
-	DrawButton(dc, screen, WindowButtons.at(WINBTN_TCKINFO_REFRESH).first, { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, WindowButtons.at(WINBTN_TCKINFO_REFRESH).second, WINBTN_TCKINFO_REFRESH, "TCKINFO");
+	DrawButton(dc, screen, WindowButtons.at(BTN_REFRESH).first, { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, WindowButtons.at(BTN_REFRESH).second, WIN_TCKINFO, to_string(BTN_REFRESH).c_str());
 	// Close button
-	DrawButton(dc, screen, WindowButtons.at(WINBTN_CLOSE).first, { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(WINBTN_CLOSE).second, WINBTN_CLOSE, "TCKINFO");
+	DrawButton(dc, screen, WindowButtons.at(BTN_CLOSE).first, { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(BTN_CLOSE).second, WIN_TCKINFO, to_string(BTN_CLOSE).c_str());
 
 	// Draw lines
 	FontSelector::SelectNormalFont(16, dc);
