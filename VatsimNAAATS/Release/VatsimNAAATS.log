@@ -1,0 +1,65 @@
+﻿  DataHandler.cpp
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\atlmfc\include\afx.h(38): warning C4996: 'MBCS_Support_Deprecated_In_MFC': MBCS support in MFC is deprecated and may be removed in a future version of MFC.
+  C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\atlmfc\include\afx.h(33): note: see declaration of 'MBCS_Support_Deprecated_In_MFC'
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+DataHandler.cpp(31): warning C4018: '<': signed/unsigned mismatch
+DataHandler.cpp(54): warning C4018: '<': signed/unsigned mismatch
+DataHandler.cpp(77): warning C4018: '<': signed/unsigned mismatch
+DataHandler.cpp(83): warning C4018: '<': signed/unsigned mismatch
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\messagewindow.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\basewindow.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\conflictdetection.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\flightplanwindow.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\basewindow.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\inboundlist.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\menubar.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\naaats.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\basewindow.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\otherlist.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\overlays.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\pathrenderer.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\pch.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\radardisplay.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\basewindow.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\styles.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\trackinfowindow.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\basewindow.obj.  Using first PCH.
+LINK : warning C4727: PCH named q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.pch with same timestamp found in q:\programming\vatsim-naaats\vatsimnaaats\release\vatsimnaaats.obj and q:\programming\vatsim-naaats\vatsimnaaats\release\actargets.obj.  Using first PCH.
+     Creating library Q:\Programming\vatsim-NAAATS\VatsimNAAATS\Release\VatsimNAAATS.lib and object Q:\Programming\vatsim-NAAATS\VatsimNAAATS\Release\VatsimNAAATS.exp
+LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+q:\programming\vatsim-naaats\vatsimnaaats\datahandler.cpp : fatal error C1001: An internal error has occurred in the compiler.
+  (compiler file 'f:\dd\vctools\compiler\utc\src\p2\main.c', line 255)
+   To work around this problem, try simplifying or changing the program near the locations listed above.
+  Please choose the Technical Support command on the Visual C++ 
+   Help menu, or open the Technical Support help file for more information
+    link!RaiseException()+0x62
+    link!RaiseException()+0x62
+    link!CxxThrowException()+0x66
+    link!std::_Xout_of_range()+0x1f
+    link!InvokeCompilerPass()+0x2ba32
+    link!InvokeCompilerPass()+0x1e816
+    link!InvokeCompilerPass()+0x1e78c
+    link!InvokeCompilerPass()+0x1ea2d
+    link!InvokeCompilerPass()+0x1e78c
+    link!InvokeCompilerPass()+0x1ebc3
+    link!InvokeCompilerPass()+0x1eaf7
+    link!InvokeCompilerPass()+0x21a38
+    link!InvokeCompilerPass()+0x214e0
+    link!DllGetC2Telemetry()+0xe39f7
+  
+q:\programming\vatsim-naaats\vatsimnaaats\datahandler.cpp : fatal error C1001: An internal error has occurred in the compiler.
+  (compiler file 'f:\dd\vctools\compiler\utc\src\p2\main.c', line 255)
+   To work around this problem, try simplifying or changing the program near the locations listed above.
+  Please choose the Technical Support command on the Visual C++ 
+   Help menu, or open the Technical Support help file for more information
+    link!RaiseException()+0x62
+    link!CxxThrowException()+0x66
+    link!std::_Xout_of_range()+0x1f
+    link!InvokeCompilerPass()+0x2ba32
+    link!InvokeCompilerPass()+0x1e816
+    link!InvokeCompilerPass()+0x1e78c
+    link!InvokeCompilerPass()+0x1ea2d
+    link!InvokeCompilerPass()+0x1e78c
+    link!InvokeCompilerPass()+0x1ebc3
+    link!InvokeCompilerPass()+0x1eaf7
+    link!InvokeCompilerPass()+0x21a38
+    link!InvokeCompilerPass()+0x214e0
+    link!DllGetC2Telemetry()+0xe39f7
+  
+LINK : fatal error LNK1257: code generation failed

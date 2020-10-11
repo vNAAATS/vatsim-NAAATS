@@ -8,6 +8,7 @@
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
 #include "FlightPlanWindow.h"
+#include "MessageWindow.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -51,8 +52,6 @@ class CRadarDisplay : public CRadarScreen
 		map<int, bool> buttonsPressed;
 		map<int, int> toggleButtons;
 		bool aselDetailed;	
-		vector<CListAircraft> inboundAircraft;
-		vector<string> otherAircraft;		
 		map<string, int> aircraftOnScreen;
 		map<int, string> menuFields;
 		string asel = "";
@@ -63,5 +62,6 @@ class CRadarDisplay : public CRadarScreen
 		COtherList* otherList;
 		CTrackInfoWindow* trackWindow = nullptr;
 		CFlightPlanWindow* fltPlnWindow = nullptr;
+		CMessageWindow* msgWindow = nullptr;
 };
 

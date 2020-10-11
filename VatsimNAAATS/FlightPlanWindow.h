@@ -16,7 +16,15 @@ class CFlightPlanWindow : public CBaseWindow
 		// Inherited methods
 		CFlightPlanWindow(POINT topLeft);
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderCopyPanel(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderManClrcWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		virtual void MakeWindowItems();
+		virtual void ButtonDown(int id);
+		virtual void ButtonUp(int id);
+		virtual void ButtonPress(int id);
 
 		// Fill data
 		void UpdateData(CRadarScreen* screen, CAcFPStatus status);

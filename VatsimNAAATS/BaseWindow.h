@@ -21,6 +21,9 @@ class CBaseWindow
 		void MoveWindow(CRect topleft);
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) = 0;
 		virtual void MakeWindowItems() = 0;
+		virtual void ButtonDown(int id) = 0;
+		virtual void ButtonUp(int id) = 0;
+		virtual void ButtonPress(int id) = 0;
 		void DrawButton(CDC* dc, CRadarScreen* screen, string text, POINT topLeft, int width, int height, int vtcAlign, CInputState state, int type, string id);
 		void DrawTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, bool canEdit, CWinTextInput* obj, int type, string id);
 		void DrawCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinCheckBox* obj, int type, string id);
@@ -34,6 +37,9 @@ class CBaseWindow
 		bool IsButton(int id);
 		bool IsTextInput(int id);
 		bool IsCheckBox(int id);
+
+		// Closed flag
+		bool IsClosed;
 
 	protected:
 		// Top left point of window

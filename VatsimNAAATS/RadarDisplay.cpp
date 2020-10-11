@@ -24,7 +24,8 @@ CRadarDisplay::CRadarDisplay()
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
-	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 });
+	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 }); // TODO: settings save
+	msgWindow = new CMessageWindow({ 500, 500 }); // TODO: settings save
 	menuButtons = CMenuBar::BuildButtonData();
 	toggleButtons = CMenuBar::BuildToggleButtonData();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
@@ -40,7 +41,7 @@ CRadarDisplay::~CRadarDisplay()
 
 void CRadarDisplay::PopulateProgramData() {
 	// Lists
-	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY }, true);
+	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY });
 	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
 	// Dropdown values
@@ -160,11 +161,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	double tenSecT = (double)(clock() - tenSecondTimer) / ((double)CLOCKS_PER_SEC);
 
 	// Clear lists if not empty and time is greater than 1 second
-	if (fiveSecT >= 5 && !inboundAircraft.empty()) {
-		inboundAircraft.clear();
+	if (fiveSecT >= 5 && !inboundList->AircraftList.empty()) {
+		inboundList->AircraftList.clear();
 	}
-	if (fiveSecT >= 5 && !otherAircraft.empty()) {
-		otherAircraft.clear();
+	if (fiveSecT >= 5 && !otherList->AircraftList.empty()) {
+		otherList->AircraftList.clear();
 	}
 
 	// Reset currently on screen list
@@ -295,7 +296,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 									// Test flight time
 									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
 										// Add if within
-										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(), 
+										inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 												rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
 										break;
 									}
@@ -303,7 +304,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 						else {
@@ -312,14 +313,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 								// They are coming from land so check entry points
 								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
-									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
 									break;
 								}
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 					}
@@ -332,7 +333,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 									// Test flight time
 									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
 										// Add if within
-										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+										inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 											rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
 										break;
 									}
@@ -340,7 +341,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 						else {
@@ -349,14 +350,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
 								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
-									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
 									break;
 								}
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 					}
@@ -444,18 +445,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CMenuBar::dropDownClicked = -1;
 
 		// Check the lists are not empty first, then draw
-		inboundList->DrawList(&g, &dc, this, &inboundAircraft);
-		otherList->DrawList(&g, &dc, this, &otherAircraft);
-
-		// Draw track info window if button pressed
-		if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
-			trackWindow->RenderWindow(&dc, &g, this);
-		}
-
-		// Draw flight plan window if button pressed
-		if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
-			fltPlnWindow->RenderWindow(&dc, &g, this);
-		}
+		inboundList->RenderList(&g, &dc, this);
+		otherList->RenderList(&g, &dc, this);
 
 		// SEP draw
 		if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
@@ -478,6 +469,39 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				// Render
 				CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
+			}
+		}
+
+		// Draw track info window if button pressed
+		if (!trackWindow->IsClosed) {
+			trackWindow->RenderWindow(&dc, &g, this);
+		}
+		else {
+			// Erase the button if active
+			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_TCKINFO);
+			}
+		}
+
+		// Draw message window if button pressed
+		if (!msgWindow->IsClosed) {
+			msgWindow->RenderWindow(&dc, &g, this);
+		}
+		else {
+			// Erase the button if active
+			if (buttonsPressed.find(MENBTN_MESSAGE) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_MESSAGE);
+			}
+		}
+
+		// Draw flight plan window if button pressed
+		if (!fltPlnWindow->IsClosed) {
+			fltPlnWindow->RenderWindow(&dc, &g, this);
+		}
+		else {
+			// Erase the button if active
+			if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
+				buttonsPressed.erase(MENBTN_FLIGHTPLAN);
 			}
 		}
 
@@ -505,7 +529,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	mousePointer = Pt;
 	// Move inbound list
 	if (ObjectType == LIST_INBOUND) {
-		inboundList->MoveList(Area, Released);
+		inboundList->MoveList(Area);
 
 		// To save
 		CUtils::InboundX = Area.left;
@@ -534,6 +558,9 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 		if (string(sObjectId) == "FLTPLN")
 			fltPlnWindow->MoveWindow(Area);
+
+		if (string(sObjectId) == "MSG")
+			msgWindow->MoveWindow(Area);
 
 		CUtils::TrackWindowX = Area.left;
 		CUtils::TrackWindowY = Area.top;
@@ -702,9 +729,37 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		} 
 
+		
+
 		// If the flight plan window
 		if (ObjectType == MENBTN_FLIGHTPLAN) {
-			fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+			if (fltPlnWindow->IsClosed) {
+				fltPlnWindow->IsClosed = false;
+				fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+			}
+			else {
+				fltPlnWindow->IsClosed = true;
+			}
+		}
+
+		// If the track window
+		if (ObjectType == MENBTN_TCKINFO) {
+			if (trackWindow->IsClosed) {
+				trackWindow->IsClosed = false;
+			}
+			else {
+				trackWindow->IsClosed = true;
+			}
+		}
+
+		// If the message window
+		if (ObjectType == MENBTN_MESSAGE) {
+			if (msgWindow->IsClosed) {
+				msgWindow->IsClosed = false;
+			}
+			else {
+				msgWindow->IsClosed = true;
+			}
 		}
 
 		// If screen object is a tag
@@ -941,17 +996,12 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 {
 	// Track info window
 	if (ObjectType == WIN_TCKINFO) {
-		trackWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
+		trackWindow->ButtonDown(atoi(sObjectId));
 	}
 
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
-		// If not disabled, press
-		if (fltPlnWindow->IsButton(atoi(sObjectId))) {
-			if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
-				fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
-			}
-		}
+		trackWindow->ButtonDown(atoi(sObjectId));
 	}
 
 	// Refresh
@@ -962,37 +1012,12 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 {
 	// Track info window
 	if (ObjectType == WIN_TCKINFO) {
-		if (atoi(sObjectId) == CTrackInfoWindow::BTN_CLOSE) { // Close button
-			// Reset window state
-			trackWindow->MsgDataRefresh = "";
-			// Unpress track info window button to close window
-			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_TCKINFO);
-			}
-		}
-		if (atoi(sObjectId) == CTrackInfoWindow::BTN_REFRESH) { // Refresh button
-			// Set data to refreshed so that text comes up
-			trackWindow->NATDataRefresh = true;
-		}
-		// Finally unpress the button
-		trackWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
+		trackWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
-		if (atoi(sObjectId) == CFlightPlanWindow::BTN_CLOSE) { // Close button
-			// If the close button then unpress flight plan window button to close window
-			if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_FLIGHTPLAN);
-			}
-		}
-
-		// Finally unpress the button if not disabled (and id is actually a button)
-		if (fltPlnWindow->IsButton(atoi(sObjectId))) {
-			if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
-				fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
-			}
-		}
+		fltPlnWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Refresh

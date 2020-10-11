@@ -13,8 +13,10 @@ const int CTrackInfoWindow::BTN_REFRESH = 1;
 CTrackInfoWindow::CTrackInfoWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
 	MakeWindowItems();
-};
 
+	// Close by default
+	IsClosed = true;
+};
 
 void CTrackInfoWindow::MakeWindowItems() {
 	WindowButtons[BTN_REFRESH] = make_pair("Refresh NAT Data", CInputState::INACTIVE);
@@ -51,6 +53,10 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 	InflateRect(buttonBarRect, -1, -1);
 	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
+
+	// Add screen objects
+	screen->AddScreenObject(WINDOW, "WIN_TCKINFO", windowRect, true, ""); // So that we can't click anything under the flight plan window
+	screen->AddScreenObject(WINDOW, "TCKINFO", titleRect, true, ""); // Movable
 
 	/// Draw buttons
 	// Refresh button
@@ -161,15 +167,35 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	InflateRect(windowRect, 1, 1);
 	dc->DrawEdge(windowRect, EDGE_RAISED, BF_RECT);
 
-	// Add screen object
-	screen->AddScreenObject(WINDOW, "TCKINFO", titleRect, true, "");
-
 	// Cleanup
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
 
 	// Restore device context
 	dc->RestoreDC(iDC);
+}
+
+void CTrackInfoWindow::ButtonUp(int id) {
+	if (id == CTrackInfoWindow::BTN_CLOSE) { // Close button
+		// Reset window state
+		MsgDataRefresh = "";
+		// Close window
+		IsClosed = true;
+	}
+	if (id == CTrackInfoWindow::BTN_REFRESH) { // Refresh button
+		// Set data to refreshed so that text comes up
+		NATDataRefresh = true;
+	}
+	// Finally unpress the button
+	WindowButtons.find(id)->second.second = CInputState::INACTIVE;
+}
+
+void CTrackInfoWindow::ButtonDown(int id) {
+	WindowButtons.find(id)->second.second = CInputState::ACTIVE;
+}
+
+void CTrackInfoWindow::ButtonPress(int id) {
+
 }
 
 void CTrackInfoWindow::Scroll(CRect area, POINT mousePtr) {

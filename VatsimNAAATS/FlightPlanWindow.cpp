@@ -40,6 +40,9 @@ const int CFlightPlanWindow::TXT_STATE_CPY = 117;
 CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
 	MakeWindowItems();
+
+	// Close by default
+	IsClosed = true;
 };
 
 void CFlightPlanWindow::MakeWindowItems() {
@@ -98,7 +101,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string(string("Flight Plan") + string(" - ") + string(TextInputs[TXT_ACID].Content)).c_str());
 
-	// Add screen object
+	// Add screen objects
 	screen->AddScreenObject(WINDOW, "WIN_FLTPLN", windowRect, true, ""); // So that we can't click anything under the flight plan window
 	screen->AddScreenObject(WINDOW, "FLTPLN", titleRect, true, ""); // Movable
 
@@ -347,4 +350,32 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 		}
 		return 1;
 	}
+}
+
+void CFlightPlanWindow::ButtonUp(int id) {
+
+	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
+		// If the close button close window
+		IsClosed = true;
+	}
+
+	// Finally unpress the button if not disabled (and id is actually a button)
+	if (IsButton(id)) {
+		if (WindowButtons.find(id)->second.second != CInputState::DISABLED) {
+			WindowButtons.find(id)->second.second = CInputState::INACTIVE;
+		}
+	}
+}
+
+void CFlightPlanWindow::ButtonDown(int id) {
+	// If not disabled, press
+	if (IsButton(id)) {
+		if (WindowButtons.find(id)->second.second != CInputState::DISABLED) {
+			WindowButtons.find(id)->second.second = CInputState::ACTIVE;
+		}
+	}
+}
+
+void CFlightPlanWindow::ButtonPress(int id) {
+
 }

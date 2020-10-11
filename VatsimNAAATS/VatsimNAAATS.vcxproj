@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -23,23 +23,23 @@
     <ProjectGuid>{8E1E2CE6-DF6C-41D3-8BBF-8803D826031D}</ProjectGuid>
     <Keyword>MFCDLLProj</Keyword>
     <RootNamespace>VatsimNAAATS</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <UseOfMfc>Dynamic</UseOfMfc>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <UseOfMfc>Dynamic</UseOfMfc>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -136,7 +136,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -145,6 +145,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>Q:\Programming\vatsim-NAAATS\lib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -152,6 +153,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>.\VatsimNAAATS.def</ModuleDefinitionFile>
       <AdditionalDependencies>Q:\Programming\vatsim-NAAATS\lib\EuroScopePlugInDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -191,7 +193,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AcTargets.cpp" />
+    <ClCompile Include="BaseList.cpp" />
     <ClCompile Include="BaseWindow.cpp" />
+    <ClCompile Include="MessageWindow.cpp" />
     <ClCompile Include="ConflictDetection.cpp" />
     <ClCompile Include="FlightPlanWindow.cpp" />
     <ClCompile Include="InboundList.cpp" />
@@ -215,12 +219,14 @@
   <ItemGroup>
     <ClInclude Include="..\lib\include\EuroScopePlugIn.h" />
     <ClInclude Include="AcTargets.h" />
+    <ClInclude Include="BaseList.h" />
     <ClInclude Include="BaseWindow.h" />
     <ClInclude Include="ConflictDetection.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="FlightPlanWindow.h" />
     <ClInclude Include="InboundList.h" />
     <ClInclude Include="MenuBar.h" />
+    <ClInclude Include="MessageWindow.h" />
     <ClInclude Include="NAAATS.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="OtherList.h" />

@@ -23,9 +23,9 @@ struct CRoutePosition {
 	int FlightLevel;
 };
 
-// Aircraft displayed on list (inbound at the moment)
-struct CListAircraft {
-	CListAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
+// Describes an inbound aircraft
+struct CInboundAircraft {
+	CInboundAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
 		Callsign = cs;
 		FinalAltitude = fA;
 		ClearedLevel = cL;
@@ -43,7 +43,7 @@ struct CListAircraft {
 	bool Direction;
 };
 
-// General aircraft status
+// Describes a aircraft status
 struct CAircraftStatus {
 	CAircraftStatus() {}; // Default constructor
 	CAircraftStatus(string cs, int alt, int gs, int hdg, CPosition pos) {

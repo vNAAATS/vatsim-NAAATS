@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <WinInet.h>
+#pragma comment(lib,"WinInet.Lib" )
 
 // Include dependency
 using json = nlohmann::json;

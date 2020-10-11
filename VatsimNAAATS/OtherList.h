@@ -5,20 +5,18 @@
 #include <vector>
 #include <gdiplus.h>
 #include <EuroScopePlugIn.h>
+#include "BaseList.h"
 
 using namespace std;
 using namespace Gdiplus;
 using namespace EuroScopePlugIn;
 
-class COtherList
+class COtherList : public CBaseList
 {
 	public:
 		COtherList(POINT topLeft);
-		POINT GetTopLeft();
-		Rect DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector <string> * otherAircraft);
-		void MoveList(CRect area);
-		void MoveList(POINT topleft);
+		virtual void RenderList(Graphics* g, CDC* dc, CRadarScreen* screen);
 
-	private:
-		POINT topLeft;
+		// Aircraft list
+		static vector<string> AircraftList;
 };

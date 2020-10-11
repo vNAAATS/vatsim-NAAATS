@@ -146,15 +146,18 @@ const int WINSZ_FLTPLN_HEIGHT_INIT = 170;
 const int WINSZ_FLTPLN_HEIGHT_DATA = 310;
 const int WINSZ_FLTPLN_HEIGHT_CPY = 600;
 const int WINSZ_FLTPLN_HEIGHT_XTRA = 600;
+const int WINSZ_MSG_WIDTH = 550;
+const int WINSZ_MSG_HEIGHT = 300;
 
 // Conflict
 const int SEPTOOL_TIME = 2700; // 45 minutes
 const int STCA_TIME = 480; // 8 minutes
 
-/// OBJECTS
+/// OBJECT HANDLES
 // Screen
 const int SCREEN_TAG = 1;
 const int WINDOW = 100;
+
 
 // Window object handles (for buttons, etc)
 const int WIN_TCKINFO = 101;
