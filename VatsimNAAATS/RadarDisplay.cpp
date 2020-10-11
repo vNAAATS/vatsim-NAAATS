@@ -20,7 +20,7 @@ using namespace EuroScopePlugIn;
 
 CRadarDisplay::CRadarDisplay() 
 {
-	ShowHideGridReference(this, false);
+	COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
@@ -83,66 +83,6 @@ void CRadarDisplay::PopulateProgramData() {
 
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
-}
-
-// Show and hide the grid reference and waypoints
-void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
-	if (show) {
-		screen->GetPlugIn()->SelectScreenSectorfile(screen);
-		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
-		string gridName = string(grid.GetName());
-		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
-			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
-			gridName = string(grid.GetName());
-		}
-
-		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
-		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
-			
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-			
-		}
-
-		string componentName;
-		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos || freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
-			componentName = freetext.GetComponentName(0);
-			screen->ShowSectorFileElement(freetext, componentName.c_str(), true);
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-		}
-
-		screen->ShowSectorFileElement(grid, "", true);
-	}
-	else {
-		screen->GetPlugIn()->SelectScreenSectorfile(screen);
-		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
-		string gridName = string(grid.GetName());
-		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
-			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
-			gridName = string(grid.GetName());
-		}
-
-		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
-		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-		}
-
-		string componentName;
-		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos || freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
-			componentName = freetext.GetComponentName(0);
-			screen->ShowSectorFileElement(freetext, componentName.c_str(), false);
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-		}
-
-		screen->ShowSectorFileElement(grid, "", false);
-	}
-
-	RefreshMapContent();
 }
 
 // On radar screen refresh (occurs about once a second)
@@ -689,7 +629,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			else if (ObjectType == MENBTN_GRID) {
 				// Grid is off
 				CUtils::GridEnabled = false;
-				ShowHideGridReference(this, CUtils::GridEnabled);
+				COverlays::ShowHideGridReference(this, CUtils::GridEnabled); // TODO: Review
 			}
 			else if (ObjectType == MENBTN_OVERLAYS) {
 				// Overlays are disabled
@@ -716,7 +656,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				else if (ObjectType == MENBTN_GRID) {
 					// Grid is on
 					CUtils::GridEnabled = true;
-					ShowHideGridReference(this, CUtils::GridEnabled);
+					COverlays::ShowHideGridReference(this, CUtils::GridEnabled); // Review
 				}
 				else if (ObjectType == MENBTN_OVERLAYS) {
 					// Overlays are enabled

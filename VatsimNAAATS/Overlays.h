@@ -22,6 +22,9 @@ class COverlays
 
 		// Display the currently selected overlay
 		static void ShowCurrentOverlay(CDC* dc, Graphics* g, CRadarScreen* screen);
+
+		// Grid reference
+		static void ShowHideGridReference(CRadarScreen* screen, bool show);
 };
 
 

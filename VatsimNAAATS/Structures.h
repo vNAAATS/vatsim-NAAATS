@@ -85,14 +85,18 @@ struct CSepStatus {
 };
 
 // Describes a window text input
-struct CWinTextInput {
-	CWinTextInput() {}; // Default constructor
-	CWinTextInput(string lbl, string content, int width, CInputState state) {
+struct CTextInput {
+	CTextInput() {}; // Default constructor
+	CTextInput(string id, int type, string lbl, string content, int width, CInputState state) {
+		Id = id;
+		Type = type;
 		Label = lbl;
 		Content = content;
 		Width = width;
 		State = state;
 	}
+	string Id;
+	int Type;
 	string Label;
 	string Content;
 	int Width;
@@ -100,9 +104,34 @@ struct CWinTextInput {
 };
 
 // Describes a window check box
-struct CWinCheckBox {
+struct CCheckBox {
+	CCheckBox() {}; // Default constructor
+	CCheckBox(string id, int type, string lbl, bool isChecked, CInputState state) {
+		Id = id;
+		Type = type;
+		Label = lbl;
+		IsChecked = isChecked;
+		State = state;
+	}
+	string Id;
+	int Type;
 	string Label;
 	bool IsChecked;
+	CInputState State;
+};
+
+// Describes a button
+struct CButton {
+	CButton() {}; // Default constructor
+	CButton(string id, int type, string lbl, CInputState state) {
+		Id = id;
+		Type = type;
+		Label = lbl;
+		State = state;
+	}
+	string Id;
+	int Type;
+	string Label;
 	CInputState State;
 };
 

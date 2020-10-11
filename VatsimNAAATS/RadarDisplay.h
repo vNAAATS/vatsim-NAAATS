@@ -21,8 +21,7 @@ class CRadarDisplay : public CRadarScreen
 		CRadarDisplay();
 		virtual ~CRadarDisplay();
 
-		// Custom methods
-		void ShowHideGridReference(CRadarScreen* screen, bool show);		
+		// Custom methods	
 		void PopulateProgramData();
 
 		// Inherited methods
