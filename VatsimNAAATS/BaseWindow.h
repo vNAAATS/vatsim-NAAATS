@@ -31,17 +31,17 @@ class CBaseWindow
 		virtual bool IsTextInput(int id);
 		virtual bool IsCheckBox(int id);
 
-		// Window items (multiple maps for each panel)
-		map<int, CWinButton> WindowButtons;
-		map<int, CTextInput> TextInputs;
-		map<int, CCheckBox> CheckBoxes;
-		map<int, CDropDown> DropDowns;
-
 		// Closed flag
 		bool IsClosed;
 
 	protected:
 		// Top left point of window
 		POINT topLeft;
+
+		// Window items
+		map<int, CWinButton> windowButtons;
+		map<int, CTextInput> textInputs;
+		map<int, CCheckBox> checkBoxes;
+		map<int, CDropDown> dropDowns;
 };
 

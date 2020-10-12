@@ -8,36 +8,56 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 using namespace Gdiplus;
-
-// The menu bar
 class CMenuBar
 {
-	public:
-		// Dropdowns
-		static map<int, string> dropDownSelections;
-		static map<int, string> dropDownItems;
-		static map<int, string> selectedTracks;
-		static int currentDropDownId;
-		static int dropDownHover;
-		static int dropDownClicked;
+	CMenuBar();
+	~CMenuBar() {};
+	static void MakeDropDowns();
+	void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+	void RenderAltFilter(CDC* dc, Graphics* g, CRadarScreen* screen);
+	void RenderPositionID(CDC* dc, Graphics* g, CRadarScreen* screen);
+	void ButtonDown(int id);
+	void ButtonUp(int id);
+	void ButtonPress(int id);
 
-		// TODO: Major refactor
-		// Button data
-		static map<int, string> BuildButtonData();
+	// Definitions
+	const int BTN_SETUP = 0;
+	const int BTN_NOTEPAD = 1;
+	const int BTN_ADSC = 2;
+	const int BTN_TCKINFO = 3;
+	const int BTN_MISC = 4;
+	const int BTN_MESSAGE = 5;
+	const int BTN_TAGS = 6;
+	const int BTN_FLIGHTPLAN = 7;
+	const int BTN_DETAILED = 8;
+	const int BTN_AREASEL = 9;
+	const int BTN_TCKCTRL = 10;
+	const int BTN_OVERLAYS = 11;
+	const int BTN_TYPESEL = 12;
+	const int BTN_ALTFILT = 13;
+	const int BTN_HALO = 14;
+	const int BTN_RBL = 15;
+	const int BTN_RINGS = 16;
+	const int BTN_PTL = 17;
+	const int BTN_PIV = 18;
+	const int BTN_GRID = 19;
+	const int BTN_SEP = 20;
+	const int BTN_QCKLOOK = 21;
+	
+	const int DRP_AREASEL = 100;
+	const int DRP_TCKCTRL = 101;
+	const int DRP_OVERLAYS = 102;
+	const int DRP_TYPESEL = 103;
 
-		// Toggle button data
-		static map<int, int> BuildToggleButtonData();
+	const int TXT_ALTFILT = 30;
+	const int ID_POS = 31;
 
-		// Dropdown ids
-		static string ParseDropDownId(int id, int type);
-
-		// Render the menu bar
-		static void DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData);
-
-		// Render a button, any button
-		static CRect DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive);
-		
-		// Render a drop down
-		static CRect DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, int dpId);
+	private:
+		// Menu bar objects
+		map<int, CWinButton> buttons;
+		map<int, CTextInput> textInputs;
+		map<int, CCheckBox> checkBoxes;
+		map<int, CDropDown> dropDowns;
+		map<int, int> panels;
 };
 

@@ -18,7 +18,7 @@ CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 };
 
 void CMessageWindow::MakeWindowItems() {
-	WindowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_MSG, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_MSG, "Close", CInputState::INACTIVE);
 }
 
 void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {

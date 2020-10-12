@@ -19,18 +19,18 @@ void CBaseWindow::MoveWindow(CRect area) {
 
 bool CBaseWindow::IsButton(int id) {
 	// If exists return true
-	if (WindowButtons.find(id) != WindowButtons.end()) return true;
+	if (windowButtons.find(id) != windowButtons.end()) return true;
 	return false; // It doesn't exist
 }
 
 bool CBaseWindow::IsTextInput(int id) {
 	// If exists return true
-	if (TextInputs.find(id) != TextInputs.end()) return true;
+	if (textInputs.find(id) != textInputs.end()) return true;
 	return false; // It doesn't exist
 }
 
 bool CBaseWindow::IsCheckBox(int id) {
 	// If exists return true
-	if (CheckBoxes.find(id) != CheckBoxes.end()) return true;
+	if (checkBoxes.find(id) != checkBoxes.end()) return true;
 	return false; // It doesn't exist
 }

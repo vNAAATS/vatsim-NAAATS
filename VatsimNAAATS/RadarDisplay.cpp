@@ -993,6 +993,7 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 			CUtils::AltFiltHigh = atoi(sItemString); // Return if in range
 		}
 	}
+
 	// If it is a flight plan window text input
 	if (fltPlnWindow->IsTextInput(FunctionId) && string(sItemString) != "") {
 		fltPlnWindow->ChangeDataPoint(this, FunctionId, string(sItemString));

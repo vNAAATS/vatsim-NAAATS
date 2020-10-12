@@ -156,8 +156,9 @@ const int STCA_TIME = 480; // 8 minutes
 /// OBJECT HANDLES
 // Screen
 const int SCREEN_TAG = 1;
-const int WINDOW = 100;
-
+const int MENBAR = 2;
+const int WINDOW = 3;
+const int MENBAR = 4;
 
 // Window object handles (for buttons, etc)
 const int WIN_TCKINFO = 101;
@@ -173,37 +174,6 @@ const int FUNC_ALTFILT_HIGH = 202;
 // Lists
 const int LIST_INBOUND = 300;
 const int LIST_OTHERS = 301;
-
-// Menu buttons, dropdowns & text fields
-const int MENBTN_SETUP = 400;
-const int MENBTN_NOTEPAD = 401;
-const int MENBTN_ADSC = 402;
-const int MENBTN_TCKINFO = 403;
-const int MENBTN_MISC = 404;
-const int MENBTN_MESSAGE = 405;
-const int MENBTN_TAGS = 406;
-const int MENBTN_FLIGHTPLAN = 407;
-const int MENBTN_DETAILED = 408;
-const int MENBTN_AREASEL = 409;
-const int MENBTN_TCKCTRL = 410;
-const int MENBTN_OVERLAYS = 411;
-const int MENBTN_TYPESEL = 412;
-const int MENBTN_ALTFILT = 413;
-const int MENBTN_HALO = 414;
-const int MENBTN_RBL = 415;
-const int MENBTN_RINGS = 416;
-const int MENBTN_MTT = 417;
-const int MENBTN_PTL = 418;
-const int MENBTN_PIV = 419;
-const int MENBTN_GRID = 420;
-const int MENBTN_SEP = 421;
-const int MENBTN_POS = 422;
-const int MENBTN_QCKLOOK = 423;
-const int MENDRP_AREASEL = 424;
-const int MENDRP_TCKCTRL = 425;
-const int MENDRP_OVERLAYS = 426;
-const int MENDRP_TYPESEL = 427;
-const int MENTXT_ALTFILT = 428;
 
 // Dropdown
 const int DROPDOWN = 800;
