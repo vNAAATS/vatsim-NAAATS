@@ -162,7 +162,8 @@ const int WINDOW = 100;
 // Window object handles (for buttons, etc)
 const int WIN_TCKINFO = 101;
 const int WIN_FLTPLN = 102;
-const int WIN_SCROLLBAR = 102;
+const int WIN_SCROLLBAR = 103;
+const int WIN_MSG = 104;
 
 // Text inputs and functions
 const int TXT_ENTRY = 200;

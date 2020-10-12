@@ -25,11 +25,7 @@ class CMessageWindow : public CBaseWindow
 		void Scroll(CRect area, POINT mousePtr);
 
 		// Button definitions
-		static const int BTN_REMOVE;
-		static const int BTN_DONE;
 		static const int BTN_CLOSE;
-		static const int BTN_RESPOND;
-		static const int BTN_FORWARD;
 
 	private:
 		double trackScrollAreaSize;

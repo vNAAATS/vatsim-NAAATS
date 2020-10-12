@@ -4,9 +4,9 @@
 
 using namespace Colours;
 
-CBaseWindow::CBaseWindow(POINT topLeft) {
+CBaseWindow::CBaseWindow(POINT topleft) {
 	// Set top left
-	topLeft = topLeft;
+	topLeft = topleft;
 }
 
 POINT CBaseWindow::GetTopLeft() {

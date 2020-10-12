@@ -37,6 +37,9 @@ CRadarDisplay::~CRadarDisplay()
 {
 	delete inboundList;
 	delete otherList;
+	delete trackWindow;
+	delete fltPlnWindow;
+	delete msgWindow;
 }
 
 void CRadarDisplay::PopulateProgramData() {
@@ -941,7 +944,7 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
-		trackWindow->ButtonDown(atoi(sObjectId));
+		fltPlnWindow->ButtonDown(atoi(sObjectId));
 	}
 
 	// Refresh

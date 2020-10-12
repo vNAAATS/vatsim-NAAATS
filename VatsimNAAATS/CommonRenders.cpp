@@ -36,7 +36,7 @@ void CCommonRenders::RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 	}
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(button.left + (button.Width() / 2), button.top + (button.Height() / 2), obj->Label.c_str());
+	dc->TextOutA(button.left + (button.Width() / 2), button.top + ((button.bottom - button.top) / 4.5), obj->Label.c_str());
 
 	// Restore device context
 	dc->RestoreDC(sDC);

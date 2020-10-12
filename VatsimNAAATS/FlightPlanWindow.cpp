@@ -47,33 +47,33 @@ CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 
 void CFlightPlanWindow::MakeWindowItems() {
 	// Button defaults
-	WindowButtons[BTN_CLOSE] = make_pair("Close", CInputState::INACTIVE);
-	WindowButtons[BTN_COPY] = make_pair("Copy", CInputState::DISABLED);
-	WindowButtons[BTN_TRNSFR] = make_pair("Transfer", CInputState::DISABLED);
-	WindowButtons[BTN_COORD] = make_pair("Co-ord", CInputState::DISABLED);
-	WindowButtons[BTN_MANCLEAR] = make_pair("Man Clrc", CInputState::INACTIVE);
-	WindowButtons[BTN_PROBE] = make_pair("Probe", CInputState::DISABLED);
-	WindowButtons[BTN_DELETE] = make_pair("Delete", CInputState::DISABLED);
-	WindowButtons[BTN_ADS] = make_pair("ADS", CInputState::DISABLED);
-	WindowButtons[BTN_READBK] = make_pair("ReadBK", CInputState::DISABLED);
-	WindowButtons[BTN_MSG] = make_pair("Message", CInputState::INACTIVE);
-	WindowButtons[BTN_HIST] = make_pair("History", CInputState::INACTIVE);
-	WindowButtons[BTN_SAVE] = make_pair("Save", CInputState::DISABLED);
+	WindowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	WindowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
+	WindowButtons[BTN_TRNSFR] = CWinButton(BTN_TRNSFR, WIN_FLTPLN, "Transfer", CInputState::INACTIVE);
+	WindowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
+	WindowButtons[BTN_MANCLEAR] = CWinButton(BTN_MANCLEAR, WIN_FLTPLN, "Man Clrc", CInputState::INACTIVE);
+	WindowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
+	WindowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::INACTIVE);
+	WindowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::INACTIVE);
+	WindowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::INACTIVE);
+	WindowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::INACTIVE);
+	WindowButtons[BTN_HIST] = CWinButton(BTN_HIST, WIN_FLTPLN, "History", CInputState::INACTIVE);
+	WindowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::INACTIVE);
 
 	// Text defaults
-	TextInputs[TXT_ACID] = CWinTextInput("ACID", "", 70, CInputState::INACTIVE);
-	TextInputs[TXT_TYPE] = CWinTextInput("Type", "", 55, CInputState::INACTIVE);
-	TextInputs[TXT_DEPART] = CWinTextInput("Depart", "", 50, CInputState::INACTIVE);
-	TextInputs[TXT_ETD] = CWinTextInput("Etd", "", 50, CInputState::INACTIVE);
-	TextInputs[TXT_SELCAL] = CWinTextInput("SELCAL", "", 55, CInputState::INACTIVE);
-	TextInputs[TXT_DATALINK] = CWinTextInput("Datalink", "", 60, CInputState::INACTIVE);
-	TextInputs[TXT_COMMS] = CWinTextInput("Com", "", 35, CInputState::INACTIVE);
-	TextInputs[TXT_OWNERSHIP] = CWinTextInput("Sector", "", 25, CInputState::INACTIVE);
-	TextInputs[TXT_SPD] = CWinTextInput("Spd", "", 50, CInputState::ACTIVE);
-	TextInputs[TXT_LEVEL] = CWinTextInput("FL", "", 90, CInputState::ACTIVE);
-	TextInputs[TXT_DEST] = CWinTextInput("Dest", "", 45, CInputState::ACTIVE);
-	TextInputs[TXT_TCK] = CWinTextInput("Tck", "", 25, CInputState::DISABLED);
-	TextInputs[TXT_STATE] = CWinTextInput("State", "", 35, CInputState::DISABLED);
+	TextInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
+	TextInputs[TXT_TYPE] = CTextInput(TXT_TYPE, WIN_FLTPLN, "Type", "", 55, CInputState::INACTIVE);
+	TextInputs[TXT_DEPART] = CTextInput(TXT_DEPART, WIN_FLTPLN, "Depart", "", 50, CInputState::INACTIVE);
+	TextInputs[TXT_ETD] = CTextInput(TXT_ETD, WIN_FLTPLN, "Etd", "", 50, CInputState::INACTIVE);
+	TextInputs[TXT_SELCAL] = CTextInput(TXT_SELCAL, WIN_FLTPLN, "SELCAL", "", 55, CInputState::INACTIVE);
+	TextInputs[TXT_DATALINK] = CTextInput(TXT_DATALINK, WIN_FLTPLN, "Datalink", "", 60, CInputState::INACTIVE);
+	TextInputs[TXT_COMMS] = CTextInput(TXT_COMMS, WIN_FLTPLN, "Com", "", 35, CInputState::INACTIVE);
+	TextInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 25, CInputState::INACTIVE);
+	TextInputs[TXT_SPD] = CTextInput(TXT_SPD, WIN_FLTPLN, "Spd", "", 50, CInputState::ACTIVE);
+	TextInputs[TXT_LEVEL] = CTextInput(TXT_LEVEL, WIN_FLTPLN, "FL", "", 90, CInputState::ACTIVE);
+	TextInputs[TXT_DEST] = CTextInput(TXT_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
+	TextInputs[TXT_TCK] = CTextInput(TXT_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::DISABLED);
+	TextInputs[TXT_STATE] = CTextInput(TXT_STATE, WIN_FLTPLN, "State", "", 30, CInputState::DISABLED);
 }
 
 void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -118,7 +118,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	int counter = 0; // Counter for buttons so we know when to offset the Y axis
 	for (auto kv : WindowButtons) {
 		// Draw the button
-		DrawButton(dc, screen, WindowButtons.at(kv.first).first, { buttonBarRect.left + offsetX, buttonBarRect.top + offsetY }, 70, 30, 6, WindowButtons.at(kv.first).second, WIN_FLTPLN, to_string(kv.first).c_str());
+		CCommonRenders::RenderButton(dc, screen, { buttonBarRect.left + offsetX, buttonBarRect.top + offsetY }, 70, 30, &WindowButtons.at(kv.first));
 		if (counter != 5) { // Because there are 6 top row buttons
 			offsetX += 82;
 		}
@@ -156,8 +156,8 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		offsetY += textHeight + 2;
 		bool editable = false;
 		if (kv.second.State == CInputState::ACTIVE) editable = true;
-		DrawTextInput(dc, screen, { infoBarRect.left + offsetX, infoBarRect.top + offsetY }, kv.second.Width, textHeight + 5, editable, &kv.second, WIN_FLTPLN, to_string(kv.first).c_str());
-
+		CCommonRenders::RenderTextInput(dc, screen, { infoBarRect.left + offsetX, infoBarRect.top + offsetY }, kv.second.Width, textHeight + 5, &TextInputs.at(kv.first));
+		
 		// Offset
 		offsetX += kv.second.Width + 5;
 		offsetY = 6;
@@ -197,7 +197,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	while (txtValid) {
 		// Get index
 		if (counter == TXT_SPD_CPY) break; // Break if end
-		CWinTextInput idx = TextInputs.at(counter);
+		CTextInput idx = TextInputs.at(counter);
 
 		// Font
 		FontSelector::SelectNormalFont(15, dc);
@@ -224,7 +224,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		}
 		bool editable = false;
 		if (idx.State == CInputState::ACTIVE) editable = true;
-		DrawTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, editable, &idx, WIN_FLTPLN, to_string(counter).c_str());
+		CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, & TextInputs.at(counter));
 
 		// Offset
 		if (counter == TXT_DEST) { // Need a bit more space
@@ -361,8 +361,8 @@ void CFlightPlanWindow::ButtonUp(int id) {
 
 	// Finally unpress the button if not disabled (and id is actually a button)
 	if (IsButton(id)) {
-		if (WindowButtons.find(id)->second.second != CInputState::DISABLED) {
-			WindowButtons.find(id)->second.second = CInputState::INACTIVE;
+		if (WindowButtons.find(id)->second.State != CInputState::DISABLED) {
+			WindowButtons.find(id)->second.State = CInputState::INACTIVE;
 		}
 	}
 }
@@ -370,8 +370,8 @@ void CFlightPlanWindow::ButtonUp(int id) {
 void CFlightPlanWindow::ButtonDown(int id) {
 	// If not disabled, press
 	if (IsButton(id)) {
-		if (WindowButtons.find(id)->second.second != CInputState::DISABLED) {
-			WindowButtons.find(id)->second.second = CInputState::ACTIVE;
+		if (WindowButtons.find(id)->second.State != CInputState::DISABLED) {
+			WindowButtons.find(id)->second.State = CInputState::ACTIVE;
 		}
 	}
 }

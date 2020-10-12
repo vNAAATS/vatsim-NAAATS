@@ -7,11 +7,7 @@
 
 using namespace Colours;
 
-const int CMessageWindow::BTN_REMOVE = 0;
-const int CMessageWindow::BTN_DONE = 1;
 const int CMessageWindow::BTN_CLOSE = 2;
-const int CMessageWindow::BTN_RESPOND = 3;
-const int CMessageWindow::BTN_FORWARD = 4;
 
 CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
@@ -22,11 +18,7 @@ CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 };
 
 void CMessageWindow::MakeWindowItems() {
-	WindowButtons[BTN_REMOVE] = make_pair("Remove", CInputState::INACTIVE);
-	WindowButtons[BTN_DONE] = make_pair("Done", CInputState::INACTIVE);
-	WindowButtons[BTN_CLOSE] = make_pair("Close", CInputState::ACTIVE);
-	WindowButtons[BTN_RESPOND] = make_pair("Respond", CInputState::INACTIVE);
-	WindowButtons[BTN_FORWARD] = make_pair("Forward", CInputState::INACTIVE);
+	WindowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_MSG, "Close", CInputState::INACTIVE);
 }
 
 void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
