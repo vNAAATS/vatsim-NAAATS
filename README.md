@@ -1,7 +1,7 @@
 # VATSIM North Atlantic Advanced Air Traffic System
 ![vNAAATS Image](https://i.imgur.com/X6pVVmE.png)
 
-vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on the VATSIM network. It simulates the GAATS+ HMI (Gander Automated Air Traffic System +) used by Oceanic controllers at Gander and Prestwick (Shanwick). The plugin supports track drawing, full clearance workflows, and a full conflict toolset for Oceanic controllers.
+vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on the VATSIM network. It simulates the GAATS+ HMI (Gander Automated Air Traffic System +) used by Oceanic controllers at Gander and Prestwick (Shanwick). The plugin supports track drawing, full clearance workflows, and a full conflict toolset for Oceanic controllers. In addition, it supports a CPDLC-esque exchange of data via datalink through natTrak.
 
 ### Main Features
 - Custom drawn oceanic tags with detailed mode and status indicators
