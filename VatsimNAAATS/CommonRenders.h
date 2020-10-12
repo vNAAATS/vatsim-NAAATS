@@ -12,8 +12,9 @@ using namespace EuroScopePlugIn;
 class CCommonRenders // Commonly rendered objects, here for ease of access
 {
 	public: 
-		static void RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CButton* obj);
+		static void RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinButton* obj);
 		static void RenderTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CTextInput* obj);
 		static void RenderCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CCheckBox* obj);
+		static void RenderDropDown(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CDropDown* obj);
 };
 

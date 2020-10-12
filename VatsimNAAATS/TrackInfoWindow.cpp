@@ -19,8 +19,8 @@ CTrackInfoWindow::CTrackInfoWindow(POINT topLeft) : CBaseWindow(topLeft) {
 };
 
 void CTrackInfoWindow::MakeWindowItems() {
-	WindowButtons[BTN_REFRESH] = make_pair("Refresh NAT Data", CInputState::INACTIVE);
-	WindowButtons[BTN_CLOSE] = make_pair("Close", CInputState::INACTIVE);
+	WindowButtons[BTN_REFRESH] = CWinButton(BTN_REFRESH, WIN_TCKINFO, "Refresh NAT Data", CInputState::INACTIVE);
+	WindowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_TCKINFO, "Close", CInputState::INACTIVE);
 }
 
 void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -60,9 +60,9 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 
 	/// Draw buttons
 	// Refresh button
-	DrawButton(dc, screen, WindowButtons.at(BTN_REFRESH).first, { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, 6, WindowButtons.at(BTN_REFRESH).second, WIN_TCKINFO, to_string(BTN_REFRESH).c_str());
+	CCommonRenders::RenderButton(dc, screen, { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 140, 30, &WindowButtons.at(BTN_REFRESH));
 	// Close button
-	DrawButton(dc, screen, WindowButtons.at(BTN_CLOSE).first, { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, 6, WindowButtons.at(BTN_CLOSE).second, WIN_TCKINFO, to_string(BTN_CLOSE).c_str());
+	CCommonRenders::RenderButton(dc, screen, { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, &WindowButtons.at(BTN_CLOSE));
 
 	// Draw lines
 	FontSelector::SelectNormalFont(16, dc);
@@ -187,11 +187,11 @@ void CTrackInfoWindow::ButtonUp(int id) {
 		NATDataRefresh = true;
 	}
 	// Finally unpress the button
-	WindowButtons.find(id)->second.second = CInputState::INACTIVE;
+	WindowButtons.find(id)->second.State = CInputState::INACTIVE;
 }
 
 void CTrackInfoWindow::ButtonDown(int id) {
-	WindowButtons.find(id)->second.second = CInputState::ACTIVE;
+	WindowButtons.find(id)->second.State = CInputState::ACTIVE;
 }
 
 void CTrackInfoWindow::ButtonPress(int id) {

@@ -26,6 +26,12 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void ButtonUp(int id);
 		virtual void ButtonPress(int id);
 
+		// Window items (multiple maps for each panel)
+		map<int, CButton> WindowButtons;
+		map<int, CTextInput> TextInputs;
+		map<int, CCheckBox> CheckBoxes;
+		map<int, CDropDown> DropDowns;
+
 		// Fill data
 		void UpdateData(CRadarScreen* screen, CAcFPStatus status);
 		void OnCloseFlightPlanWindow();

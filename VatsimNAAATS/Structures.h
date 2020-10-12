@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "Constants.h"
+#include <map>
 
 // Describes a NAT track
 struct CTrack {
@@ -87,7 +88,7 @@ struct CSepStatus {
 // Describes a window text input
 struct CTextInput {
 	CTextInput() {}; // Default constructor
-	CTextInput(string id, int type, string lbl, string content, int width, CInputState state) {
+	CTextInput(int id, int type, string lbl, string content, int width, CInputState state) {
 		Id = id;
 		Type = type;
 		Label = lbl;
@@ -95,7 +96,7 @@ struct CTextInput {
 		Width = width;
 		State = state;
 	}
-	string Id;
+	int Id;
 	int Type;
 	string Label;
 	string Content;
@@ -106,14 +107,14 @@ struct CTextInput {
 // Describes a window check box
 struct CCheckBox {
 	CCheckBox() {}; // Default constructor
-	CCheckBox(string id, int type, string lbl, bool isChecked, CInputState state) {
+	CCheckBox(int id, int type, string lbl, bool isChecked, CInputState state) {
 		Id = id;
 		Type = type;
 		Label = lbl;
 		IsChecked = isChecked;
 		State = state;
 	}
-	string Id;
+	int Id;
 	int Type;
 	string Label;
 	bool IsChecked;
@@ -121,18 +122,52 @@ struct CCheckBox {
 };
 
 // Describes a button
-struct CButton {
-	CButton() {}; // Default constructor
-	CButton(string id, int type, string lbl, CInputState state) {
+struct CWinButton {
+	CWinButton() {}; // Default constructor
+	CWinButton(int id, int type, string lbl, CInputState state) {
 		Id = id;
 		Type = type;
 		Label = lbl;
 		State = state;
 	}
-	string Id;
+	int Id;
 	int Type;
 	string Label;
 	CInputState State;
+};
+
+// Describes a dropdown item
+struct CDropDownItem {
+	CDropDownItem() {}; // Default constructor
+	CDropDownItem(int id, int type, string lbl, bool hovered, bool checkItem, CInputState state) {
+		Id = id;
+		Type = type;
+		Label = lbl;
+		IsHovered = hovered;
+		IsCheckItem = checkItem;
+		State = state;
+	}
+	int Id;
+	int Type;
+	string Label;
+	bool IsHovered;
+	bool IsCheckItem;
+	CInputState State;
+};
+
+// Describes a dropdown
+struct CDropDown {
+	CDropDown() {}; // Default constructor
+	CDropDown(int id, int type, string value, map<int, CDropDownItem>* items) {
+		Id = id;
+		Type = type;
+		Value = value;
+		Items = *items;
+	}
+	int Id;
+	int Type;
+	string Value;
+	map<int, CDropDownItem> Items;
 };
 
 struct CAcFPStatus {

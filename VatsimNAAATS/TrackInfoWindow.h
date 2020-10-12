@@ -30,6 +30,9 @@ class CTrackInfoWindow : public CBaseWindow
 		// Window messages to display
 		string MsgDataRefresh = "";
 
+		// Panel definitions
+		static const int PANEL_BTNS;
+
 		// Button definitions
 		static const int BTN_CLOSE;
 		static const int BTN_REFRESH;

@@ -72,6 +72,9 @@
     <ClCompile Include="BaseList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CommonRenders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VatsimNAAATS.def">
@@ -155,6 +158,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BaseList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonRenders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

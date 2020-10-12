@@ -195,6 +195,7 @@
     <ClCompile Include="AcTargets.cpp" />
     <ClCompile Include="BaseList.cpp" />
     <ClCompile Include="BaseWindow.cpp" />
+    <ClCompile Include="CommonRenders.cpp" />
     <ClCompile Include="MessageWindow.cpp" />
     <ClCompile Include="ConflictDetection.cpp" />
     <ClCompile Include="FlightPlanWindow.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="AcTargets.h" />
     <ClInclude Include="BaseList.h" />
     <ClInclude Include="BaseWindow.h" />
+    <ClInclude Include="CommonRenders.h" />
     <ClInclude Include="ConflictDetection.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="FlightPlanWindow.h" />
