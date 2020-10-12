@@ -40,19 +40,19 @@ CMenuBar::CMenuBar() {
 	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map);
 	map.clear();
 	// TODO: Get tracks
-	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map);
+	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_AREASEL, MENBAR, "None", &map);
 	map.clear();
 	map.insert(make_pair("ALL_TCKS", false));
 	map.insert(make_pair("TCKS_EAST", false));
 	map.insert(make_pair("TCKS_WEST", false));
 	map.insert(make_pair("TCKS_SEL", false));
 	map.insert(make_pair("TCKS_ACTV", false));
-	dropDowns[DRP_OVERLAYS] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map);
+	dropDowns[DRP_OVERLAYS] = CDropDown(DRP_AREASEL, MENBAR, "ALL_TCKS", &map);
 	map.clear();
 	map.insert(make_pair("Delivery", false));
 	map.insert(make_pair("OCA Enroute", false));
 	map.insert(make_pair("Multi-role", false));
-	dropDowns[DRP_TYPESEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map);
+	dropDowns[DRP_TYPESEL] = CDropDown(DRP_AREASEL, MENBAR, "Multi-role", &map);
 }
 
 CMenuBar::~CMenuBar() {
