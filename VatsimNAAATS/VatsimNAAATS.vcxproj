@@ -201,7 +201,6 @@
     <ClCompile Include="ConflictDetection.cpp" />
     <ClCompile Include="FlightPlanWindow.cpp" />
     <ClCompile Include="InboundList.cpp" />
-    <ClCompile Include="MenuBarOld.cpp" />
     <ClCompile Include="NAAATS.cpp" />
     <ClCompile Include="OtherList.cpp" />
     <ClCompile Include="Overlays.cpp" />
@@ -229,7 +228,6 @@
     <ClInclude Include="FlightPlanWindow.h" />
     <ClInclude Include="InboundList.h" />
     <ClInclude Include="MenuBar.h" />
-    <ClInclude Include="MenuBarOld.h" />
     <ClInclude Include="MessageWindow.h" />
     <ClInclude Include="NAAATS.h" />
     <ClInclude Include="framework.h" />

@@ -158,7 +158,6 @@ const int STCA_TIME = 480; // 8 minutes
 const int SCREEN_TAG = 1;
 const int MENBAR = 2;
 const int WINDOW = 3;
-const int MENBAR = 4;
 
 // Window object handles (for buttons, etc)
 const int WIN_TCKINFO = 101;
@@ -176,7 +175,6 @@ const int LIST_INBOUND = 300;
 const int LIST_OTHERS = 301;
 
 // Dropdown
-const int DROPDOWN = 800;
 const int DRP_AREA_EGGX = 801;
 const int DRP_AREA_CZQX = 802;
 const int DRP_AREA_BDBX = 803;

@@ -124,16 +124,18 @@ struct CCheckBox {
 // Describes a button
 struct CWinButton {
 	CWinButton() {}; // Default constructor
-	CWinButton(int id, int type, string lbl, CInputState state, int width = -1) {
+	CWinButton(int id, int type, string lbl, CInputState state, int width = -1, int cycle = 0) {
 		Id = id;
 		Type = type;
 		Width = width;
 		Label = lbl;
 		State = state;
+		Cycle = cycle;
 	}
 	int Id;
 	int Type;
 	int Width;
+	int Cycle;
 	string Label;
 	CInputState State;
 };
@@ -160,20 +162,22 @@ struct CDropDownItem {
 // Describes a dropdown
 struct CDropDown {
 	CDropDown() {}; // Default constructor
-	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems) {
+	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems, CInputState state) {
 		Id = id;
 		Type = type;
 		Value = value;
-		int counter = 0;
+		int counter = 800;
 		for (auto kv : *dropDownItems) {
-			Items.insert(make_pair(counter, CDropDownItem(counter, id, kv.first, false, kv.second, CInputState::INACTIVE)));
+			Items.insert(make_pair(counter, CDropDownItem(counter, type, kv.first, false, kv.second, CInputState::INACTIVE)));
 			counter++;
 		}
+		State = state;
 	}
 	int Id;
 	int Type;
 	string Value;
 	map<int, CDropDownItem> Items;
+	CInputState State;
 };
 
 struct CAcFPStatus {

@@ -15,6 +15,6 @@ class CCommonRenders // Commonly rendered objects, here for ease of access
 		static void RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinButton* obj);
 		static void RenderTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CTextInput* obj);
 		static void RenderCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CCheckBox* obj);
-		static void RenderDropDown(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CDropDown* obj);
+		static void RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, int width, int height, CDropDown* obj);
 };
 

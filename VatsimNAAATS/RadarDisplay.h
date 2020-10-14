@@ -5,6 +5,7 @@
 #include "InboundList.h"
 #include "Structures.h"
 #include "OtherList.h"
+#include "MenuBar.h"
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
 #include "FlightPlanWindow.h"
@@ -47,9 +48,6 @@ class CRadarDisplay : public CRadarScreen
 		POINT mousePointer;
 		clock_t fiveSecondTimer;
 		clock_t tenSecondTimer;
-		map<int, string> menuButtons;
-		map<int, bool> buttonsPressed;
-		map<int, int> toggleButtons;
 		bool aselDetailed;	
 		map<string, int> aircraftOnScreen;
 		map<int, string> menuFields;
@@ -57,6 +55,7 @@ class CRadarDisplay : public CRadarScreen
 		map<string, pair<bool, POINT>> tagStatuses;
 		string aircraftSel1 = ""; // For use in conflict tools
 		string aircraftSel2 = ""; // "
+		CMenuBar* menuBar;
 		CInboundList* inboundList;
 		COtherList* otherList;
 		CTrackInfoWindow* trackWindow = nullptr;
