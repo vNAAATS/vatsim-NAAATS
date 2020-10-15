@@ -5,6 +5,7 @@
 #include "Styles.h"
 #include "Utils.h"
 #include "CommonRenders.h"
+#include "Overlays.h"
 
 using namespace Colours;
 
@@ -16,7 +17,7 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_TCKINFO] = CWinButton(BTN_TCKINFO, MENBAR, "Track Info", CInputState::INACTIVE, 78);
 	buttons[BTN_MISC] = CWinButton(BTN_MISC, MENBAR, "Misc", CInputState::DISABLED, 41);
 	buttons[BTN_MESSAGE] = CWinButton(BTN_MESSAGE, MENBAR, "Message", CInputState::INACTIVE, 73);
-	buttons[BTN_TAGS] = CWinButton(BTN_TAGS, MENBAR, "Tags", CInputState::INACTIVE, 46);
+	buttons[BTN_TAGS] = CWinButton(BTN_TAGS, MENBAR, "Tags", CInputState::ACTIVE, 46);
 	buttons[BTN_FLIGHTPLAN] = CWinButton(BTN_FLIGHTPLAN, MENBAR, "Flight Plan", CInputState::INACTIVE, 78);
 	buttons[BTN_DETAILED] = CWinButton(BTN_DETAILED, MENBAR, "Detailed", CInputState::INACTIVE, 73);
 	buttons[BTN_AREASEL] = CWinButton(BTN_AREASEL, MENBAR, "Area Sel", CInputState::INACTIVE, 83);
@@ -84,6 +85,11 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 	}
 	
 	/// ITEM RENDERING
+	// Render zulu time
+	FontSelector::SelectNormalFont(30, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, CUtils::ParseZuluTime(true).c_str());
+
 	// Font selection
 	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
@@ -99,7 +105,7 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 	strDate += "-";
 	strDate += to_string(1900 + date->tm_year);
 	
-	// Render time
+	// Render date
 	dc->TextOutA(radarArea.left + 64, radarArea.top + 12.5, strDate.c_str());
 
 	// Buttons
@@ -126,11 +132,9 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 				break;
 			case BTN_OVERLAYS:
 				offsetX += 164;
-				text = "Map";
 				break;
 			case BTN_TYPESEL:
 				offsetX = offsetX = RECT1_WIDTH + RECT2_WIDTH + 85;
-				text = "Pos Type";
 				break;
 			case BTN_ALTFILT:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + 10;
@@ -156,6 +160,23 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 		// Button rendering
 		CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, kv.second.Width, 30, &kv.second);
 
+		// Text alignment
+		dc->SetTextAlign(TA_LEFT);
+
+		// Text rendering
+		if (kv.first == BTN_DETAILED) {
+			text = "ASEL: " + (asel == "" ? "None" : asel);
+			dc->TextOutA(offsetX + kv.second.Width + 4, offsetY + 7, text.c_str());
+		}
+		else if (kv.first == BTN_OVERLAYS) {
+			text = "Map";
+			dc->TextOutA(offsetX - (kv.second.Width / 2) - 2, offsetY + 7, text.c_str());
+		}
+		else if (kv.first == BTN_TYPESEL) {
+			text = "Pos Type";
+			dc->TextOutA(offsetX - kv.second.Width - 2, offsetY + 7, text.c_str());
+		}
+
 		// If offsetting between buttons
 		if (offsetIsItemSize) {
 			offsetX += kv.second.Width + 1;
@@ -167,7 +188,7 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 
 	// Misc items
 	offsetX = RECT1_WIDTH + 10;
-	offsetY += 6;
+	offsetY += 8;
 	for (auto kv : dropDowns) {
 		// Offsets
 		bool offsetIsItemSize = true;
@@ -190,6 +211,29 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 			offsetX += kv.second.Width + 1;
 		}
 	}
+
+	// Altitude filter (we only need this once so we draw it directly here)
+	CRect altFilt(RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + 10, 61, RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + 10 + 86, 91);
+	dc->FillSolidRect(altFilt, ButtonPressed.ToCOLORREF());
+	// Button bevel
+	dc->Draw3dRect(altFilt, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(altFilt, -1, -1);
+	dc->Draw3dRect(altFilt, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	/// Add screen objects for text
+	// Low
+	CSize rectSize = dc->GetTextExtent("000");
+	CRect lowRect(altFilt.left + 14, altFilt.top + 6, altFilt.left + 16 + rectSize.cx, altFilt.top + 6 + rectSize.cy);
+	screen->AddScreenObject(ALTFILT_TEXT, "ALTFILT_LOW", lowRect, false, "");
+	// High
+	CRect highRect(altFilt.right - 16 - rectSize.cx, altFilt.top + 6, altFilt.right - 14, altFilt.top + 6 + rectSize.cy);
+	screen->AddScreenObject(ALTFILT_TEXT, "ALTFILT_HIGH", highRect, false, "");
+	
+	// Text out
+	string lowAlt = CUtils::PadWithZeros(3, CUtils::AltFiltLow);
+	string highAlt = CUtils::PadWithZeros(3, CUtils::AltFiltHigh);
+	dc->SetTextAlign(TA_CENTER);
+	dc->TextOutA(altFilt.left + (altFilt.Width() / 2), altFilt.top + 7, (lowAlt + "-" + highAlt).c_str());
 
 	// Clean up
 	DeleteObject(&brush);
@@ -262,6 +306,11 @@ void CMenuBar::OnOverDropDownItem(int id) {
 	ActiveDropDownHover = id;
 }
 
+void CMenuBar::SetDropDownValue(int id, int value) {
+	// Set the value
+	dropDowns[id].Value = dropDowns[id].Items[value].Label;
+}
+
 void CMenuBar::ButtonDown(int id, int button) {
 
 }
@@ -270,10 +319,57 @@ void CMenuBar::ButtonUp(int id, int button) {
 
 }
 
-void CMenuBar::ButtonPress(int id, int button) {
+void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 	if (button == EuroScopePlugIn::BUTTON_LEFT) {
-		// Finally, press the button
-		SetButtonState(id, CInputState::ACTIVE);
+		// Check if dropdown
+		if (id >= 800) {
+			// Set value
+			dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
+			// Close drop down
+			dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+			ActiveDropDownHover = 0;
+			dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+
+			// Save values
+			if (ActiveDropDown == DRP_AREASEL) {
+				CUtils::AreaSelection = id;
+			} else if (ActiveDropDown == DRP_OVERLAYS) {
+				CUtils::SelectedOverlay = id;
+
+				switch (id) {
+					case 800: // ALL_TCKS
+						COverlays::CurrentType = COverlayType::TCKS_ALL;
+						break;
+					case 801: // TCKS_ACTV
+						//COverlays::CurrentType = COverlayType::TCKS_ACTV;
+						break;
+					case 802: // TCKS_EAST
+						COverlays::CurrentType = COverlayType::TCKS_EAST;
+						break;
+					case 803: // TCKS_SEL
+						//COverlays::CurrentType = COverlayType::TCKS_SEL;
+						break;
+					case 804: // TCKS_WEST
+						COverlays::CurrentType = COverlayType::TCKS_WEST;
+						break;
+				}
+			}
+			else if (ActiveDropDown == DRP_TYPESEL) {
+				CUtils::PosType = id;
+			}
+
+			// Reset drop down
+			ActiveDropDown = 0;
+		}
+		else {
+			// Press the button
+			SetButtonState(id, CInputState::ACTIVE);
+
+			// Grid
+			if (id == BTN_GRID) {
+				COverlays::ShowHideGridReference(screen, true);
+			}
+		}
 	}
 	else if (button == EuroScopePlugIn::BUTTON_RIGHT) {
 		if (id == BTN_HALO) {
@@ -370,7 +466,12 @@ void CMenuBar::ButtonPress(int id, int button) {
 	}
 }
 
-void CMenuBar::ButtonUnpress(int id, int button) {
+void CMenuBar::ButtonUnpress(int id, int button, CRadarScreen* screen) {
 	// Finally, unpress the button
 	SetButtonState(id, CInputState::INACTIVE);
+
+	// Grid
+	if (id == BTN_GRID) {
+		COverlays::ShowHideGridReference(screen, false);
+	}
 }

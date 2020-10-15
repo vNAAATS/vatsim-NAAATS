@@ -22,10 +22,11 @@ class CMenuBar
 		map<int, CWinButton> GetToggleButtons();
 		void SetButtonState(int id, CInputState state);
 		void OnOverDropDownItem(int id);
+		void SetDropDownValue(int id, int value);
 		void ButtonDown(int id, int button);
 		void ButtonUp(int id, int button);
-		void ButtonPress(int id, int button);
-		void ButtonUnpress(int id, int button);
+		void ButtonPress(int id, int button, CRadarScreen* screen);
+		void ButtonUnpress(int id, int button, CRadarScreen* screen);
 		int ActiveDropDown;
 		int ActiveDropDownHover;
 

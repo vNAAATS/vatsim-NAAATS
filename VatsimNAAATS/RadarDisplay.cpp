@@ -46,10 +46,9 @@ void CRadarDisplay::PopulateProgramData() {
 	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
 	// Dropdown values
-	/*CMenuBar::dropDownSelections.find(MENDRP_AREASEL)->second = CMenuBar::ParseDropDownId(CUtils::AreaSelection, MENDRP_AREASEL);
-	CMenuBar::dropDownSelections.find(MENDRP_TCKCTRL)->second = string("None");
-	CMenuBar::dropDownSelections.find(MENDRP_OVERLAYS)->second = CMenuBar::ParseDropDownId(CUtils::SelectedOverlay, MENDRP_OVERLAYS);
-	CMenuBar::dropDownSelections.find(MENDRP_TYPESEL)->second = CMenuBar::ParseDropDownId(CUtils::PosType, MENDRP_TYPESEL);*/
+	menuBar->SetDropDownValue(CMenuBar::DRP_AREASEL, CUtils::AreaSelection);
+	menuBar->SetDropDownValue(CMenuBar::DRP_OVERLAYS, CUtils::SelectedOverlay);
+	menuBar->SetDropDownValue(CMenuBar::DRP_TYPESEL, CUtils::PosType);
 
 	// Buttons
 	if (CUtils::TagsEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_TAGS)) {
@@ -502,10 +501,10 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	// If menu button
 	if (ObjectType == MENBAR) {
 		if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
-			menuBar->ButtonPress(atoi(sObjectId), Button);
+			menuBar->ButtonPress(atoi(sObjectId), Button, this);
 		}
 		else {
-			menuBar->ButtonUnpress(atoi(sObjectId), Button);
+			menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
 		}
 	}
 
@@ -607,7 +606,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// If a menu text entry
-		/*if (ObjectType == TXT_ENTRY) {
+		if (ObjectType == ALTFILT_TEXT) {
 			// If the low altitude filter
 			if (string(sObjectId) == "ALTFILT_LOW") {
 				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_LOW, "");
@@ -616,7 +615,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			if (string(sObjectId) == "ALTFILT_HIGH") {
 				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_HIGH, "");
 			}
-		}*/
+		}
 
 		// If a flight plan window text entry
 		if (ObjectType == WIN_FLTPLN) {

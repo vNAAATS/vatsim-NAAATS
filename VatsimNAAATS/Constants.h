@@ -166,7 +166,7 @@ const int WIN_SCROLLBAR = 103;
 const int WIN_MSG = 104;
 
 // Text inputs and functions
-const int TXT_ENTRY = 200;
+const int ALTFILT_TEXT = 200;
 const int FUNC_ALTFILT_LOW = 201;
 const int FUNC_ALTFILT_HIGH = 202;
 
