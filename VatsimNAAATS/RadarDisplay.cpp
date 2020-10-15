@@ -538,6 +538,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		}
 
+		// Flight plan button
+		if (atoi(sObjectId) == CMenuBar::BTN_FLIGHTPLAN) {
+			fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+		}
+
 		// Qck Look button
 		if (atoi(sObjectId) == CMenuBar::BTN_QCKLOOK) {
 			aselDetailed = false;
@@ -666,11 +671,19 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 {
 	// Track info window
 	if (ObjectType == WIN_TCKINFO) {
+		if (atoi(sObjectId) == CTrackInfoWindow::BTN_CLOSE) {
+			// Close window if the close button
+			menuBar->SetButtonState(CMenuBar::BTN_TCKINFO, CInputState::INACTIVE);
+		}
 		trackWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
+		if (atoi(sObjectId) == CFlightPlanWindow::BTN_CLOSE) {
+			// Close window if the close button
+			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
+		}
 		fltPlnWindow->ButtonUp(atoi(sObjectId));
 	}
 
