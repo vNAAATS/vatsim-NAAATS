@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "Constants.h"
+#include <map>
 
 // Describes a NAT track
 struct CTrack {
@@ -23,9 +24,9 @@ struct CRoutePosition {
 	int FlightLevel;
 };
 
-// Aircraft displayed on list (inbound at the moment)
-struct CListAircraft {
-	CListAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
+// Describes an inbound aircraft
+struct CInboundAircraft {
+	CInboundAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
 		Callsign = cs;
 		FinalAltitude = fA;
 		ClearedLevel = cL;
@@ -43,7 +44,7 @@ struct CListAircraft {
 	bool Direction;
 };
 
-// General aircraft status
+// Describes a aircraft status
 struct CAircraftStatus {
 	CAircraftStatus() {}; // Default constructor
 	CAircraftStatus(string cs, int alt, int gs, int hdg, CPosition pos) {
@@ -85,14 +86,18 @@ struct CSepStatus {
 };
 
 // Describes a window text input
-struct CWinTextInput {
-	CWinTextInput() {}; // Default constructor
-	CWinTextInput(string lbl, string content, int width, CInputState state) {
+struct CTextInput {
+	CTextInput() {}; // Default constructor
+	CTextInput(int id, int type, string lbl, string content, int width, CInputState state) {
+		Id = id;
+		Type = type;
 		Label = lbl;
 		Content = content;
 		Width = width;
 		State = state;
 	}
+	int Id;
+	int Type;
 	string Label;
 	string Content;
 	int Width;
@@ -100,10 +105,82 @@ struct CWinTextInput {
 };
 
 // Describes a window check box
-struct CWinCheckBox {
+struct CCheckBox {
+	CCheckBox() {}; // Default constructor
+	CCheckBox(int id, int type, string lbl, bool isChecked, CInputState state) {
+		Id = id;
+		Type = type;
+		Label = lbl;
+		IsChecked = isChecked;
+		State = state;
+	}
+	int Id;
+	int Type;
 	string Label;
 	bool IsChecked;
 	CInputState State;
+};
+
+// Describes a button
+struct CWinButton {
+	CWinButton() {}; // Default constructor
+	CWinButton(int id, int type, string lbl, CInputState state, int width = -1, int cycle = 0) {
+		Id = id;
+		Type = type;
+		Width = width;
+		Label = lbl;
+		State = state;
+		Cycle = cycle;
+	}
+	int Id;
+	int Type;
+	int Width;
+	int Cycle;
+	string Label;
+	CInputState State;
+};
+
+// Describes a dropdown item
+struct CDropDownItem {
+	CDropDownItem() {}; // Default constructor
+	CDropDownItem(int id, int type, string lbl, bool hovered, bool checkItem, CInputState state) {
+		Id = id;
+		Type = type;
+		Label = lbl;
+		IsHovered = hovered;
+		IsCheckItem = checkItem;
+		State = state;
+	}
+	int Id;
+	int Type;
+	string Label;
+	bool IsHovered;
+	bool IsCheckItem;
+	CInputState State;
+	int Width;
+};
+
+// Describes a dropdown
+struct CDropDown {
+	CDropDown() {}; // Default constructor
+	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems, CInputState state, int width = -1) {
+		Id = id;
+		Type = type;
+		Value = value;
+		int counter = 800;
+		for (auto kv : *dropDownItems) {
+			Items.insert(make_pair(counter, CDropDownItem(counter, type, kv.first, false, kv.second, CInputState::INACTIVE)));
+			counter++;
+		}
+		State = state;
+		Width = width;
+	}
+	int Id;
+	int Type;
+	string Value;
+	map<int, CDropDownItem> Items;
+	CInputState State;
+	int Width;
 };
 
 struct CAcFPStatus {

@@ -3,12 +3,13 @@
 #include "Utils.h"
 #include "PathRenderer.h"
 #include "ConflictDetection.h"
+#include "MenuBar.h"
 
 using namespace Colours;
 
 clock_t CAcTargets::twoSecondTimer = clock();
 
-void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, int>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
+void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
 
@@ -121,7 +122,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Check if leader lines are selected
 	if (ptl) {
 		// Get ptl value
-		int val = toggleData->at(MENBTN_PTL);
+		int val = toggleData->at(CMenuBar::BTN_PTL).Cycle;
 
 		// Leader minutes
 		int min = 0;
@@ -165,7 +166,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Draw halos
 	if (halo) {
 		// Get ptl value
-		int val = toggleData->at(MENBTN_HALO);
+		int val = toggleData->at(CMenuBar::BTN_HALO).Cycle;
 
 		// Leader minutes
 		int min = 0;

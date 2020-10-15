@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "RadarDisplay.h"
 #include "AcTargets.h"
-#include "MenuBar.h"
 #include "InboundList.h"
 #include "Constants.h"
 #include "PathRenderer.h"
@@ -20,13 +19,13 @@ using namespace EuroScopePlugIn;
 
 CRadarDisplay::CRadarDisplay() 
 {
-	ShowHideGridReference(this, false);
+	COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
-	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 });
-	menuButtons = CMenuBar::BuildButtonData();
-	toggleButtons = CMenuBar::BuildToggleButtonData();
+	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 }); // TODO: settings save
+	msgWindow = new CMessageWindow({ 500, 500 }); // TODO: settings save
+	menuBar = new CMenuBar();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
@@ -36,31 +35,33 @@ CRadarDisplay::~CRadarDisplay()
 {
 	delete inboundList;
 	delete otherList;
+	delete trackWindow;
+	delete fltPlnWindow;
+	delete msgWindow;
 }
 
 void CRadarDisplay::PopulateProgramData() {
 	// Lists
-	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY }, true);
+	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY });
 	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
 	// Dropdown values
-	CMenuBar::dropDownSelections.find(MENDRP_AREASEL)->second = CMenuBar::ParseDropDownId(CUtils::AreaSelection, MENDRP_AREASEL);
-	CMenuBar::dropDownSelections.find(MENDRP_TCKCTRL)->second = string("None");
-	CMenuBar::dropDownSelections.find(MENDRP_OVERLAYS)->second = CMenuBar::ParseDropDownId(CUtils::SelectedOverlay, MENDRP_OVERLAYS);
-	CMenuBar::dropDownSelections.find(MENDRP_TYPESEL)->second = CMenuBar::ParseDropDownId(CUtils::PosType, MENDRP_TYPESEL);
+	menuBar->SetDropDownValue(CMenuBar::DRP_AREASEL, CUtils::AreaSelection);
+	menuBar->SetDropDownValue(CMenuBar::DRP_OVERLAYS, CUtils::SelectedOverlay);
+	menuBar->SetDropDownValue(CMenuBar::DRP_TYPESEL, CUtils::PosType);
 
 	// Buttons
-	if (CUtils::TagsEnabled && buttonsPressed.find(MENBTN_TAGS) == buttonsPressed.end()) {
-		buttonsPressed[MENBTN_TAGS] = true;
+	if (CUtils::TagsEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_TAGS)) {
+		menuBar->SetButtonState(CMenuBar::BTN_TAGS, CInputState::ACTIVE);
 	}
-	if (CUtils::GridEnabled && buttonsPressed.find(MENBTN_GRID) == buttonsPressed.end()) {
-		buttonsPressed[MENBTN_GRID] = true;
+	if (CUtils::GridEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_GRID)) {
+		menuBar->SetButtonState(CMenuBar::BTN_GRID, CInputState::ACTIVE);
 	}
-	if (CUtils::OverlayEnabled && buttonsPressed.find(MENBTN_OVERLAYS) == buttonsPressed.end()) {
-		buttonsPressed[MENBTN_OVERLAYS] = true;
+	if (CUtils::OverlayEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
+		menuBar->SetButtonState(CMenuBar::BTN_OVERLAYS, CInputState::ACTIVE);
 	}
-	if (CUtils::QckLookEnabled && buttonsPressed.find(MENBTN_QCKLOOK) == buttonsPressed.end()) {
-		buttonsPressed[MENBTN_QCKLOOK] = true;
+	if (CUtils::QckLookEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK)) {
+		menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::ACTIVE);
 	}
 
 	// Parse track ID
@@ -84,66 +85,6 @@ void CRadarDisplay::PopulateProgramData() {
 	FontSelector::InitialiseFonts();
 }
 
-// Show and hide the grid reference and waypoints
-void CRadarDisplay::ShowHideGridReference(CRadarScreen* screen, bool show) {
-	if (show) {
-		screen->GetPlugIn()->SelectScreenSectorfile(screen);
-		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
-		string gridName = string(grid.GetName());
-		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
-			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
-			gridName = string(grid.GetName());
-		}
-
-		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
-		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
-			
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-			
-		}
-
-		string componentName;
-		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos || freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
-			componentName = freetext.GetComponentName(0);
-			screen->ShowSectorFileElement(freetext, componentName.c_str(), true);
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-		}
-
-		screen->ShowSectorFileElement(grid, "", true);
-	}
-	else {
-		screen->GetPlugIn()->SelectScreenSectorfile(screen);
-		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
-		string gridName = string(grid.GetName());
-		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
-			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
-			gridName = string(grid.GetName());
-		}
-
-		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
-		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-		}
-
-		string componentName;
-		while (freetextName.find("CZQO Grid Reference Numbers.") != string::npos || freetextName.find("EGGX Grid Reference Numbers.") != string::npos) {
-			componentName = freetext.GetComponentName(0);
-			screen->ShowSectorFileElement(freetext, componentName.c_str(), false);
-			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
-			freetextName = string(freetext.GetName());
-		}
-
-		screen->ShowSectorFileElement(grid, "", false);
-	}
-
-	RefreshMapContent();
-}
-
 // On radar screen refresh (occurs about once a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
@@ -160,11 +101,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	double tenSecT = (double)(clock() - tenSecondTimer) / ((double)CLOCKS_PER_SEC);
 
 	// Clear lists if not empty and time is greater than 1 second
-	if (fiveSecT >= 5 && !inboundAircraft.empty()) {
-		inboundAircraft.clear();
+	if (fiveSecT >= 5 && !inboundList->AircraftList.empty()) {
+		inboundList->AircraftList.clear();
 	}
-	if (fiveSecT >= 5 && !otherAircraft.empty()) {
-		otherAircraft.clear();
+	if (fiveSecT >= 5 && !otherList->AircraftList.empty()) {
+		otherList->AircraftList.clear();
 	}
 
 	// Reset currently on screen list
@@ -176,34 +117,19 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			CRadarTarget target = GetPlugIn()->RadarTargetSelect(idx->first.c_str());
 			if (!target.IsValid()) { // If not valid
 				// Erase aircraft selections if they are an asel
-				if (idx->first == aircraftSel1) { // We need to annul the selection and disable tool if activated
+				if (idx->first == aircraftSel1 || idx->first == aircraftSel2) { // We need to annul the selection and disable tool if activated
 					aircraftSel1 = "";
-					// Erase RBL (if active)
-					if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-						buttonsPressed.erase(MENBTN_RBL);
+					// Reset RBL (if active)
+					if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
+						menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::INACTIVE);
 					}
-					// Erase SEP (if active)
-					if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-						buttonsPressed.erase(MENBTN_SEP);
+					// Reset SEP (if active)
+					if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+						menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 					}
-					// Erase PIV (if active)
-					if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-						buttonsPressed.erase(MENBTN_PIV);
-					}
-				}
-				else if (idx->first == aircraftSel2) { // We need to annul the selection and disable tool if activated
-					aircraftSel2 = "";
-					// Erase RBL (if active)
-					if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-						buttonsPressed.erase(MENBTN_RBL);
-					}
-					// Erase SEP (if active)
-					if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-						buttonsPressed.erase(MENBTN_SEP);
-					}
-					// Erase PIV (if active)
-					if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-						buttonsPressed.erase(MENBTN_PIV);
+					// Reset PIV (if active)
+					if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+						menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 					}
 				}
 				if (idx->first == asel) {
@@ -219,7 +145,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	}
 
 	// Redo the PIV calculations every 5 seconds
-	if (fiveSecT >= 5 && buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+	if (fiveSecT >= 5 && menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
 		CConflictDetection::PIVLocations1.clear();
 		CConflictDetection::PIVLocations2.clear();
 		CConflictDetection::PIVSeparationStatuses.clear();
@@ -228,7 +154,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	
 	// Check if the altitude filter is on
 	bool altFiltEnabled = false;
-	if (buttonsPressed.find(MENBTN_ALTFILT) != buttonsPressed.end()) altFiltEnabled = true;
+	if (menuBar->IsButtonPressed(CMenuBar::BTN_ALTFILT)) altFiltEnabled = true;
 
 	// Get the radar area
 	CRect RadarArea(GetRadarArea());
@@ -237,7 +163,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
 		// Draw overlays if enabled
-		if (buttonsPressed.find(MENBTN_OVERLAYS) != buttonsPressed.end()) {
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
 			COverlays::ShowCurrentOverlay(&dc, &g, this);
 		}
 
@@ -287,7 +213,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (fiveSecT >= 5) {
 					// If going westbound
 					if (!direction && entryMinutes > 0) {
-						if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "CZQX") {
+						if (menuBar->GetDropDownValue(CMenuBar::DRP_AREASEL) == "CZQX") {
 							int i;
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
 								// Find out if 30 west is in their flight plan
@@ -295,7 +221,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 									// Test flight time
 									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
 										// Add if within
-										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(), 
+										inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 												rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
 										break;
 									}
@@ -303,7 +229,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 						else {
@@ -312,19 +238,19 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 								// They are coming from land so check entry points
 								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
-									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
 									break;
 								}
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 					}
 					else if (direction && entryMinutes > 0) {
-						if (CMenuBar::dropDownSelections[MENDRP_AREASEL] == "EGGX") {
+						if (menuBar->GetDropDownValue(CMenuBar::DRP_AREASEL) == "EGGX") {
 							int i;
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
 								// Find out if 30 west is in their flight plan
@@ -332,7 +258,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 									// Test flight time
 									if (rte.GetPointDistanceInMinutes(i) > 0 && rte.GetPointDistanceInMinutes(i) < 60) {
 										// Add if within
-										inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+										inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 											rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
 										break;
 									}
@@ -340,7 +266,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 						else {
@@ -349,14 +275,14 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
 								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
-									inboundAircraft.push_back(CListAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
+									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
 									break;
 								}
 							}
 							if (i == rte.GetPointsNumber()) {
 								// Add to 'others' list
-								otherAircraft.push_back(ac.GetCallsign());
+								otherList->AircraftList.push_back(ac.GetCallsign());
 							}
 						}
 					}
@@ -366,34 +292,34 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				bool detailedEnabled = false;
 
 				// Now we check if all the tags are selected as detailed				
-				if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end()) {
+				if (menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK)) {
 					detailedEnabled = true; // Set detailed on
 
 					// Unpress detailed if not already
-					if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end() && !aselDetailed) {
-						buttonsPressed.erase(MENBTN_DETAILED);
+					if (menuBar->IsButtonPressed(CMenuBar::BTN_DETAILED) && !aselDetailed) {
+						menuBar->SetButtonState(CMenuBar::BTN_DETAILED, CInputState::INACTIVE);
 					}
 				}
 
 				// Check if only one is set to detailed
-				if (buttonsPressed.find(MENBTN_DETAILED) != buttonsPressed.end()) {
+				if (menuBar->IsButtonPressed(CMenuBar::BTN_DETAILED)) {
 					if (fp.GetCallsign() == asel) {
 						detailedEnabled = true; // Set detailed on
 					}
 
 					// Unpress quick look if not already
-					if (buttonsPressed.find(MENBTN_QCKLOOK) != buttonsPressed.end() && aselDetailed) {
-						buttonsPressed.erase(MENBTN_QCKLOOK);
+					if (menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) && aselDetailed) {
+						menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::INACTIVE);
 					}
 				}
 
 				bool ptl = false;
 				bool halo = false;
 				// Set PTL and HALO if they are on
-				if (buttonsPressed.find(MENBTN_PTL) != buttonsPressed.end()) {
+				if (menuBar->IsButtonPressed(CMenuBar::BTN_PTL)) {
 					ptl = true;
 				}
-				if (buttonsPressed.find(MENBTN_HALO) != buttonsPressed.end()) {
+				if (menuBar->IsButtonPressed(CMenuBar::BTN_HALO)) {
 					halo = true;
 				}
 
@@ -408,17 +334,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 
 				// Draw the tag and target with the information if tags are turned on and within altitude filter
-				if (buttonsPressed.find(MENBTN_TAGS) != buttonsPressed.end()) {
+				if (menuBar->IsButtonPressed(CMenuBar::BTN_TAGS)) {
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &toggleButtons, halo, ptl, &stcaStatus);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
 					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
 					
 				}
 				else {
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &toggleButtons, halo, ptl, &stcaStatus);
+					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
 				}
 			}
 			else { // If not there, and the aircraft was on the screen, then delete
@@ -431,34 +357,25 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 
 		// Clear ASELs if none of the range/separation tools are pressed
-		if (buttonsPressed.find(MENBTN_PIV) == buttonsPressed.end()
-			&& buttonsPressed.find(MENBTN_RBL) == buttonsPressed.end()
-			&& buttonsPressed.find(MENBTN_SEP) == buttonsPressed.end()) {
+		if (!menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
+			&& !menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
+			&& !menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 			// Reset ASELs if none enabled
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
 
-		// Draw menu bar and reset dropdown click
-		CMenuBar::DrawMenuBar(&dc, &g, this, { RadarArea.left, RadarArea.top }, &menuButtons, &buttonsPressed, &toggleButtons);
-		CMenuBar::dropDownClicked = -1;
+
+		/// RENDERING
+		// Draw menu bar
+		menuBar->RenderBar(&dc, &g, this, asel);
 
 		// Check the lists are not empty first, then draw
-		inboundList->DrawList(&g, &dc, this, &inboundAircraft);
-		otherList->DrawList(&g, &dc, this, &otherAircraft);
-
-		// Draw track info window if button pressed
-		if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
-			trackWindow->RenderWindow(&dc, &g, this);
-		}
-
-		// Draw flight plan window if button pressed
-		if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
-			fltPlnWindow->RenderWindow(&dc, &g, this);
-		}
+		inboundList->RenderList(&g, &dc, this);
+		otherList->RenderList(&g, &dc, this);
 
 		// SEP draw
-		if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				CConflictDetection::SepTool(&dc, &g, this, aircraftSel1, aircraftSel2);
@@ -466,19 +383,34 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// RBL draw
-		if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				CConflictDetection::RBLTool(&dc, &g, this, aircraftSel1, aircraftSel2);
 			}
 		}
 
 		// PIV draw
-		if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				// Render
 				CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
 			}
+		}
+
+		// Draw track info window if button pressed
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_TCKINFO)) {
+			trackWindow->RenderWindow(&dc, &g, this);
+		}
+
+		// Draw message window if button pressed
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_MESSAGE)) {
+			msgWindow->RenderWindow(&dc, &g, this);
+		}
+
+		// Draw flight plan window if button pressed
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
+			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
 
 		// Finally, reset the clocks if time has been exceeded
@@ -505,7 +437,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	mousePointer = Pt;
 	// Move inbound list
 	if (ObjectType == LIST_INBOUND) {
-		inboundList->MoveList(Area, Released);
+		inboundList->MoveList(Area);
 
 		// To save
 		CUtils::InboundX = Area.left;
@@ -535,6 +467,9 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		if (string(sObjectId) == "FLTPLN")
 			fltPlnWindow->MoveWindow(Area);
 
+		if (string(sObjectId) == "MSG")
+			msgWindow->MoveWindow(Area);
+
 		CUtils::TrackWindowX = Area.left;
 		CUtils::TrackWindowY = Area.top;
 	}
@@ -551,8 +486,10 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
 {
 	// Dropdown
-	if (ObjectType == DROPDOWN) {
-		CMenuBar::dropDownHover = atoi(sObjectId);
+	if (ObjectType == MENBAR) {
+		if (atoi(sObjectId) >= 800) {
+			menuBar->OnOverDropDownItem(atoi(sObjectId));
+		}
 	}
 
 	// Refresh
@@ -561,152 +498,18 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 
 void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
+	// If menu button
+	if (ObjectType == MENBAR) {
+		if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
+			menuBar->ButtonPress(atoi(sObjectId), Button, this);
+		}
+		else {
+			menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
+		}
+	}
+
 	// Left button actions
 	if (Button == BUTTON_LEFT) {
-		int dropDownToCancel = -1;
-		// If screen object is a dropdown
-		if (ObjectType == MENDRP_AREASEL) {
-			CMenuBar::dropDownItems.clear();
-			dropDownToCancel = CMenuBar::currentDropDownId;
-			CMenuBar::currentDropDownId = MENDRP_AREASEL;
-			CMenuBar::dropDownHover = -1;
-			CMenuBar::dropDownItems[DRP_AREA_EGGX] = "EGGX";
-			CMenuBar::dropDownItems[DRP_AREA_CZQX] = "CZQX";
-			CMenuBar::dropDownItems[DRP_AREA_BDBX] = "BDBX";
-		}
-		else if (ObjectType == MENDRP_TCKCTRL) {
-			CMenuBar::dropDownItems.clear();
-			dropDownToCancel = CMenuBar::currentDropDownId;
-			CMenuBar::currentDropDownId = MENDRP_TCKCTRL;
-			int idx = 0;
-			for (auto kv : COverlays::CurrentTracks) {
-				idx++;
-				CMenuBar::dropDownItems[800 + idx] = string(string("TCK ") + kv.first);				
-			}
-			CMenuBar::dropDownHover = -1;
-		}
-		else if (ObjectType == MENDRP_OVERLAYS) {
-			CMenuBar::dropDownItems.clear();
-			dropDownToCancel = CMenuBar::currentDropDownId;
-			CMenuBar::currentDropDownId = MENDRP_OVERLAYS;
-			CMenuBar::dropDownHover = -1;
-			CMenuBar::dropDownItems[DRP_OVL_ALL] = "ALL_TCKS";
-			CMenuBar::dropDownItems[DRP_OVL_EAST] = "TCKS_EAST";
-			CMenuBar::dropDownItems[DRP_OVL_WEST] = "TCKS_WEST";
-			//CMenuBar::dropDownItems[DRP_OVL_SEL] = "OCA_TCKSSEL";
-		}
-		else if (ObjectType == MENDRP_TYPESEL) {
-			CMenuBar::dropDownItems.clear();
-			dropDownToCancel = CMenuBar::currentDropDownId;
-			CMenuBar::currentDropDownId = MENDRP_TYPESEL;
-			CMenuBar::dropDownHover = -1;
-			CMenuBar::dropDownItems[DRP_TYPE_DEL] = "Delivery";
-			CMenuBar::dropDownItems[DRP_TYPE_ENR] = "OCA Enroute";
-			CMenuBar::dropDownItems[DRP_TYPE_MULTI] = "Multi-role";
-		}
-
-		// If item is a drop down menu item
-		bool brk = false;
-		for (auto kv : CMenuBar::dropDownItems) {
-			if (atoi(sObjectId) == kv.first) {
-				CMenuBar::dropDownSelections[CMenuBar::currentDropDownId] = kv.second;
-				if (CMenuBar::currentDropDownId == MENDRP_AREASEL) {
-					CUtils::AreaSelection = atoi(sObjectId);
-				}
-				else if (CMenuBar::currentDropDownId == MENDRP_OVERLAYS) {
-					CUtils::SelectedOverlay = atoi(sObjectId);
-				}
-				else if (CMenuBar::currentDropDownId == MENDRP_TYPESEL) {
-					CUtils::PosType = atoi(sObjectId);
-				}
-				// If an overlay
-				if (CMenuBar::currentDropDownId == MENDRP_OVERLAYS) {
-					if (atoi(sObjectId) == DRP_OVL_ALL) {
-						COverlays::CurrentType = COverlayType::TCKS_ALL;
-					}
-					else if (atoi(sObjectId) == DRP_OVL_EAST) {
-						COverlays::CurrentType = COverlayType::TCKS_EAST;
-					}
-					else if (atoi(sObjectId) == DRP_OVL_WEST) {
-						COverlays::CurrentType = COverlayType::TCKS_WEST;
-					}
-					else if (atoi(sObjectId) == DRP_OVL_SEL) {
-						// TODO: implement when ownership is done
-					}
-				}
-				CMenuBar::dropDownClicked = atoi(sObjectId);
-				CMenuBar::dropDownHover = -1;
-				buttonsPressed.erase(CMenuBar::currentDropDownId);
-				CMenuBar::currentDropDownId = -1;
-				brk = true;
-				break;
-			}
-		}
-
-		// Clear dropdown items if so
-		if (brk) CMenuBar::dropDownItems.clear();
-
-		// If menu button is being unpressed
-		if (buttonsPressed.find(ObjectType) != buttonsPressed.end() && string(sObjectId) == "") {
-			buttonsPressed.erase(ObjectType);
-
-			if (ObjectType == CMenuBar::currentDropDownId) {
-				CMenuBar::currentDropDownId = -1;
-				CMenuBar::dropDownHover = -1;
-			}
-
-			// Button settings
-			if (ObjectType == MENBTN_TAGS) {
-				CUtils::TagsEnabled = false;
-			}
-			else if (ObjectType == MENBTN_GRID) {
-				// Grid is off
-				CUtils::GridEnabled = false;
-				ShowHideGridReference(this, CUtils::GridEnabled);
-			}
-			else if (ObjectType == MENBTN_OVERLAYS) {
-				// Overlays are disabled
-				CUtils::OverlayEnabled = false;
-			}
-			else if (ObjectType == MENBTN_QCKLOOK) {
-				// Quick look is off
-				CUtils::QckLookEnabled = false;
-			}
-		}
-		else if (menuButtons.find(ObjectType) != menuButtons.end() && string(sObjectId) == "") { // If being pressed
-			if (buttonsPressed.find(ObjectType) == buttonsPressed.end()) {
-				buttonsPressed[ObjectType] = true;
-				
-				// Cancel existing open dropdown
-				if (dropDownToCancel != -1) {
-					buttonsPressed.erase(dropDownToCancel);
-				}
-
-				// Button settings
-				if (ObjectType == MENBTN_TAGS) {
-					CUtils::TagsEnabled = true;
-				}
-				else if (ObjectType == MENBTN_GRID) {
-					// Grid is on
-					CUtils::GridEnabled = true;
-					ShowHideGridReference(this, CUtils::GridEnabled);
-				}
-				else if (ObjectType == MENBTN_OVERLAYS) {
-					// Overlays are enabled
-					CUtils::OverlayEnabled = true;
-				}
-				else if (ObjectType == MENBTN_QCKLOOK) {
-					// Quick look is on
-					CUtils::QckLookEnabled = true;
-				}
-			}
-		} 
-
-		// If the flight plan window
-		if (ObjectType == MENBTN_FLIGHTPLAN) {
-			fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
-		}
-
 		// If screen object is a tag
 		if (ObjectType == SCREEN_TAG) {
 			// Set the ASEL
@@ -714,14 +517,14 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
 
-			if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
 				fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
 			}			
 
 			// Probing tools
-			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end() 
-				|| buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()
-				|| buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
+				|| menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
+				|| menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 				if (aircraftSel1 == "") {
 					aircraftSel1 = asel;
 				}
@@ -730,30 +533,31 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				}
 			}
 
-			if (fp.GetCallsign() == aircraftSel2 && buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
+			if (fp.GetCallsign() == aircraftSel2 && menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
 				CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
 			}
 		}
 
 		// Qck Look button
-		if (ObjectType == MENBTN_QCKLOOK) {
+		if (atoi(sObjectId) == CMenuBar::BTN_QCKLOOK) {
 			aselDetailed = false;
 		}
 
 		// Detailed button
-		if (ObjectType == MENBTN_DETAILED) {
+		if (atoi(sObjectId) == CMenuBar::BTN_DETAILED) {
 			aselDetailed = true;
 		}
 
 		// If the button is the PIV button
-		if (ObjectType == MENBTN_PIV) {
+		if (atoi(sObjectId) == CMenuBar::BTN_PIV) {
 			// Erase RBL (if active)
-			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_RBL);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
+				menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
 			}
+
 			// Erase SEP (if active)
-			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_SEP);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
 
 			// If PIV already active then clear everything
@@ -768,37 +572,41 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// If the button is the RBL button
-		if (ObjectType == MENBTN_RBL) {
+		if (atoi(sObjectId) == CMenuBar::BTN_RBL) {
 			// Erase PIV (if active)
-			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_PIV);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+				menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 			}
+
 			// Erase SEP (if active)
-			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_SEP);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
+			
 			// Reset ASELs
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
 
 		// If the button is the SEP button
-		if (ObjectType == MENBTN_SEP) {
+		if (atoi(sObjectId) == CMenuBar::BTN_SEP) {
 			// Erase RBL (if active)
-			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_RBL);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
+				menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
 			}
+
 			// Erase PIV (if active)
-			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_PIV);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+				menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 			}
+
 			// Reset ASELs
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
 
 		// If a menu text entry
-		if (ObjectType == TXT_ENTRY) {
+		if (ObjectType == ALTFILT_TEXT) {
 			// If the low altitude filter
 			if (string(sObjectId) == "ALTFILT_LOW") {
 				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_LOW, "");
@@ -833,105 +641,6 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				CPathRenderer::ClearCurrentRoute();
 			}
 		}
-
-		if (ObjectType == MENBTN_HALO) {
-			// Get the toggle button
-			auto cycle = toggleButtons.find(MENBTN_HALO);
-
-			// Increment if less than or equal 3 (20 minute halos max)
-			if (cycle->second < 3) {
-				cycle->second++;
-			}
-			else {
-				cycle->second = 0;
-			}
-
-			// Now assign the values
-			auto haloBtn = menuButtons.find(MENBTN_HALO);
-			switch (cycle->second) {
-			case 0:
-				haloBtn->second = "Halo 5";
-				break;
-			case 1:
-				haloBtn->second = "Halo 10";
-				break;
-			case 2:
-				haloBtn->second = "Halo 15";
-				break;
-			case 3:
-				haloBtn->second = "Halo 20";
-				break;
-			}
-		}
-
-		if (ObjectType == MENBTN_PTL) {
-			// Get the toggle button
-			auto cycle = toggleButtons.find(MENBTN_PTL);
-
-			// Increment if less than or equal 5 (30 minute lines max)
-			if (cycle->second < 5) {
-				cycle->second++;
-			}
-			else {
-				cycle->second = 0;
-			}
-
-			// Now assign the values
-			auto ptlBtn = menuButtons.find(MENBTN_PTL);
-			switch (cycle->second) {
-			case 0:
-				ptlBtn->second = "PTL 5";
-				break;
-			case 1:
-				ptlBtn->second = "PTL 10";
-				break;
-			case 2:
-				ptlBtn->second = "PTL 15";
-				break;
-			case 3:
-				ptlBtn->second = "PTL 20";
-				break;
-			case 4:
-				ptlBtn->second = "PTL 25";
-				break;
-			case 5:
-				ptlBtn->second = "PTL 30";
-				break;
-			}
-		}
-
-		if (ObjectType == MENBTN_RINGS) {
-			// Get the toggle button
-			auto cycle = toggleButtons.find(MENBTN_RINGS);
-
-			// Increment if less than or equal 4 (5 rings max)
-			if (cycle->second < 4) {
-				cycle->second++;
-			}
-			else {
-				cycle->second = 0;
-			}
-
-			// Now assign the values
-			auto ringsBtn = menuButtons.find(MENBTN_RINGS);
-			switch (cycle->second) {
-			case 0:
-				ringsBtn->second = "Rings 1";
-				break;
-			case 1:
-				ringsBtn->second = "Rings 2";
-				break;
-			case 2:
-				ringsBtn->second = "Rings 3";
-				break;
-			case 3:
-				ringsBtn->second = "Rings 4";
-				break;
-			case 4:
-				ringsBtn->second = "Rings 5";
-				break;
-			}
-		}
 	}
 	
 	RequestRefresh();
@@ -941,17 +650,12 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 {
 	// Track info window
 	if (ObjectType == WIN_TCKINFO) {
-		trackWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
+		trackWindow->ButtonDown(atoi(sObjectId));
 	}
 
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
-		// If not disabled, press
-		if (fltPlnWindow->IsButton(atoi(sObjectId))) {
-			if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
-				fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::ACTIVE;
-			}
-		}
+		fltPlnWindow->ButtonDown(atoi(sObjectId));
 	}
 
 	// Refresh
@@ -962,37 +666,12 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 {
 	// Track info window
 	if (ObjectType == WIN_TCKINFO) {
-		if (atoi(sObjectId) == CTrackInfoWindow::BTN_CLOSE) { // Close button
-			// Reset window state
-			trackWindow->MsgDataRefresh = "";
-			// Unpress track info window button to close window
-			if (buttonsPressed.find(MENBTN_TCKINFO) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_TCKINFO);
-			}
-		}
-		if (atoi(sObjectId) == CTrackInfoWindow::BTN_REFRESH) { // Refresh button
-			// Set data to refreshed so that text comes up
-			trackWindow->NATDataRefresh = true;
-		}
-		// Finally unpress the button
-		trackWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
+		trackWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Flight plan window
 	if (ObjectType == WIN_FLTPLN) {
-		if (atoi(sObjectId) == CFlightPlanWindow::BTN_CLOSE) { // Close button
-			// If the close button then unpress flight plan window button to close window
-			if (buttonsPressed.find(MENBTN_FLIGHTPLAN) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_FLIGHTPLAN);
-			}
-		}
-
-		// Finally unpress the button if not disabled (and id is actually a button)
-		if (fltPlnWindow->IsButton(atoi(sObjectId))) {
-			if (fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second != CInputState::DISABLED) {
-				fltPlnWindow->WindowButtons.find(atoi(sObjectId))->second.second = CInputState::INACTIVE;
-			}
-		}
+		fltPlnWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Refresh
@@ -1025,6 +704,7 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 			CUtils::AltFiltHigh = atoi(sItemString); // Return if in range
 		}
 	}
+
 	// If it is a flight plan window text input
 	if (fltPlnWindow->IsTextInput(FunctionId) && string(sItemString) != "") {
 		fltPlnWindow->ChangeDataPoint(this, FunctionId, string(sItemString));
@@ -1038,6 +718,12 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 
 void CRadarDisplay::OnAsrContentToBeSaved(void)
 {
+	// Buttons
+	CUtils::TagsEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_TAGS) ? true : false;
+	CUtils::GridEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_GRID) ? true : false;
+	CUtils::OverlayEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS) ? true : false;
+	CUtils::QckLookEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) ? true : false;
+
 	CUtils::SavePluginData(this);
 }
 

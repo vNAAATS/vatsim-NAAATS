@@ -5,9 +5,11 @@
 #include "InboundList.h"
 #include "Structures.h"
 #include "OtherList.h"
+#include "MenuBar.h"
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
 #include "FlightPlanWindow.h"
+#include "MessageWindow.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
@@ -20,8 +22,7 @@ class CRadarDisplay : public CRadarScreen
 		CRadarDisplay();
 		virtual ~CRadarDisplay();
 
-		// Custom methods
-		void ShowHideGridReference(CRadarScreen* screen, bool show);		
+		// Custom methods	
 		void PopulateProgramData();
 
 		// Inherited methods
@@ -47,21 +48,18 @@ class CRadarDisplay : public CRadarScreen
 		POINT mousePointer;
 		clock_t fiveSecondTimer;
 		clock_t tenSecondTimer;
-		map<int, string> menuButtons;
-		map<int, bool> buttonsPressed;
-		map<int, int> toggleButtons;
 		bool aselDetailed;	
-		vector<CListAircraft> inboundAircraft;
-		vector<string> otherAircraft;		
 		map<string, int> aircraftOnScreen;
 		map<int, string> menuFields;
 		string asel = "";
 		map<string, pair<bool, POINT>> tagStatuses;
 		string aircraftSel1 = ""; // For use in conflict tools
 		string aircraftSel2 = ""; // "
+		CMenuBar* menuBar;
 		CInboundList* inboundList;
 		COtherList* otherList;
 		CTrackInfoWindow* trackWindow = nullptr;
 		CFlightPlanWindow* fltPlnWindow = nullptr;
+		CMessageWindow* msgWindow = nullptr;
 };
 

@@ -8,15 +8,13 @@
 
 using namespace Colours;
 
-CInboundList::CInboundList(POINT topLeftPt) {
-	topLeft = topLeftPt;
+vector<CInboundAircraft> CInboundList::AircraftList;
+
+CInboundList::CInboundList(POINT topLeft) : CBaseList(topLeft) {
+
 }
 
-POINT CInboundList::GetTopLeft() {
-	return topLeft;
-}
-
-Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CListAircraft>* inboundAircraft)
+void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 {
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -34,7 +32,7 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<C
 	int offsetX = 18;
 	int idx = 0;
 
-	for (vector<CListAircraft>::iterator ac = inboundAircraft->begin(); ac != inboundAircraft->end(); ac++) {
+	for (vector<CInboundAircraft>::iterator ac = AircraftList.begin(); ac != AircraftList.end(); ac++) {
 		// Direction arrow (Shanwick)
 		if (ac->Direction == false) {
 			SolidBrush brush(TextWhite);
@@ -92,11 +90,11 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<C
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 	// Draw header but don't show size if none
-	if (inboundAircraft->size() == 0) {
+	if (AircraftList.size() == 0) {
 		dc->TextOutA(rectangle.X, rectangle.Y, "Inbound");
 	}
 	else {
-		dc->TextOutA(rectangle.X, rectangle.Y, string("Inbound (" + to_string(inboundAircraft->size()) + ")").c_str());
+		dc->TextOutA(rectangle.X, rectangle.Y, string("Inbound (" + to_string(AircraftList.size()) + ")").c_str());
 	}
 
 	// Restore device context
@@ -105,16 +103,4 @@ Rect CInboundList::DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<C
 	// Get object area and add object to screen
 	CRect area(topLeft.x, topLeft.y, topLeft.x + LIST_INBOUND_WIDTH, topLeft.y + 14);
 	screen->AddScreenObject(LIST_INBOUND, "", area, true, "");
-	
-	return rectangle;
-}
-
-void CInboundList::MoveList(CRect area, bool isReleased) { // TODO: check need for isReleased
-	isMouseReleased = isReleased;
-	topLeft = { area.left, area.top };
-}
-
-void CInboundList::MoveList(POINT topleft, bool isReleased) { // TODO: check need for isReleased
-	isMouseReleased = isReleased;
-	topLeft = { topleft.x, topleft.y };
 }

@@ -4,40 +4,72 @@
 #include <map>
 #include <gdiplus.h>
 #include <EuroScopePlugIn.h>
+#include "Structures.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 using namespace Gdiplus;
-
-// The menu bar
 class CMenuBar
 {
 	public:
-		// Dropdowns
-		static map<int, string> dropDownSelections;
-		static map<int, string> dropDownItems;
-		static map<int, string> selectedTracks;
-		static int currentDropDownId;
-		static int dropDownHover;
-		static int dropDownClicked;
+		CMenuBar();
+		~CMenuBar() {};
+		void RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel);
+		void RenderAltFilter(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderPositionID(CDC* dc, Graphics* g, CRadarScreen* screen);
+		bool IsButtonPressed(int id);
+		string GetDropDownValue(int id);
+		map<int, CWinButton> GetToggleButtons();
+		void SetButtonState(int id, CInputState state);
+		void OnOverDropDownItem(int id);
+		void SetDropDownValue(int id, int value);
+		void ButtonDown(int id, int button);
+		void ButtonUp(int id, int button);
+		void ButtonPress(int id, int button, CRadarScreen* screen);
+		void ButtonUnpress(int id, int button, CRadarScreen* screen);
+		int ActiveDropDown;
+		int ActiveDropDownHover;
 
-		// TODO: Major refactor
-		// Button data
-		static map<int, string> BuildButtonData();
+		// Definitions
+		static const int BTN_SETUP = 0;
+		static const int BTN_NOTEPAD = 1;
+		static const int BTN_ADSC = 2;
+		static const int BTN_TCKINFO = 3;
+		static const int BTN_MISC = 4;
+		static const int BTN_MESSAGE = 5;
+		static const int BTN_TAGS = 6;
+		static const int BTN_FLIGHTPLAN = 7;
+		static const int BTN_DETAILED = 8;
+		static const int BTN_AREASEL = 9;
+		static const int BTN_TCKCTRL = 10;
+		static const int BTN_OVERLAYS = 11;
+		static const int BTN_TYPESEL = 12;
+		static const int BTN_ALTFILT = 13;
+		static const int BTN_HALO = 14;
+		static const int BTN_RBL = 15;
+		static const int BTN_RINGS = 16;
+		static const int BTN_PTL = 17;
+		static const int BTN_PIV = 18;
+		static const int BTN_GRID = 19;
+		static const int BTN_SEP = 20;
+		static const int BTN_QCKLOOK = 21;
+	
+		static const int DRP_AREASEL = 100;
+		static const int DRP_TCKCTRL = 101;
+		static const int DRP_OVERLAYS = 102;
+		static const int DRP_TYPESEL = 103;
 
-		// Toggle button data
-		static map<int, int> BuildToggleButtonData();
+		static const int TXT_ALTFILT = 30;
+		static const int ID_POS = 31;
 
-		// Dropdown ids
-		static string ParseDropDownId(int id, int type);
+		const int PANEL_SIZES[8] = { RECT1_WIDTH, RECT2_WIDTH, RECT3_WIDTH, RECT4_WIDTH, RECT5_WIDTH, RECT6_WIDTH, RECT7_WIDTH, RECT8_WIDTH };
 
-		// Render the menu bar
-		static void DrawMenuBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, map<int, string>* btnData, map<int, bool>* pressedData, map<int, int>* toggleData);
-
-		// Render a button, any button
-		static CRect DrawMenuBarButton(CDC* dc, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isCentred, bool isPressed, bool isPosActive);
-		
-		// Render a drop down
-		static CRect DrawDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, pair<int, string> kv, int width, int height, int vtcAlign, POINT mousePointer, bool isOpen, int dpId);
+	private:
+		// Menu bar objects
+		map<int, CWinButton> buttons;
+		map<int, CTextInput> textInputs;
+		map<int, CCheckBox> checkBoxes;
+		map<int, CDropDown> dropDowns;
+		map<int, int> panels;
 };
 

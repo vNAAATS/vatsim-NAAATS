@@ -4,24 +4,21 @@
 #include <map>
 #include <vector>
 #include <gdiplus.h>
-#include "Structures.h"
 #include <EuroScopePlugIn.h>
+#include "Structures.h"
+#include "BaseList.h"
 
 using namespace std;
 using namespace Gdiplus;
 using namespace EuroScopePlugIn;
 
-class CInboundList
+class CInboundList : public CBaseList
 {
 	public:
 		CInboundList(POINT topLeft);
-		POINT GetTopLeft();
-		Rect DrawList(Graphics* g, CDC* dc, CRadarScreen* screen, vector<CListAircraft>* inboundAircraft);
-		void MoveList(CRect area, bool isReleased);
-		void MoveList(POINT topleft, bool isReleased);
+		virtual void RenderList(Graphics* g, CDC* dc, CRadarScreen* screen);
 
-	private:
-		bool isMouseReleased = true;
-		POINT topLeft;
+		// Aircraft list
+		static vector<CInboundAircraft> AircraftList;
 };
 

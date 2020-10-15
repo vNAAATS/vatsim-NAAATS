@@ -40,37 +40,40 @@ const int CFlightPlanWindow::TXT_STATE_CPY = 117;
 CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
 	MakeWindowItems();
+
+	// Close by default
+	IsClosed = true;
 };
 
 void CFlightPlanWindow::MakeWindowItems() {
 	// Button defaults
-	WindowButtons[BTN_CLOSE] = make_pair("Close", CInputState::INACTIVE);
-	WindowButtons[BTN_COPY] = make_pair("Copy", CInputState::DISABLED);
-	WindowButtons[BTN_TRNSFR] = make_pair("Transfer", CInputState::DISABLED);
-	WindowButtons[BTN_COORD] = make_pair("Co-ord", CInputState::DISABLED);
-	WindowButtons[BTN_MANCLEAR] = make_pair("Man Clrc", CInputState::INACTIVE);
-	WindowButtons[BTN_PROBE] = make_pair("Probe", CInputState::DISABLED);
-	WindowButtons[BTN_DELETE] = make_pair("Delete", CInputState::DISABLED);
-	WindowButtons[BTN_ADS] = make_pair("ADS", CInputState::DISABLED);
-	WindowButtons[BTN_READBK] = make_pair("ReadBK", CInputState::DISABLED);
-	WindowButtons[BTN_MSG] = make_pair("Message", CInputState::INACTIVE);
-	WindowButtons[BTN_HIST] = make_pair("History", CInputState::INACTIVE);
-	WindowButtons[BTN_SAVE] = make_pair("Save", CInputState::DISABLED);
+	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
+	windowButtons[BTN_TRNSFR] = CWinButton(BTN_TRNSFR, WIN_FLTPLN, "Transfer", CInputState::INACTIVE);
+	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
+	windowButtons[BTN_MANCLEAR] = CWinButton(BTN_MANCLEAR, WIN_FLTPLN, "Man Clrc", CInputState::INACTIVE);
+	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
+	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::INACTIVE);
+	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::INACTIVE);
+	windowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::INACTIVE);
+	windowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::INACTIVE);
+	windowButtons[BTN_HIST] = CWinButton(BTN_HIST, WIN_FLTPLN, "History", CInputState::INACTIVE);
+	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::INACTIVE);
 
 	// Text defaults
-	TextInputs[TXT_ACID] = CWinTextInput("ACID", "", 70, CInputState::INACTIVE);
-	TextInputs[TXT_TYPE] = CWinTextInput("Type", "", 55, CInputState::INACTIVE);
-	TextInputs[TXT_DEPART] = CWinTextInput("Depart", "", 50, CInputState::INACTIVE);
-	TextInputs[TXT_ETD] = CWinTextInput("Etd", "", 50, CInputState::INACTIVE);
-	TextInputs[TXT_SELCAL] = CWinTextInput("SELCAL", "", 55, CInputState::INACTIVE);
-	TextInputs[TXT_DATALINK] = CWinTextInput("Datalink", "", 60, CInputState::INACTIVE);
-	TextInputs[TXT_COMMS] = CWinTextInput("Com", "", 35, CInputState::INACTIVE);
-	TextInputs[TXT_OWNERSHIP] = CWinTextInput("Sector", "", 25, CInputState::INACTIVE);
-	TextInputs[TXT_SPD] = CWinTextInput("Spd", "", 50, CInputState::ACTIVE);
-	TextInputs[TXT_LEVEL] = CWinTextInput("FL", "", 90, CInputState::ACTIVE);
-	TextInputs[TXT_DEST] = CWinTextInput("Dest", "", 45, CInputState::ACTIVE);
-	TextInputs[TXT_TCK] = CWinTextInput("Tck", "", 25, CInputState::DISABLED);
-	TextInputs[TXT_STATE] = CWinTextInput("State", "", 35, CInputState::DISABLED);
+	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
+	textInputs[TXT_TYPE] = CTextInput(TXT_TYPE, WIN_FLTPLN, "Type", "", 55, CInputState::INACTIVE);
+	textInputs[TXT_DEPART] = CTextInput(TXT_DEPART, WIN_FLTPLN, "Depart", "", 50, CInputState::INACTIVE);
+	textInputs[TXT_ETD] = CTextInput(TXT_ETD, WIN_FLTPLN, "Etd", "", 50, CInputState::INACTIVE);
+	textInputs[TXT_SELCAL] = CTextInput(TXT_SELCAL, WIN_FLTPLN, "SELCAL", "", 55, CInputState::INACTIVE);
+	textInputs[TXT_DATALINK] = CTextInput(TXT_DATALINK, WIN_FLTPLN, "Datalink", "", 60, CInputState::INACTIVE);
+	textInputs[TXT_COMMS] = CTextInput(TXT_COMMS, WIN_FLTPLN, "Com", "", 35, CInputState::INACTIVE);
+	textInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 25, CInputState::INACTIVE);
+	textInputs[TXT_SPD] = CTextInput(TXT_SPD, WIN_FLTPLN, "Spd", "", 50, CInputState::ACTIVE);
+	textInputs[TXT_LEVEL] = CTextInput(TXT_LEVEL, WIN_FLTPLN, "FL", "", 90, CInputState::ACTIVE);
+	textInputs[TXT_DEST] = CTextInput(TXT_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
+	textInputs[TXT_TCK] = CTextInput(TXT_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::DISABLED);
+	textInputs[TXT_STATE] = CTextInput(TXT_STATE, WIN_FLTPLN, "State", "", 30, CInputState::DISABLED);
 }
 
 void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -96,9 +99,9 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_FLTPLN_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string(string("Flight Plan") + string(" - ") + string(TextInputs[TXT_ACID].Content)).c_str());
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string(string("Flight Plan") + string(" - ") + string(textInputs[TXT_ACID].Content)).c_str());
 
-	// Add screen object
+	// Add screen objects
 	screen->AddScreenObject(WINDOW, "WIN_FLTPLN", windowRect, true, ""); // So that we can't click anything under the flight plan window
 	screen->AddScreenObject(WINDOW, "FLTPLN", titleRect, true, ""); // Movable
 
@@ -113,9 +116,9 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	int offsetX = 25;
 	int offsetY = 6;
 	int counter = 0; // Counter for buttons so we know when to offset the Y axis
-	for (auto kv : WindowButtons) {
+	for (auto kv : windowButtons) {
 		// Draw the button
-		DrawButton(dc, screen, WindowButtons.at(kv.first).first, { buttonBarRect.left + offsetX, buttonBarRect.top + offsetY }, 70, 30, 6, WindowButtons.at(kv.first).second, WIN_FLTPLN, to_string(kv.first).c_str());
+		CCommonRenders::RenderButton(dc, screen, { buttonBarRect.left + offsetX, buttonBarRect.top + offsetY }, 70, 30, &windowButtons.at(kv.first));
 		if (counter != 5) { // Because there are 6 top row buttons
 			offsetX += 82;
 		}
@@ -137,7 +140,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Draw info bar text inputs
 	offsetX = 4;
 	offsetY = 6;
-	for (auto kv : TextInputs) {
+	for (auto kv : textInputs) {
 		if (kv.first == TXT_SPD) break; // Break if end
 
 		// Font
@@ -153,8 +156,8 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		offsetY += textHeight + 2;
 		bool editable = false;
 		if (kv.second.State == CInputState::ACTIVE) editable = true;
-		DrawTextInput(dc, screen, { infoBarRect.left + offsetX, infoBarRect.top + offsetY }, kv.second.Width, textHeight + 5, editable, &kv.second, WIN_FLTPLN, to_string(kv.first).c_str());
-
+		CCommonRenders::RenderTextInput(dc, screen, { infoBarRect.left + offsetX, infoBarRect.top + offsetY }, kv.second.Width, textHeight + 5, &textInputs.at(kv.first));
+		
 		// Offset
 		offsetX += kv.second.Width + 5;
 		offsetY = 6;
@@ -174,7 +177,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	FontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, TextInputs[TXT_ACID].Content.c_str());
+	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
 
 	// Create the route box
 	CRect rteBox(windowRect.left + 5, idBox.bottom + 8, windowRect.right + - 100, idBox.bottom + 84);
@@ -185,7 +188,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 
 	// Draw text in route box
 
-
 	// Make inputs
 	bool txtValid = true;
 	counter = TXT_SPD;
@@ -194,7 +196,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	while (txtValid) {
 		// Get index
 		if (counter == TXT_SPD_CPY) break; // Break if end
-		CWinTextInput idx = TextInputs.at(counter);
+		CTextInput idx = textInputs.at(counter);
 
 		// Font
 		FontSelector::SelectNormalFont(15, dc);
@@ -221,7 +223,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		}
 		bool editable = false;
 		if (idx.State == CInputState::ACTIVE) editable = true;
-		DrawTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, editable, &idx, WIN_FLTPLN, to_string(counter).c_str());
+		CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, & textInputs.at(counter));
 
 		// Offset
 		if (counter == TXT_DEST) { // Need a bit more space
@@ -263,10 +265,10 @@ void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAcFPStatus status) {
 	size_t found = remarks.find(string("SEL/"));
 	// If found
 	if (found != string::npos) {
-		TextInputs[TXT_SELCAL].Content = remarks.substr(found + 4, 4);
+		textInputs[TXT_SELCAL].Content = remarks.substr(found + 4, 4);
 	}
 	else {
-		TextInputs[TXT_SELCAL].Content = "N/A";
+		textInputs[TXT_SELCAL].Content = "N/A";
 	}
 
 	// Get communication mode
@@ -286,19 +288,19 @@ void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAcFPStatus status) {
 	}
 
 	// Fill data points
-	TextInputs[TXT_ACID].Content = fp.GetCallsign();
-	TextInputs[TXT_TYPE].Content = data.GetAircraftFPType();
-	TextInputs[TXT_DEPART].Content = data.GetOrigin();
-	TextInputs[TXT_ETD].Content = CUtils::ParseZuluTime(false, atoi(data.GetEstimatedDepartureTime()));
-	TextInputs[TXT_DATALINK].Content = "N/A";
-	TextInputs[TXT_COMMS].Content = comType;
-	TextInputs[TXT_OWNERSHIP].Content = "34";
+	textInputs[TXT_ACID].Content = fp.GetCallsign();
+	textInputs[TXT_TYPE].Content = data.GetAircraftFPType();
+	textInputs[TXT_DEPART].Content = data.GetOrigin();
+	textInputs[TXT_ETD].Content = CUtils::ParseZuluTime(false, atoi(data.GetEstimatedDepartureTime()));
+	textInputs[TXT_DATALINK].Content = "N/A";
+	textInputs[TXT_COMMS].Content = comType;
+	textInputs[TXT_OWNERSHIP].Content = "34";
 
 	// TEMPORARY FOR BETA TESTING
 	int mach = fp.GetControllerAssignedData().GetAssignedMach();
-	TextInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, fp.GetControllerAssignedData().GetAssignedMach());
-	TextInputs[TXT_LEVEL].Content =  to_string(fp.GetControllerAssignedData().GetClearedAltitude());
-	TextInputs[TXT_DEST].Content = data.GetDestination();
+	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, fp.GetControllerAssignedData().GetAssignedMach());
+	textInputs[TXT_LEVEL].Content =  to_string(fp.GetControllerAssignedData().GetClearedAltitude());
+	textInputs[TXT_DEST].Content = data.GetDestination();
 }
 
 void CFlightPlanWindow::OnCloseFlightPlanWindow() {
@@ -307,7 +309,7 @@ void CFlightPlanWindow::OnCloseFlightPlanWindow() {
 
 int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string str) {
 	// TODO: Currently temporary format, make more robust when implementing the different window modes
-	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(TextInputs[TXT_ACID].Content.c_str());
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(textInputs[TXT_ACID].Content.c_str());
 	if (data == TXT_SPD) {
 		bool isNumber = true;
 		for (int i = 0; i < strlen(str.c_str()); i++) { // Check if int
@@ -315,7 +317,7 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 		}
 		if (isNumber && (stoi(str) > 0 && stoi(str) < 250)) {
 			bool status = fp.GetControllerAssignedData().SetAssignedMach(stoi(str));
-			UpdateData(screen, CAcFPStatus(TextInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
+			UpdateData(screen, CAcFPStatus(textInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
 			return 0;
 		}
 		return 1;
@@ -327,7 +329,7 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 		}
 		if (isNumber && (stoi(str) > 0 && stoi(str) < 700)) {
 			bool status = fp.GetControllerAssignedData().SetClearedAltitude(stoi(str));
-			UpdateData(screen, CAcFPStatus(TextInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
+			UpdateData(screen, CAcFPStatus(textInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
 			return 0;
 		}
 		return 1;
@@ -341,10 +343,38 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 			if (isAlpha) {
 				bool status = fp.GetFlightPlanData().SetDestination(str.c_str());
 				fp.GetFlightPlanData().AmendFlightPlan();
-				UpdateData(screen, CAcFPStatus(TextInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
+				UpdateData(screen, CAcFPStatus(textInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
 				return 0;
 			}
 		}
 		return 1;
 	}
+}
+
+void CFlightPlanWindow::ButtonUp(int id) {
+
+	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
+		// If the close button close window
+		IsClosed = true;
+	}
+
+	// Finally unpress the button if not disabled (and id is actually a button)
+	if (IsButton(id)) {
+		if (windowButtons.find(id)->second.State != CInputState::DISABLED) {
+			windowButtons.find(id)->second.State = CInputState::INACTIVE;
+		}
+	}
+}
+
+void CFlightPlanWindow::ButtonDown(int id) {
+	// If not disabled, press
+	if (IsButton(id)) {
+		if (windowButtons.find(id)->second.State != CInputState::DISABLED) {
+			windowButtons.find(id)->second.State = CInputState::ACTIVE;
+		}
+	}
+}
+
+void CFlightPlanWindow::ButtonPress(int id) {
+
 }

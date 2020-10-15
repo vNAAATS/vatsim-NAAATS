@@ -1,0 +1,121 @@
+﻿  AcTargets.cpp
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\atlmfc\include\afx.h(38): warning C4996: 'MBCS_Support_Deprecated_In_MFC': MBCS support in MFC is deprecated and may be removed in a future version of MFC.
+  C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\atlmfc\include\afx.h(33): note: see declaration of 'MBCS_Support_Deprecated_In_MFC'
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+AcTargets.cpp(73): warning C4244: 'argument': conversion from 'double' to 'Gdiplus::REAL', possible loss of data
+AcTargets.cpp(74): warning C4244: 'argument': conversion from 'LONG' to 'Gdiplus::REAL', possible loss of data
+AcTargets.cpp(153): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+AcTargets.cpp(154): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+AcTargets.cpp(191): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+AcTargets.cpp(192): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+  BaseList.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  BaseWindow.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  CommonRenders.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+CommonRenders.cpp(39): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+CommonRenders.cpp(149): warning C4244: 'argument': conversion from 'double' to 'INT', possible loss of data
+  MenuBar.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+MenuBar.cpp(109): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+  MessageWindow.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+MessageWindow.cpp(84): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+MessageWindow.cpp(96): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+MessageWindow.cpp(171): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  ConflictDetection.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(23): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(24): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(78): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(79): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(101): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(102): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(183): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(184): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(201): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(210): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(272): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(273): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(283): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(310): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(311): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(313): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(314): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(320): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(321): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(322): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(363): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(364): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(366): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(455): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+ConflictDetection.cpp(461): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  FlightPlanWindow.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+FlightPlanWindow.cpp(315): warning C4018: '<': signed/unsigned mismatch
+FlightPlanWindow.cpp(327): warning C4018: '<': signed/unsigned mismatch
+FlightPlanWindow.cpp(340): warning C4018: '<': signed/unsigned mismatch
+q:\programming\vatsim-naaats\vatsimnaaats\flightplanwindow.cpp(352): warning C4715: 'CFlightPlanWindow::ChangeDataPoint': not all control paths return a value
+  InboundList.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  NAAATS.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  OtherList.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  Overlays.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  PathRenderer.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(253): warning C4018: '<': signed/unsigned mismatch
+PathRenderer.cpp(301): warning C4018: '<': signed/unsigned mismatch
+PathRenderer.cpp(316): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(317): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(321): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(322): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(334): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(335): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(339): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(340): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(360): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(393): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(396): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+PathRenderer.cpp(404): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  pch.cpp
+  RadarDisplay.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+RadarDisplay.cpp(688): warning C4018: '<': signed/unsigned mismatch
+RadarDisplay.cpp(700): warning C4018: '<': signed/unsigned mismatch
+  Styles.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  TrackInfoWindow.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+TrackInfoWindow.cpp(113): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+TrackInfoWindow.cpp(125): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+TrackInfoWindow.cpp(138): warning C4018: '<': signed/unsigned mismatch
+TrackInfoWindow.cpp(152): warning C4018: '<': signed/unsigned mismatch
+TrackInfoWindow.cpp(208): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  Utils.cpp
+Utils.cpp(1): warning C4005: '_USE_MATH_DEFINES': macro redefinition
+  Utils.cpp(1): note: command-line arguments:  see previous definition of '_USE_MATH_DEFINES'
+Utils.cpp(1): warning C4603: '_USE_MATH_DEFINES': macro is not defined or definition is different after precompiled header use
+  Utils.cpp(1): note: Add macro to precompiled header instead of defining here
+  Utils.cpp(2): note: use of precompiled header
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+Utils.cpp(314): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+Utils.cpp(324): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+Utils.cpp(325): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
+Utils.cpp(419): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+Utils.cpp(420): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+q:\programming\vatsim-naaats\vatsimnaaats\utils.cpp(138): warning C4715: 'CUtils::GetAircraftDirection': not all control paths return a value
+  VatsimNAAATS.cpp
+  DataHandler.cpp
+q:\programming\vatsim-naaats\vatsimnaaats\Constants.h(114): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+DataHandler.cpp(31): warning C4018: '<': signed/unsigned mismatch
+DataHandler.cpp(54): warning C4018: '<': signed/unsigned mismatch
+DataHandler.cpp(77): warning C4018: '<': signed/unsigned mismatch
+DataHandler.cpp(83): warning C4018: '<': signed/unsigned mismatch
+     Creating library Q:\Programming\vatsim-NAAATS\VatsimNAAATS\Release\VatsimNAAATS.lib and object Q:\Programming\vatsim-NAAATS\VatsimNAAATS\Release\VatsimNAAATS.exp
+LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  VatsimNAAATS.vcxproj -> Q:\Programming\vatsim-NAAATS\VatsimNAAATS\Release\VatsimNAAATS.dll
+  VatsimNAAATS.vcxproj -> Q:\Programming\vatsim-NAAATS\VatsimNAAATS\Release\VatsimNAAATS.pdb (Full PDB)

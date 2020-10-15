@@ -105,7 +105,7 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v0.1a";
+const string PLUGIN_VERSION = "v0.2b";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
@@ -146,23 +146,27 @@ const int WINSZ_FLTPLN_HEIGHT_INIT = 170;
 const int WINSZ_FLTPLN_HEIGHT_DATA = 310;
 const int WINSZ_FLTPLN_HEIGHT_CPY = 600;
 const int WINSZ_FLTPLN_HEIGHT_XTRA = 600;
+const int WINSZ_MSG_WIDTH = 550;
+const int WINSZ_MSG_HEIGHT = 300;
 
 // Conflict
 const int SEPTOOL_TIME = 2700; // 45 minutes
 const int STCA_TIME = 480; // 8 minutes
 
-/// OBJECTS
+/// OBJECT HANDLES
 // Screen
 const int SCREEN_TAG = 1;
-const int WINDOW = 100;
+const int MENBAR = 2;
+const int WINDOW = 3;
 
 // Window object handles (for buttons, etc)
 const int WIN_TCKINFO = 101;
 const int WIN_FLTPLN = 102;
-const int WIN_SCROLLBAR = 102;
+const int WIN_SCROLLBAR = 103;
+const int WIN_MSG = 104;
 
 // Text inputs and functions
-const int TXT_ENTRY = 200;
+const int ALTFILT_TEXT = 200;
 const int FUNC_ALTFILT_LOW = 201;
 const int FUNC_ALTFILT_HIGH = 202;
 
@@ -170,39 +174,7 @@ const int FUNC_ALTFILT_HIGH = 202;
 const int LIST_INBOUND = 300;
 const int LIST_OTHERS = 301;
 
-// Menu buttons, dropdowns & text fields
-const int MENBTN_SETUP = 400;
-const int MENBTN_NOTEPAD = 401;
-const int MENBTN_ADSC = 402;
-const int MENBTN_TCKINFO = 403;
-const int MENBTN_MISC = 404;
-const int MENBTN_MESSAGE = 405;
-const int MENBTN_TAGS = 406;
-const int MENBTN_FLIGHTPLAN = 407;
-const int MENBTN_DETAILED = 408;
-const int MENBTN_AREASEL = 409;
-const int MENBTN_TCKCTRL = 410;
-const int MENBTN_OVERLAYS = 411;
-const int MENBTN_TYPESEL = 412;
-const int MENBTN_ALTFILT = 413;
-const int MENBTN_HALO = 414;
-const int MENBTN_RBL = 415;
-const int MENBTN_RINGS = 416;
-const int MENBTN_MTT = 417;
-const int MENBTN_PTL = 418;
-const int MENBTN_PIV = 419;
-const int MENBTN_GRID = 420;
-const int MENBTN_SEP = 421;
-const int MENBTN_POS = 422;
-const int MENBTN_QCKLOOK = 423;
-const int MENDRP_AREASEL = 424;
-const int MENDRP_TCKCTRL = 425;
-const int MENDRP_OVERLAYS = 426;
-const int MENDRP_TYPESEL = 427;
-const int MENTXT_ALTFILT = 428;
-
 // Dropdown
-const int DROPDOWN = 800;
 const int DRP_AREA_EGGX = 801;
 const int DRP_AREA_CZQX = 802;
 const int DRP_AREA_BDBX = 803;
