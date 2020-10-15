@@ -93,7 +93,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	int sDC = dc->SaveDC();
 
 	// Create dropdown area
-	CRect dropDown(topLeft.x, topLeft.y, topLeft.x + width, topLeft.y + height);
+	CRect dropDown(topLeft.x, topLeft.y, topLeft.x + width - 15, topLeft.y + height);
 
 	// Fill
 	dc->FillSolidRect(dropDown, ScreenBlue.ToCOLORREF());
@@ -101,6 +101,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	// Select font
 	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
 
 	// Dropdown bevel
 	dc->Draw3dRect(dropDown, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
@@ -111,7 +112,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	dc->TextOutA(dropDown.left + 2, dropDown.top + 1, obj->Value.c_str());
 
 	// Create dropdown button
-	CRect button(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+	CRect button(topLeft.x + width - 15, topLeft.y, topLeft.x + width, topLeft.y + height);
 
 	// Check if pressed
 	if (obj->State == CInputState::ACTIVE) {
@@ -142,7 +143,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	// Button triangle
 	SolidBrush brush(Grey);
 	// Coz GDI+ doesn't like GDI
-	Rect rectangle(topLeft.x + width, topLeft.y, topLeft.x + width + 15, topLeft.y + height);
+	Rect rectangle(topLeft.x + width - 15, topLeft.y, topLeft.x + width, topLeft.y + height);
 	Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
 		Point(rectangle.X + 12, rectangle.Y + 4),
 		Point(rectangle.X + 7.5, rectangle.Y + 14) };

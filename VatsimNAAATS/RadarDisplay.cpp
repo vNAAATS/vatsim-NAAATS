@@ -524,8 +524,8 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 			// Probing tools
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
-				&& menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
-				&& menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				|| menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
+				|| menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 				if (aircraftSel1 == "") {
 					aircraftSel1 = asel;
 				}
@@ -540,24 +540,25 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// Qck Look button
-		/*if (ObjectType == MENBTN_QCKLOOK) {
+		if (atoi(sObjectId) == CMenuBar::BTN_QCKLOOK) {
 			aselDetailed = false;
 		}
 
 		// Detailed button
-		if (ObjectType == MENBTN_DETAILED) {
+		if (atoi(sObjectId) == CMenuBar::BTN_DETAILED) {
 			aselDetailed = true;
 		}
 
 		// If the button is the PIV button
-		if (ObjectType == MENBTN_PIV) {
+		if (atoi(sObjectId) == CMenuBar::BTN_PIV) {
 			// Erase RBL (if active)
-			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_RBL);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
+				menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
 			}
+
 			// Erase SEP (if active)
-			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_SEP);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
 
 			// If PIV already active then clear everything
@@ -572,37 +573,41 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// If the button is the RBL button
-		if (ObjectType == MENBTN_RBL) {
+		if (atoi(sObjectId) == CMenuBar::BTN_RBL) {
 			// Erase PIV (if active)
-			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_PIV);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+				menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 			}
+
 			// Erase SEP (if active)
-			if (buttonsPressed.find(MENBTN_SEP) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_SEP);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
+			
 			// Reset ASELs
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
 
 		// If the button is the SEP button
-		if (ObjectType == MENBTN_SEP) {
+		if (atoi(sObjectId) == CMenuBar::BTN_SEP) {
 			// Erase RBL (if active)
-			if (buttonsPressed.find(MENBTN_RBL) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_RBL);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
+				menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
 			}
+
 			// Erase PIV (if active)
-			if (buttonsPressed.find(MENBTN_PIV) != buttonsPressed.end()) {
-				buttonsPressed.erase(MENBTN_PIV);
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+				menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 			}
+
 			// Reset ASELs
 			aircraftSel1 = "";
 			aircraftSel2 = "";
 		}
 
 		// If a menu text entry
-		if (ObjectType == TXT_ENTRY) {
+		/*if (ObjectType == TXT_ENTRY) {
 			// If the low altitude filter
 			if (string(sObjectId) == "ALTFILT_LOW") {
 				GetPlugIn()->OpenPopupEdit(Area, FUNC_ALTFILT_LOW, "");
@@ -714,23 +719,11 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 
 void CRadarDisplay::OnAsrContentToBeSaved(void)
 {
-	/*// Button settings
-	if (ObjectType == MENBTN_TAGS) {
-		CUtils::TagsEnabled = false;
-	}
-	else if (ObjectType == MENBTN_GRID) {
-		// Grid is off
-		CUtils::GridEnabled = false;
-		COverlays::ShowHideGridReference(this, CUtils::GridEnabled); // TODO: Review
-	}
-	else if (ObjectType == MENBTN_OVERLAYS) {
-		// Overlays are disabled
-		CUtils::OverlayEnabled = false;
-	}
-	else if (ObjectType == MENBTN_QCKLOOK) {
-		// Quick look is off
-		CUtils::QckLookEnabled = false;
-	}*/
+	// Buttons
+	CUtils::TagsEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_TAGS) ? true : false;
+	CUtils::GridEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_GRID) ? true : false;
+	CUtils::OverlayEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS) ? true : false;
+	CUtils::QckLookEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) ? true : false;
 
 	CUtils::SavePluginData(this);
 }

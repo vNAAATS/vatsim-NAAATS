@@ -188,7 +188,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 
 	// Draw text in route box
 
-
 	// Make inputs
 	bool txtValid = true;
 	counter = TXT_SPD;

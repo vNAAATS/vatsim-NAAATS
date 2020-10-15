@@ -157,12 +157,13 @@ struct CDropDownItem {
 	bool IsHovered;
 	bool IsCheckItem;
 	CInputState State;
+	int Width;
 };
 
 // Describes a dropdown
 struct CDropDown {
 	CDropDown() {}; // Default constructor
-	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems, CInputState state) {
+	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems, CInputState state, int width = -1) {
 		Id = id;
 		Type = type;
 		Value = value;
@@ -172,12 +173,14 @@ struct CDropDown {
 			counter++;
 		}
 		State = state;
+		Width = width;
 	}
 	int Id;
 	int Type;
 	string Value;
 	map<int, CDropDownItem> Items;
 	CInputState State;
+	int Width;
 };
 
 struct CAcFPStatus {

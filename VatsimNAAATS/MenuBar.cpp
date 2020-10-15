@@ -38,22 +38,22 @@ CMenuBar::CMenuBar() {
 	map.insert(make_pair("CZQX", false));
 	map.insert(make_pair("EGGX", false));
 	map.insert(make_pair("BDBX", false));
-	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map, CInputState::INACTIVE);
+	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map, CInputState::INACTIVE, 83);
 	map.clear();
 	// TODO: Get tracks
-	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_TCKCTRL, MENBAR, "None", &map, CInputState::INACTIVE);
+	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_TCKCTRL, MENBAR, "None", &map, CInputState::INACTIVE, 88);
 	map.clear();
 	map.insert(make_pair("ALL_TCKS", false));
 	map.insert(make_pair("TCKS_EAST", false));
 	map.insert(make_pair("TCKS_WEST", false));
 	map.insert(make_pair("TCKS_SEL", false));
 	map.insert(make_pair("TCKS_ACTV", false));
-	dropDowns[DRP_OVERLAYS] = CDropDown(DRP_OVERLAYS, MENBAR, "ALL_TCKS", &map, CInputState::INACTIVE);
+	dropDowns[DRP_OVERLAYS] = CDropDown(DRP_OVERLAYS, MENBAR, "ALL_TCKS", &map, CInputState::INACTIVE, 113);
 	map.clear();
 	map.insert(make_pair("Delivery", false));
 	map.insert(make_pair("OCA Enroute", false));
 	map.insert(make_pair("Multi-role", false));
-	dropDowns[DRP_TYPESEL] = CDropDown(DRP_TYPESEL, MENBAR, "Multi-role", &map, CInputState::INACTIVE);
+	dropDowns[DRP_TYPESEL] = CDropDown(DRP_TYPESEL, MENBAR, "Multi-role", &map, CInputState::INACTIVE, 143);
 }
 
 void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel) {
@@ -126,9 +126,11 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 				break;
 			case BTN_OVERLAYS:
 				offsetX += 164;
+				text = "Map";
 				break;
 			case BTN_TYPESEL:
 				offsetX = offsetX = RECT1_WIDTH + RECT2_WIDTH + 85;
+				text = "Pos Type";
 				break;
 			case BTN_ALTFILT:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + 10;
@@ -151,10 +153,8 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 				break;
 		}
 
-		// Buttons
+		// Button rendering
 		CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, kv.second.Width, 30, &kv.second);
-
-		// Misc items
 
 		// If offsetting between buttons
 		if (offsetIsItemSize) {
@@ -164,11 +164,48 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 		// Increment
 		idx++;
 	}
+
+	// Misc items
+	offsetX = RECT1_WIDTH + 10;
+	offsetY += 6;
+	for (auto kv : dropDowns) {
+		// Offsets
+		bool offsetIsItemSize = true;
+		switch (kv.first) {
+			case DRP_OVERLAYS: 
+				offsetX += 36;
+				offsetIsItemSize = false;
+				break;
+			case DRP_TYPESEL:
+				offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
+				offsetIsItemSize = false;
+				break;
+		}
+
+		// Render
+		CCommonRenders::RenderDropDown(dc, g, screen, { offsetX, offsetY }, kv.second.Width, 20, &kv.second);
+
+		// If offsetting between buttons
+		if (offsetIsItemSize) {
+			offsetX += kv.second.Width + 1;
+		}
+	}
+
+	// Clean up
+	DeleteObject(&brush);
+
+	// Restore
+	dc->RestoreDC(sDC);
 }
 
 bool CMenuBar::IsButtonPressed(int id) {
 	// If button pressed
-	if (buttons.find(id) != buttons.end() && buttons[id].State == CInputState::ACTIVE) return true;
+	if (id >= 100) { // dropdown
+		if (dropDowns.find(id) != dropDowns.end() && dropDowns[id].State == CInputState::ACTIVE) return true;
+	}
+	else {
+		if (buttons.find(id) != buttons.end() && buttons[id].State == CInputState::ACTIVE) return true;
+	}
 
 	return false; // Not pressed
 }
@@ -189,17 +226,39 @@ map<int, CWinButton> CMenuBar::GetToggleButtons() {
 
 void CMenuBar::SetButtonState(int id, CInputState state) {
 	// Set the state to the requested one (with failsafe check)
-	if (buttons.find(id)->second.State != CInputState::DISABLED) {
-		if (buttons.find(id) != buttons.end()) {
-			buttons[id].State = state;
+	if (id >= 100) { // dropdown
+		if (dropDowns.find(id)->second.State != CInputState::DISABLED) {
+			if (dropDowns.find(id) != dropDowns.end()) {
+				// Remove the old dropdown stuff
+				if (ActiveDropDownHover != 0) {
+					dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+					ActiveDropDownHover = 0;
+				}
+				if (ActiveDropDown != 0) {
+					dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+					ActiveDropDown = 0;
+				}
+				
+				dropDowns[id].State = state;
+				ActiveDropDown = state == CInputState::ACTIVE ? id : 0;
+			}
+		}
+	}
+	else { // normal button
+		if (buttons.find(id)->second.State != CInputState::DISABLED) {
+			if (buttons.find(id) != buttons.end()) {
+				buttons[id].State = state;
+			}
 		}
 	}
 }
 
 void CMenuBar::OnOverDropDownItem(int id) {
 	// Reset the hover state of the old one and set the state of new one
-	dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
-	dropDowns[ActiveDropDown].Items[id].IsHovered = true;
+	if (ActiveDropDownHover != 0) {
+		dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+		dropDowns[ActiveDropDown].Items[id].IsHovered = true;
+	}
 	ActiveDropDownHover = id;
 }
 
