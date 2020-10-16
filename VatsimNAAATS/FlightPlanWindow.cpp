@@ -55,13 +55,13 @@ void CFlightPlanWindow::MakeWindowItems() {
 	// Button defaults
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
-	windowButtons[BTN_TRNSFR] = CWinButton(BTN_TRNSFR, WIN_FLTPLN, "Transfer", CInputState::INACTIVE);
-	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
+	windowButtons[BTN_TRNSFR] = CWinButton(BTN_TRNSFR, WIN_FLTPLN, "Transfer", CInputState::DISABLED);
+	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::DISABLED);
 	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::INACTIVE);
-	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
-	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::INACTIVE);
+	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::DISABLED);
+	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::DISABLED);
-	windowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::INACTIVE);
+	windowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::DISABLED);
 	windowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::INACTIVE);
 	windowButtons[BTN_HIST] = CWinButton(BTN_HIST, WIN_FLTPLN, "History", CInputState::INACTIVE);
 	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::INACTIVE);
@@ -721,31 +721,47 @@ void CFlightPlanWindow::ButtonUp(int id) {
 		IsClosed = true;
 	}
 
-	if (id == BTN_COPY) { // Make copy
-		IsCopyMade = true;
-	}
-	if (id == BTN_DELETE) { // Delete copy
-		IsCopyMade = false; // Delete copy (TODO: put more in here to actually delete copies)
-	}
-	if (id == BTN_PROBE) {
-		IsConflictWindow = !IsConflictWindow ? true : false;
-	}
-	if (id == BTN_MSG) {
-		IsMessageOpen = !IsMessageOpen ? true : false;
-	}
-	if (id == BTN_COORD) {
-		IsCoordOpen = !IsCoordOpen ? true : false;
-	}
+	// Failsafe
+	bool stateSetManually = false; // Flag to show whether we've set the state manually
+	if (windowButtons.find(id)->second.State != CInputState::DISABLED) {
+		if (id == BTN_COPY) { // Make copy
+			IsCopyMade = true;
 
-	// Finally unpress the button if not disabled (and id is actually a button)
-	if (IsButton(id) && id) {
+			// Set the states
+			SetButtonState(BTN_DELETE, CInputState::INACTIVE);
+			SetButtonState(BTN_COPY, CInputState::DISABLED);
+
+			// Flag
+			stateSetManually = true;
+		}
+		if (id == BTN_DELETE) { // Delete copy
+			IsCopyMade = false; // Delete copy (TODO: put more in here to actually delete copies)
+			// Set the states
+			SetButtonState(BTN_DELETE, CInputState::DISABLED);
+			SetButtonState(BTN_COPY, CInputState::INACTIVE);
+
+			stateSetManually = true;
+		}
+		if (id == BTN_PROBE) {
+			IsConflictWindow = !IsConflictWindow ? true : false;
+		}
+		if (id == BTN_MSG) {
+			IsMessageOpen = !IsMessageOpen ? true : false;
+		}
+		if (id == BTN_COORD) {
+			IsCoordOpen = !IsCoordOpen ? true : false;
+		}
+	}
+	
+	// Finally unpress the button if not disabled (and id is actually a button and not set manually)
+	if (IsButton(id) && !stateSetManually && windowButtons.find(id)->second.State != CInputState::DISABLED) {
 		SetButtonState(id, CInputState::INACTIVE);
 	}
 }
 
 void CFlightPlanWindow::ButtonDown(int id) {
 	// If not disabled, press
-	if (IsButton(id)) {
+	if (IsButton(id) && windowButtons.find(id)->second.State != CInputState::DISABLED) {
 		SetButtonState(id, CInputState::ACTIVE);
 	}
 }
@@ -776,28 +792,24 @@ void CFlightPlanWindow::ButtonUnpress(int id) {
 
 void CFlightPlanWindow::SetButtonState(int id, CInputState state) {
 	if (id >= 200) { // Dropdown
-		if (dropDowns.find(id)->second.State != CInputState::DISABLED) {
 			if (dropDowns.find(id) != dropDowns.end()) {
-				// Remove the old dropdown stuff
-				if (ActiveDropDownHover != 0) {
-					dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
-					ActiveDropDownHover = 0;
-				}
-				if (ActiveDropDown != 0) {
-					dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
-					ActiveDropDown = 0;
-				}
-
-				dropDowns[id].State = state;
-				ActiveDropDown = state == CInputState::ACTIVE ? id : 0;
+			// Remove the old dropdown stuff
+			if (ActiveDropDownHover != 0) {
+				dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+				ActiveDropDownHover = 0;
 			}
+			if (ActiveDropDown != 0) {
+				dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+				ActiveDropDown = 0;
+			}
+
+			dropDowns[id].State = state;
+			ActiveDropDown = state == CInputState::ACTIVE ? id : 0;
 		}
 	}
 	else { // normal button
-		if (windowButtons.find(id)->second.State != CInputState::DISABLED) {
-			if (windowButtons.find(id) != windowButtons.end()) {
-				windowButtons[id].State = state;
-			}
+		if (windowButtons.find(id) != windowButtons.end()) {
+			windowButtons[id].State = state;
 		}
 	}
 }
