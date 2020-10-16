@@ -17,12 +17,18 @@ class CFlightPlanWindow : public CBaseWindow
 		CFlightPlanWindow(POINT topLeft);
 		virtual void MakeWindowItems();
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void RenderCopyPanel(CDC* dc, Graphics* g, CRadarScreen* screen);
 		void RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		void RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderManClrcWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen);
 
+		// Button clicks
 		virtual void ButtonDown(int id);
 		virtual void ButtonUp(int id);
 		virtual void ButtonPress(int id);
@@ -32,12 +38,23 @@ class CFlightPlanWindow : public CBaseWindow
 		void OnCloseFlightPlanWindow();
 		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
 
+		// Panel states
+		bool IsCopyOpen;
+		bool IsConflictWindow;
+		bool IsClearanceOpen;
+		bool IsManualEntryOpen;
+		bool IsMessageOpen;
+		bool IsCoordOpen;
+		bool IsHistoryOpen;
+		bool IsATCRestrictionsOpen;
+		bool IsTransferOpen;
+
 		// Button definitions
 		static const int BTN_CLOSE;
 		static const int BTN_COPY;
 		static const int BTN_TRNSFR;
 		static const int BTN_COORD;
-		static const int BTN_MANCLEAR;
+		static const int BTN_MANENTRY;
 		static const int BTN_PROBE;
 		static const int BTN_DELETE;
 		static const int BTN_ADS;

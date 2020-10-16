@@ -142,7 +142,7 @@ const int WINSZ_TITLEBAR_HEIGHT = 20;
 const int WINSZ_TCKINFO_WIDTH = 450;
 const int WINSZ_TCKINFO_HEIGHT = 250;
 const int WINSZ_FLTPLN_WIDTH = 540;
-const int WINSZ_FLTPLN_HEIGHT_INIT = 170;
+const int WINSZ_FLTPLN_HEIGHT_INIT = 150;
 const int WINSZ_FLTPLN_HEIGHT_DATA = 310;
 const int WINSZ_FLTPLN_HEIGHT_CPY = 600;
 const int WINSZ_FLTPLN_HEIGHT_XTRA = 600;
@@ -241,13 +241,6 @@ enum class CTrackStatus {
     SAME
 };
 
-// Message type
-enum class CMessageType {
-    OK,
-    WARNING,
-    CRITICAL
-};
-
 // Button states
 enum class CInputState {
     INACTIVE,
@@ -263,4 +256,8 @@ enum class CFlightPlanMode {
     DATA_COPY,
     CLEARANCE,
     PROBE
+};
+
+enum class CMessageType {
+
 };

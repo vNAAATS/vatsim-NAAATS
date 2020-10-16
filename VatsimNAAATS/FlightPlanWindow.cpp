@@ -10,7 +10,7 @@ const int CFlightPlanWindow::BTN_CLOSE = 0;
 const int CFlightPlanWindow::BTN_COPY = 1;
 const int CFlightPlanWindow::BTN_TRNSFR = 2;
 const int CFlightPlanWindow::BTN_COORD = 3;
-const int CFlightPlanWindow::BTN_MANCLEAR = 4;
+const int CFlightPlanWindow::BTN_MANENTRY = 4;
 const int CFlightPlanWindow::BTN_PROBE = 5;
 const int CFlightPlanWindow::BTN_DELETE = 6;
 const int CFlightPlanWindow::BTN_ADS = 7;
@@ -51,7 +51,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
 	windowButtons[BTN_TRNSFR] = CWinButton(BTN_TRNSFR, WIN_FLTPLN, "Transfer", CInputState::INACTIVE);
 	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
-	windowButtons[BTN_MANCLEAR] = CWinButton(BTN_MANCLEAR, WIN_FLTPLN, "Man Clrc", CInputState::INACTIVE);
+	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "Man Entry", CInputState::INACTIVE);
 	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::INACTIVE);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::INACTIVE);
@@ -83,16 +83,14 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
-	CBrush lightBackground(LightBackground.ToCOLORREF());
-	CBrush routeBox(RouteBox.ToCOLORREF());
-
+	
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
 	// Create base window rectangle
-	CRect windowRect(topLeft.x, topLeft.y, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_DATA);
+	CRect windowRect(topLeft.x, topLeft.y, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_INIT);
 	dc->FillRect(windowRect, &darkerBrush);
 
 	// Create titlebar
@@ -163,16 +161,38 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		offsetY = 6;
 	}
 
-	// TODO: switch to only show if in progress clearance/clearance issued
+	// Create borders
+	dc->DrawEdge(windowRect, EDGE_SUNKEN, BF_RECT);
+	InflateRect(windowRect, 1, 1);
+	dc->Draw3dRect(windowRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(windowRect, 1, 1);
+	dc->DrawEdge(windowRect, EDGE_RAISED, BF_RECT);
+
+	// Cleanup
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
+	
+
+	// Restore device context
+	dc->RestoreDC(iDC);
+}
+
+void CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft) {
+	// Brushes
+	CBrush routeBox(RouteBox.ToCOLORREF());
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
+	CBrush lightBackground(LightBackground.ToCOLORREF());
+
 	// Create data bar
-	CRect dataBarRect(windowRect.left, infoBarRect.bottom + 1, windowRect.left + WINSZ_FLTPLN_WIDTH, infoBarRect.bottom + 160);
+	CRect dataBarRect(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + 160);
 	dc->FillRect(dataBarRect, &darkerBrush);
 	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(dataBarRect, -1, -1);
 	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Show callsign in coloured box
-	CRect idBox(windowRect.left + 6, dataBarRect.top + 8, windowRect.left + 150, dataBarRect.top + 36);
+	CRect idBox(topLeft.x + 6, dataBarRect.top + 8, topLeft.x + 150, dataBarRect.top + 36);
 	dc->FillRect(idBox, &lightBackground);
 	FontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
@@ -180,7 +200,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
 
 	// Create the route box
-	CRect rteBox(windowRect.left + 5, idBox.bottom + 8, windowRect.right + - 100, idBox.bottom + 84);
+	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, topLeft.x + -100, idBox.bottom + 84);
 	dc->FillRect(rteBox, &routeBox);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(rteBox, -1, -1);
@@ -190,9 +210,9 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 
 	// Make inputs
 	bool txtValid = true;
-	counter = TXT_SPD;
-	offsetX = idBox.Width() + 10;
-	offsetY = 11;
+	int counter = TXT_SPD;
+	int offsetX = idBox.Width() + 10;
+	int offsetY = 11;
 	while (txtValid) {
 		// Get index
 		if (counter == TXT_SPD_CPY) break; // Break if end
@@ -208,14 +228,14 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		int textWidth = dc->GetTextExtent(idx.Label.c_str()).cx;
 
 		// Shove the label down
-		if (counter >= TXT_TCK) { 
+		if (counter >= TXT_TCK) {
 			offsetY += textHeight;
 		}
 		// Draw the text
 		dc->TextOutA(dataBarRect.left + offsetX, dataBarRect.top + offsetY + 2, idx.Label.c_str());
 
 		// So that track and state get shoved down a row
-		if (counter < TXT_TCK ) { 
+		if (counter < TXT_TCK) {
 			offsetX += textWidth + 5;
 		}
 		else {
@@ -223,7 +243,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		}
 		bool editable = false;
 		if (idx.State == CInputState::ACTIVE) editable = true;
-		CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, & textInputs.at(counter));
+		CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, &textInputs.at(counter));
 
 		// Offset
 		if (counter == TXT_DEST) { // Need a bit more space
@@ -238,21 +258,48 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		counter++;
 	}
 
-	// Create borders
-	dc->DrawEdge(windowRect, EDGE_SUNKEN, BF_RECT);
-	InflateRect(windowRect, 1, 1);
-	dc->Draw3dRect(windowRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
-	InflateRect(windowRect, 1, 1);
-	dc->DrawEdge(windowRect, EDGE_RAISED, BF_RECT);
-
 	// Cleanup
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
 	DeleteObject(lightBackground);
 	DeleteObject(routeBox);
+}
 
-	// Restore device context
-	dc->RestoreDC(iDC);
+void CFlightPlanWindow::RenderCopyPanel(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
+{
+
+}
+
+void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
+}
+
+void CFlightPlanWindow::RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+
 }
 
 void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAcFPStatus status) {
@@ -299,7 +346,7 @@ void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAcFPStatus status) {
 	// TEMPORARY FOR BETA TESTING
 	int mach = fp.GetControllerAssignedData().GetAssignedMach();
 	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, fp.GetControllerAssignedData().GetAssignedMach());
-	textInputs[TXT_LEVEL].Content =  to_string(fp.GetControllerAssignedData().GetClearedAltitude());
+	textInputs[TXT_LEVEL].Content = to_string(fp.GetControllerAssignedData().GetClearedAltitude());
 	textInputs[TXT_DEST].Content = data.GetDestination();
 }
 
