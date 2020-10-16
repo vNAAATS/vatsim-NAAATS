@@ -18,14 +18,14 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void MakeWindowItems();
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		CRect RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, bool isCopy);
-		void RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen);
+		void RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT bottomLeft);
+		void RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 
 		bool IsButtonPressed(int id);
 

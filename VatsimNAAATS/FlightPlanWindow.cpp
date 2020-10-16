@@ -110,12 +110,19 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	dc->SetTextAlign(TA_CENTER);
 
 	// Get window size
-	int size;
+	int size = WINSZ_FLTPLN_HEIGHT_INIT;
+	int message = 0;
 	if (IsData) {
-		size = WINSZ_FLTPLN_HEIGHT_DATA;
+		size += WINSZ_FLTPLN_HEIGHT_DATA;
 	}
 	if (IsCopyMade) {
-		size = WINSZ_FLTPLN_HEIGHT_CPY;
+		size += WINSZ_FLTPLN_HEIGHT_CPY;
+	}
+	if (IsConflictWindow || IsClearanceOpen) {
+		size += WINSZ_FLTPLN_HEIGHT_XTRA;
+	}
+	if (IsMessageOpen) {
+		message = WINSZ_FLTPLN_HEIGHT_MSG;
 	}
 	// Create base window rectangle
 	CRect windowRect(topLeft.x, topLeft.y, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + size);
@@ -191,20 +198,46 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	}
 
 	/// PANELS & WINDOWS
+	if (IsMessageOpen) {
+		RenderMessageWindow(dc, g, screen, { windowRect.left, windowRect.top });
+	}
 	// Data panel
 	CRect dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
 
 	// Copy panel
+	CRect copyPanel;
 	if (IsCopyMade) {
-		RenderDataPanel(dc, g, screen, { windowRect.left, dataPanel.bottom }, true);
+		copyPanel = RenderDataPanel(dc, g, screen, { windowRect.left, dataPanel.bottom }, true);
+	}
+
+	// Conflict panel
+	if (IsConflictWindow && !IsCopyMade) { // No copy
+		RenderConflictWindow(dc, g, screen, { windowRect.left, dataPanel.bottom });
+	}
+	else if (IsConflictWindow && IsCopyMade) { // Copy made
+		RenderConflictWindow(dc, g, screen, { windowRect.left, copyPanel.bottom });
+	}
+
+	// Clearance panel
+	if (IsClearanceOpen && !IsCopyMade) { // No copy
+		RenderClearanceWindow(dc, g, screen, { windowRect.left, dataPanel.bottom });
+	}
+	else if (IsClearanceOpen && IsCopyMade) { // Copy made
+		RenderClearanceWindow(dc, g, screen, { windowRect.left, copyPanel.bottom });
+	}
+
+	// Coordination window
+	if (IsCoordOpen) {
+		RenderCoordModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
 	}
 
 	// Create borders
-	dc->DrawEdge(windowRect, EDGE_SUNKEN, BF_RECT);
-	InflateRect(windowRect, 1, 1);
-	dc->Draw3dRect(windowRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
-	InflateRect(windowRect, 1, 1);
-	dc->DrawEdge(windowRect, EDGE_RAISED, BF_RECT);
+	CRect borderRect(windowRect.left, windowRect.top - message, windowRect.right, windowRect.bottom);
+	dc->DrawEdge(borderRect, EDGE_SUNKEN, BF_RECT);
+	InflateRect(borderRect, 1, 1);
+	dc->Draw3dRect(borderRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(borderRect, 1, 1);
+	dc->DrawEdge(borderRect, EDGE_RAISED, BF_RECT);
 
 	// Cleanup
 	DeleteObject(darkerBrush);
@@ -216,8 +249,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 }
 
 CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, bool isCopy) {
-	// TODO: copy
-
 	// Brushes
 	CBrush routeBox(RouteBox.ToCOLORREF());
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
@@ -225,7 +256,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	CBrush lightBackground(LightBackground.ToCOLORREF());
 
 	// Create data bar
-	CRect dataBarRect(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + 165);
+	CRect dataBarRect(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_DATA + 2);
 	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(dataBarRect, -1, -1);
 	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
@@ -317,37 +348,262 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	return dataBarRect;
 }
 
-void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
-
-}
-
-void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
+void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
 {
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
+
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create conflict panel
+	CRect conflictPanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_XTRA + 2);
+	dc->Draw3dRect(conflictPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(conflictPanel, -1, -1);
+	dc->Draw3dRect(conflictPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(conflictPanel.left, conflictPanel.top, conflictPanel.left + WINSZ_FLTPLN_WIDTH, conflictPanel.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Conflict Window") + string(" - ")).c_str())); // TODO: show callsign properly
+	
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 
 }
 
-void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT bottomLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create message panel
+	CRect messagePanel(bottomLeft.x, bottomLeft.y - WINSZ_FLTPLN_HEIGHT_MSG - 2, bottomLeft.x + WINSZ_FLTPLN_WIDTH, bottomLeft.y);
+	dc->FillRect(messagePanel, &darkerBrush);
+	dc->Draw3dRect(messagePanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(messagePanel, -1, -1);
+	dc->Draw3dRect(messagePanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(messagePanel.left, messagePanel.top, messagePanel.left + WINSZ_FLTPLN_WIDTH, messagePanel.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("FROM: ").c_str()); // TODO: show who from properly
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create clearance panel
+	CRect clearancePanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_XTRA + 2);
+	dc->Draw3dRect(clearancePanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(clearancePanel, -1, -1);
+	dc->Draw3dRect(clearancePanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(clearancePanel.left, clearancePanel.top, clearancePanel.left + WINSZ_FLTPLN_WIDTH, clearancePanel.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Clearance") + string(" - ")).c_str())); // TODO: show callsign properly
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create manual entry panel
+	CRect manEntryPanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_XTRA + 2);
+	dc->Draw3dRect(manEntryPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(manEntryPanel, -1, -1);
+	dc->Draw3dRect(manEntryPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(manEntryPanel.left, manEntryPanel.top, manEntryPanel.left + WINSZ_FLTPLN_WIDTH, manEntryPanel.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Manual Entry") + string(" - ")).c_str())); // TODO: show callsign properly
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft) 
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create coordination window
+	CRect coordWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_COORD);
+	dc->FillRect(coordWindow, &darkerBrush);
+	dc->Draw3dRect(coordWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(coordWindow, -1, -1);
+	dc->Draw3dRect(coordWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(coordWindow.left, coordWindow.top, coordWindow.left + WINSZ_FLTPLN_WIDTH_MDL, coordWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Co-ordination Window - ").c_str())); // TODO: show callsign properly
+
+	// Create borders
+	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
+	InflateRect(coordWindow, 1, 1);
+	dc->Draw3dRect(coordWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(coordWindow, 1, 1);
+	dc->DrawEdge(coordWindow, EDGE_RAISED, BF_RECT);
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create history window
+	CRect histWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_HIST);
+	dc->FillRect(histWindow, &darkerBrush);
+	dc->Draw3dRect(histWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(histWindow, -1, -1);
+	dc->Draw3dRect(histWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(histWindow.left, histWindow.top, histWindow.left + WINSZ_FLTPLN_WIDTH_MDL, histWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("History - ").c_str())); // TODO: show callsign properly
+
+	// Create borders
+	dc->DrawEdge(histWindow, EDGE_SUNKEN, BF_RECT);
+	InflateRect(histWindow, 1, 1);
+	dc->Draw3dRect(histWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(histWindow, 1, 1);
+	dc->DrawEdge(histWindow, EDGE_RAISED, BF_RECT);
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create restrictions window
+	CRect atcrWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_ATCR);
+	dc->FillRect(atcrWindow, &darkerBrush);
+	dc->Draw3dRect(atcrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(atcrWindow, -1, -1);
+	dc->Draw3dRect(atcrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(atcrWindow.left, atcrWindow.top, atcrWindow.left + WINSZ_FLTPLN_WIDTH_MDL, atcrWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - ").c_str())); // TODO: show callsign properly
+
+	// Create borders
+	dc->DrawEdge(atcrWindow, EDGE_SUNKEN, BF_RECT);
+	InflateRect(atcrWindow, 1, 1);
+	dc->Draw3dRect(atcrWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(atcrWindow, 1, 1);
+	dc->DrawEdge(atcrWindow, EDGE_RAISED, BF_RECT);
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
+}
+
+void CFlightPlanWindow::RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
+
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create transfer window
+	CRect tsfrWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_TSFR);
+	dc->FillRect(tsfrWindow, &darkerBrush);
+	dc->Draw3dRect(tsfrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(tsfrWindow, -1, -1);
+	dc->Draw3dRect(tsfrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(tsfrWindow.left, tsfrWindow.top, tsfrWindow.left + WINSZ_FLTPLN_WIDTH_MDL, tsfrWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Transfer - ").c_str())); // TODO: show callsign properly
+
+	// Create borders
+	dc->DrawEdge(tsfrWindow, EDGE_SUNKEN, BF_RECT);
+	InflateRect(tsfrWindow, 1, 1);
+	dc->Draw3dRect(tsfrWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(tsfrWindow, 1, 1);
+	dc->DrawEdge(tsfrWindow, EDGE_RAISED, BF_RECT);
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
 }
 
 bool CFlightPlanWindow::IsButtonPressed(int id) {
@@ -468,8 +724,17 @@ void CFlightPlanWindow::ButtonUp(int id) {
 	if (id == BTN_COPY) { // Make copy
 		IsCopyMade = true;
 	}
-	if (id == BTN_DELETE) {
+	if (id == BTN_DELETE) { // Delete copy
 		IsCopyMade = false; // Delete copy (TODO: put more in here to actually delete copies)
+	}
+	if (id == BTN_PROBE) {
+		IsConflictWindow = !IsConflictWindow ? true : false;
+	}
+	if (id == BTN_MSG) {
+		IsMessageOpen = !IsMessageOpen ? true : false;
+	}
+	if (id == BTN_COORD) {
+		IsCoordOpen = !IsCoordOpen ? true : false;
 	}
 
 	// Finally unpress the button if not disabled (and id is actually a button)
