@@ -198,6 +198,14 @@ void CTrackInfoWindow::ButtonPress(int id) {
 
 }
 
+void CTrackInfoWindow::ButtonUnpress(int id) {
+
+}
+
+void CTrackInfoWindow::SetButtonState(int id, CInputState state) {
+
+}
+
 void CTrackInfoWindow::Scroll(CRect area, POINT mousePtr) {
 	// Current bar position
 	if (currentScrollPos.left == 0) { // If initial then just set to the area

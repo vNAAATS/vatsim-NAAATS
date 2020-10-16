@@ -25,9 +25,14 @@ class CBaseWindow
 		virtual void ButtonDown(int id) = 0;
 		virtual void ButtonUp(int id) = 0;
 		virtual void ButtonPress(int id) = 0;
+		virtual void ButtonUnpress(int id) = 0;
+		virtual void SetButtonState(int id, CInputState state) = 0;
+		int ActiveDropDown;
+		int ActiveDropDownHover;
 
 		// Check if an item is a particular type
 		virtual bool IsButton(int id);
+		virtual bool IsDropDown(int id);
 		virtual bool IsTextInput(int id);
 		virtual bool IsCheckBox(int id);
 

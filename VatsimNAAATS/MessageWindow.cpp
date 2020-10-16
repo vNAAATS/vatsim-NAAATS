@@ -161,6 +161,14 @@ void CMessageWindow::ButtonPress(int id) {
 
 }
 
+void CMessageWindow::ButtonUnpress(int id) {
+
+}
+
+void CMessageWindow::SetButtonState(int id, CInputState state) {
+
+}
+
 void CMessageWindow::Scroll(CRect area, POINT mousePtr) {
 	// Current bar position
 	if (currentScrollPos.left == 0) { // If initial then just set to the area

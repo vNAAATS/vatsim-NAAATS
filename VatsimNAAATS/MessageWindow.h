@@ -20,6 +20,8 @@ class CMessageWindow : public CBaseWindow
 		virtual void ButtonDown(int id);
 		virtual void ButtonUp(int id);
 		virtual void ButtonPress(int id);
+		virtual void ButtonUnpress(int id);
+		virtual void SetButtonState(int id, CInputState state);
 
 		// Window methods
 		void Scroll(CRect area, POINT mousePtr);

@@ -23,6 +23,12 @@ bool CBaseWindow::IsButton(int id) {
 	return false; // It doesn't exist
 }
 
+bool CBaseWindow::IsDropDown(int id) {
+	// If exists return true
+	if (dropDowns.find(id) != dropDowns.end()) return true;
+	return false; // It doesn't exist
+}
+
 bool CBaseWindow::IsTextInput(int id) {
 	// If exists return true
 	if (textInputs.find(id) != textInputs.end()) return true;

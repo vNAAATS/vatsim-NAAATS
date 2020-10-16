@@ -4,7 +4,7 @@
 
 using namespace Colours;
 
-void CCommonRenders::RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinButton* obj) {
+CRect CCommonRenders::RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CWinButton* obj, int vtcAlign) {
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -36,13 +36,16 @@ void CCommonRenders::RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft, 
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 	}
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(button.left + (button.Width() / 2), button.top + ((button.bottom - button.top) / 4.5), obj->Label.c_str());
+	dc->TextOutA(button.left + (button.Width() / 2), button.top + (vtcAlign != -1 ? vtcAlign : ((button.bottom - button.top) / 4.5)), obj->Label.c_str());
 
 	// Restore device context
 	dc->RestoreDC(sDC);
 
 	// Add object and return the rectangle
 	screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), button, false, "");
+
+	// Return
+	return button;
 }
 
 void CCommonRenders::RenderTextInput(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CTextInput* obj) {

@@ -506,6 +506,13 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		else {
 			menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
 		}
+	} else if (ObjectType == WIN_FLTPLN) {
+		if (!fltPlnWindow->IsButtonPressed(atoi(sObjectId))) {
+			fltPlnWindow->ButtonPress(atoi(sObjectId));
+		}
+		else {
+			fltPlnWindow->ButtonUnpress(atoi(sObjectId));
+		}
 	}
 
 	// Left button actions

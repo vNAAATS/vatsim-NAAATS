@@ -17,8 +17,7 @@ class CFlightPlanWindow : public CBaseWindow
 		CFlightPlanWindow(POINT topLeft);
 		virtual void MakeWindowItems();
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
-		void RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
-		void RenderCopyPanel(CDC* dc, Graphics* g, CRadarScreen* screen);
+		CRect RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, bool isCopy);
 		void RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		void RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
 		void RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
@@ -28,10 +27,14 @@ class CFlightPlanWindow : public CBaseWindow
 		void RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen);
 		void RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen);
 
+		bool IsButtonPressed(int id);
+
 		// Button clicks
 		virtual void ButtonDown(int id);
 		virtual void ButtonUp(int id);
 		virtual void ButtonPress(int id);
+		virtual void ButtonUnpress(int id);
+		virtual void SetButtonState(int id, CInputState state);
 
 		// Fill data
 		void UpdateData(CRadarScreen* screen, CAcFPStatus status);
@@ -39,15 +42,16 @@ class CFlightPlanWindow : public CBaseWindow
 		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
 
 		// Panel states
-		bool IsCopyOpen;
-		bool IsConflictWindow;
-		bool IsClearanceOpen;
-		bool IsManualEntryOpen;
-		bool IsMessageOpen;
-		bool IsCoordOpen;
-		bool IsHistoryOpen;
-		bool IsATCRestrictionsOpen;
-		bool IsTransferOpen;
+		bool IsData = true;
+		bool IsCopyMade = false;
+		bool IsConflictWindow = false;
+		bool IsClearanceOpen = false;
+		bool IsManualEntryOpen = false;
+		bool IsMessageOpen = false;
+		bool IsCoordOpen = false;
+		bool IsHistoryOpen = false;
+		bool IsATCRestrictionsOpen = false;
+		bool IsTransferOpen = false;
 
 		// Button definitions
 		static const int BTN_CLOSE;
@@ -62,6 +66,12 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_MSG;
 		static const int BTN_HIST;
 		static const int BTN_SAVE;
+		static const int BTN_ATCR;
+		static const int BTN_ATCR_CPY;
+
+		// Dropdown definitions
+		static const int DRP_ATCR;
+		static const int DRP_ATCR_CPY;
 
 		// Text definitions
 		static const int TXT_ACID;
