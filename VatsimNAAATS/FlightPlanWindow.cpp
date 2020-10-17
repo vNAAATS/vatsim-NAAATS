@@ -6,43 +6,6 @@
 
 using namespace Colours;
 
-const int CFlightPlanWindow::BTN_CLOSE = 0;
-const int CFlightPlanWindow::BTN_COPY = 1;
-const int CFlightPlanWindow::BTN_TRNSFR = 2;
-const int CFlightPlanWindow::BTN_COORD = 3;
-const int CFlightPlanWindow::BTN_MANENTRY = 4;
-const int CFlightPlanWindow::BTN_PROBE = 5;
-const int CFlightPlanWindow::BTN_DELETE = 6;
-const int CFlightPlanWindow::BTN_ADS = 7;
-const int CFlightPlanWindow::BTN_READBK = 8;
-const int CFlightPlanWindow::BTN_MSG = 9;
-const int CFlightPlanWindow::BTN_HIST = 10;
-const int CFlightPlanWindow::BTN_SAVE = 11;
-const int CFlightPlanWindow::BTN_ATCR = 12;
-const int CFlightPlanWindow::BTN_ATCR_CPY = 13;
-
-const int CFlightPlanWindow::DRP_ATCR = 200;
-const int CFlightPlanWindow::DRP_ATCR_CPY = 201;
-
-const int CFlightPlanWindow::TXT_ACID = 100;
-const int CFlightPlanWindow::TXT_TYPE = 101;
-const int CFlightPlanWindow::TXT_DEPART = 102;
-const int CFlightPlanWindow::TXT_ETD = 103;
-const int CFlightPlanWindow::TXT_SELCAL = 104;
-const int CFlightPlanWindow::TXT_DATALINK = 105;
-const int CFlightPlanWindow::TXT_COMMS = 106;
-const int CFlightPlanWindow::TXT_OWNERSHIP = 107;
-const int CFlightPlanWindow::TXT_SPD = 108;
-const int CFlightPlanWindow::TXT_LEVEL = 109;
-const int CFlightPlanWindow::TXT_DEST = 110;
-const int CFlightPlanWindow::TXT_TCK = 111;
-const int CFlightPlanWindow::TXT_STATE = 112;
-const int CFlightPlanWindow::TXT_SPD_CPY = 113;
-const int CFlightPlanWindow::TXT_LEVEL_CPY = 114;
-const int CFlightPlanWindow::TXT_DEST_CPY = 115;
-const int CFlightPlanWindow::TXT_TCK_CPY = 116;
-const int CFlightPlanWindow::TXT_STATE_CPY = 117;
-
 CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
 	MakeWindowItems();
@@ -55,10 +18,10 @@ void CFlightPlanWindow::MakeWindowItems() {
 	// Button defaults
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
-	windowButtons[BTN_TRNSFR] = CWinButton(BTN_TRNSFR, WIN_FLTPLN, "Transfer", CInputState::DISABLED);
+	windowButtons[BTN_UNCLEAR] = CWinButton(BTN_UNCLEAR, WIN_FLTPLN, "Unclear", CInputState::DISABLED);
 	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::DISABLED);
 	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::INACTIVE);
-	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::DISABLED);
+	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::DISABLED);
 	windowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::DISABLED);
@@ -67,6 +30,15 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::INACTIVE);
 	windowButtons[BTN_ATCR] = CWinButton(BTN_ATCR, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
 	windowButtons[BTN_ATCR_CPY] = CWinButton(BTN_ATCR_CPY, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_REMOVE] = CWinButton(BTN_MSG_REMOVE, WIN_FLTPLN, "Remove", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_DONE] = CWinButton(BTN_MSG_DONE, WIN_FLTPLN, "Done", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_CLOSE] = CWinButton(BTN_MSG_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_REQUEUE] = CWinButton(BTN_MSG_REQUEUE, WIN_FLTPLN, "Requeue", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_FORWARD] = CWinButton(BTN_MSG_FORWARD, WIN_FLTPLN, "Forward", CInputState::INACTIVE);
+	windowButtons[BTN_CONF_ACCCL] = CWinButton(BTN_CONF_ACCCL, WIN_FLTPLN, "ACCCL", CInputState::INACTIVE);
+	windowButtons[BTN_CONF_MANCL] = CWinButton(BTN_CONF_MANCL, WIN_FLTPLN, "MANCL", CInputState::INACTIVE);
+	windowButtons[BTN_CONF_COORD] = CWinButton(BTN_CONF_COORD, WIN_FLTPLN, "CO-ORD", CInputState::INACTIVE);
+	windowButtons[BTN_CONF_CLOSE] = CWinButton(BTN_CONF_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -112,7 +84,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Get window size
 	int size = WINSZ_FLTPLN_HEIGHT_INIT;
 	int message = 0;
-	if (IsData) {
+	if (IsData || IsManualEntryOpen) {
 		size += WINSZ_FLTPLN_HEIGHT_DATA;
 	}
 	if (IsCopyMade) {
@@ -201,8 +173,12 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	if (IsMessageOpen) {
 		RenderMessageWindow(dc, g, screen, { windowRect.left, windowRect.top });
 	}
+
 	// Data panel
-	CRect dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
+	CRect dataPanel;
+	if (IsData) {
+		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
+	}
 
 	// Copy panel
 	CRect copyPanel;
@@ -224,6 +200,11 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	}
 	else if (IsClearanceOpen && IsCopyMade) { // Copy made
 		RenderClearanceWindow(dc, g, screen, { windowRect.left, copyPanel.bottom });
+	}
+
+	// Manual entry panel
+	if (IsManualEntryOpen) {
+		RenderManEntryWindow(dc, g, screen, { windowRect.left, infoBarRect.bottom });
 	}
 
 	// Coordination window
@@ -369,8 +350,23 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CRect titleRect(conflictPanel.left, conflictPanel.top, conflictPanel.left + WINSZ_FLTPLN_WIDTH, conflictPanel.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Conflict Window") + string(" - ")).c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Conflict Window - ").c_str()); // TODO: show callsign properly
 	
+	// Create content panel
+	CRect content(conflictPanel.left + 2, titleRect.bottom + 2, conflictPanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2.4), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 43);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(content, -1, -1);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Draw buttons (3 buttons)
+	int offsetY = 3;
+	for (int idx = BTN_CONF_ACCCL; idx <= BTN_CONF_CLOSE; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { conflictPanel.right - 82, titleRect.bottom + offsetY }, 75, 30, &windowButtons.at(idx));
+
+		offsetY += 35;
+	}
+
 	// Clean up
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
@@ -400,6 +396,27 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("FROM: ").c_str()); // TODO: show who from properly
+
+	// Create button bar
+	CRect buttonBarRect(messagePanel.left - 1, messagePanel.bottom - 40, messagePanel.left + WINSZ_FLTPLN_WIDTH, messagePanel.bottom);
+	dc->FillRect(buttonBarRect, &darkerBrush);
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
+	InflateRect(buttonBarRect, -1, -1);
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
+
+	// Draw buttons (5 buttons)
+	int offsetX = 5;
+	for (int idx = BTN_MSG_REMOVE; idx <= BTN_MSG_FORWARD; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { buttonBarRect.left + offsetX, buttonBarRect.top + 5 }, 75, 30, &windowButtons.at(idx));
+
+		if (idx + 1 == BTN_MSG_FORWARD) {
+			offsetX += (buttonBarRect.Width() - offsetX - 75) - 7;
+		}
+		else {
+			offsetX += 82;
+		}
+	}
 
 	// Clean up
 	DeleteObject(darkerBrush);
@@ -436,9 +453,107 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 
 void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
 {
-	// Create brushes
+	// Brushes
+	/*CBrush routeBox(RouteBox.ToCOLORREF());
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
+	CBrush lightBackground(LightBackground.ToCOLORREF());
+
+	// Create data bar
+	CRect dataBarRect(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_DATA + 2);
+	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(dataBarRect, -1, -1);
+	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Show callsign in coloured box
+	CRect idBox(topLeft.x + 6, dataBarRect.top + 8, topLeft.x + 150, dataBarRect.top + 36);
+	dc->FillRect(idBox, &lightBackground);
+	FontSelector::SelectATCFont(18, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
+
+	// Create the route box
+	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, dataBarRect.right - 100, idBox.bottom + 84);
+	dc->FillRect(rteBox, &routeBox);
+	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(rteBox, -1, -1);
+	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());*/
+
+	// Draw text in route box
+
+	// Make inputs
+	/*bool txtValid = true;
+	int counter = isCopy ? TXT_SPD_CPY : TXT_SPD;
+	int offsetX = idBox.Width() + 10;
+	int offsetY = 11;
+	while (txtValid) {
+		// Get index
+		if (counter == TXT_SPD_CPY && !isCopy) break; // Break if end
+		if (counter == TXT_STATE_CPY && isCopy) txtValid = false;
+
+		CTextInput idx = textInputs.at(counter);
+
+		// Font
+		FontSelector::SelectNormalFont(15, dc);
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+		dc->SetTextAlign(TA_LEFT);
+
+		// Get text height to set offset and height of input
+		int textHeight = dc->GetTextExtent(idx.Label.c_str()).cy;
+		int textWidth = dc->GetTextExtent(idx.Label.c_str()).cx;
+
+		// Shove the label down
+		if ((counter >= TXT_TCK && !isCopy) || (counter >= TXT_TCK_CPY && isCopy)) {
+			offsetY += textHeight;
+		}
+		// Draw the text
+		dc->TextOutA(dataBarRect.left + offsetX, dataBarRect.top + offsetY + 2, idx.Label.c_str());
+
+		// So that track and state get shoved down a row
+		if ((counter < TXT_TCK && !isCopy) || (counter < TXT_TCK_CPY && isCopy)) {
+			offsetX += textWidth + 5;
+		}
+		else {
+			offsetY += textHeight + 5;
+		}
+
+		bool editable = false;
+		if (idx.State == CInputState::ACTIVE) editable = true;
+		CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, &textInputs.at(counter));
+
+		// Offset
+		if (counter == TXT_DEST || counter == TXT_DEST_CPY) { // Need a bit more space
+			offsetX += idx.Width + 10;
+		}
+		else {
+			offsetX += idx.Width + 5;
+		}
+
+		if (counter == TXT_TCK || counter == TXT_TCK_CPY) {
+			offsetY -= textHeight + 20;
+		}
+		counter++;
+	}*/
+	// TODO: Scroll bar here
+
+	// Render drop down and restrictions button 
+	/*int restrictBtnType = isCopy ? BTN_ATCR_CPY : BTN_ATCR;
+	int restrictDrpType = isCopy ? DRP_ATCR_CPY : DRP_ATCR;
+	CRect button = CCommonRenders::RenderButton(dc, screen, { rteBox.left, rteBox.bottom + 15 }, 45, 20, &windowButtons.at(restrictBtnType), 1);
+	CCommonRenders::RenderDropDown(dc, g, screen, { button.right + 5, rteBox.bottom + 15 }, WINSZ_FLTPLN_WIDTH - button.Width() - 20, 20, &dropDowns.at(restrictDrpType));
+
+	// Cleanup
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
+	DeleteObject(lightBackground);
+	DeleteObject(routeBox);*/
+
+	// Create brushes
+	CBrush routeBox(RouteBox.ToCOLORREF());
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
+	CBrush lightBackground(LightBackground.ToCOLORREF());
 
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
@@ -446,7 +561,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->SetTextAlign(TA_CENTER);
 
 	// Create manual entry panel
-	CRect manEntryPanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_XTRA + 2);
+	CRect manEntryPanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_DATA + 2);
 	dc->Draw3dRect(manEntryPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(manEntryPanel, -1, -1);
 	dc->Draw3dRect(manEntryPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
@@ -456,6 +571,21 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Manual Entry") + string(" - ")).c_str())); // TODO: show callsign properly
+
+	// Show callsign in coloured box
+	CRect idBox(topLeft.x + 6, titleRect.bottom + 8, topLeft.x + 150, titleRect.bottom + 36);
+	dc->FillRect(idBox, &lightBackground);
+	FontSelector::SelectATCFont(18, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+	dc->TextOutA(idBox.left + (idBox.Width() / 2), manEntryPanel.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
+
+	// Create the route box
+	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, manEntryPanel.right - 100, idBox.bottom + 84);
+	dc->FillRect(rteBox, &routeBox);
+	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(rteBox, -1, -1);
+	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Clean up
 	DeleteObject(darkerBrush);
@@ -570,7 +700,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
 {
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
@@ -581,25 +711,25 @@ void CFlightPlanWindow::RenderTransferModal(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
-	// Create transfer window
-	CRect tsfrWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_TSFR);
-	dc->FillRect(tsfrWindow, &darkerBrush);
-	dc->Draw3dRect(tsfrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	InflateRect(tsfrWindow, -1, -1);
-	dc->Draw3dRect(tsfrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	// Create status exchange and transfer window
+	CRect coordWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_TSFR);
+	dc->FillRect(coordWindow, &darkerBrush);
+	dc->Draw3dRect(coordWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(coordWindow, -1, -1);
+	dc->Draw3dRect(coordWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Create titlebar
-	CRect titleRect(tsfrWindow.left, tsfrWindow.top, tsfrWindow.left + WINSZ_FLTPLN_WIDTH_MDL, tsfrWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	CRect titleRect(coordWindow.left, coordWindow.top, coordWindow.left + WINSZ_FLTPLN_WIDTH_MDL, coordWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Transfer - ").c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Co-ordination - ").c_str())); // TODO: show callsign properly
 
 	// Create borders
-	dc->DrawEdge(tsfrWindow, EDGE_SUNKEN, BF_RECT);
-	InflateRect(tsfrWindow, 1, 1);
-	dc->Draw3dRect(tsfrWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
-	InflateRect(tsfrWindow, 1, 1);
-	dc->DrawEdge(tsfrWindow, EDGE_RAISED, BF_RECT);
+	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
+	InflateRect(coordWindow, 1, 1);
+	dc->Draw3dRect(coordWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(coordWindow, 1, 1);
+	dc->DrawEdge(coordWindow, EDGE_RAISED, BF_RECT);
 
 	// Clean up
 	DeleteObject(darkerBrush);
@@ -743,7 +873,7 @@ void CFlightPlanWindow::ButtonUp(int id) {
 			stateSetManually = true;
 		}
 		if (id == BTN_PROBE) {
-			IsConflictWindow = !IsConflictWindow ? true : false;
+			IsManualEntryOpen = !IsManualEntryOpen ? true : false;
 		}
 		if (id == BTN_MSG) {
 			IsMessageOpen = !IsMessageOpen ? true : false;

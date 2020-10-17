@@ -49,8 +49,6 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	screen->AddScreenObject(WINDOW, "WIN_MSG", windowRect, true, ""); // So that we can't click anything under the flight plan window
 	screen->AddScreenObject(WINDOW, "MSG", titleRect, true, ""); // Movable
 
-	/// Draw buttons
-	
 	// Draw lines
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
