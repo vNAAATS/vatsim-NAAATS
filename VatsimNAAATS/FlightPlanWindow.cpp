@@ -12,6 +12,12 @@ CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 
 	// Close by default
 	IsClosed = true;
+
+	// Subwindow positions TODO: save
+	subWindowPositions[SUBWIN_ATCR] = { 0, 0 };
+	subWindowPositions[SUBWIN_COORD] = { 0, 0 };
+	subWindowPositions[SUBWIN_HIST] = { 0, 0 };
+	subWindowPositions[SUBWIN_XCHANGE] = { 0, 0 };
 };
 
 void CFlightPlanWindow::MakeWindowItems() {
@@ -19,7 +25,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
 	windowButtons[BTN_UNCLEAR] = CWinButton(BTN_UNCLEAR, WIN_FLTPLN, "Unclear", CInputState::DISABLED);
-	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::DISABLED);
+	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
 	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::INACTIVE);
 	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
@@ -45,6 +51,9 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_CLRC_VOICE] = CWinButton(BTN_CLRC_VOICE, WIN_FLTPLN, "Voice", CInputState::INACTIVE);
 	windowButtons[BTN_CLRC_SEND] = CWinButton(BTN_CLRC_SEND, WIN_FLTPLN, "Send", CInputState::INACTIVE);
 	windowButtons[BTN_CLRC_REJECT] = CWinButton(BTN_CLRC_REJECT, WIN_FLTPLN, "Reject", CInputState::INACTIVE);
+	windowButtons[BTN_ATCR_ADD] = CWinButton(BTN_ATCR_ADD, WIN_FLTPLN, "Add", CInputState::INACTIVE);
+	windowButtons[BTN_ATCR_CANCEL] = CWinButton(BTN_ATCR_CANCEL, WIN_FLTPLN, "Cancel", CInputState::INACTIVE);
+	windowButtons[BTN_ATCR_OK] = CWinButton(BTN_ATCR_OK, WIN_FLTPLN, "OK", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -85,6 +94,10 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_CLRC_CPDLC] = CCheckBox(CHK_CLRC_CPDLC, WIN_FLTPLN, "CPDLC", false, CInputState::INACTIVE);
 	checkBoxes[CHK_CLRC_TXT] = CCheckBox(CHK_CLRC_TXT, WIN_FLTPLN, "TXT", false, CInputState::INACTIVE);
 
+}
+
+void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
+	subWindowPositions[id] = { topLeft.x, topLeft.y };
 }
 
 void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -229,11 +242,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		RenderManEntryWindow(dc, g, screen, { windowRect.left, infoBarRect.bottom });
 	}
 
-	// Coordination window
-	if (IsCoordOpen) {
-		RenderCoordModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
-	}
-
 	// Create borders
 	CRect borderRect(windowRect.left, windowRect.top - message, windowRect.right, windowRect.bottom);
 	dc->DrawEdge(borderRect, EDGE_SUNKEN, BF_RECT);
@@ -241,6 +249,16 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	dc->Draw3dRect(borderRect, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
 	InflateRect(borderRect, 1, 1);
 	dc->DrawEdge(borderRect, EDGE_RAISED, BF_RECT);
+
+	// Coordination modal
+	if (IsTransferOpen) {
+		RenderExchangeModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
+	}
+
+	// Restrictions modal
+	if (IsATCRestrictionsOpen) {
+		RenderATCRestrictModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
+	}
 
 	// Cleanup
 	DeleteObject(darkerBrush);
@@ -620,8 +638,13 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
+	// If the position is null then set it
+	if (subWindowPositions[SUBWIN_COORD].x == 0 && subWindowPositions[SUBWIN_COORD].y == 0) {
+		subWindowPositions[SUBWIN_COORD] = { topLeft.x, topLeft.y };
+	}
+
 	// Create coordination window
-	CRect coordWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_COORD);
+	CRect coordWindow(subWindowPositions[SUBWIN_COORD].x, subWindowPositions[SUBWIN_COORD].y + 1, subWindowPositions[SUBWIN_COORD].x + WINSZ_FLTPLN_WIDTH_MDL, subWindowPositions[SUBWIN_COORD].y + WINSZ_FLTPLN_HEIGHT_COORD);
 	dc->FillRect(coordWindow, &darkerBrush);
 	dc->Draw3dRect(coordWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(coordWindow, -1, -1);
@@ -632,6 +655,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Co-ordination Window - ").c_str())); // TODO: show callsign properly
+	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_COORD).c_str(), titleRect, true, "");
 
 	// Create borders
 	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
@@ -692,8 +716,13 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
+	// If the position is null then set it
+	if (subWindowPositions[SUBWIN_ATCR].x == 0 && subWindowPositions[SUBWIN_ATCR].y == 0) {
+		subWindowPositions[SUBWIN_ATCR] = { topLeft.x, topLeft.y };
+	}
+
 	// Create restrictions window
-	CRect atcrWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_ATCR);
+	CRect atcrWindow(subWindowPositions[SUBWIN_ATCR].x, subWindowPositions[SUBWIN_ATCR].y, subWindowPositions[SUBWIN_ATCR].x + WINSZ_FLTPLN_WIDTH_MDL, subWindowPositions[SUBWIN_ATCR].y + WINSZ_FLTPLN_HEIGHT_ATCR);
 	dc->FillRect(atcrWindow, &darkerBrush);
 	dc->Draw3dRect(atcrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(atcrWindow, -1, -1);
@@ -704,6 +733,43 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - ").c_str())); // TODO: show callsign properly
+	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
+
+	// Create the restrictions panel
+	CRect restrictions(atcrWindow.left + 5, titleRect.bottom + 22, atcrWindow.left + (WINSZ_FLTPLN_WIDTH_MDL / 3) * 1, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_ATCR - 63);
+	dc->Draw3dRect(restrictions, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(restrictions, -1, -1);
+	dc->Draw3dRect(restrictions, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Create content panel
+	CRect content(restrictions.right + 7, titleRect.bottom + 22, restrictions.right + ((WINSZ_FLTPLN_WIDTH_MDL / 3) * 1.945), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_ATCR - 63);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(content, -1, -1);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Select font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Draw headers
+	dc->TextOutA(restrictions.left + 3, restrictions.top - dc->GetTextExtent("Restrictions").cy - 2, "Restrictions");
+	dc->TextOutA(content.left + 3, content.top - dc->GetTextExtent("ATC/").cy - 2, "ATC/");
+
+	// Draw buttons (3 buttons)
+	int offsetX = restrictions.left;
+	for (int idx = BTN_ATCR_ADD; idx <= BTN_ATCR_OK; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { offsetX, restrictions.bottom + 5 }, 75, 30, &windowButtons.at(idx));
+
+		if (idx == BTN_ATCR_ADD) {
+			offsetX = content.right - 155;
+		}
+		else {
+			offsetX += 80;
+		}
+	}
+
 
 	// Create borders
 	dc->DrawEdge(atcrWindow, EDGE_SUNKEN, BF_RECT);
@@ -728,8 +794,13 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
-	// Create status exchange and transfer window
-	CRect coordWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_TSFR);
+	// If the position is null then set it
+	if (subWindowPositions[SUBWIN_XCHANGE].x == 0 && subWindowPositions[SUBWIN_XCHANGE].y == 0) {
+		subWindowPositions[SUBWIN_XCHANGE] = { topLeft.x, topLeft.y };
+	}
+
+	// Create coordination window
+	CRect coordWindow(subWindowPositions[SUBWIN_XCHANGE].x, subWindowPositions[SUBWIN_XCHANGE].y + 1, subWindowPositions[SUBWIN_XCHANGE].x + WINSZ_FLTPLN_WIDTH_MDL, subWindowPositions[SUBWIN_XCHANGE].y + WINSZ_FLTPLN_HEIGHT_COORD);
 	dc->FillRect(coordWindow, &darkerBrush);
 	dc->Draw3dRect(coordWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(coordWindow, -1, -1);
@@ -739,7 +810,20 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	CRect titleRect(coordWindow.left, coordWindow.top, coordWindow.left + WINSZ_FLTPLN_WIDTH_MDL, coordWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Co-ordination - ").c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Station Co-ordination - ").c_str())); // TODO: show callsign properly
+	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_XCHANGE).c_str(), titleRect, true, "");
+
+	// Select font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Create content panel
+	CRect content(coordWindow.left + (coordWindow.Width() / 3) * 1.4, titleRect.bottom + 22, coordWindow.right - 8, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 30);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(content, -1, -1);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	dc->TextOutA(content.left + 3, content.top - dc->GetTextExtent("Active Authorities").cy - 2, "Active Authorities");
 
 	// Create borders
 	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
@@ -899,7 +983,10 @@ void CFlightPlanWindow::ButtonUp(int id) {
 			IsMessageOpen = !IsMessageOpen ? true : false;
 		}
 		if (id == BTN_COORD) {
-			IsCoordOpen = !IsCoordOpen ? true : false;
+			IsTransferOpen = !IsTransferOpen ? true : false;
+		}
+		if (id == BTN_ATCR) {
+			IsATCRestrictionsOpen = !IsATCRestrictionsOpen ? true : false;
 		}
 	}
 	

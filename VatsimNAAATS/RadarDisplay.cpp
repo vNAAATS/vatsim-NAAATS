@@ -474,6 +474,13 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		CUtils::TrackWindowY = Area.top;
 	}
 
+	// Move subwindows for flight plan
+	if (ObjectType == WIN_FLTPLN) {
+		if (atoi(sObjectId) >= 400 && atoi(sObjectId) <= 420) {
+			fltPlnWindow->MoveSubWindow(atoi(sObjectId), { Area.left, Area.top });
+		}
+	}
+
 	// Scrolling
 	if (ObjectType == WIN_SCROLLBAR) {
 		if (string(sObjectId) == "TCKINFO") trackWindow->Scroll(Area, mousePointer);

@@ -12,6 +12,8 @@ using namespace EuroScopePlugIn;
 
 class CFlightPlanWindow : public CBaseWindow
 {
+	private: 
+		map<int, POINT> subWindowPositions;
 	public:
 		// Inherited methods
 		CFlightPlanWindow(POINT topLeft);
@@ -26,6 +28,7 @@ class CFlightPlanWindow : public CBaseWindow
 		void RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void MoveSubWindow(int id, POINT topLeft);
 
 		bool IsButtonPressed(int id);
 
@@ -89,6 +92,9 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_CLRC_SEND = 26;
 		static const int BTN_CLRC_VOICE = 27;
 		static const int BTN_CLRC_REJECT = 28;
+		static const int BTN_ATCR_ADD = 29;
+		static const int BTN_ATCR_CANCEL = 30;
+		static const int BTN_ATCR_OK = 31;
 
 		// Dropdown definitions
 		static const int DRP_ATCR = 200;
