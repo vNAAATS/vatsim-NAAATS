@@ -101,6 +101,8 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_XCHANGE_TRANSFER = 35;
 		static const int BTN_XCHANGE_REJECT = 36;
 		static const int BTN_XCHANGE_TRACK = 37;
+		static const int BTN_COORD_CLOSE = 38;
+		static const int BTN_COORD_SENDOK = 39;
 
 		// Dropdown definitions
 		static const int DRP_ATCR = 200;

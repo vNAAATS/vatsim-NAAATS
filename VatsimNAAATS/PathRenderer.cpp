@@ -220,8 +220,7 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 	}
 	else if (type == CPathType::TCKS) { // Draw tracks if the type is tracks
 		// Pen
-		CPen pen(PS_SOLID, 1, TextWhite.ToCOLORREF());
-		dc->SelectObject(pen);
+		Pen pen(TextWhite, 2);
 
 		// Font
 		FontSelector::SelectMonoFont(14, dc);
@@ -239,24 +238,27 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 			}
 
 			// Move to start and draw 
-			POINT firstPointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
-			dc->MoveTo(firstPointCoord);
+			POINT pointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
 			string id = kv.first;
 			if (kv.second.Direction == CTrackDirection::EAST) {
-				dc->TextOutA(firstPointCoord.x - 12, firstPointCoord.y - 5, id.c_str());
+				dc->TextOutA(pointCoord.x - 12, pointCoord.y - 5, id.c_str());
 			}
 			else {
-				dc->TextOutA(firstPointCoord.x + 12, firstPointCoord.y - 5, id.c_str());
+				dc->TextOutA(pointCoord.x + 12, pointCoord.y - 5, id.c_str());
 			}
+
+			// Anti-aliasing
+			g->SetSmoothingMode(SmoothingModeAntiAlias);
 
 			// Draw lines
 			for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
-				dc->LineTo(screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]));
+				g->DrawLine(&pen, pointCoord.x, pointCoord.y, screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).x, (screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).y));
+				pointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]);
 			}
 		}
 
 		// Cleanup
-		DeleteObject(pen);
+		DeleteObject(&pen);
 	}
 
 	// Restore context
