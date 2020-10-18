@@ -95,6 +95,12 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_ATCR_ADD = 29;
 		static const int BTN_ATCR_CANCEL = 30;
 		static const int BTN_ATCR_OK = 31;
+		static const int BTN_XCHANGE_NOTIFY = 32;
+		static const int BTN_XCHANGE_CLOSE = 33;
+		static const int BTN_XCHANGE_ACCEPT = 34;
+		static const int BTN_XCHANGE_TRANSFER = 35;
+		static const int BTN_XCHANGE_REJECT = 36;
+		static const int BTN_XCHANGE_TRACK = 37;
 
 		// Dropdown definitions
 		static const int DRP_ATCR = 200;
@@ -125,6 +131,8 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int TXT_MAN_DEST = 121;
 		static const int TXT_MAN_EP = 122;
 		static const int TXT_MAN_EPTIME = 123;
+		static const int TXT_XCHANGE_CURRENT = 124;
+		static const int TXT_XCHANGE_NEXT = 125;
 
 		// Checkbox definitions
 		static const int CHK_CLRC_ORCA = 300;

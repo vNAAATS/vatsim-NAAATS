@@ -54,6 +54,12 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_ATCR_ADD] = CWinButton(BTN_ATCR_ADD, WIN_FLTPLN, "Add", CInputState::INACTIVE);
 	windowButtons[BTN_ATCR_CANCEL] = CWinButton(BTN_ATCR_CANCEL, WIN_FLTPLN, "Cancel", CInputState::INACTIVE);
 	windowButtons[BTN_ATCR_OK] = CWinButton(BTN_ATCR_OK, WIN_FLTPLN, "OK", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_NOTIFY] = CWinButton(BTN_XCHANGE_NOTIFY, WIN_FLTPLN, "Notify", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_CLOSE] = CWinButton(BTN_XCHANGE_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_ACCEPT] = CWinButton(BTN_XCHANGE_ACCEPT, WIN_FLTPLN, "Accept", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_TRANSFER] = CWinButton(BTN_XCHANGE_TRANSFER, WIN_FLTPLN, "Transfer", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_REJECT] = CWinButton(BTN_XCHANGE_REJECT, WIN_FLTPLN, "Reject", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_TRACK] = CWinButton(BTN_XCHANGE_TRACK, WIN_FLTPLN, "Track", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -80,6 +86,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_DEST] = CTextInput(TXT_MAN_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
 	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
+	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
+	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Next Authority", "NONE", 160, CInputState::INACTIVE);
 
 	/// Dropdown defaults
 	map<string, bool> map;
@@ -819,11 +827,48 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->SetTextAlign(TA_LEFT);
 
 	// Create content panel
-	CRect content(coordWindow.left + (coordWindow.Width() / 3) * 1.4, titleRect.bottom + 22, coordWindow.right - 8, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 30);
+	CRect content(coordWindow.left + (coordWindow.Width() / 3) * 1.48, titleRect.bottom + 22, coordWindow.right - 8, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 30);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	dc->TextOutA(content.left + 3, content.top - dc->GetTextExtent("Active Authorities").cy - 2, "Active Authorities");
+
+	// Draw buttons (6 buttons)
+	int offsetX = coordWindow.left + 5;
+	int offsetY = coordWindow.bottom - 107;
+	for (int idx = BTN_XCHANGE_NOTIFY; idx <= BTN_XCHANGE_TRACK; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, 85, 30, &windowButtons.at(idx));
+
+		// Offsets
+		if (idx == BTN_XCHANGE_CLOSE || idx == BTN_XCHANGE_TRANSFER) {
+			offsetY += 35;
+			offsetX = coordWindow.left + 5;
+		}
+		else {
+			offsetX += 90;
+		}
+	}
+
+	// Draw text (2 boxes)
+	offsetX = coordWindow.left + 5;
+	offsetY = content.top;
+	for (int idx = TXT_XCHANGE_CURRENT; idx <= TXT_XCHANGE_NEXT; idx++) {
+		// Font
+		FontSelector::SelectNormalFont(15, dc);
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+		dc->SetTextAlign(TA_LEFT);
+
+		// Get text height to set offset and height of input
+		int textHeight = dc->GetTextExtent(textInputs.at(idx).Label.c_str()).cy;
+		dc->TextOutA(offsetX, offsetY, textInputs.at(idx).Label.c_str());
+		CCommonRenders::RenderTextInput(dc, screen, { offsetX, offsetY + textHeight + 5 }, textInputs.at(idx).Width, textHeight + 5, &textInputs.at(idx));
+		
+		offsetY += textHeight * 2 + 20;
+	
+	}
+
+
 
 	// Create borders
 	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
