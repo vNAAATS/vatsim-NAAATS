@@ -86,11 +86,45 @@ void CCommonRenders::RenderTextInput(CDC* dc, CRadarScreen* screen, POINT topLef
 		screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), rect, false, "");
 	}
 }
-void CCommonRenders::RenderCheckBox(CDC* dc, CRadarScreen* screen, POINT topLeft, int width, int height, CCheckBox* obj) {
 
+CRect CCommonRenders::RenderCheckBox(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, int height, CCheckBox* obj) {
+	// Save context for later
+	int sDC = dc->SaveDC();
+
+	// Pens
+	Pen white(TextWhite, 2);
+	Pen grey(Grey, 2);
+
+	// Create rectangle
+	CRect rect(topLeft.x, topLeft.y, topLeft.x + height, topLeft.y + height);
+	// Button bevel
+	if (obj->IsChecked) {
+		dc->Draw3dRect(rect, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+		InflateRect(rect, -1, -1);
+		dc->Draw3dRect(rect, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+		dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
+		g->DrawLine(&white, rect.left + 1, rect.top + 1, rect.right - 2, rect.bottom - 2);
+		g->DrawLine(&white, rect.left + 1, rect.bottom - 2, rect.right - 2, rect.top + 1);
+	}
+	else {
+		dc->Draw3dRect(rect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(rect, -1, -1);
+		dc->Draw3dRect(rect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	}
+
+	// Restore device context
+	dc->RestoreDC(sDC);
+
+	// Clean up
+	DeleteObject(&white);
+	DeleteObject(&grey);
+
+	// Add object
+	screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), rect, false, "");
+
+	return rect;
 }
 
-// TODO: checkmark items
 void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, int width, int height, CDropDown* obj) {
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -162,6 +196,6 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	// Clean up
 	DeleteObject(&brush);
 
-	// Add object and return dropdown
+	// Add object
 	screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), button, false, "");
 }

@@ -691,7 +691,9 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 			// Close window if the close button
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
 		}
-		fltPlnWindow->ButtonUp(atoi(sObjectId));
+		if (atoi(sObjectId) < 200) {
+			fltPlnWindow->ButtonUp(atoi(sObjectId));
+		}		
 	}
 
 	// Refresh

@@ -42,7 +42,7 @@ class CFlightPlanWindow : public CBaseWindow
 		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
 
 		// Panel states
-		bool IsData = false;
+		bool IsData = true;
 		bool IsCopyMade = false;
 		bool IsConflictWindow = false;
 		bool IsClearanceOpen = false;
@@ -83,6 +83,12 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_CONF_MANCL = 20;
 		static const int BTN_CONF_COORD = 21;
 		static const int BTN_CONF_CLOSE = 22;
+		static const int BTN_MAN_CANCEL = 23;
+		static const int BTN_MAN_SUBMIT = 24;
+		static const int BTN_CLRC_READBK = 25;		
+		static const int BTN_CLRC_SEND = 26;
+		static const int BTN_CLRC_VOICE = 27;
+		static const int BTN_CLRC_REJECT = 28;
 
 		// Dropdown definitions
 		static const int DRP_ATCR = 200;
@@ -107,5 +113,17 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int TXT_DEST_CPY = 115;
 		static const int TXT_TCK_CPY = 116;
 		static const int TXT_STATE_CPY = 117;
+		static const int TXT_MAN_FL = 118;
+		static const int TXT_MAN_SPD = 119;
+		static const int TXT_MAN_TCK = 120;
+		static const int TXT_MAN_DEST = 121;
+		static const int TXT_MAN_EP = 122;
+		static const int TXT_MAN_EPTIME = 123;
+
+		// Checkbox definitions
+		static const int CHK_CLRC_ORCA = 300;
+		static const int CHK_CLRC_VOX = 301;
+		static const int CHK_CLRC_CPDLC = 302;
+		static const int CHK_CLRC_TXT = 303;
 };
 

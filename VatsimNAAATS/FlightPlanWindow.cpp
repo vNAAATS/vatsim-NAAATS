@@ -39,6 +39,12 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_CONF_MANCL] = CWinButton(BTN_CONF_MANCL, WIN_FLTPLN, "MANCL", CInputState::INACTIVE);
 	windowButtons[BTN_CONF_COORD] = CWinButton(BTN_CONF_COORD, WIN_FLTPLN, "CO-ORD", CInputState::INACTIVE);
 	windowButtons[BTN_CONF_CLOSE] = CWinButton(BTN_CONF_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_MAN_CANCEL] = CWinButton(BTN_MAN_CANCEL, WIN_FLTPLN, "Cancel", CInputState::INACTIVE);
+	windowButtons[BTN_MAN_SUBMIT] = CWinButton(BTN_MAN_SUBMIT, WIN_FLTPLN, "Submit", CInputState::INACTIVE);
+	windowButtons[BTN_CLRC_READBK] = CWinButton(BTN_CLRC_READBK, WIN_FLTPLN, "ReadBK", CInputState::INACTIVE);
+	windowButtons[BTN_CLRC_VOICE] = CWinButton(BTN_CLRC_VOICE, WIN_FLTPLN, "Voice", CInputState::INACTIVE);
+	windowButtons[BTN_CLRC_SEND] = CWinButton(BTN_CLRC_SEND, WIN_FLTPLN, "Send", CInputState::INACTIVE);
+	windowButtons[BTN_CLRC_REJECT] = CWinButton(BTN_CLRC_REJECT, WIN_FLTPLN, "Reject", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -59,6 +65,12 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_DEST_CPY] = CTextInput(TXT_DEST_CPY, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
 	textInputs[TXT_TCK_CPY] = CTextInput(TXT_TCK_CPY, WIN_FLTPLN, "Tck", "", 25, CInputState::DISABLED);
 	textInputs[TXT_STATE_CPY] = CTextInput(TXT_STATE_CPY, WIN_FLTPLN, "State", "", 30, CInputState::DISABLED);
+	textInputs[TXT_MAN_FL] = CTextInput(TXT_MAN_FL, WIN_FLTPLN, "FL", "", 60, CInputState::ACTIVE);
+	textInputs[TXT_MAN_SPD] = CTextInput(TXT_MAN_SPD, WIN_FLTPLN, "Spd", "", 60, CInputState::ACTIVE);
+	textInputs[TXT_MAN_TCK] = CTextInput(TXT_MAN_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::ACTIVE);
+	textInputs[TXT_MAN_DEST] = CTextInput(TXT_MAN_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
+	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "", 60, CInputState::ACTIVE);
+	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
 
 	/// Dropdown defaults
 	map<string, bool> map;
@@ -66,6 +78,13 @@ void CFlightPlanWindow::MakeWindowItems() {
 	map.clear();
 	dropDowns[DRP_ATCR_CPY] = CDropDown(DRP_ATCR_CPY, WIN_FLTPLN, "", &map, CInputState::INACTIVE, 83);
 	map.clear();
+
+	// Checkbox defaults
+	checkBoxes[CHK_CLRC_VOX] = CCheckBox(CHK_CLRC_VOX, WIN_FLTPLN, "VOX", false, CInputState::INACTIVE);
+	checkBoxes[CHK_CLRC_ORCA] = CCheckBox(CHK_CLRC_ORCA, WIN_FLTPLN, "ORCA", false, CInputState::INACTIVE);
+	checkBoxes[CHK_CLRC_CPDLC] = CCheckBox(CHK_CLRC_CPDLC, WIN_FLTPLN, "CPDLC", false, CInputState::INACTIVE);
+	checkBoxes[CHK_CLRC_TXT] = CCheckBox(CHK_CLRC_TXT, WIN_FLTPLN, "TXT", false, CInputState::INACTIVE);
+
 }
 
 void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -84,8 +103,11 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Get window size
 	int size = WINSZ_FLTPLN_HEIGHT_INIT;
 	int message = 0;
-	if (IsData || IsManualEntryOpen) {
+	if (IsData) {
 		size += WINSZ_FLTPLN_HEIGHT_DATA;
+	}
+	if (IsManualEntryOpen) {
+		size += WINSZ_FLTPLN_HEIGHT_MANETRY;
 	}
 	if (IsCopyMade) {
 		size += WINSZ_FLTPLN_HEIGHT_CPY;
@@ -446,6 +468,58 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Clearance") + string(" - ")).c_str())); // TODO: show callsign properly
 
+	// Create content panel 1
+	CRect contentA(clearancePanel.left + 5, titleRect.bottom + 5, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 90);
+	dc->Draw3dRect(contentA, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(contentA, -1, -1);
+	dc->Draw3dRect(contentA, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Create content panel 2
+	CRect contentB(clearancePanel.left + 5, contentA.bottom + 10, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2), contentA.bottom + 62);
+	dc->Draw3dRect(contentB, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(contentB, -1, -1);
+	dc->Draw3dRect(contentB, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Checkboxes
+	int offsetX = 13;
+	int offsetY = 10;
+	for (int idx = CHK_CLRC_ORCA; idx <= CHK_CLRC_TXT; idx++)
+	{
+		CRect box = CCommonRenders::RenderCheckBox(dc, g, screen, { contentA.right + offsetX, titleRect.bottom + offsetY }, 15, &checkBoxes.at(idx));
+		dc->TextOutA(box.right + 5, box.top - 1, checkBoxes.at(idx).Label.c_str());
+
+		if (idx == CHK_CLRC_ORCA || idx == CHK_CLRC_CPDLC) {
+			offsetY += 31;
+		}
+		else {
+			if (idx != CHK_CLRC_TXT)
+				offsetY = 10;
+			else offsetY += 30;
+			offsetX += 80;
+		}
+	}
+
+	// Buttons (4 buttons)
+	offsetX = 13;
+	for (int idx = BTN_CLRC_READBK; idx <= BTN_CLRC_REJECT; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { contentA.right + offsetX, titleRect.bottom + offsetY }, 75, 30, &windowButtons.at(idx));
+
+		if (idx == BTN_CLRC_READBK || idx == BTN_CLRC_VOICE) {
+			offsetY += 35;
+		}
+		else {
+			offsetY -= 35;
+			offsetX += 80;
+		}
+	}
+
+
 	// Clean up
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
@@ -453,102 +527,6 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 
 void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
 {
-	// Brushes
-	/*CBrush routeBox(RouteBox.ToCOLORREF());
-	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
-	CBrush lighterBrush(WindowBorder.ToCOLORREF());
-	CBrush lightBackground(LightBackground.ToCOLORREF());
-
-	// Create data bar
-	CRect dataBarRect(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_DATA + 2);
-	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-	InflateRect(dataBarRect, -1, -1);
-	dc->Draw3dRect(dataBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
-
-	// Show callsign in coloured box
-	CRect idBox(topLeft.x + 6, dataBarRect.top + 8, topLeft.x + 150, dataBarRect.top + 36);
-	dc->FillRect(idBox, &lightBackground);
-	FontSelector::SelectATCFont(18, dc);
-	dc->SetTextColor(Black.ToCOLORREF());
-	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
-
-	// Create the route box
-	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, dataBarRect.right - 100, idBox.bottom + 84);
-	dc->FillRect(rteBox, &routeBox);
-	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
-	InflateRect(rteBox, -1, -1);
-	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());*/
-
-	// Draw text in route box
-
-	// Make inputs
-	/*bool txtValid = true;
-	int counter = isCopy ? TXT_SPD_CPY : TXT_SPD;
-	int offsetX = idBox.Width() + 10;
-	int offsetY = 11;
-	while (txtValid) {
-		// Get index
-		if (counter == TXT_SPD_CPY && !isCopy) break; // Break if end
-		if (counter == TXT_STATE_CPY && isCopy) txtValid = false;
-
-		CTextInput idx = textInputs.at(counter);
-
-		// Font
-		FontSelector::SelectNormalFont(15, dc);
-		dc->SetTextColor(TextWhite.ToCOLORREF());
-		dc->SetTextAlign(TA_LEFT);
-
-		// Get text height to set offset and height of input
-		int textHeight = dc->GetTextExtent(idx.Label.c_str()).cy;
-		int textWidth = dc->GetTextExtent(idx.Label.c_str()).cx;
-
-		// Shove the label down
-		if ((counter >= TXT_TCK && !isCopy) || (counter >= TXT_TCK_CPY && isCopy)) {
-			offsetY += textHeight;
-		}
-		// Draw the text
-		dc->TextOutA(dataBarRect.left + offsetX, dataBarRect.top + offsetY + 2, idx.Label.c_str());
-
-		// So that track and state get shoved down a row
-		if ((counter < TXT_TCK && !isCopy) || (counter < TXT_TCK_CPY && isCopy)) {
-			offsetX += textWidth + 5;
-		}
-		else {
-			offsetY += textHeight + 5;
-		}
-
-		bool editable = false;
-		if (idx.State == CInputState::ACTIVE) editable = true;
-		CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + offsetX, dataBarRect.top + offsetY }, idx.Width, textHeight + 5, &textInputs.at(counter));
-
-		// Offset
-		if (counter == TXT_DEST || counter == TXT_DEST_CPY) { // Need a bit more space
-			offsetX += idx.Width + 10;
-		}
-		else {
-			offsetX += idx.Width + 5;
-		}
-
-		if (counter == TXT_TCK || counter == TXT_TCK_CPY) {
-			offsetY -= textHeight + 20;
-		}
-		counter++;
-	}*/
-	// TODO: Scroll bar here
-
-	// Render drop down and restrictions button 
-	/*int restrictBtnType = isCopy ? BTN_ATCR_CPY : BTN_ATCR;
-	int restrictDrpType = isCopy ? DRP_ATCR_CPY : DRP_ATCR;
-	CRect button = CCommonRenders::RenderButton(dc, screen, { rteBox.left, rteBox.bottom + 15 }, 45, 20, &windowButtons.at(restrictBtnType), 1);
-	CCommonRenders::RenderDropDown(dc, g, screen, { button.right + 5, rteBox.bottom + 15 }, WINSZ_FLTPLN_WIDTH - button.Width() - 20, 20, &dropDowns.at(restrictDrpType));
-
-	// Cleanup
-	DeleteObject(darkerBrush);
-	DeleteObject(lighterBrush);
-	DeleteObject(lightBackground);
-	DeleteObject(routeBox);*/
-
 	// Create brushes
 	CBrush routeBox(RouteBox.ToCOLORREF());
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
@@ -561,7 +539,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->SetTextAlign(TA_CENTER);
 
 	// Create manual entry panel
-	CRect manEntryPanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_DATA + 2);
+	CRect manEntryPanel(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH, topLeft.y + WINSZ_FLTPLN_HEIGHT_MANETRY + 2);
 	dc->Draw3dRect(manEntryPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(manEntryPanel, -1, -1);
 	dc->Draw3dRect(manEntryPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
@@ -581,11 +559,50 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->TextOutA(idBox.left + (idBox.Width() / 2), manEntryPanel.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
 
 	// Create the route box
-	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, manEntryPanel.right - 100, idBox.bottom + 84);
+	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, manEntryPanel.right - 150, idBox.bottom + 94);
 	dc->FillRect(rteBox, &routeBox);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(rteBox, -1, -1);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// TODO scroll here
+
+	// Draw text (6 text boxes)
+	int offsetX = 5;
+	int offsetY = 12;
+	for (int idx = TXT_MAN_FL; idx <= TXT_MAN_EPTIME; idx++) {
+		// Font
+		FontSelector::SelectNormalFont(15, dc);
+		dc->SetTextColor(TextWhite.ToCOLORREF());
+		dc->SetTextAlign(TA_LEFT);
+
+		// Get text height to set offset and height of input
+		int textHeight = dc->GetTextExtent(textInputs.at(idx).Label.c_str()).cy;
+		int textWidth = dc->GetTextExtent(textInputs.at(idx).Label.c_str()).cx;
+		dc->TextOutA(idBox.right + offsetX, titleRect.bottom + offsetY + 2, textInputs.at(idx).Label.c_str());
+		CCommonRenders::RenderTextInput(dc, screen, { idBox.right + offsetX + textWidth + 5, titleRect.bottom + offsetY }, textInputs.at(idx).Width, textHeight + 5, &textInputs.at(idx));
+		
+		if (idx < TXT_MAN_DEST) {
+			offsetX += textInputs.at(idx).Width + textWidth + 10;
+		}
+		else {
+			if (idx == TXT_MAN_DEST)
+				offsetY += textHeight + 20;
+			else {
+				offsetY += textHeight + 15;
+			}
+		}
+	}
+
+	// Draw buttons (2 buttons)
+	offsetX += 3;
+	offsetY += 8;
+	for (int idx = BTN_MAN_CANCEL; idx <= BTN_MAN_SUBMIT; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { idBox.right + offsetX, titleRect.bottom + offsetY }, 65, 30, &windowButtons.at(idx));
+
+		offsetX += 70;
+	}
 
 	// Clean up
 	DeleteObject(darkerBrush);
@@ -873,7 +890,10 @@ void CFlightPlanWindow::ButtonUp(int id) {
 			stateSetManually = true;
 		}
 		if (id == BTN_PROBE) {
-			IsManualEntryOpen = !IsManualEntryOpen ? true : false;
+			IsConflictWindow = !IsConflictWindow ? true : false;
+		}
+		if (id == BTN_MANENTRY) {
+			IsClearanceOpen = !IsClearanceOpen ? true : false;
 		}
 		if (id == BTN_MSG) {
 			IsMessageOpen = !IsMessageOpen ? true : false;
@@ -905,6 +925,12 @@ void CFlightPlanWindow::ButtonPress(int id) {
 		dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
 		ActiveDropDownHover = 0;
 		dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+	}
+
+	if (id >= 300) {
+		if (checkBoxes.find(id) != checkBoxes.end()) {
+			checkBoxes.at(id).IsChecked = checkBoxes.at(id).IsChecked ? false : true;
+		}
 	}
 
 	// If dropdown then set the state
