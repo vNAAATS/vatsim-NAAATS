@@ -23,17 +23,17 @@ CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 void CFlightPlanWindow::MakeWindowItems() {
 	// Button defaults
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
-	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::INACTIVE);
+	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::DISABLED);
 	windowButtons[BTN_UNCLEAR] = CWinButton(BTN_UNCLEAR, WIN_FLTPLN, "Unclear", CInputState::DISABLED);
 	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
 	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::INACTIVE);
-	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::INACTIVE);
+	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::DISABLED);
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::DISABLED);
 	windowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::DISABLED);
 	windowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::INACTIVE);
 	windowButtons[BTN_HIST] = CWinButton(BTN_HIST, WIN_FLTPLN, "History", CInputState::INACTIVE);
-	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::INACTIVE);
+	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::DISABLED);
 	windowButtons[BTN_ATCR] = CWinButton(BTN_ATCR, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
 	windowButtons[BTN_ATCR_CPY] = CWinButton(BTN_ATCR_CPY, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
 	windowButtons[BTN_MSG_REMOVE] = CWinButton(BTN_MSG_REMOVE, WIN_FLTPLN, "Remove", CInputState::INACTIVE);
@@ -223,6 +223,10 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade)
+			windowButtons[BTN_COPY].State = CInputState::INACTIVE;
+		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE)
+			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 	}
 
 	// Copy panel
@@ -1053,34 +1057,78 @@ void CFlightPlanWindow::ButtonUp(int id) {
 			// Set the states
 			SetButtonState(BTN_DELETE, CInputState::INACTIVE);
 			SetButtonState(BTN_COPY, CInputState::DISABLED);
+			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
 
 			// Flag
 			stateSetManually = true;
 		}
 		if (id == BTN_DELETE) { // Delete copy
 			IsCopyMade = false; // Delete copy (TODO: put more in here to actually delete copies)
+			IsConflictWindow = false;
 			// Set the states
 			SetButtonState(BTN_DELETE, CInputState::DISABLED);
 			SetButtonState(BTN_COPY, CInputState::INACTIVE);
+			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 
 			stateSetManually = true;
 		}
 		if (id == BTN_PROBE) {
-			IsConflictWindow = !IsConflictWindow ? true : false;
+			IsConflictWindow = true;
+			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 		}
-		if (id == BTN_MANENTRY) {
-			IsClearanceOpen = !IsClearanceOpen ? true : false;
+		if (id == BTN_CONF_CLOSE) {
+			IsConflictWindow = false;
+			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
 		}
-		if (id == BTN_MSG) {
+		if (id == BTN_MANENTRY || id == BTN_MAN_CANCEL) {
+			IsManualEntryOpen = !IsManualEntryOpen ? true : false;
+		}
+		if (id == BTN_CONF_ACCCL || id == BTN_CONF_MANCL) {
+			IsConflictWindow = false;
+			SetButtonState(BTN_PROBE, CInputState::DISABLED);
+			SetButtonState(BTN_UNCLEAR, CInputState::INACTIVE);
+			SetButtonState(BTN_DELETE, CInputState::DISABLED);
+			IsClearanceOpen = true;
+		}
+		if (id == BTN_CLRC_REJECT) {
+			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
+			IsClearanceOpen = false;
+		}
+		if (id == BTN_CLRC_SEND) {
+			SetButtonState(BTN_UNCLEAR, CInputState::DISABLED);
+			SetButtonState(BTN_READBK, CInputState::INACTIVE);
+			IsClearanceOpen = false;
+		}
+		if (id == BTN_READBK) {
+			if (windowButtons[BTN_READBK].State == CInputState::ACTIVE) {
+				IsClearanceOpen = false;
+				IsCopyMade = false;
+				SetButtonState(BTN_READBK, CInputState::DISABLED);
+				SetButtonState(BTN_DELETE, CInputState::DISABLED);
+				SetButtonState(BTN_COPY, CInputState::INACTIVE);
+			}
+		}
+		if (id == BTN_UNCLEAR) {
+			if (windowButtons[BTN_UNCLEAR].State == CInputState::ACTIVE) {
+				IsClearanceOpen = false;
+				SetButtonState(BTN_UNCLEAR, CInputState::DISABLED);
+				SetButtonState(BTN_DELETE, CInputState::INACTIVE);
+				SetButtonState(BTN_PROBE, CInputState::INACTIVE);
+			}
+		}
+		if (id == BTN_MSG || id  == BTN_MSG_CLOSE) {
 			IsMessageOpen = !IsMessageOpen ? true : false;
 		}
-		if (id == BTN_COORD) {
+		if (id == BTN_COORD || id == BTN_XCHANGE_CLOSE) {
 			IsTransferOpen = !IsTransferOpen ? true : false;
 		}
-		if (id == BTN_ATCR) {
+		if (id == BTN_COORD_SENDOK) {
+			IsCoordOpen = false;
+		}
+		if (id == BTN_ATCR || id == BTN_ATCR_CANCEL) {
 			IsATCRestrictionsOpen = !IsATCRestrictionsOpen ? true : false;
 		}
-		if (id == BTN_CONF_COORD) {
+		if (id == BTN_CONF_COORD || id == BTN_COORD_CLOSE) {
 			IsCoordOpen = !IsCoordOpen ? true : false;
 		}
 		if (id == BTN_HIST) {
