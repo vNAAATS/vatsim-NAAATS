@@ -116,6 +116,30 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_CLRC_ORCA] = CCheckBox(CHK_CLRC_ORCA, WIN_FLTPLN, "ORCA", false, CInputState::INACTIVE);
 	checkBoxes[CHK_CLRC_CPDLC] = CCheckBox(CHK_CLRC_CPDLC, WIN_FLTPLN, "CPDLC", false, CInputState::INACTIVE);
 	checkBoxes[CHK_CLRC_TXT] = CCheckBox(CHK_CLRC_TXT, WIN_FLTPLN, "TXT", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_CZQOV] = CCheckBox(CHK_COORD_CZQOV, WIN_FLTPLN, "Gander", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_EGGXV] = CCheckBox(CHK_COORD_EGGXV, WIN_FLTPLN, "Shanwick", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_BIRDV] = CCheckBox(CHK_COORD_BIRDV, WIN_FLTPLN, "Reykjavik", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_ZNYV] = CCheckBox(CHK_COORD_ZNYV, WIN_FLTPLN, "New York", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_LPPOV] = CCheckBox(CHK_COORD_LPPOV, WIN_FLTPLN, "Santa Maria", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_EISNV] = CCheckBox(CHK_COORD_EISNV, WIN_FLTPLN, "Shannon", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_CZQXV] = CCheckBox(CHK_COORD_CZQXV, WIN_FLTPLN, "Gander", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_CZULV] = CCheckBox(CHK_COORD_CZULV, WIN_FLTPLN, "Montreal", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_EGPXV] = CCheckBox(CHK_COORD_EGPXV, WIN_FLTPLN, "Scottish", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_LFRRV] = CCheckBox(CHK_COORD_LFRRV, WIN_FLTPLN, "Brest", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_PLANV] = CCheckBox(CHK_COORD_PLANV, WIN_FLTPLN, "Planning", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_ENRV] = CCheckBox(CHK_COORD_ENRV, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_CZQOT] = CCheckBox(CHK_COORD_CZQOT, WIN_FLTPLN, "Gander", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_EGGXT] = CCheckBox(CHK_COORD_EGGXT, WIN_FLTPLN, "Shanwick", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_BIRDT] = CCheckBox(CHK_COORD_BIRDT, WIN_FLTPLN, "Reykjavik", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_ZNYT] = CCheckBox(CHK_COORD_ZNYT, WIN_FLTPLN, "New York", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_LPPOT] = CCheckBox(CHK_COORD_LPPOT, WIN_FLTPLN, "Santa Maria", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_EISNT] = CCheckBox(CHK_COORD_EISNT, WIN_FLTPLN, "Shannon", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_CZQXT] = CCheckBox(CHK_COORD_CZQXT, WIN_FLTPLN, "Gander", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_CZULT] = CCheckBox(CHK_COORD_CZULT, WIN_FLTPLN, "Montreal", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_EGPXT] = CCheckBox(CHK_COORD_EGPXT, WIN_FLTPLN, "Scottish", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_LFRRT] = CCheckBox(CHK_COORD_LFRRT, WIN_FLTPLN, "Brest", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_PLANT] = CCheckBox(CHK_COORD_PLANT, WIN_FLTPLN, "Planning", false, CInputState::INACTIVE);
+	checkBoxes[CHK_COORD_ENRT] = CCheckBox(CHK_COORD_ENRT, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
 }
 
 void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
@@ -731,8 +755,33 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	}
 
 	// Draw checkboxes
-	for (int i = CHK_COORD_CZQOV; i <= CHK_COORD_ENRT; i++) {
+	int offsetY = 0;
+	for (int i = CHK_COORD_CZQOV; i <= CHK_COORD_ENRV; i++) {
+		// Headers
+		CRect rect(stations.left, stations.top + offsetY, stations.right, stations.top + offsetY + dc->GetTextExtent("ABCD").cy);
+		if (i == CHK_COORD_CZQOV) {
+			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
+			dc->TextOutA(stations.left + 35, stations.top + offsetY, "Oceanic");
+			offsetY += 20;
+		}
+		else if (i == CHK_COORD_EISNV) {
+			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
+			dc->TextOutA(stations.left + 35, stations.top + offsetY, "Domestic");
+			offsetY += 20;
+		}
+		else if (i == CHK_COORD_PLANV) {
+			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
+			dc->TextOutA(stations.left + 35, stations.top + offsetY, "Misc");
+			offsetY += 20;
+		}
+		// Checkboxes
+		CRect box = CCommonRenders::RenderCheckBox(dc, g, screen, { stations.left + 5, stations.top + offsetY }, 15, &checkBoxes.at(i));
+		CCommonRenders::RenderCheckBox(dc, g, screen, { stations.right - 48, stations.top + offsetY }, 15, &checkBoxes.at(i + 56)); // The manual one
 
+		// Text
+		dc->TextOutA(box.right + 15, box.top - 1, checkBoxes.at(i).Label.c_str());
+
+		offsetY += 20;
 	}
 
 	// Create borders
