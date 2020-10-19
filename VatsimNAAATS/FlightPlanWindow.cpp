@@ -18,6 +18,18 @@ CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	subWindowPositions[SUBWIN_COORD] = { 0, 0 };
 	subWindowPositions[SUBWIN_HIST] = { 0, 0 };
 	subWindowPositions[SUBWIN_XCHANGE] = { 0, 0 };
+
+	// Restriction selections
+	restrictionSelections[SEL_ATCR_LCHG] = "LCHG";
+	restrictionSelections[SEL_ATCR_MCHG] = "MCHG";
+	restrictionSelections[SEL_ATCR_EPC] = "EPC";
+	restrictionSelections[SEL_ATCR_RERUTE] = "RERUTE";
+	restrictionSelections[SEL_ATCR_RTD] = "RTD";
+	restrictionSelections[SEL_ATCR_UNABLE] = "UNABLE";
+	restrictionSelections[SEL_ATCR_ATA] = "ATA";
+	restrictionSelections[SEL_ATCR_ATB] = "ATB";
+	restrictionSelections[SEL_ATCR_XAT] = "XAT";
+	restrictionSelections[SEL_ATCR_INT] = "INT";
 };
 
 void CFlightPlanWindow::MakeWindowItems() {
@@ -103,7 +115,6 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_CLRC_ORCA] = CCheckBox(CHK_CLRC_ORCA, WIN_FLTPLN, "ORCA", false, CInputState::INACTIVE);
 	checkBoxes[CHK_CLRC_CPDLC] = CCheckBox(CHK_CLRC_CPDLC, WIN_FLTPLN, "CPDLC", false, CInputState::INACTIVE);
 	checkBoxes[CHK_CLRC_TXT] = CCheckBox(CHK_CLRC_TXT, WIN_FLTPLN, "TXT", false, CInputState::INACTIVE);
-
 }
 
 void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
@@ -736,13 +747,18 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// If the position is null then set it
+	if (subWindowPositions[SUBWIN_HIST].x == 0 && subWindowPositions[SUBWIN_HIST].y == 0) {
+		subWindowPositions[SUBWIN_HIST] = { topLeft.x, topLeft.y };
+	}
+
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
 	// Create history window
-	CRect histWindow(topLeft.x, topLeft.y + 1, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_HIST);
+	CRect histWindow(subWindowPositions[SUBWIN_HIST].x, subWindowPositions[SUBWIN_HIST].y + 1, subWindowPositions[SUBWIN_HIST].x + WINSZ_FLTPLN_WIDTH_MDL, subWindowPositions[SUBWIN_HIST].y + WINSZ_FLTPLN_HEIGHT_HIST);
 	dc->FillRect(histWindow, &darkerBrush);
 	dc->Draw3dRect(histWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(histWindow, -1, -1);
@@ -753,6 +769,7 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("History - ").c_str())); // TODO: show callsign properly
+	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_HIST).c_str(), titleRect, true, "");
 
 	// Create borders
 	dc->DrawEdge(histWindow, EDGE_SUNKEN, BF_RECT);
@@ -796,22 +813,41 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - ").c_str())); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
 
+	// Select font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
 	// Create the restrictions panel
 	CRect restrictions(atcrWindow.left + 5, titleRect.bottom + 22, atcrWindow.left + (WINSZ_FLTPLN_WIDTH_MDL / 3) * 1, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_ATCR - 63);
 	dc->Draw3dRect(restrictions, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(restrictions, -1, -1);
 	dc->Draw3dRect(restrictions, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
+	// Add restrictions
+	int offsetY = restrictions.top + 2;
+	for (int i = SEL_ATCR_LCHG; i <= SEL_ATCR_INT; i++) {
+		// Register click
+		CRect textObj(restrictions.left, offsetY, restrictions.right - 1, offsetY + dc->GetTextExtent(restrictionSelections[i].c_str()).cy);
+		if (i == selectedRestriction)
+			dc->FillSolidRect(textObj, ButtonPressed.ToCOLORREF());
+
+		// Text out
+		dc->TextOutA(restrictions.left + 2, offsetY, restrictionSelections[i].c_str());
+		
+		// Screen object
+		screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
+
+		// Offset
+		offsetY += dc->GetTextExtent(restrictionSelections[i].c_str()).cy + 2;
+	}
+
+
 	// Create content panel
 	CRect content(restrictions.right + 7, titleRect.bottom + 22, restrictions.right + ((WINSZ_FLTPLN_WIDTH_MDL / 3) * 1.945), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_ATCR - 63);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
-
-	// Select font
-	FontSelector::SelectNormalFont(15, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
-	dc->SetTextAlign(TA_LEFT);
 
 	// Draw headers
 	dc->TextOutA(restrictions.left + 3, restrictions.top - dc->GetTextExtent("Restrictions").cy - 2, "Restrictions");
@@ -945,10 +981,10 @@ bool CFlightPlanWindow::IsButtonPressed(int id) {
 	return false; // Not pressed
 }
 
-void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAcFPStatus status) {
+void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAircraftFlightPlan plan) {
 	// Get the data
-	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(status.Callsign.c_str());
-	CFlightPlanData data = screen->GetPlugIn()->FlightPlanSelect(status.Callsign.c_str()).GetFlightPlanData();
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(plan.Callsign.c_str());
+	CFlightPlanData data = screen->GetPlugIn()->FlightPlanSelect(plan.Callsign.c_str()).GetFlightPlanData();
 
 	// Get SELCAL code
 	string remarks = data.GetRemarks();
@@ -1007,7 +1043,7 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 		}
 		if (isNumber && (stoi(str) > 0 && stoi(str) < 250)) {
 			bool status = fp.GetControllerAssignedData().SetAssignedMach(stoi(str));
-			UpdateData(screen, CAcFPStatus(textInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
+			UpdateData(screen, CAircraftFlightPlan(textInputs[TXT_ACID].Content));
 			return 0;
 		}
 		return 1;
@@ -1019,7 +1055,7 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 		}
 		if (isNumber && (stoi(str) > 0 && stoi(str) < 700)) {
 			bool status = fp.GetControllerAssignedData().SetClearedAltitude(stoi(str));
-			UpdateData(screen, CAcFPStatus(textInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
+			UpdateData(screen, CAircraftFlightPlan(textInputs[TXT_ACID].Content));
 			return 0;
 		}
 		return 1;
@@ -1033,7 +1069,7 @@ int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string st
 			if (isAlpha) {
 				bool status = fp.GetFlightPlanData().SetDestination(str.c_str());
 				fp.GetFlightPlanData().AmendFlightPlan();
-				UpdateData(screen, CAcFPStatus(textInputs[TXT_ACID].Content, CFlightPlanMode::INIT));
+				UpdateData(screen, CAircraftFlightPlan(textInputs[TXT_ACID].Content));
 				return 0;
 			}
 		}
@@ -1050,7 +1086,7 @@ void CFlightPlanWindow::ButtonUp(int id) {
 
 	// Failsafe
 	bool stateSetManually = false; // Flag to show whether we've set the state manually
-	if (windowButtons.find(id)->second.State != CInputState::DISABLED) {
+	if (IsButton(id) && windowButtons.find(id)->second.State != CInputState::DISABLED) {
 		if (id == BTN_COPY) { // Make copy
 			IsCopyMade = true;
 
@@ -1085,6 +1121,7 @@ void CFlightPlanWindow::ButtonUp(int id) {
 		}
 		if (id == BTN_CONF_ACCCL || id == BTN_CONF_MANCL) {
 			IsConflictWindow = false;
+			IsCoordOpen = false;
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 			SetButtonState(BTN_UNCLEAR, CInputState::INACTIVE);
 			SetButtonState(BTN_DELETE, CInputState::DISABLED);
@@ -1160,9 +1197,17 @@ void CFlightPlanWindow::ButtonPress(int id) {
 		dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
 	}
 
+	// Check if checkbox
 	if (id >= 300) {
 		if (checkBoxes.find(id) != checkBoxes.end()) {
 			checkBoxes.at(id).IsChecked = checkBoxes.at(id).IsChecked ? false : true;
+		}
+	}
+
+	// Check if selection
+	if (id >= 400) {
+		if (restrictionSelections.find(id) != restrictionSelections.end()) {
+			selectedRestriction = id;
 		}
 	}
 

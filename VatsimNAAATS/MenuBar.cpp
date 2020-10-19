@@ -12,7 +12,7 @@ using namespace Colours;
 CMenuBar::CMenuBar() {
 	// Button defaults
 	buttons[BTN_SETUP] = CWinButton(BTN_SETUP, MENBAR, "Setup", CInputState::DISABLED, 46);
-	buttons[BTN_NOTEPAD] = CWinButton(BTN_NOTEPAD, MENBAR, "NotePad", CInputState::DISABLED, 78);
+	buttons[BTN_NOTEPAD] = CWinButton(BTN_NOTEPAD, MENBAR, "NotePad", CInputState::INACTIVE, 78);
 	buttons[BTN_ADSC] = CWinButton(BTN_ADSC, MENBAR, "Contracts", CInputState::DISABLED, 73);
 	buttons[BTN_TCKINFO] = CWinButton(BTN_TCKINFO, MENBAR, "Track Info", CInputState::INACTIVE, 78);
 	buttons[BTN_MISC] = CWinButton(BTN_MISC, MENBAR, "Misc", CInputState::DISABLED, 41);

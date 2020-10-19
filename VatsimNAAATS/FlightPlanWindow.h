@@ -13,7 +13,11 @@ using namespace EuroScopePlugIn;
 class CFlightPlanWindow : public CBaseWindow
 {
 	private: 
+		CAircraftFlightPlan primedPlan;
+		CAircraftFlightPlan copiedPlan;
 		map<int, POINT> subWindowPositions;
+		map<int, string> restrictionSelections;
+		int selectedRestriction = 0;
 	public:
 		// Inherited methods
 		CFlightPlanWindow(POINT topLeft);
@@ -40,7 +44,7 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void SetButtonState(int id, CInputState state);
 
 		// Fill data
-		void UpdateData(CRadarScreen* screen, CAcFPStatus status);
+		void UpdateData(CRadarScreen* screen, CAircraftFlightPlan status);
 		void OnCloseFlightPlanWindow();
 		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
 
@@ -141,5 +145,17 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int CHK_CLRC_VOX = 301;
 		static const int CHK_CLRC_CPDLC = 302;
 		static const int CHK_CLRC_TXT = 303;
+
+		// Selection definitions
+		static const int SEL_ATCR_LCHG = 400;
+		static const int SEL_ATCR_MCHG = 401;
+		static const int SEL_ATCR_EPC = 402;
+		static const int SEL_ATCR_RERUTE = 403;
+		static const int SEL_ATCR_RTD = 404;
+		static const int SEL_ATCR_UNABLE = 405;
+		static const int SEL_ATCR_ATA = 406;
+		static const int SEL_ATCR_ATB = 407;
+		static const int SEL_ATCR_XAT = 408;
+		static const int SEL_ATCR_INT = 409;
 };
 

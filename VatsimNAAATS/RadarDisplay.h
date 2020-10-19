@@ -6,6 +6,7 @@
 #include "Structures.h"
 #include "OtherList.h"
 #include "MenuBar.h"
+#include "NotePad.h"
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
 #include "FlightPlanWindow.h"
@@ -61,5 +62,6 @@ class CRadarDisplay : public CRadarScreen
 		CTrackInfoWindow* trackWindow = nullptr;
 		CFlightPlanWindow* fltPlnWindow = nullptr;
 		CMessageWindow* msgWindow = nullptr;
+		CNotePad* npWindow = nullptr;
 };
 

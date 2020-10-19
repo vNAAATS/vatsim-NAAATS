@@ -75,6 +75,9 @@
     <ClCompile Include="MenuBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NotePad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VatsimNAAATS.def">
@@ -161,6 +164,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MenuBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NotePad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

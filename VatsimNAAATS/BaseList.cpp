@@ -3,17 +3,17 @@
 
 CBaseList::CBaseList(POINT topLeft) {
 	// Set top left
-	topLeft = topLeft;
+	topleft = topLeft;
 }
 
 POINT CBaseList::GetTopLeft() {
-	return topLeft;
+	return topleft;
 }
 
 void CBaseList::MoveList(CRect area) {
-	topLeft = { area.left, area.top };
+	topleft = { area.left, area.top };
 }
 
-void CBaseList::MoveList(POINT topleft) {
-	topLeft = { topleft.x, topleft.y };
+void CBaseList::MoveList(POINT topLeft) {
+	topleft = { topLeft.x, topLeft.y };
 }

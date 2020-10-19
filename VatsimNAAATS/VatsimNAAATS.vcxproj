@@ -202,6 +202,7 @@
     <ClCompile Include="FlightPlanWindow.cpp" />
     <ClCompile Include="InboundList.cpp" />
     <ClCompile Include="NAAATS.cpp" />
+    <ClCompile Include="NotePad.cpp" />
     <ClCompile Include="OtherList.cpp" />
     <ClCompile Include="Overlays.cpp" />
     <ClCompile Include="PathRenderer.cpp" />
@@ -231,6 +232,7 @@
     <ClInclude Include="MessageWindow.h" />
     <ClInclude Include="NAAATS.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="NotePad.h" />
     <ClInclude Include="OtherList.h" />
     <ClInclude Include="Overlays.h" />
     <ClInclude Include="PathRenderer.h" />

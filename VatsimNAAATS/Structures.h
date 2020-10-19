@@ -183,12 +183,56 @@ struct CDropDown {
 	int Width;
 };
 
-struct CAcFPStatus {
-	CAcFPStatus() {}; // Default constructor
-	CAcFPStatus(string cs, CFlightPlanMode mode) {
+struct CAircraftFlightPlan {
+	CAircraftFlightPlan() {}; // Default constructor
+	CAircraftFlightPlan(string cs) {
 		Callsign = cs;
-		Mode = mode;
 	}
 	string Callsign;
-	CFlightPlanMode Mode;
 };
+
+/*struct CAircraftFlightPlan {
+	CAircraftFlightPlan() {}; // Default constructor
+	CAircraftFlightPlan(string cs) {
+		
+	}
+	string Callsign;
+	string Type;
+	string Depart;
+	string Dest;
+	string Etd;
+	string SELCAL;
+	string DLStatus;
+	string Communications;
+	string Sector;
+	string FlightLevel;
+	string Mach;
+	string Track;
+	string State;
+	CMessage CurrentMessage;
+	vector<string> FlightHistory;
+	vector<CRoutePosition> Route;
+	vector<CFlightRestriction> Restrictions;
+	bool IsCleared;
+};
+
+struct CMessage {
+	CMessage() {}; // Default constructor
+	CMessage() {
+
+	}
+	string To;
+	string From;
+	string MessageRaw;
+	string MessageHuman;
+	CMessageType Type;
+};
+
+struct CFlightRestriction {
+	CFlightRestriction() {}; // Default constructor
+	CFlightRestriction() {
+		
+	}
+	int Type;
+	string Content;
+};*/

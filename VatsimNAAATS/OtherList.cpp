@@ -17,7 +17,7 @@ void COtherList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 	int sDC = dc->SaveDC();
 
 	// Make rectangle
-	Rect rectangle(topLeft.x, topLeft.y, 100, 500);
+	Rect rectangle(topleft.x, topleft.y, 100, 500);
 
 	/// Make "Others" text
 	// Font
@@ -63,6 +63,6 @@ void COtherList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 
 
 	// Get object area and add object to screen
-	CRect area(topLeft.x, topLeft.y, topLeft.x + 110, topLeft.y + 14);
+	CRect area(topleft.x, topleft.y, topleft.x + 110, topleft.y + 14);
 	screen->AddScreenObject(LIST_OTHERS, "", area, true, "");
 }

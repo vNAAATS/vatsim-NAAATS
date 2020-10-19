@@ -156,6 +156,8 @@ const int WINSZ_FLTPLN_HEIGHT_HIST = 260;
 const int WINSZ_FLTPLN_HEIGHT_TSFR = 260;
 const int WINSZ_MSG_WIDTH = 550;
 const int WINSZ_MSG_HEIGHT = 300;
+const int WINSZ_NP_WIDTH = 250;
+const int WINSZ_NP_HEIGHT = 300;
 
 // Conflict
 const int SEPTOOL_TIME = 2700; // 45 minutes

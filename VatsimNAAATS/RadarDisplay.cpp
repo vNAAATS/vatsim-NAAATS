@@ -25,6 +25,7 @@ CRadarDisplay::CRadarDisplay()
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
 	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 }); // TODO: settings save
 	msgWindow = new CMessageWindow({ 500, 500 }); // TODO: settings save
+	npWindow = new CNotePad({ 300, 300 }, { 800, 200 }); // TODO: save settings
 	menuBar = new CMenuBar();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
@@ -413,6 +414,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
 
+		// Draw flight plan window if button pressed
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_NOTEPAD)) {
+			npWindow->RenderWindow(&dc, &g, this);
+		}
+
 		// Finally, reset the clocks if time has been exceeded
 		if (fiveSecT >= 5) {
 			fiveSecondTimer = clock();
@@ -469,6 +475,9 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 		if (string(sObjectId) == "MSG")
 			msgWindow->MoveWindow(Area);
+
+		if (string(sObjectId) == "NOTEPAD")
+			npWindow->MoveWindow(Area);
 
 		CUtils::TrackWindowX = Area.left;
 		CUtils::TrackWindowY = Area.top;
@@ -532,7 +541,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
-				fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+				fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
 			}			
 
 			// Probing tools
@@ -554,7 +563,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// Flight plan button
 		if (atoi(sObjectId) == CMenuBar::BTN_FLIGHTPLAN) {
-			fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+			fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
 		}
 
 		// Qck Look button
