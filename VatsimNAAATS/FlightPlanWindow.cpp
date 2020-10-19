@@ -74,6 +74,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_XCHANGE_TRACK] = CWinButton(BTN_XCHANGE_TRACK, WIN_FLTPLN, "Track", CInputState::INACTIVE);
 	windowButtons[BTN_COORD_CLOSE] = CWinButton(BTN_COORD_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COORD_SENDOK] = CWinButton(BTN_COORD_SENDOK, WIN_FLTPLN, "Send/OK", CInputState::INACTIVE);
+	windowButtons[BTN_HIST_CLOSE] = CWinButton(BTN_HIST_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -277,21 +278,21 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 
 	// Active coordination modal
 	if (IsTransferOpen) {
-		RenderExchangeModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
+		RenderExchangeModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 30 });
 	}
 
 	// Coordination modal
 	if (IsCoordOpen) {
-		RenderCoordModal(dc, g, screen, { windowRect.left + 100, windowRect.top + 50 });
+		RenderCoordModal(dc, g, screen, { windowRect.left + 100, windowRect.top + 30 });
 	}
 	// Coordination modal
 	if (IsHistoryOpen) {
-		RenderHistoryModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
+		RenderHistoryModal(dc, g, screen, { windowRect.left + 20, windowRect.top + 20 });
 	}
 
 	// Restrictions modal
 	if (IsATCRestrictionsOpen) {
-		RenderATCRestrictModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 50 });
+		RenderATCRestrictModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 30 });
 	}
 
 	// Cleanup
@@ -729,6 +730,11 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 		offsetX = buttonBarRect.right - 73;
 	}
 
+	// Draw checkboxes
+	for (int i = CHK_COORD_CZQOV; i <= CHK_COORD_ENRT; i++) {
+
+	}
+
 	// Create borders
 	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
 	InflateRect(coordWindow, 1, 1);
@@ -758,18 +764,40 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	dc->SetTextAlign(TA_CENTER);
 
 	// Create history window
-	CRect histWindow(subWindowPositions[SUBWIN_HIST].x, subWindowPositions[SUBWIN_HIST].y + 1, subWindowPositions[SUBWIN_HIST].x + WINSZ_FLTPLN_WIDTH_MDL, subWindowPositions[SUBWIN_HIST].y + WINSZ_FLTPLN_HEIGHT_HIST);
+	CRect histWindow(subWindowPositions[SUBWIN_HIST].x, subWindowPositions[SUBWIN_HIST].y + 1, subWindowPositions[SUBWIN_HIST].x + WINSZ_FLTPLN_WIDTH_HIST, subWindowPositions[SUBWIN_HIST].y + WINSZ_FLTPLN_HEIGHT_HIST);
 	dc->FillRect(histWindow, &darkerBrush);
 	dc->Draw3dRect(histWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(histWindow, -1, -1);
 	dc->Draw3dRect(histWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Create titlebar
-	CRect titleRect(histWindow.left, histWindow.top, histWindow.left + WINSZ_FLTPLN_WIDTH_MDL, histWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	CRect titleRect(histWindow.left, histWindow.top, histWindow.left + WINSZ_FLTPLN_WIDTH_HIST, histWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("History - ").c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_HIST / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("History - ").c_str())); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_HIST).c_str(), titleRect, true, "");
+
+	// Create content panel
+	CRect content(histWindow.left + 5, titleRect.bottom + 20, histWindow.right - 5, histWindow.bottom - 40);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(content, -1, -1);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Create headers
+	int offsetX = content.left + 3;
+	dc->TextOutA(offsetX, content.top - dc->GetTextExtent("'SPACER").cy - 2, "Time");
+	offsetX += dc->GetTextExtent("Time").cx + 7;
+	dc->TextOutA(offsetX, content.top - dc->GetTextExtent("SPACER").cy - 2, "From");
+	offsetX += dc->GetTextExtent("Time").cx + 25;
+	dc->TextOutA(offsetX, content.top - dc->GetTextExtent("SPACER").cy - 2, "Message");
+
+	// Render close button
+	CCommonRenders::RenderButton(dc, screen, { content.left, content.bottom + 5 }, 65, 30, &windowButtons.at(BTN_HIST_CLOSE));
 
 	// Create borders
 	dc->DrawEdge(histWindow, EDGE_SUNKEN, BF_RECT);
@@ -1168,7 +1196,7 @@ void CFlightPlanWindow::ButtonUp(int id) {
 		if (id == BTN_CONF_COORD || id == BTN_COORD_CLOSE) {
 			IsCoordOpen = !IsCoordOpen ? true : false;
 		}
-		if (id == BTN_HIST) {
+		if (id == BTN_HIST || id == BTN_HIST_CLOSE) {
 			IsHistoryOpen = !IsHistoryOpen ? true : false;
 		}
 	}

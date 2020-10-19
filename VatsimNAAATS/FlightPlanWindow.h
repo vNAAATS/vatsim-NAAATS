@@ -107,6 +107,7 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_XCHANGE_TRACK = 37;
 		static const int BTN_COORD_CLOSE = 38;
 		static const int BTN_COORD_SENDOK = 39;
+		static const int BTN_HIST_CLOSE = 40;
 
 		// Dropdown definitions
 		static const int DRP_ATCR = 200;
@@ -145,6 +146,31 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int CHK_CLRC_VOX = 301;
 		static const int CHK_CLRC_CPDLC = 302;
 		static const int CHK_CLRC_TXT = 303;
+		static const int CHK_COORD_CZQOV = 304;
+		static const int CHK_COORD_EGGXV = 305;
+		static const int CHK_COORD_BIRDV = 306;
+		static const int CHK_COORD_ZNYV = 307;
+		static const int CHK_COORD_LPPOV = 308;
+		static const int CHK_COORD_EISNV = 309;
+		static const int CHK_COORD_CZQXV = 310;
+		static const int CHK_COORD_CZULV = 311;
+		static const int CHK_COORD_EGPXV = 312;
+		static const int CHK_COORD_LFRRV = 313;
+		static const int CHK_COORD_PLANV = 314;
+		static const int CHK_COORD_ENRV = 315;
+
+		static const int CHK_COORD_CZQOT = 360; // We start here from 360 because we need to be able to know that this is manual
+		static const int CHK_COORD_EGGXT = 361;
+		static const int CHK_COORD_BIRDT = 362;
+		static const int CHK_COORD_ZNYT = 363;
+		static const int CHK_COORD_LPPOT = 364;
+		static const int CHK_COORD_EISNT = 365;
+		static const int CHK_COORD_CZQXT = 366;
+		static const int CHK_COORD_CZULT = 367;
+		static const int CHK_COORD_EGPXT = 368;
+		static const int CHK_COORD_LFRRT = 369;
+		static const int CHK_COORD_PLANT = 370;
+		static const int CHK_COORD_ENRT = 371;
 
 		// Selection definitions
 		static const int SEL_ATCR_LCHG = 400;
