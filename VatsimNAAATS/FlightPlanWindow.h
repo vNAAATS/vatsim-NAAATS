@@ -189,5 +189,13 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int SCRL_CPY = 501;
 		static const int SCRL_CONF_X = 502;
 		static const int SCRL_CONF_Y = 503;
+		static const int SCRL_HIST = 504;
+		static const int SCRL_MSG = 505;
+		static const int SCRL_CLRC = 506;
+		static const int SCRL_CLRC_XTRA = 507;
+		static const int SCRL_MANENTRY = 508;
+		static const int SCRL_COORD_STATIONS = 509;
+		static const int SCRL_COORD_HIST = 510;
+		static const int SCRL_XCHANGE = 511;
 };
 

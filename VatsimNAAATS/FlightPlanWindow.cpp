@@ -98,7 +98,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_FL] = CTextInput(TXT_MAN_FL, WIN_FLTPLN, "FL", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_SPD] = CTextInput(TXT_MAN_SPD, WIN_FLTPLN, "Spd", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_TCK] = CTextInput(TXT_MAN_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::ACTIVE);
-	textInputs[TXT_MAN_DEST] = CTextInput(TXT_MAN_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
+	textInputs[TXT_MAN_DEST] = CTextInput(TXT_MAN_DEST, WIN_FLTPLN, "Dest", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
@@ -146,6 +146,14 @@ void CFlightPlanWindow::MakeWindowItems() {
 	scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, 0, 0, 0, true);
 	scrollBars[SCRL_CONF_X] = CWinScrollBar(SCRL_CONF_X, WIN_FLTPLN, 0, 0, 0, true);
 	scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_HIST] = CWinScrollBar(SCRL_HIST, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_MSG] = CWinScrollBar(SCRL_MSG, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_CLRC_XTRA] = CWinScrollBar(SCRL_CLRC_XTRA, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_MANENTRY] = CWinScrollBar(SCRL_MANENTRY, WIN_FLTPLN, 0, 0, 0, true);
+	scrollBars[SCRL_COORD_STATIONS] = CWinScrollBar(SCRL_COORD_STATIONS, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_COORD_HIST] = CWinScrollBar(SCRL_COORD_HIST, WIN_FLTPLN, 0, 0, 0, false);
+	scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, 0, 0, 0, false);
 }
 
 void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
@@ -313,7 +321,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 
 	// Coordination modal
 	if (IsCoordOpen) {
-		RenderCoordModal(dc, g, screen, { windowRect.left + 100, windowRect.top + 30 });
+		RenderCoordModal(dc, g, screen, { windowRect.left + 85, windowRect.top + 30 });
 	}
 	// Coordination modal
 	if (IsHistoryOpen) {
@@ -531,6 +539,19 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	InflateRect(buttonBarRect, -1, -1);
 	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 
+	// Create content panel
+	CRect content(messagePanel.left + 5, titleRect.bottom + 2, messagePanel.right - 20, buttonBarRect.top - 5);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(content, -1, -1);
+	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Scroll bar values
+	if (scrollBars[SCRL_MSG].FrameSize == 0)
+		scrollBars[SCRL_MSG] = CWinScrollBar(SCRL_MSG, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_MSG]);
+
 	// Draw buttons (5 buttons)
 	int offsetX = 5;
 	for (int idx = BTN_MSG_REMOVE; idx <= BTN_MSG_FORWARD; idx++) {
@@ -574,16 +595,27 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Clearance") + string(" - ")).c_str())); // TODO: show callsign properly
 
 	// Create content panel 1
-	CRect contentA(clearancePanel.left + 5, titleRect.bottom + 5, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 90);
+	CRect contentA(clearancePanel.left + 5, titleRect.bottom + 5, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2) - 10, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 90);
 	dc->Draw3dRect(contentA, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(contentA, -1, -1);
 	dc->Draw3dRect(contentA, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Create content panel 2
-	CRect contentB(clearancePanel.left + 5, contentA.bottom + 10, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2), contentA.bottom + 62);
+	CRect contentB(clearancePanel.left + 5, contentA.bottom + 10, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2) - 10, contentA.bottom + 62);
 	dc->Draw3dRect(contentB, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(contentB, -1, -1);
 	dc->Draw3dRect(contentB, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Scroll bar values
+	if (scrollBars[SCRL_CLRC].FrameSize == 0)
+		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentA.Height(), contentA.Height() + 2, 0, false);
+	if (scrollBars[SCRL_CLRC_XTRA].FrameSize == 0)
+		scrollBars[SCRL_CLRC_XTRA] = CWinScrollBar(SCRL_CLRC_XTRA, WIN_FLTPLN, contentB.Height(), contentB.Height() + 2, 0, false);
+
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { contentA.right + 3, contentA.top - 1 }, &scrollBars[SCRL_CLRC]);
+	CCommonRenders::RenderScrollBar(dc, g, screen, { contentB.right + 3, contentB.top - 1 }, &scrollBars[SCRL_CLRC_XTRA]);
 
 	// Font
 	FontSelector::SelectNormalFont(15, dc);
@@ -591,7 +623,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	dc->SetTextAlign(TA_LEFT);
 
 	// Checkboxes
-	int offsetX = 13;
+	int offsetX = 25;
 	int offsetY = 10;
 	for (int idx = CHK_CLRC_ORCA; idx <= CHK_CLRC_TXT; idx++)
 	{
@@ -610,7 +642,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	}
 
 	// Buttons (4 buttons)
-	offsetX = 13;
+	offsetX = 25;
 	for (int idx = BTN_CLRC_READBK; idx <= BTN_CLRC_REJECT; idx++) {
 		// Draw the button
 		CCommonRenders::RenderButton(dc, screen, { contentA.right + offsetX, titleRect.bottom + offsetY }, 75, 30, &windowButtons.at(idx));
@@ -670,7 +702,12 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	InflateRect(rteBox, -1, -1);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
-	// TODO scroll here
+	// Scroll bar values
+	if (scrollBars[SCRL_MANENTRY].FrameSize == 0)
+		scrollBars[SCRL_MANENTRY] = CWinScrollBar(SCRL_MANENTRY, WIN_FLTPLN, rteBox.Width(), rteBox.Width() + 2, 0, true);
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left - 1, rteBox.bottom + 3 }, &scrollBars[SCRL_MANENTRY]);
 
 	// Draw text (6 text boxes)
 	int offsetX = 5;
@@ -680,6 +717,12 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 		FontSelector::SelectNormalFont(15, dc);
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 		dc->SetTextAlign(TA_LEFT);
+
+		// Because OCD
+		if (idx == TXT_MAN_DEST)
+			offsetX += 2;
+		else if (idx == TXT_MAN_DEST + 1) // Reset
+			offsetX -= 2;
 
 		// Get text height to set offset and height of input
 		int textHeight = dc->GetTextExtent(textInputs.at(idx).Label.c_str()).cy;
@@ -719,7 +762,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
-
+	
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
@@ -745,16 +788,27 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_COORD).c_str(), titleRect, true, "");
 
 	// Create the stations panel
-	CRect stations(coordWindow.left + 5, titleRect.bottom + 22, coordWindow.left + (WINSZ_FLTPLN_WIDTH_COORD / 3) * 1.7, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 77);
+	CRect stations(coordWindow.left + 5, titleRect.bottom + 22, coordWindow.left + (WINSZ_FLTPLN_WIDTH_COORD / 3) * 1.7 - 10, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 77);
 	dc->Draw3dRect(stations, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(stations, -1, -1);
 	dc->Draw3dRect(stations, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Create history panel
-	CRect history(stations.right + 7, titleRect.bottom + 22, stations.right + ((WINSZ_FLTPLN_WIDTH_COORD / 3) * 1.3) - 5, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 77);
+	CRect history(stations.right + 18, titleRect.bottom + 22, stations.right + ((WINSZ_FLTPLN_WIDTH_COORD / 3) * 1.3) - 7, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 77);
 	dc->Draw3dRect(history, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(history, -1, -1);
 	dc->Draw3dRect(history, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Scroll bar values
+	if (scrollBars[SCRL_COORD_STATIONS].FrameSize == 0)
+		scrollBars[SCRL_COORD_STATIONS] = CWinScrollBar(SCRL_COORD_STATIONS, WIN_FLTPLN, stations.Height(), stations.Height() + 2, 0, false);
+	if (scrollBars[SCRL_COORD_HIST].FrameSize == 0)
+		scrollBars[SCRL_COORD_HIST] = CWinScrollBar(SCRL_COORD_HIST, WIN_FLTPLN, history.Height(), history.Height() + 2, 0, false);
+
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { stations.right + 3, stations.top - 1 }, &scrollBars[SCRL_COORD_STATIONS]);
+	CCommonRenders::RenderScrollBar(dc, g, screen, { history.right + 3, history.top - 1 }, &scrollBars[SCRL_COORD_HIST]);
 
 	// Select font
 	FontSelector::SelectNormalFont(15, dc);
@@ -762,8 +816,8 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->SetTextAlign(TA_LEFT);
 
 	// Draw headers
-	dc->TextOutA(stations.left + 3, stations.top - dc->GetTextExtent("Voice").cy - 2, "Voice");
-	dc->TextOutA(stations.right - dc->GetTextExtent("Manual").cx - 3, stations.top - dc->GetTextExtent("Manual").cy - 2, "Manual");
+	dc->TextOutA(stations.left + 3, stations.top - dc->GetTextExtent("Voice").cy - 2, "VOICE");
+	dc->TextOutA(stations.right - dc->GetTextExtent("Manual").cx - 6, stations.top - dc->GetTextExtent("MANUAL").cy - 2, "MANUAL");
 	dc->TextOutA(history.left + 3, history.top - dc->GetTextExtent("History").cy - 2, "History");
 
 	// Draw button bar
@@ -804,7 +858,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 		}
 		// Checkboxes
 		CRect box = CCommonRenders::RenderCheckBox(dc, g, screen, { stations.left + 5, stations.top + offsetY }, 15, &checkBoxes.at(i));
-		CCommonRenders::RenderCheckBox(dc, g, screen, { stations.right - 48, stations.top + offsetY }, 15, &checkBoxes.at(i + 56)); // The manual one
+		CCommonRenders::RenderCheckBox(dc, g, screen, { stations.right - 40, stations.top + offsetY }, 15, &checkBoxes.at(i + 56)); // The manual one
 
 		// Text
 		dc->TextOutA(box.right + 15, box.top - 1, checkBoxes.at(i).Label.c_str());
@@ -855,10 +909,17 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_HIST).c_str(), titleRect, true, "");
 
 	// Create content panel
-	CRect content(histWindow.left + 5, titleRect.bottom + 20, histWindow.right - 5, histWindow.bottom - 40);
+	CRect content(histWindow.left + 5, titleRect.bottom + 20, histWindow.right - 20, histWindow.bottom - 40);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Scroll bar values
+	if (scrollBars[SCRL_HIST].FrameSize == 0)
+		scrollBars[SCRL_HIST] = CWinScrollBar(SCRL_HIST, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_HIST]);
 
 	// Font
 	FontSelector::SelectNormalFont(15, dc);
@@ -1021,11 +1082,19 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->SetTextAlign(TA_LEFT);
 
 	// Create content panel
-	CRect content(coordWindow.left + (coordWindow.Width() / 3) * 1.48, titleRect.bottom + 22, coordWindow.right - 8, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 30);
+	CRect content(coordWindow.left + (coordWindow.Width() / 3) * 1.48, titleRect.bottom + 22, coordWindow.right - 20, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_COORD - 30);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	dc->TextOutA(content.left + 3, content.top - dc->GetTextExtent("Active Authorities").cy - 2, "Active Authorities");
+
+	// Scroll bar values
+	if (scrollBars[SCRL_XCHANGE].FrameSize == 0)
+		scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_XCHANGE]);
 
 	// Draw buttons (6 buttons)
 	int offsetX = coordWindow.left + 5;
