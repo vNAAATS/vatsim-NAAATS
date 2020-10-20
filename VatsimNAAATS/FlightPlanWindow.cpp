@@ -372,10 +372,10 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 
 	// Scroll bar values
 	if (!isCopy && scrollBars[SCRL_DATA].FrameSize == 0)
-		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, rteBox.Width(), rteBox.Width() + 2, 0, true);
+		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), 0, true);
 
 	if (isCopy && scrollBars[SCRL_CPY].FrameSize == 0)
-		scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, rteBox.Width(), rteBox.Width() + 2, 0, true);
+		scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), 0, true);
 
 	// Draw route scroll bar
 	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left-1, rteBox.bottom + 3 }, &scrollBars[isCopy ? SCRL_CPY : SCRL_DATA]);

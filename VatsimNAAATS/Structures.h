@@ -192,13 +192,13 @@ struct CWinScrollBar {
 		FrameSize = fSize;
 		ContentRatio = (double)FrameSize / (double)ContentSize;
 		GripPositionDelta = delta;
-		TotalScrollableArea = ContentSize = FrameSize;
+		TotalScrollableArea = ContentSize - FrameSize;
 		IsHorizontal = isX;
 
-		// Grip size
-		GripSize = FrameSize * ContentRatio;
+		// Grip size (subtract 10 because buttons)
+		GripSize = (FrameSize - 10) * ContentRatio;
 		if (GripSize < 20) GripSize = 20; // Minimum grip size
-		if (GripSize > FrameSize) GripSize = FrameSize; // Maximum grip size
+		if (GripSize > FrameSize) GripSize = FrameSize - 10; // Maximum grip size
 	}
 	int Id;
 	int Type;

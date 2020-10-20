@@ -223,9 +223,10 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	InflateRect(scrollBarTrack, -1, -1);
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
-	// Draw scroll buttons
+	// Draw scroll buttons & grip
 	CRect buttonRect1;
 	CRect buttonRect2;
+	CRect grip;
 	SolidBrush brush(ScreenBlue);
 	Pen lighterPen(BevelLight, 1.5);
 	Pen darkerPen(BevelDark, 1.5);
@@ -242,9 +243,14 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 
 		// Set rectangles
 		buttonRect1 = CRect(scrollBarTrack.left, scrollBarTrack.top, scrollBarTrack.left + 11, scrollBarTrack.bottom);
-		dc->Draw3dRect(buttonRect1, BevelLight.ToCOLORREF(), BevelLight.ToCOLORREF());
 		buttonRect2 = CRect(scrollBarTrack.right - 11, scrollBarTrack.top, scrollBarTrack.right, scrollBarTrack.bottom);
-		dc->Draw3dRect(buttonRect1, BevelLight.ToCOLORREF(), BevelLight.ToCOLORREF());
+		
+		// Grip
+		grip = CRect(scrollBarTrack.left + 11, scrollBarTrack.top, scrollBarTrack.left + scrollView->GripSize, scrollBarTrack.bottom - 1);
+		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
+		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(grip, -1, -1);
+		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 		// '3d' border trick
 		g->DrawLine(&lighterPen, btnA[0], btnA[1]);
@@ -264,6 +270,13 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 			Point(scrollBarTrack.right - 2, scrollBarTrack.bottom - 10) };
 		g->FillPolygon(&brush, btnB, 3);
 
+		// Grip
+		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11, scrollBarTrack.right - 1, scrollBarTrack.top + scrollView->GripSize);
+		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
+		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+		InflateRect(grip, -1, -1);
+		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
 		// '3d' border trick
 		g->DrawLine(&lighterPen, btnA[0], btnA[2]);
 		g->DrawLine(&darkerPen, btnA[1], btnA[2]);
@@ -272,9 +285,6 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		g->DrawLine(&darkerPen, btnB[1], btnB[2]);
 		g->DrawLine(&darkerPen, btnB[0], btnB[1]);
 	}
-	
-	// Draw grip
-
 
 	// Cleanup
 	DeleteObject(&brush);
