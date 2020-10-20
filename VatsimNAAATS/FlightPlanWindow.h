@@ -183,5 +183,9 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int SEL_ATCR_ATB = 407;
 		static const int SEL_ATCR_XAT = 408;
 		static const int SEL_ATCR_INT = 409;
+
+		// Scroll bar definitions
+		static const int SCRL_DATA = 500;
+		static const int SCRL_CPY = 501;
 };
 

@@ -48,5 +48,6 @@ class CBaseWindow
 		map<int, CTextInput> textInputs;
 		map<int, CCheckBox> checkBoxes;
 		map<int, CDropDown> dropDowns;
+		map<int, CWinScrollBar> scrollBars;
 };
 

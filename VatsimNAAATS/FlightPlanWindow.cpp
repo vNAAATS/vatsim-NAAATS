@@ -140,6 +140,9 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_COORD_LFRRT] = CCheckBox(CHK_COORD_LFRRT, WIN_FLTPLN, "Brest", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_PLANT] = CCheckBox(CHK_COORD_PLANT, WIN_FLTPLN, "Planning", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_ENRT] = CCheckBox(CHK_COORD_ENRT, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
+
+	// Scroll bars
+	scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, 0, 0, 0, 0);
 }
 
 void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
@@ -355,6 +358,13 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(rteBox, -1, -1);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Scroll bar values
+	if (scrollBars[SCRL_DATA].FrameSize == 0)
+		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), 0, true);
+
+	// Draw route scroll bar
+	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left, rteBox.bottom + 2 }, &scrollBars[SCRL_DATA]);
 
 	// Draw text in route box
 

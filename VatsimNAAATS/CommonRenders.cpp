@@ -199,3 +199,22 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	// Add object
 	screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), button, false, "");
 }
+
+void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, CWinScrollBar* scrollView) {
+	// Save context for later
+	int sDC = dc->SaveDC();
+
+	// Draw scroll track
+	CRect scrollBarTrack;
+	if (scrollView->IsHorizontal) // Different track depending on whether it's horizontal or not
+		scrollBarTrack =  CRect(topLeft.x, topLeft.y, topLeft.x + scrollView->FrameSize, topLeft.y + 13);
+	else
+		scrollBarTrack = CRect(topLeft.x, topLeft.y, topLeft.x + 13, topLeft.y + scrollView->FrameSize);
+	dc->FillSolidRect(scrollBarTrack, ButtonPressed.ToCOLORREF());
+	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(scrollBarTrack, -1, -1);
+	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Restore device context
+	dc->RestoreDC(sDC);
+}

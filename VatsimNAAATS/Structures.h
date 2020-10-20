@@ -183,6 +183,34 @@ struct CDropDown {
 	int Width;
 };
 
+struct CWinScrollBar {
+	CWinScrollBar() {}
+	CWinScrollBar(int id, int type, int cSize, int fSize, double delta, bool isX) {
+		Id = id;
+		Type = type;
+		ContentSize = cSize;
+		FrameSize = fSize;
+		ContentRatio = (double)FrameSize / (double)ContentSize;
+		GripPositionDelta = delta;
+		TotalScrollableArea = ContentSize = FrameSize;
+		IsHorizontal = isX;
+
+		// Grip size
+		GripSize = FrameSize * ContentRatio;
+		if (GripSize < 20) GripSize = 20; // Minimum grip size
+		if (GripSize > FrameSize) GripSize = FrameSize; // Maximum grip size
+	}
+	int Id;
+	int Type;
+	int ContentSize;
+	int FrameSize;
+	double ContentRatio;
+	double GripSize;
+	double GripPositionDelta;
+	int TotalScrollableArea;
+	bool IsHorizontal;
+};
+
 struct CAircraftFlightPlan {
 	CAircraftFlightPlan() {}; // Default constructor
 	CAircraftFlightPlan(string cs) {
