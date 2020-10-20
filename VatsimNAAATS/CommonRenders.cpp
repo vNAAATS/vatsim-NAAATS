@@ -223,6 +223,9 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	InflateRect(scrollBarTrack, -1, -1);
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
+	// Get grip position
+	float gripPosition = (scrollView->FrameSize - 11 - scrollView->GripSize) * (scrollView->PositionDelta / scrollView->TotalScrollableArea);
+
 	// Draw scroll buttons & grip
 	CRect buttonRect1;
 	CRect buttonRect2;
@@ -246,7 +249,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		buttonRect2 = CRect(scrollBarTrack.right - 11, scrollBarTrack.top, scrollBarTrack.right, scrollBarTrack.bottom);
 		
 		// Grip
-		grip = CRect(scrollBarTrack.left + 11, scrollBarTrack.top, scrollBarTrack.left + scrollView->GripSize, scrollBarTrack.bottom - 1);
+		grip = CRect(scrollBarTrack.left + 11 + (!isnan(gripPosition) ? gripPosition : 0), scrollBarTrack.top, scrollBarTrack.left + scrollView->GripSize, scrollBarTrack.bottom - 1);
 		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
 		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 		InflateRect(grip, -1, -1);
@@ -261,17 +264,17 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		g->DrawLine(&darkerPen, btnB[0], btnB[2]);
 	}
 	else {
-		Point btnA[3] = { Point(scrollBarTrack.left + 4, scrollBarTrack.top + 1),
-			Point(scrollBarTrack.left , scrollBarTrack.top + 9),
+		Point btnA[3] = { Point(scrollBarTrack.left + 3, scrollBarTrack.top + 1),
+			Point(scrollBarTrack.left - 1, scrollBarTrack.top + 9),
 			Point(scrollBarTrack.right - 2, scrollBarTrack.top + 9) };
 		g->FillPolygon(&brush, btnA, 3);
-		Point btnB[3] = { Point(scrollBarTrack.left + 4, scrollBarTrack.bottom - 2),
-			Point(scrollBarTrack.left, scrollBarTrack.bottom - 10),
+		Point btnB[3] = { Point(scrollBarTrack.left + 3, scrollBarTrack.bottom - 2),
+			Point(scrollBarTrack.left - 1, scrollBarTrack.bottom - 10),
 			Point(scrollBarTrack.right - 2, scrollBarTrack.bottom - 10) };
 		g->FillPolygon(&brush, btnB, 3);
 
 		// Grip
-		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11, scrollBarTrack.right - 1, scrollBarTrack.top + scrollView->GripSize);
+		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11 + (!isnan(gripPosition) ? gripPosition : 0), scrollBarTrack.right - 1, scrollBarTrack.top + (!isnan(gripPosition) ? gripPosition : 0) + scrollView->GripSize);
 		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
 		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 		InflateRect(grip, -1, -1);

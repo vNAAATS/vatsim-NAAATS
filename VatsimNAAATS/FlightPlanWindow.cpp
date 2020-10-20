@@ -483,11 +483,11 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 
 	// Scroll bar values
 	if (scrollBars[SCRL_CONF_X].FrameSize == 0)
-		scrollBars[SCRL_CONF_X] = CWinScrollBar(SCRL_CONF_X, WIN_FLTPLN, content.Width(), content.Width() + 2, 0, true);
+		scrollBars[SCRL_CONF_X] = CWinScrollBar(SCRL_CONF_X, WIN_FLTPLN, content.Width(), content.Width(), 0, true);
 
 	// Scroll bar values
 	if (scrollBars[SCRL_CONF_Y].FrameSize == 0)
-		scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+		scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, content.Height(), content.Height(), 0, false);
 
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.left - 1, content.bottom + 3 }, &scrollBars[SCRL_CONF_X]);
@@ -608,9 +608,9 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 
 	// Scroll bar values
 	if (scrollBars[SCRL_CLRC].FrameSize == 0)
-		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentA.Height(), contentA.Height() + 2, 0, false);
+		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentA.Height(), contentA.Height(), 0, false);
 	if (scrollBars[SCRL_CLRC_XTRA].FrameSize == 0)
-		scrollBars[SCRL_CLRC_XTRA] = CWinScrollBar(SCRL_CLRC_XTRA, WIN_FLTPLN, contentB.Height(), contentB.Height() + 2, 0, false);
+		scrollBars[SCRL_CLRC_XTRA] = CWinScrollBar(SCRL_CLRC_XTRA, WIN_FLTPLN, contentB.Height(), contentB.Height(), 0, false);
 
 
 	// Draw scroll bars
@@ -704,7 +704,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 
 	// Scroll bar values
 	if (scrollBars[SCRL_MANENTRY].FrameSize == 0)
-		scrollBars[SCRL_MANENTRY] = CWinScrollBar(SCRL_MANENTRY, WIN_FLTPLN, rteBox.Width(), rteBox.Width() + 2, 0, true);
+		scrollBars[SCRL_MANENTRY] = CWinScrollBar(SCRL_MANENTRY, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), 0, true);
 
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left - 1, rteBox.bottom + 3 }, &scrollBars[SCRL_MANENTRY]);
@@ -799,17 +799,6 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	InflateRect(history, -1, -1);
 	dc->Draw3dRect(history, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
-	// Scroll bar values
-	if (scrollBars[SCRL_COORD_STATIONS].FrameSize == 0)
-		scrollBars[SCRL_COORD_STATIONS] = CWinScrollBar(SCRL_COORD_STATIONS, WIN_FLTPLN, stations.Height(), stations.Height() + 2, 0, false);
-	if (scrollBars[SCRL_COORD_HIST].FrameSize == 0)
-		scrollBars[SCRL_COORD_HIST] = CWinScrollBar(SCRL_COORD_HIST, WIN_FLTPLN, history.Height(), history.Height() + 2, 0, false);
-
-
-	// Draw scroll bars
-	CCommonRenders::RenderScrollBar(dc, g, screen, { stations.right + 3, stations.top - 1 }, &scrollBars[SCRL_COORD_STATIONS]);
-	CCommonRenders::RenderScrollBar(dc, g, screen, { history.right + 3, history.top - 1 }, &scrollBars[SCRL_COORD_HIST]);
-
 	// Select font
 	FontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
@@ -817,7 +806,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 
 	// Draw headers
 	dc->TextOutA(stations.left + 3, stations.top - dc->GetTextExtent("Voice").cy - 2, "VOICE");
-	dc->TextOutA(stations.right - dc->GetTextExtent("Manual").cx - 6, stations.top - dc->GetTextExtent("MANUAL").cy - 2, "MANUAL");
+	dc->TextOutA(stations.right - dc->GetTextExtent("Manual").cx - 10, stations.top - dc->GetTextExtent("MANUAL").cy - 2, "MANUAL");
 	dc->TextOutA(history.left + 3, history.top - dc->GetTextExtent("History").cy - 2, "History");
 
 	// Draw button bar
@@ -865,6 +854,16 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 
 		offsetY += 20;
 	}
+
+	// Scroll bar values
+	if (scrollBars[SCRL_COORD_STATIONS].FrameSize == 0)
+		scrollBars[SCRL_COORD_STATIONS] = CWinScrollBar(SCRL_COORD_STATIONS, WIN_FLTPLN, offsetY - 20, stations.Height(), 0, false);
+	if (scrollBars[SCRL_COORD_HIST].FrameSize == 0)
+		scrollBars[SCRL_COORD_HIST] = CWinScrollBar(SCRL_COORD_HIST, WIN_FLTPLN, history.Height(), history.Height(), 0, false);
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { stations.right + 3, stations.top - 1 }, &scrollBars[SCRL_COORD_STATIONS]);
+	CCommonRenders::RenderScrollBar(dc, g, screen, { history.right + 3, history.top - 1 }, &scrollBars[SCRL_COORD_HIST]);
 
 	// Create borders
 	dc->DrawEdge(coordWindow, EDGE_SUNKEN, BF_RECT);
@@ -916,7 +915,7 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 
 	// Scroll bar values
 	if (scrollBars[SCRL_HIST].FrameSize == 0)
-		scrollBars[SCRL_HIST] = CWinScrollBar(SCRL_HIST, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+		scrollBars[SCRL_HIST] = CWinScrollBar(SCRL_HIST, WIN_FLTPLN, content.Height(), content.Height(), 0, false);
 
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_HIST]);
@@ -1090,7 +1089,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 
 	// Scroll bar values
 	if (scrollBars[SCRL_XCHANGE].FrameSize == 0)
-		scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+		scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, content.Height(), content.Height(), 0, false);
 
 
 	// Draw scroll bars
