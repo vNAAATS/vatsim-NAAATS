@@ -179,22 +179,28 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 
 	// Button triangle
 	SolidBrush brush(Grey);
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
 	// Coz GDI+ doesn't like GDI
 	Rect rectangle(topLeft.x + width - 15, topLeft.y, topLeft.x + width, topLeft.y + height);
-	Point points[3] = { Point(rectangle.X + 3, rectangle.Y + 4),
+	Point points[3] = { Point(rectangle.X + 2, rectangle.Y + 4),
 		Point(rectangle.X + 12, rectangle.Y + 4),
-		Point(rectangle.X + 7.5, rectangle.Y + 14) };
+		Point(rectangle.X + 7, rectangle.Y + 14) };
 	g->FillPolygon(&brush, points, 3);
 	// Button bevel
 	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(button, -1, -1);
 	dc->Draw3dRect(button, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
+	// '3d' border trick
+	Pen darkerPen(BevelDark, 1.5);
+	g->DrawLine(&darkerPen, points[1], points[2]);
+
 	// Restore device context
 	dc->RestoreDC(sDC);
 
 	// Clean up
 	DeleteObject(&brush);
+	DeleteObject(&darkerPen);
 
 	// Add object
 	screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), button, false, "");
@@ -206,14 +212,64 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 
 	// Draw scroll track
 	CRect scrollBarTrack;
-	if (scrollView->IsHorizontal) // Different track depending on whether it's horizontal or not
-		scrollBarTrack =  CRect(topLeft.x, topLeft.y, topLeft.x + scrollView->FrameSize, topLeft.y + 13);
-	else
-		scrollBarTrack = CRect(topLeft.x, topLeft.y, topLeft.x + 13, topLeft.y + scrollView->FrameSize);
+	if (scrollView->IsHorizontal) { // Different track depending on whether it's horizontal or not
+		scrollBarTrack = CRect(topLeft.x, topLeft.y, topLeft.x + scrollView->FrameSize, topLeft.y + 12);
+	}
+	else {
+		scrollBarTrack = CRect(topLeft.x, topLeft.y, topLeft.x + 12, topLeft.y + scrollView->FrameSize);
+	}
 	dc->FillSolidRect(scrollBarTrack, ButtonPressed.ToCOLORREF());
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(scrollBarTrack, -1, -1);
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Draw scroll buttons
+	SolidBrush brush(ScreenBlue);
+	Pen lighterPen(BevelLight, 1.5);
+	Pen darkerPen(BevelDark, 1.5);
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+	if (scrollView->IsHorizontal) {
+		Point btnA[3] = { Point(scrollBarTrack.left + 1, scrollBarTrack.top + 4),
+				Point(scrollBarTrack.left + 9, scrollBarTrack.top),
+				Point(scrollBarTrack.left + 9, scrollBarTrack.bottom - 2) };
+		g->FillPolygon(&brush, btnA, 3);
+		Point btnB[3] = { Point(scrollBarTrack.right - 2, scrollBarTrack.top + 4),
+			Point(scrollBarTrack.right - 10, scrollBarTrack.top),
+			Point(scrollBarTrack.right - 10, scrollBarTrack.bottom - 2) };
+		g->FillPolygon(&brush, btnB, 3);
+
+		// '3d' border trick
+		g->DrawLine(&lighterPen, btnA[0], btnA[1]);
+		g->DrawLine(&darkerPen, btnA[1], btnA[2]);
+		g->DrawLine(&darkerPen, btnA[0], btnA[2]);
+		g->DrawLine(&lighterPen, btnB[0], btnB[1]);
+		g->DrawLine(&darkerPen, btnB[1], btnB[2]);
+		g->DrawLine(&darkerPen, btnB[0], btnB[2]);
+	}
+	else {
+		Point btnA[3] = { Point(scrollBarTrack.left + 4, scrollBarTrack.top + 1),
+			Point(scrollBarTrack.left , scrollBarTrack.top + 9),
+			Point(scrollBarTrack.right - 2, scrollBarTrack.top + 9) };
+		g->FillPolygon(&brush, btnA, 3);
+		Point btnB[3] = { Point(scrollBarTrack.left + 4, scrollBarTrack.bottom - 2),
+			Point(scrollBarTrack.left, scrollBarTrack.bottom - 10),
+			Point(scrollBarTrack.right - 2, scrollBarTrack.bottom - 10) };
+		g->FillPolygon(&brush, btnB, 3);
+
+		// '3d' border trick
+		g->DrawLine(&lighterPen, btnA[0], btnA[2]);
+		g->DrawLine(&darkerPen, btnA[1], btnA[2]);
+		g->DrawLine(&darkerPen, btnA[0], btnA[1]);
+		g->DrawLine(&lighterPen, btnB[0], btnB[2]);
+		g->DrawLine(&darkerPen, btnB[1], btnB[2]);
+		g->DrawLine(&darkerPen, btnB[0], btnB[1]);
+	}
+	
+
+	// Cleanup
+	DeleteObject(&brush);
+	DeleteObject(&lighterPen);
+	DeleteObject(&darkerPen);
 
 	// Restore device context
 	dc->RestoreDC(sDC);

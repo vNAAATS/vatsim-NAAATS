@@ -187,5 +187,7 @@ class CFlightPlanWindow : public CBaseWindow
 		// Scroll bar definitions
 		static const int SCRL_DATA = 500;
 		static const int SCRL_CPY = 501;
+		static const int SCRL_CONF_X = 502;
+		static const int SCRL_CONF_Y = 503;
 };
 

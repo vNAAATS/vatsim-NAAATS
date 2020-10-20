@@ -142,7 +142,10 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_COORD_ENRT] = CCheckBox(CHK_COORD_ENRT, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
 
 	// Scroll bars
-	scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, 0, 0, 0, 0);
+	scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, 0, 0, 0, true);
+	scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, 0, 0, 0, true);
+	scrollBars[SCRL_CONF_X] = CWinScrollBar(SCRL_CONF_X, WIN_FLTPLN, 0, 0, 0, true);
+	scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, 0, 0, 0, false);
 }
 
 void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
@@ -360,11 +363,14 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Scroll bar values
-	if (scrollBars[SCRL_DATA].FrameSize == 0)
-		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), 0, true);
+	if (!isCopy && scrollBars[SCRL_DATA].FrameSize == 0)
+		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, rteBox.Width(), rteBox.Width() + 2, 0, true);
+
+	if (isCopy && scrollBars[SCRL_CPY].FrameSize == 0)
+		scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, rteBox.Width(), rteBox.Width() + 2, 0, true);
 
 	// Draw route scroll bar
-	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left, rteBox.bottom + 2 }, &scrollBars[SCRL_DATA]);
+	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left-1, rteBox.bottom + 3 }, &scrollBars[isCopy ? SCRL_CPY : SCRL_DATA]);
 
 	// Draw text in route box
 
@@ -426,8 +432,8 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	// Render drop down and restrictions button 
 	int restrictBtnType = isCopy ? BTN_ATCR_CPY : BTN_ATCR;
 	int restrictDrpType = isCopy ? DRP_ATCR_CPY : DRP_ATCR;
-	CRect button = CCommonRenders::RenderButton(dc, screen, { rteBox.left, rteBox.bottom + 15 }, 45, 20, &windowButtons.at(restrictBtnType), 1);
-	CCommonRenders::RenderDropDown(dc, g, screen, { button.right + 5, rteBox.bottom + 15 }, WINSZ_FLTPLN_WIDTH - button.Width() - 20, 20, &dropDowns.at(restrictDrpType));
+	CRect button = CCommonRenders::RenderButton(dc, screen, { rteBox.left, rteBox.bottom + 18 }, 45, 20, &windowButtons.at(restrictBtnType), 1);
+	CCommonRenders::RenderDropDown(dc, g, screen, { button.right + 5, rteBox.bottom + 18 }, WINSZ_FLTPLN_WIDTH - button.Width() - 20, 20, &dropDowns.at(restrictDrpType));
 
 	// Cleanup
 	DeleteObject(darkerBrush);
@@ -466,6 +472,18 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Scroll bar values
+	if (scrollBars[SCRL_CONF_X].FrameSize == 0)
+		scrollBars[SCRL_CONF_X] = CWinScrollBar(SCRL_CONF_X, WIN_FLTPLN, content.Width(), content.Width() + 2, 0, true);
+
+	// Scroll bar values
+	if (scrollBars[SCRL_CONF_Y].FrameSize == 0)
+		scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, content.Height(), content.Height() + 2, 0, false);
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { content.left - 1, content.bottom + 3 }, &scrollBars[SCRL_CONF_X]);
+	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_CONF_Y]);
 
 	// Draw buttons (3 buttons)
 	int offsetY = 3;
