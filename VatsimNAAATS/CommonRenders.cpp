@@ -224,6 +224,8 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Draw scroll buttons
+	CRect buttonRect1;
+	CRect buttonRect2;
 	SolidBrush brush(ScreenBlue);
 	Pen lighterPen(BevelLight, 1.5);
 	Pen darkerPen(BevelDark, 1.5);
@@ -237,6 +239,12 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 			Point(scrollBarTrack.right - 10, scrollBarTrack.top),
 			Point(scrollBarTrack.right - 10, scrollBarTrack.bottom - 2) };
 		g->FillPolygon(&brush, btnB, 3);
+
+		// Set rectangles
+		buttonRect1 = CRect(scrollBarTrack.left, scrollBarTrack.top, scrollBarTrack.left + 11, scrollBarTrack.bottom);
+		dc->Draw3dRect(buttonRect1, BevelLight.ToCOLORREF(), BevelLight.ToCOLORREF());
+		buttonRect2 = CRect(scrollBarTrack.right - 11, scrollBarTrack.top, scrollBarTrack.right, scrollBarTrack.bottom);
+		dc->Draw3dRect(buttonRect1, BevelLight.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 		// '3d' border trick
 		g->DrawLine(&lighterPen, btnA[0], btnA[1]);
@@ -265,6 +273,8 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		g->DrawLine(&darkerPen, btnB[0], btnB[1]);
 	}
 	
+	// Draw grip
+
 
 	// Cleanup
 	DeleteObject(&brush);

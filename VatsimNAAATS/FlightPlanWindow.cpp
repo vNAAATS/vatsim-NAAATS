@@ -840,7 +840,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	int offsetY = 0;
 	for (int i = CHK_COORD_CZQOV; i <= CHK_COORD_ENRV; i++) {
 		// Headers
-		CRect rect(stations.left, stations.top + offsetY, stations.right, stations.top + offsetY + dc->GetTextExtent("ABCD").cy);
+		CRect rect(stations.left, stations.top + offsetY, stations.right - 1, stations.top + offsetY + dc->GetTextExtent("ABCD").cy);
 		if (i == CHK_COORD_CZQOV) {
 			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
 			dc->TextOutA(stations.left + 35, stations.top + offsetY, "Oceanic");
