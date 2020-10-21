@@ -185,13 +185,12 @@ struct CDropDown {
 
 struct CWinScrollBar {
 	CWinScrollBar() {}
-	CWinScrollBar(int id, int type, int cSize, int fSize, double delta, bool isX) {
+	CWinScrollBar(int id, int type, int cSize, int fSize, bool isX) {
 		Id = id;
 		Type = type;
 		ContentSize = cSize;
 		FrameSize = fSize;
 		ContentRatio = (double)FrameSize / (double)ContentSize;
-		PositionDelta = delta;
 		TotalScrollableArea = ContentSize - FrameSize;
 		IsHorizontal = isX;
 
@@ -199,6 +198,8 @@ struct CWinScrollBar {
 		GripSize = (FrameSize - 12) * ContentRatio;
 		if (GripSize < 20) GripSize = 20; // Minimum grip size
 		if (GripSize > FrameSize) GripSize = FrameSize - 13; // Maximum grip size
+		PositionDelta = 0;
+		WindowPos = 0;
 
 	}
 	int Id;
@@ -208,6 +209,7 @@ struct CWinScrollBar {
 	double ContentRatio;
 	double GripSize;
 	double PositionDelta;
+	double WindowPos;
 	int TotalScrollableArea;
 	bool IsHorizontal;
 };

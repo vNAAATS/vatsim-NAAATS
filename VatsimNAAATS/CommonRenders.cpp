@@ -224,7 +224,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Get grip position
-	float gripPosition = (scrollView->FrameSize - 11 - scrollView->GripSize) * (scrollView->PositionDelta / scrollView->TotalScrollableArea);
+	scrollView->PositionDelta = (scrollView->FrameSize - 11 - scrollView->GripSize) * (scrollView->WindowPos / scrollView->TotalScrollableArea);
 
 	// Draw scroll buttons & grip
 	CRect buttonRect1;
@@ -249,7 +249,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		buttonRect2 = CRect(scrollBarTrack.right - 11, scrollBarTrack.top, scrollBarTrack.right, scrollBarTrack.bottom);
 		
 		// Grip
-		grip = CRect(scrollBarTrack.left + 11 + (!isnan(gripPosition) ? gripPosition : 0), scrollBarTrack.top, scrollBarTrack.left + scrollView->GripSize, scrollBarTrack.bottom - 1);
+		grip = CRect(scrollBarTrack.left + 11 + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0), scrollBarTrack.top, scrollBarTrack.left + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0) + scrollView->GripSize, scrollBarTrack.bottom - 1);
 		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
 		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 		InflateRect(grip, -1, -1);
@@ -274,7 +274,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		g->FillPolygon(&brush, btnB, 3);
 
 		// Grip
-		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11 + (!isnan(gripPosition) ? gripPosition : 0), scrollBarTrack.right - 1, scrollBarTrack.top + (!isnan(gripPosition) ? gripPosition : 0) + scrollView->GripSize);
+		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11 + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0), scrollBarTrack.right - 1, scrollBarTrack.top + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0) + scrollView->GripSize);
 		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
 		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 		InflateRect(grip, -1, -1);
@@ -288,6 +288,9 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		g->DrawLine(&darkerPen, btnB[1], btnB[2]);
 		g->DrawLine(&darkerPen, btnB[0], btnB[1]);
 	}
+
+	// Screen objects
+	screen->AddScreenObject(scrollView->Type, to_string(scrollView->Id).c_str(), grip, true, "");
 
 	// Cleanup
 	DeleteObject(&brush);

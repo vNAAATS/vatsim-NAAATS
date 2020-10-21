@@ -439,8 +439,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
 {
-	// Mouse pointer
-	mousePointer = Pt;
 	// Move inbound list
 	if (ObjectType == LIST_INBOUND) {
 		inboundList->MoveList(Area);
@@ -488,6 +486,9 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		if (atoi(sObjectId) >= 400 && atoi(sObjectId) <= 420) {
 			fltPlnWindow->MoveSubWindow(atoi(sObjectId), { Area.left, Area.top });
 		}
+		if (atoi(sObjectId) >= 500) {
+			fltPlnWindow->Scroll(atoi(sObjectId), Pt, mousePointer);
+		}
 	}
 
 	// Scrolling
@@ -495,12 +496,16 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		if (string(sObjectId) == "TCKINFO") trackWindow->Scroll(Area, mousePointer);
 	}
 
+	// Mouse pointer
+	mousePointer = Pt;
+
 	// Refresh
 	RequestRefresh();
 }
 
 void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
 {
+	mousePointer = Pt;
 	// Dropdown
 	if (ObjectType == MENBAR) {
 		if (atoi(sObjectId) >= 800) {
