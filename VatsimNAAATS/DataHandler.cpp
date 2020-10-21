@@ -8,7 +8,8 @@
 // Include dependency
 using json = nlohmann::json;
 
-string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
+const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
+const string CDataHandler::CTPTrackUrl = "https://tracks.ganderoceanic.com/ctp";
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string

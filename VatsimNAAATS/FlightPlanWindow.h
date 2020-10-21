@@ -34,19 +34,22 @@ class CFlightPlanWindow : public CBaseWindow
 		void RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void MoveSubWindow(int id, POINT topLeft);
 
-		bool IsButtonPressed(int id);
-
 		// Button clicks
 		virtual void ButtonDown(int id);
 		virtual void ButtonUp(int id);
 		virtual void ButtonPress(int id);
 		virtual void ButtonUnpress(int id);
 		virtual void SetButtonState(int id, CInputState state);
+		bool IsButtonPressed(int id);
 
 		// Fill data
 		void UpdateData(CRadarScreen* screen, CAircraftFlightPlan status);
 		void OnCloseFlightPlanWindow();
 		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
+
+		// Data
+		pair<string, CAircraftFlightPlan> CurrentFlightPlan; // We have a flight plan object in the second position for the copy
+		map<string, CAircraftFlightPlan> SavedFlightPlans; // Currently saved (in progress) flight plan edits
 
 		// Panel states
 		bool IsData = true;
