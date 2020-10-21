@@ -224,7 +224,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	dc->Draw3dRect(scrollBarTrack, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Get grip position
-	scrollView->PositionDelta = (scrollView->FrameSize - 11 - scrollView->GripSize) * (scrollView->WindowPos / scrollView->TotalScrollableArea);
+	scrollView->PositionDelta = (scrollView->FrameSize - 12 - scrollView->GripSize) * (scrollView->WindowPos / scrollView->TotalScrollableArea);
 
 	// Draw scroll buttons & grip
 	CRect buttonRect1;

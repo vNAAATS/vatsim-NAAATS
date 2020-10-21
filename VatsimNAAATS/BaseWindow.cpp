@@ -34,8 +34,8 @@ void CBaseWindow::Scroll(int id, POINT newPtr, POINT oldPtr) {
 	if (scrollBars[id].PositionDelta < 0) {
 		scrollBars[id].PositionDelta = 0;
 	}
-	if (scrollBars[id].PositionDelta > (scrollBars[id].FrameSize - 12 - scrollBars[id].GripSize)) {
-		scrollBars[id].PositionDelta = scrollBars[id].FrameSize - 12 - scrollBars[id].GripSize;
+	if (scrollBars[id].PositionDelta > (scrollBars[id].FrameSize - 33 - scrollBars[id].GripSize)) {
+		scrollBars[id].PositionDelta = scrollBars[id].FrameSize - 33 - scrollBars[id].GripSize;
 	}
 
 	// Get window position
