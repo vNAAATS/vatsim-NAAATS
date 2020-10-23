@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "DataHandler.h"
+#include "RoutesHelper.h"
 #include <iostream>
 #include <fstream>
 #include <WinInet.h>
@@ -46,8 +47,8 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	
 	try {
 		// Clear old tracks
-		if (!COverlays::CurrentTracks.empty()) {
-			COverlays::CurrentTracks.clear();
+		if (!CRoutesHelper::CurrentTracks.empty()) {
+			CRoutesHelper::CurrentTracks.clear();
 		}
 		
 		// Now we parse the json
@@ -61,7 +62,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 
 			// TMI
 			track.TMI = jsonArray[i].at("tmi");
-			COverlays::CurrentTMI = jsonArray[i].at("tmi");
+			CRoutesHelper::CurrentTMI = jsonArray[i].at("tmi");
 
 			// Direction
 			if (jsonArray[i].at("direction") == 0) {
@@ -86,14 +87,18 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 			}
 
 			// Push track to tracks array
-			COverlays::CurrentTracks.insert(make_pair(track.Identifier, track));
+			CRoutesHelper::CurrentTracks.insert(make_pair(track.Identifier, track));
 		}
 		// Everything succeeded, show to user
-		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + COverlays::CurrentTMI + ".").c_str(), false, false, false, false, false);
+		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + CRoutesHelper::CurrentTMI + ".").c_str(), false, false, false, false, false);
 		return 0;
 	}
 	catch (exception & e) {
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse NAT track data: " + string(e.what())).c_str(), true, true, true, true, true);
 		return 1;
 	}
+}
+
+int CDataHandler::MakeNewFlightData(string callsign) {
+
 }

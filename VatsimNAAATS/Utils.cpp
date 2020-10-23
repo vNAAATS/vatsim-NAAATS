@@ -137,7 +137,7 @@ bool CUtils::GetAircraftDirection(int heading) {
 	}
 }
 
-bool CUtils::IsEntryExitPoint(string pointName, bool side) {
+bool CUtils::IsEntryPoint(string pointName, bool side) {
 	if (side) { // Gander
 		if (find(pointsGander.begin(), pointsGander.end(), pointName) != pointsGander.end()) {
 			return true; // Match
@@ -148,6 +148,25 @@ bool CUtils::IsEntryExitPoint(string pointName, bool side) {
 	}
 	else { // Shanwick
 		if (find(pointsShanwick.begin(), pointsShanwick.end(), pointName) != pointsShanwick.end()) {
+			return true; // Match
+		}
+		else {
+			return false; // No match
+		}
+	}
+}
+
+bool CUtils::IsExitPoint(string pointName, bool side) {
+	if (side) { // Gander
+		if (find(pointsShanwick.begin(), pointsShanwick.end(), pointName) != pointsShanwick.end()) {
+			return true; // Match
+		}
+		else {
+			return false; // No match
+		}
+	}
+	else { // Shanwick
+		if (find(pointsGander.begin(), pointsGander.end(), pointName) != pointsGander.end()) {
 			return true; // Match
 		}
 		else {

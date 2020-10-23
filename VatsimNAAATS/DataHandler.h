@@ -13,21 +13,22 @@ using namespace EuroScopePlugIn;
 class CDataHandler
 {
 	public:
-		
-
 		// Download nat track data
 		static int PopulateLatestTrackData(CPlugIn* plugin);
 
 		// Get flight data
-		CAircraftFlightPlan GetFlightData(string callsign);
+		static CAircraftFlightPlan* GetFlightData(string callsign);
 
 		// Set flight data
-		int SetFlightData(CAircraftFlightPlan);
+		static int SetFlightData(CAircraftFlightPlan plan);
+
+		// Make a new block
+		static int MakeNewFlightData(string callsign);
 
 	private:
 		// NAT Track URL
 		static const string TrackURL;
 		static const string CTPTrackUrl;
-		map<string, CAircraftFlightPlan> flights;
+		static map<string, CAircraftFlightPlan> flights;
 };
 

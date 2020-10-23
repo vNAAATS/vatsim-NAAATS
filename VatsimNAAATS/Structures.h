@@ -214,19 +214,23 @@ struct CWinScrollBar {
 	bool IsHorizontal;
 };
 
-struct CAircraftFlightPlan {
-	CAircraftFlightPlan() {}; // Default constructor
-	CAircraftFlightPlan(string cs) {
-		Callsign = cs;
-	}
-	string Callsign;
+struct CMessage {
+	CMessage() {}; // Default constructor
+	string To;
+	string From;
+	string MessageRaw;
+	string MessageHuman;
+	CMessageType Type;
 };
 
-/*struct CAircraftFlightPlan {
+struct CFlightRestriction {
+	CFlightRestriction() {}; // Default constructor
+	int Type;
+	string Content;
+};
+
+struct CAircraftFlightPlan {
 	CAircraftFlightPlan() {}; // Default constructor
-	CAircraftFlightPlan(string cs) {
-		
-	}
 	string Callsign;
 	string Type;
 	string Depart;
@@ -242,28 +246,8 @@ struct CAircraftFlightPlan {
 	string State;
 	CMessage CurrentMessage;
 	vector<string> FlightHistory;
-	vector<CRoutePosition> Route;
+	vector<string> Route;
 	vector<CFlightRestriction> Restrictions;
+	bool IsValid;
 	bool IsCleared;
 };
-
-struct CMessage {
-	CMessage() {}; // Default constructor
-	CMessage() {
-
-	}
-	string To;
-	string From;
-	string MessageRaw;
-	string MessageHuman;
-	CMessageType Type;
-};
-
-struct CFlightRestriction {
-	CFlightRestriction() {}; // Default constructor
-	CFlightRestriction() {
-		
-	}
-	int Type;
-	string Content;
-};*/

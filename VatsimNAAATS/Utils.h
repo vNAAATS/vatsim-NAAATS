@@ -43,8 +43,11 @@ class CUtils {
 		// Get the aircraft direction
 		static bool GetAircraftDirection(int heading);
 
-		// Check if point is a Gander/Shanwick border point (true = Gander, false = Shanwick)
-		static bool IsEntryExitPoint(string pointName, bool direction);
+		// Check if point is an entry point (direction: true = Gander, false = Shanwick)
+		static bool IsEntryPoint(string pointName, bool direction);
+
+		// Check if point is an exit point (direction: true = Gander, false = Shanwick)
+		static bool IsExitPoint(string pointName, bool direction);
 
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);

@@ -14,17 +14,14 @@ class COverlays
 		// Current overlay type
 		static COverlayType CurrentType;
 
-		// Current NAT tracks
-		static map<string, CTrack> CurrentTracks;
-
-		// Current TMI
-		static string CurrentTMI;
-
 		// Display the currently selected overlay
 		static void ShowCurrentOverlay(CDC* dc, Graphics* g, CRadarScreen* screen);
 
 		// Grid reference
 		static void ShowHideGridReference(CRadarScreen* screen, bool show);
+
+		// Clear route
+		static int ClearCurrentRoute();
 };
 
 

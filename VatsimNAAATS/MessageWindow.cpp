@@ -2,7 +2,7 @@
 #include "MessageWindow.h"
 #include "Styles.h"
 #include "Constants.h"
-#include "Overlays.h"
+#include "RoutesHelper.h"
 #include "DataHandler.h"
 
 using namespace Colours;
@@ -55,7 +55,7 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	dc->SetTextAlign(TA_CENTER);
 
 	// Get a rectangle for the content
-	int contentSize = COverlays::CurrentTracks.size() * 45; // We minus 25 because 25 extra is always added on at the end of the loop
+	int contentSize = CRoutesHelper::CurrentTracks.size() * 45; // We minus 25 because 25 extra is always added on at the end of the loop
 	CRect scrollContent(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT, windowRect.right, windowRect.top + WINSZ_TITLEBAR_HEIGHT + contentSize);
 	/// Scroll bar mechanics
 	scrollWindowSize = WINSZ_MSG_HEIGHT - 3 - (titleRect.Height() + 1); // Size of the window (which is also the size of the track for the scroll grip)
