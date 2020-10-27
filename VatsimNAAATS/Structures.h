@@ -24,6 +24,12 @@ struct CRoutePosition {
 	int FlightLevel;
 };
 
+// Describes a generic waypoint
+struct CWaypoint {
+	string Name;
+	CPosition Position;
+};
+
 // Describes an inbound aircraft
 struct CInboundAircraft {
 	CInboundAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
@@ -246,7 +252,7 @@ struct CAircraftFlightPlan {
 	string State;
 	CMessage CurrentMessage;
 	vector<string> FlightHistory;
-	vector<string> Route;
+	vector<CWaypoint> Route;
 	vector<CFlightRestriction> Restrictions;
 	bool IsValid;
 	bool IsCleared;

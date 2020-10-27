@@ -127,6 +127,57 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
 }
 
+// Returns the requested format, or returns the same string if the format was unchanged
+string CUtils::ConvertCoordinateFormat(string coordinateString, int format) { // format = 0 (slash format), 1 (xxxxN), 2 (xxNxxxW)
+	// Check the current format of the input string
+	int currentFormat = -1;
+	if (coordinateString.find('/') != string::npos) {
+		currentFormat = 0;
+	}
+	else if (coordinateString.find('W') == string::npos && coordinateString.find('/') == string::npos && coordinateString.size() == 5) {
+		currentFormat = 1;
+	}
+	else if (coordinateString.find('W') != string::npos) {
+		currentFormat = 2;
+	}
+
+	// Check the current format, if -1 or matches, just return the input string
+	if (currentFormat == -1 || currentFormat == format) {
+		return coordinateString;
+	}
+
+	// Otherwise, change the format
+	string returnFormat;
+	if (format == 0) {
+		if (currentFormat == 1) {
+			returnFormat = coordinateString.substr(0, 2) + "/" + coordinateString.substr(2, 2);
+			
+		} else if (currentFormat == 2) {
+			returnFormat = coordinateString.substr(0, 2) + "/" + coordinateString.substr(4, 2);
+		}
+	}
+	else if (format == 1) {
+		if (currentFormat == 0) {
+			returnFormat = coordinateString.substr(0, 2) + coordinateString.substr(3, 2) + "N";
+		}
+		else if (currentFormat == 2) {
+			returnFormat = coordinateString.substr(0, 2) + coordinateString.substr(4, 2) + "N";
+		}
+	}
+	else {
+		if (currentFormat == 0) {
+			returnFormat = coordinateString.substr(0, 2) + "N0" + coordinateString.substr(3, 2) + "W";
+		}
+		else if (currentFormat == 1) {
+			returnFormat = coordinateString.substr(0, 2) + "N0" + coordinateString.substr(2, 2) + "W";
+		}
+	}
+
+	// Return the string
+	return returnFormat;
+}
+
+
 bool CUtils::GetAircraftDirection(int heading) {
 	if ((heading <= 359) && (heading >= 181)) {
 		return false; // Westbound

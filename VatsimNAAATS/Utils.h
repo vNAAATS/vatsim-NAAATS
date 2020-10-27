@@ -38,7 +38,7 @@ class CUtils {
 		static void LoadPluginData(CRadarScreen* screen);
 
 		// Convert other types of coordinates to NN/WW format
-		static string ConvertCoordinatesToSlashFormat(string coordinateString);
+		static string ConvertCoordinateFormat(string coordinateString, int format);
 
 		// Get the aircraft direction
 		static bool GetAircraftDirection(int heading);

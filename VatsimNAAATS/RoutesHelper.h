@@ -19,8 +19,8 @@ class CRoutesHelper
 		// Get a route
 		static vector<CRoutePosition> GetRoute(CRadarScreen* screen, string callsign);
 
-		// Initialise route for aircraft already in HLA
-		static vector<string> InitialiseRoute(CRadarScreen* screen, string callsign);
+		// Initialise route
+		static vector<CWaypoint> InitialiseRoute(CRadarScreen* screen, string callsign);
 
 		// Is on a NAT track
 		static string OnNatTrack(CRadarScreen* screen, string callsign);
