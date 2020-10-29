@@ -30,6 +30,7 @@ class CRadarDisplay : public CRadarScreen
 
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
+		void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
 		void OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released);
 		void OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area);
 		void OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button);

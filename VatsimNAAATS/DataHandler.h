@@ -4,7 +4,6 @@
 #include "EuroScopePlugIn.h"
 #include "Overlays.h"
 #include "Utils.h"
-#include "Structures.h"
 #include <json.hpp>
 
 using namespace std;
@@ -19,11 +18,17 @@ class CDataHandler
 		// Get flight data
 		static CAircraftFlightPlan* GetFlightData(string callsign);
 
-		// Set flight data
-		static int SetFlightData(CAircraftFlightPlan plan);
+		// Update a flight data object
+		static int UpdateFlightData(CRadarScreen* screen, string callsign, bool updateRoute);
 
-		// Make a new block
-		static int MakeNewFlightData(string callsign);
+		// Create a new flight data object
+		static int CreateFlightData(CRadarScreen* screen, string callsign);
+
+		// Deletes a flight data object out of the flights map
+		static int DeleteFlightData(string callsign);
+
+		// Set route
+		static int SetRoute(string callsign, vector<CWaypoint>* route);
 
 	private:
 		// NAT Track URL

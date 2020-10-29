@@ -201,7 +201,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
 			// Parse inbound & other			
-			if (entryMinutes >= 0 && entryMinutes < 60) {
+			if (CUtils::IsAircraftRelevant(this, &ac)) {
 				// If not there then add the status
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
@@ -439,6 +439,28 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	dc.Detach();
 	g.ReleaseHDC(hDC);
 	dc.DeleteDC();
+}
+
+// Ben: In this method we need to run the regular API checks for each callsign updating the data if required.
+// Data updates must be done here asynchronously, see my example in CDataHandler for threading
+void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
+	// Check if they are relevant on the screen
+	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
+		// They are relevant so get the flight plan
+		CAircraftFlightPlan* fp = CDataHandler::GetFlightData(RadarTarget.GetCallsign());
+		
+		// If not valid then it doesn't exist and we need to make it
+		if (!fp->IsValid) {
+			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
+		}
+	}
+	else { // Not relevant
+		// Check if they have a flight plan data object
+		if (CDataHandler::GetFlightData(RadarTarget.GetCallsign())->IsValid) {
+			// Delete the flight data object
+			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
+		}
+	}
 }
 
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)

@@ -101,9 +101,84 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 }
 
 CAircraftFlightPlan* CDataHandler::GetFlightData(string callsign) {
-	return nullptr;
+	if (flights.find(callsign) != flights.end()) {
+		// Ben: this is for you, I have done the 'not found' code at the bottom you need to do the code that gets the existing flight data
+		// not sure whether it's as simple as return flights.at(callsign) or something more complex, depends on the API integration
+		
+		return &flights.find(callsign)->second;
+	}
+	// Return invalid
+	CAircraftFlightPlan fp;
+	fp.IsValid = false;
+	return &fp;
 }
 
-int CDataHandler::MakeNewFlightData(string callsign) {
+int CDataHandler::UpdateFlightData(CRadarScreen* screen, string callsign, bool updateRoute) {
+	// Flight plan
+	auto fp = flights.find(callsign);
+
+	// If flight plan not found return non-success code
+	if (fp == flights.end()) {
+		return 1;
+	}
+
+	// Ben: I have done the update route part for the initialisation if passed in, but you need to do the 
+	// update querying to update the flight data, maybe make an IsFlightDataUpdated() method returning the
+	// updated data from natTrak if it has been updated and returning an FP object with IsValid == false if not updated
+
+	// Re-initialise the route if requested
+	if (updateRoute) {
+		CUtils::CAsyncData data;
+		data.Screen = screen;
+		data.Callsign = callsign;
+		_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*) &data); // Async
+	}
+
+	// Success
 	return 0;
+}
+
+int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
+	// FP object
+	CAircraftFlightPlan fp;	
+	fp.Callsign = callsign;
+	fp.IsValid = true;
+	fp.IsCleared = false; // Ben: this was temporary for my needs, make it so it updates dynamically to true if natTrak clearance
+
+	// Ben: So here I have done what I needed for the routes, I need you to initialise everything else
+	// either from natTrak if the data is there, or from Euroscope values if no natTrak data existing for the pilot
+
+	// Add FP to map
+	flights[callsign] = fp;
+
+	// Generate route (Ben: this must be the last thing done in this method)
+	CUtils::CAsyncData* data = new CUtils::CAsyncData();
+	data->Screen = screen;
+	data->Callsign = callsign;
+	_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*) data); // Async
+
+	// Success
+	return 0;
+}
+
+int CDataHandler::DeleteFlightData(string callsign) {
+	if (flights.find(callsign) != flights.end()) {
+		// Remove the flight if it exists
+		flights.erase(callsign);
+		return 0;
+	}
+	else {
+		return 1; // Non-success code occurs when flight doesn't exist to delete
+	}
+}
+
+int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route) {
+	if (flights.find(callsign) != flights.end()) {
+		// Set route if flight exists
+		flights.find(callsign)->second.Route = *route;
+		return 0;
+	}
+	else {
+		return 1; // Non-success code occurs when flight doesn't exist
+	}
 }

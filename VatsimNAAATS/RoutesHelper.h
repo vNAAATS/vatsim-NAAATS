@@ -20,7 +20,7 @@ class CRoutesHelper
 		static vector<CRoutePosition> GetRoute(CRadarScreen* screen, string callsign);
 
 		// Initialise route
-		static vector<CWaypoint> InitialiseRoute(CRadarScreen* screen, string callsign);
+		static void InitialiseRoute(void* args);
 
 		// Is on a NAT track
 		static string OnNatTrack(CRadarScreen* screen, string callsign);

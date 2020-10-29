@@ -10,7 +10,7 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
-class CUtils {
+class CUtils { // TODO: refactor into namespace
 	public:
 		// Variables to save
 		static int InboundX;
@@ -53,6 +53,9 @@ class CUtils {
 		// Check if point is an exit point (direction: true = Gander, false = Shanwick)
 		static bool IsExitPoint(string pointName, bool direction);
 
+		// Check if the aircraft is to be displayed on the screen
+		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target);
+
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);
 
@@ -94,4 +97,10 @@ class CUtils {
 
 		// Get intersection of two vectors
 		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
+
+		// We need this struct for threading
+		struct CAsyncData {
+			CRadarScreen* Screen;
+			string Callsign;
+		};
 };

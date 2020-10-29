@@ -230,6 +230,24 @@ bool CUtils::IsExitPoint(string pointName, bool side) {
 	}
 }
 
+bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
+	// Flag
+	bool valid = true;
+
+	// Flight plan
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
+
+	// Time and direction
+	int entryMinutes = fp.GetSectorEntryMinutes();
+
+	// For now it is as simple as this, but I will expand it
+	if (entryMinutes < 0 || entryMinutes > 60) {
+		valid = false;
+	}
+
+	return valid;
+}
+
 CPosition CUtils::PositionFromLatLon(double lat, double lon) {
 	// Latitude
 	int degrees = (int)floor(lat);
