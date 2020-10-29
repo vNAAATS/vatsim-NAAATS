@@ -82,8 +82,62 @@ vector<CRoutePosition> CRoutesHelper::GetRoute(CRadarScreen* screen, string call
 }
 
 vector<CWaypoint> CRoutesHelper::InitialiseRoute(CRadarScreen* screen, string callsign) {
+	// Flight plan
+	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+
+	// Final route vector
+	vector<CWaypoint> parsedRoute;
 	
-	
+	// First we check if they have a route string, *and* are cleared
+	if (!fp->RouteRaw.empty() && fp->IsCleared) { // Get their route as per the route string
+		for (auto i = fp->RouteRaw.begin(); i != fp->RouteRaw.end();  i++) {
+			// Waypoint obj
+			CWaypoint point;
+
+			// We check whether there are any numbers in the item
+			bool isAllAlpha = true;
+			for (int j = 0; j < i->size(); j++) {
+				if (isdigit(i->at(j))) {
+					isAllAlpha = false;
+				}
+			}
+
+			// If it's a waypoint we need to search the sector file for the reference
+			if (isAllAlpha) {
+				// Get sector file
+				screen->GetPlugIn()->SelectScreenSectorfile(screen);
+				CSectorElement fix(screen->GetPlugIn()->SectorFileElementSelectFirst(5)); // Fixes element
+
+				// Select waypoint
+				bool found = false;
+				while (string(fix.GetName()) != *i) {
+					fix = screen->GetPlugIn()->SectorFileElementSelectNext(fix, 5);
+				}
+
+				// Check here in case not found
+				if (*i != fix.GetName()) {
+					CPosition pos;
+					pos.m_Latitude = 0.0;
+					pos.m_Longitude = 0.0;
+					point.Name = *i;
+					point.Position = pos;
+				}
+				else {
+					CPosition pos;
+					pos.m_Latitude = 0.0;
+					pos.m_Longitude = 0.0;
+					point.Name = *i;
+					point.Position = fix.;
+				}
+			}
+			else {
+
+			}
+		}
+	}
+	else { // We get the route as per their flight plan
+
+	}
 }
 
 string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {

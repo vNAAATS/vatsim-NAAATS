@@ -252,6 +252,7 @@ struct CAircraftFlightPlan {
 	string State;
 	CMessage CurrentMessage;
 	vector<string> FlightHistory;
+	vector<string> RouteRaw;
 	vector<CWaypoint> Route;
 	vector<CFlightRestriction> Restrictions;
 	bool IsValid;
