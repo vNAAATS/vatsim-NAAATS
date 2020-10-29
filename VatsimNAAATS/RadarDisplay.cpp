@@ -237,7 +237,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							int i;
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
 								// They are coming from land so check entry points
-								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
+								if (CUtils::IsEntryPoint(rte.GetPointName(i), direction) || CUtils::IsExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
 									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
@@ -274,7 +274,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							// They are coming from land so check entry points
 							int i;
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
-								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
+								if (CUtils::IsEntryPoint(rte.GetPointName(i), direction) || CUtils::IsExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
 									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
@@ -395,7 +395,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				// Render
-				CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
+				//CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
 			}
 		}
 
@@ -546,7 +546,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
-				fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
+				//fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
 			}			
 
 			// Probing tools
@@ -568,7 +568,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// Flight plan button
 		if (atoi(sObjectId) == CMenuBar::BTN_FLIGHTPLAN) {
-			fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
+			//fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
 		}
 
 		// Qck Look button
@@ -665,14 +665,14 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
 
-			// Set route drawing
-			if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
+			// Set route drawing TODO fix
+			/*if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
 				CPathRenderer::RouteToDraw = CPathRenderer::GetRoute(this, fp.GetCallsign());
 				CPathRenderer::RouteDrawTarget = fp.GetCallsign();
 			}
 			else {
 				CPathRenderer::ClearCurrentRoute();
-			}
+			}*/
 		}
 	}
 	
@@ -750,7 +750,7 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 
 	// If it is a flight plan window text input
 	if (fltPlnWindow->IsTextInput(FunctionId) && string(sItemString) != "") {
-		fltPlnWindow->ChangeDataPoint(this, FunctionId, string(sItemString));
+
 	}
 }
 

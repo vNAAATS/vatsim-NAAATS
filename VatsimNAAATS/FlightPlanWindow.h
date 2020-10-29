@@ -45,7 +45,6 @@ class CFlightPlanWindow : public CBaseWindow
 		// Fill data
 		void UpdateData(CRadarScreen* screen, CAircraftFlightPlan status);
 		void OnCloseFlightPlanWindow();
-		int ChangeDataPoint(CRadarScreen* screen, int data, string str); // Master method to deal with all cases of text input
 
 		// Data
 		pair<string, CAircraftFlightPlan> CurrentFlightPlan; // We have a flight plan object in the second position for the copy

@@ -23,17 +23,7 @@ class CMessageWindow : public CBaseWindow
 		virtual void ButtonUnpress(int id);
 		virtual void SetButtonState(int id, CInputState state);
 
-		// Window methods
-		void Scroll(CRect area, POINT mousePtr);
-
 		// Button definitions
 		static const int BTN_CLOSE;
-
-	private:
-		double trackScrollAreaSize;
-		double gripPosDelta = 0;
-		double gripSize;
-		CRect currentScrollPos = CRect(0, 0, 0, 0);
-		int scrollWindowSize;
 };
 

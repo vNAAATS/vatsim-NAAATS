@@ -204,12 +204,12 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		DeleteObject(&pen);
 	}
 
-	// If path to be rendered
-	if (CPathRenderer::RouteDrawTarget != "") {
+	// If path to be rendered TODO fix up
+	/*if (CPathRenderer::RouteDrawTarget != "") {
 		if (CPathRenderer::RouteDrawTarget == fp.GetCallsign()) {
 			CPathRenderer::RenderPath(dc, g, screen, CPathType::RTE);
 		}
-	}
+	}*/
 
 	// Restore context
 	dc->RestoreDC(sDC);

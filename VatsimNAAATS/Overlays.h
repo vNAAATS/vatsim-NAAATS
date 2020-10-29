@@ -4,7 +4,7 @@
 #include <map>
 #include "Constants.h"
 #include "Structures.h"
-#include "PathRenderer.h"
+#include "CommonRenders.h"
 
 using namespace std;
 

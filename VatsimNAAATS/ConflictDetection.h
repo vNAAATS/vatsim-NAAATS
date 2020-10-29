@@ -4,7 +4,7 @@
 #include "Constants.h"
 #include "Utils.h"
 #include "Structures.h"
-#include "PathRenderer.h"
+#include "RoutesHelper.h"
 #include "Styles.h"
 #include <gdiplus.h>
 #include <map>
@@ -20,8 +20,8 @@ class CConflictDetection
 		// PIV
 		static vector<CAircraftStatus> PIVLocations1;
 		static vector<CAircraftStatus> PIVLocations2;
-		static pair<bool, vector<CRoutePosition>> PIVRoute1;
-		static pair<bool, vector<CRoutePosition>> PIVRoute2;
+		static vector<CRoutePosition> PIVRoute1;
+		static vector<CRoutePosition> PIVRoute2;
 		static vector<CSepStatus> PIVSeparationStatuses;
 
 		// STCA

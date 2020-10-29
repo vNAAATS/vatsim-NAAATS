@@ -11,6 +11,7 @@ using json = nlohmann::json;
 
 const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
 const string CDataHandler::CTPTrackUrl = "https://tracks.ganderoceanic.com/ctp";
+map<string, CAircraftFlightPlan> CDataHandler::flights;
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
@@ -99,6 +100,10 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	}
 }
 
-int CDataHandler::MakeNewFlightData(string callsign) {
+CAircraftFlightPlan* CDataHandler::GetFlightData(string callsign) {
+	return nullptr;
+}
 
+int CDataHandler::MakeNewFlightData(string callsign) {
+	return 0;
 }

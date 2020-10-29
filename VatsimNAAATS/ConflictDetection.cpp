@@ -3,8 +3,8 @@
 
 vector<CAircraftStatus> CConflictDetection::PIVLocations1;
 vector<CAircraftStatus> CConflictDetection::PIVLocations2;
-pair<bool, vector<CRoutePosition>> CConflictDetection::PIVRoute1;
-pair<bool, vector<CRoutePosition>> CConflictDetection::PIVRoute2;
+vector<CRoutePosition> CConflictDetection::PIVRoute1;
+vector<CRoutePosition> CConflictDetection::PIVRoute2;
 vector<CSepStatus> CConflictDetection::PIVSeparationStatuses;
 vector<CSTCAStatus> CConflictDetection::CurrentSTCA;
 
@@ -423,7 +423,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude, int pivID) {
 	// Get the route
-	pair<bool, vector<CRoutePosition>> route = CPathRenderer::GetRoute(screen, callsign);
+	vector<CRoutePosition> route = CRoutesHelper::GetRoute(screen, callsign);
 
 	if (pivID == 1) {
 		PIVRoute1 = route;
@@ -441,7 +441,7 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* 
 	// Iterate
 	int counter = 0; // Counter to check if not first pass
 	CPosition prevPos; // Previous position
-	for (auto i = route.second.begin(); i != route.second.end(); i++) {
+	for (auto i = route.begin(); i != route.end(); i++) {
 		if (i->Estimate == "--") { // If fix has been passed then continue
 			continue;
 		}

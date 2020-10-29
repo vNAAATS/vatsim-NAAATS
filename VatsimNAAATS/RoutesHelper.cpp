@@ -2,6 +2,10 @@
 #include "RoutesHelper.h"
 #include "DataHandler.h"
 
+map<string, CTrack> CRoutesHelper::CurrentTracks;
+
+string CRoutesHelper::CurrentTMI = "";
+
 vector<CRoutePosition> CRoutesHelper::GetRoute(CRadarScreen* screen, string callsign) {
 	// Get the flight plan
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
@@ -88,8 +92,8 @@ vector<CWaypoint> CRoutesHelper::InitialiseRoute(CRadarScreen* screen, string ca
 	// Final route vector
 	vector<CWaypoint> parsedRoute;
 	
-	// First we check if they have a route string, *and* are cleared
-	if (!fp->RouteRaw.empty() && fp->IsCleared) { // Get their route as per the route string
+	// First we check if they have a route string
+	if (!fp->RouteRaw.empty()) { // Get their route as per the route string
 		for (auto i = fp->RouteRaw.begin(); i != fp->RouteRaw.end();  i++) {
 			// Waypoint obj
 			CWaypoint point;
@@ -115,29 +119,77 @@ vector<CWaypoint> CRoutesHelper::InitialiseRoute(CRadarScreen* screen, string ca
 				}
 
 				// Check here in case not found
-				if (*i != fix.GetName()) {
-					CPosition pos;
+				CPosition pos;
+				if (*i == fix.GetName() && fix.GetPosition(&pos, 0)) { // If found then add
+					point.Name = *i;
+					point.Position = pos;
+					
+				}
+				else { // If not then set the default (highly unlikely but a fallback just in case)
 					pos.m_Latitude = 0.0;
 					pos.m_Longitude = 0.0;
 					point.Name = *i;
 					point.Position = pos;
 				}
-				else {
-					CPosition pos;
-					pos.m_Latitude = 0.0;
-					pos.m_Longitude = 0.0;
-					point.Name = *i;
-					point.Position = fix.;
-				}
 			}
 			else {
-
+				// Make position from the string lat and lon
+				CPosition pos;
+				pos.m_Latitude = stod(i->substr(0, 2));
+				pos.m_Latitude = stod(i->substr(2, 2));
+				point.Name = *i;
+				point.Position = pos;
 			}
+
+			// Append the waypoint object
+			parsedRoute.push_back(point);
 		}
 	}
-	else { // We get the route as per their flight plan
+	else { // We get the route as per their VATSIM flight plan if no route string
+		// Target, flight plan and route
+		CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
+		CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign());
+		CFlightPlanExtractedRoute route = fpData.GetExtractedRoute();
+
+		// Find our entry and exit points
+		int entryPoint = -1;
+		int exitPoint = -1;
+		bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+		for (int i = 0; i < route.GetPointsNumber(); i++) {
+			if (entryPoint == -1) { // Check entry point
+				if (CUtils::IsEntryPoint(string(route.GetPointName(i)), direction ? true : false)) {
+					entryPoint = i;
+					continue;
+				}
+			}
+			if (exitPoint == -1) { // Exit point
+				if (CUtils::IsExitPoint(string(route.GetPointName(i)), direction ? true : false)) {
+					entryPoint = i;
+				}
+			}
+		}
+
+		// Get the points in the route between entry and exit points
+		for (int i = entryPoint == -1 ? route.GetPointsCalculatedIndex() : entryPoint; i <= exitPoint == -1 ? exitPoint : route.GetPointsNumber() - 1; i++) {
+			// First check if position is within reasonable longitudinal bounds
+			if (route.GetPointPosition(i).m_Longitude <= -65 && route.GetPointPosition(i).m_Longitude >= -5) {
+				// Continue
+				continue;
+			}
+
+			// Now make the waypoint
+			CWaypoint point;
+			point.Name = route.GetPointName(i);
+			point.Position = route.GetPointPosition(i);
+
+			// Add waypoint to parsed vector
+			parsedRoute.push_back(point);
+		}
 
 	}
+
+	// Return the vector
+	return parsedRoute;
 }
 
 string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {

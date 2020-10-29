@@ -300,3 +300,52 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	// Restore device context
 	dc->RestoreDC(sDC);
 }
+
+void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type) {
+	// Save context
+	int iDC = dc->SaveDC();
+
+	// Pen
+	Pen pen(TextWhite, 2);
+
+	// Font
+	FontSelector::SelectMonoFont(14, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Loop tracks
+	for (auto kv : CRoutesHelper::CurrentTracks) {
+		// Show eastbound/eastbound only if that type is selected
+		if (*type == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
+			continue;
+		}
+		else if (*type == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
+			continue;
+		}
+
+		// Move to start and draw 
+		POINT pointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
+		string id = kv.first;
+		if (kv.second.Direction == CTrackDirection::EAST) {
+			dc->TextOutA(pointCoord.x - 12, pointCoord.y - 5, id.c_str());
+		}
+		else {
+			dc->TextOutA(pointCoord.x + 12, pointCoord.y - 5, id.c_str());
+		}
+
+		// Anti-aliasing
+		g->SetSmoothingMode(SmoothingModeAntiAlias);
+
+		// Draw lines
+		for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
+			g->DrawLine(&pen, pointCoord.x, pointCoord.y, screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).x, (screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).y));
+			pointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]);
+		}
+	}
+
+	// Cleanup
+	DeleteObject(&pen);
+
+	// Restore context
+	dc->RestoreDC(iDC);
+}

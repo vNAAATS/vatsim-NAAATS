@@ -1220,50 +1220,6 @@ void CFlightPlanWindow::OnCloseFlightPlanWindow() {
 
 }
 
-int CFlightPlanWindow::ChangeDataPoint(CRadarScreen* screen, int data, string str) {
-	// TODO: Currently temporary format, make more robust when implementing the different window modes
-	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(textInputs[TXT_ACID].Content.c_str());
-	if (data == TXT_SPD) {
-		bool isNumber = true;
-		for (int i = 0; i < strlen(str.c_str()); i++) { // Check if int
-			if (!isdigit(str[i])) isNumber = false;
-		}
-		if (isNumber && (stoi(str) > 0 && stoi(str) < 250)) {
-			bool status = fp.GetControllerAssignedData().SetAssignedMach(stoi(str));
-			UpdateData(screen, CAircraftFlightPlan(textInputs[TXT_ACID].Content));
-			return 0;
-		}
-		return 1;
-	}
-	if (data == TXT_LEVEL) {
-		bool isNumber = true;
-		for (int i = 0; i < strlen(str.c_str()); i++) { // Check if int
-			if (!isdigit(str[i])) isNumber = false;
-		}
-		if (isNumber && (stoi(str) > 0 && stoi(str) < 700)) {
-			bool status = fp.GetControllerAssignedData().SetClearedAltitude(stoi(str));
-			UpdateData(screen, CAircraftFlightPlan(textInputs[TXT_ACID].Content));
-			return 0;
-		}
-		return 1;
-	}
-	if (data == TXT_DEST) {
-		if (strlen(str.c_str()) < 5) {
-			bool isAlpha = true;
-			for (int i = 0; i < strlen(str.c_str()); i++) { // Check if string
-				if (!isalpha(str[i])) isAlpha = false;
-			}
-			if (isAlpha) {
-				bool status = fp.GetFlightPlanData().SetDestination(str.c_str());
-				fp.GetFlightPlanData().AmendFlightPlan();
-				UpdateData(screen, CAircraftFlightPlan(textInputs[TXT_ACID].Content));
-				return 0;
-			}
-		}
-		return 1;
-	}
-}
-
 void CFlightPlanWindow::ButtonUp(int id) {
 
 	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
