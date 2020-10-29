@@ -123,7 +123,9 @@ const int BTN_PAD_TOP = 6;
 
 // Lists
 const int LIST_INBOUND_WIDTH = 400;
-const int LIST_OTHERS_WIDTH = 100;
+const int LIST_OTHERS_WIDTH = 110;
+const int LIST_RCLS_WIDTH = 110;
+const int LIST_CONFLICT_WIDTH = 150;
 
 // Menu bar
 const int MENBAR_HEIGHT = 100;
@@ -184,6 +186,8 @@ const int FUNC_ALTFILT_HIGH = 202;
 // Lists
 const int LIST_INBOUND = 300;
 const int LIST_OTHERS = 301;
+const int LIST_RCLS = 302;
+const int LIST_CONFLICT = 303;
 
 // Dropdown
 const int DRP_AREA_EGGX = 801;

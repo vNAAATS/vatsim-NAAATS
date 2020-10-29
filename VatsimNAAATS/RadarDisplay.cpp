@@ -22,6 +22,8 @@ CRadarDisplay::CRadarDisplay()
 	COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
+	rclList = new CRCLList({ CUtils::RCLX, CUtils::RCLY }); // TODO: settings save
+	conflictList = new CConflictList({ CUtils::ConflictX, CUtils::ConflictY }); // TODO: settings save
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
 	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 }); // TODO: settings save
 	msgWindow = new CMessageWindow({ 500, 500 }); // TODO: settings save
@@ -370,10 +372,12 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		/// RENDERING
 		// Draw menu bar
 		menuBar->RenderBar(&dc, &g, this, asel);
-
-		// Check the lists are not empty first, then draw
+		
+		// Draw lists
 		inboundList->RenderList(&g, &dc, this);
 		otherList->RenderList(&g, &dc, this);
+		rclList->RenderList(&g, &dc, this);
+		conflictList->RenderList(&g, &dc, this);
 
 		// SEP draw
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
@@ -454,6 +458,23 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 		CUtils::OthersX = Area.left;
 		CUtils::OthersY = Area.top;
+	}
+
+	// Move conflict list
+	if (ObjectType == LIST_CONFLICT) {
+		conflictList->MoveList(Area);
+
+		// To save
+		CUtils::ConflictX = Area.left;
+		CUtils::ConflictY = Area.top;
+	}
+
+	// Move RCLs list
+	if (ObjectType == LIST_RCLS) {
+		rclList->MoveList(Area);
+
+		CUtils::RCLX = Area.left;
+		CUtils::RCLY = Area.top;
 	}
 
 	// Move tag

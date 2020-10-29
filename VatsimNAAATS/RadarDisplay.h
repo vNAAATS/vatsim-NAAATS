@@ -5,6 +5,8 @@
 #include "InboundList.h"
 #include "Structures.h"
 #include "OtherList.h"
+#include "ConflictList.h"
+#include "RCLList.h"
 #include "MenuBar.h"
 #include "NotePad.h"
 #include "EuroScopePlugIn.h"
@@ -59,6 +61,8 @@ class CRadarDisplay : public CRadarScreen
 		CMenuBar* menuBar;
 		CInboundList* inboundList;
 		COtherList* otherList;
+		CRCLList* rclList;
+		CConflictList* conflictList;
 		CTrackInfoWindow* trackWindow = nullptr;
 		CFlightPlanWindow* fltPlnWindow = nullptr;
 		CMessageWindow* msgWindow = nullptr;

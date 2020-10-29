@@ -6,10 +6,14 @@
 #include "RadarDisplay.h"
 
 // Default values
-int CUtils::InboundX = 500;
-int CUtils::InboundY = 150;
-int CUtils::OthersX = 200;
+int CUtils::InboundX = 1400;
+int CUtils::InboundY = 170;
+int CUtils::OthersX = 1200;
 int CUtils::OthersY = 150;
+int CUtils::ConflictX = 60;
+int CUtils::ConflictY = 120;
+int CUtils::RCLX = 600;
+int CUtils::RCLY = 150;
 int CUtils::TrackWindowX = 300;
 int CUtils::TrackWindowY = 200;
 int CUtils::AltFiltLow = 0;

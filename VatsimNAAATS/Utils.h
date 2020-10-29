@@ -17,6 +17,10 @@ class CUtils {
 		static int InboundY;
 		static int OthersX;
 		static int OthersY;
+		static int ConflictX; // save
+		static int ConflictY; // save
+		static int RCLX; // save
+		static int RCLY; // save
 		static int TrackWindowX;
 		static int TrackWindowY;
 		static int AltFiltLow;
