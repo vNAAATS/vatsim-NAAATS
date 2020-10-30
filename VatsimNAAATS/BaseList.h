@@ -23,6 +23,6 @@ class CBaseList
 
 	protected:
 		// Top left point of list
-		POINT topLeft;
+		POINT topleft;
 };
 

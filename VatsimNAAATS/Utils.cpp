@@ -6,10 +6,14 @@
 #include "RadarDisplay.h"
 
 // Default values
-int CUtils::InboundX = 500;
-int CUtils::InboundY = 150;
-int CUtils::OthersX = 200;
+int CUtils::InboundX = 1400;
+int CUtils::InboundY = 170;
+int CUtils::OthersX = 1200;
 int CUtils::OthersY = 150;
+int CUtils::ConflictX = 60;
+int CUtils::ConflictY = 120;
+int CUtils::RCLX = 600;
+int CUtils::RCLY = 150;
 int CUtils::TrackWindowX = 300;
 int CUtils::TrackWindowY = 200;
 int CUtils::AltFiltLow = 0;
@@ -21,9 +25,6 @@ bool CUtils::OverlayEnabled = false;
 int CUtils::AreaSelection = 802;
 int CUtils::SelectedOverlay = 800;
 int CUtils::PosType = 802;
-int CUtils::SepMinimaVertical = 1000;
-int CUtils::SepMinimaLateral = 60;
-int CUtils::SepMinimaLongitudinal = 10;
 
 // Save plugin data
 void CUtils::SavePluginData(CRadarScreen* screen) {
@@ -127,17 +128,83 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
 }
 
+// Returns the requested format, or returns the same string if the format was unchanged
+string CUtils::ConvertCoordinateFormat(string coordinateString, int format) { // format = 0 (slash format), 1 (xxxxN), 2 (xxNxxxW)
+	// Return var
+	string returnFormat;
+	try {
+		// First we make sure there are numbers
+		int isAllAlpha = true;
+		for (int j = 0; j < coordinateString.size(); j++) {
+			if (isdigit(coordinateString.at(j))) {
+				isAllAlpha = false;
+			}
+		}
+		// Check the current format of the input string
+		int currentFormat = -1;
+		if (coordinateString.find('/') != string::npos) {
+			currentFormat = 0;
+		}
+		else if (coordinateString.find('W') == string::npos && coordinateString.find('/') == string::npos && coordinateString.size() == 5) {
+			currentFormat = 1;
+		}
+		else if (coordinateString.find('W') != string::npos) {
+			currentFormat = 2;
+		}
+
+		// Check the current format, if -1 or matches, just return the input string
+		if (currentFormat == -1 || currentFormat == format || isAllAlpha || coordinateString.size() > 7) {
+			return coordinateString;
+		}
+
+		// Otherwise, change the format
+		if (format == 0) {
+			if (currentFormat == 1) {
+				returnFormat = coordinateString.substr(0, 2) + "/" + coordinateString.substr(2, 2);
+
+			}
+			else if (currentFormat == 2) {
+				returnFormat = coordinateString.substr(0, 2) + "/" + coordinateString.substr(4, 2);
+			}
+		}
+		else if (format == 1) {
+			if (currentFormat == 0) {
+				returnFormat = coordinateString.substr(0, 2) + coordinateString.substr(3, 2) + "N";
+			}
+			else if (currentFormat == 2) {
+				returnFormat = coordinateString.substr(0, 2) + coordinateString.substr(4, 2) + "N";
+			}
+		}
+		else {
+			if (currentFormat == 0) {
+				returnFormat = coordinateString.substr(0, 2) + "N0" + coordinateString.substr(3, 2) + "W";
+			}
+			else if (currentFormat == 1) {
+				returnFormat = coordinateString.substr(0, 2) + "N0" + coordinateString.substr(2, 2) + "W";
+			}
+		}
+	}
+	catch (exception & ex) {
+		// Return the old one if an exception occurs
+		return coordinateString;
+	}
+	
+	// Return the string
+	return returnFormat;
+}
+
+
 bool CUtils::GetAircraftDirection(int heading) {
-	if ((heading <= 359) && (heading >= 181)) {
+	if ((heading <= 359) && (heading >= 180)) {
 		return false; // Westbound
 	}
-	else if ((heading >= 1) && (heading <= 179)) {
+	else if ((heading >= 0) && (heading <= 179)) {
 
 		return true; // Eastbound
 	}
 }
 
-bool CUtils::IsEntryExitPoint(string pointName, bool side) {
+bool CUtils::IsEntryPoint(string pointName, bool side) {
 	if (side) { // Gander
 		if (find(pointsGander.begin(), pointsGander.end(), pointName) != pointsGander.end()) {
 			return true; // Match
@@ -154,6 +221,46 @@ bool CUtils::IsEntryExitPoint(string pointName, bool side) {
 			return false; // No match
 		}
 	}
+}
+
+bool CUtils::IsExitPoint(string pointName, bool side) {
+	if (side) { // Gander
+		if (find(pointsShanwick.begin(), pointsShanwick.end(), pointName) != pointsShanwick.end()) {
+			return true; // Match
+		}
+		else {
+			return false; // No match
+		}
+	}
+	else { // Shanwick
+		if (find(pointsGander.begin(), pointsGander.end(), pointName) != pointsGander.end()) {
+			return true; // Match
+		}
+		else {
+			return false; // No match
+		}
+	}
+}
+
+bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
+	// Flag
+	bool valid = true;
+
+	// Flight plan
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
+
+	// Time and direction
+	int entryMinutes = fp.GetSectorEntryMinutes();
+
+	// If not ever going to enter, or greater than 60 min out
+	if (entryMinutes < 0 || entryMinutes > 60) {
+		valid = false;
+	}
+
+	// However we should keep them on the screen if they aren't long out of the airspace
+	//if ()
+
+	return valid;
 }
 
 CPosition CUtils::PositionFromLatLon(double lat, double lon) {

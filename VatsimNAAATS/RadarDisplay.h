@@ -5,7 +5,10 @@
 #include "InboundList.h"
 #include "Structures.h"
 #include "OtherList.h"
+#include "ConflictList.h"
+#include "RCLList.h"
 #include "MenuBar.h"
+#include "NotePad.h"
 #include "EuroScopePlugIn.h"
 #include "TrackInfoWindow.h"
 #include "FlightPlanWindow.h"
@@ -27,6 +30,9 @@ class CRadarDisplay : public CRadarScreen
 
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
+		void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
+		void OnControllerDisconnect(CController Controller);
+		void OnFlightPlanDisconnect(CFlightPlan FlightPlan);
 		void OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released);
 		void OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area);
 		void OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button);
@@ -58,8 +64,11 @@ class CRadarDisplay : public CRadarScreen
 		CMenuBar* menuBar;
 		CInboundList* inboundList;
 		COtherList* otherList;
+		CRCLList* rclList;
+		CConflictList* conflictList;
 		CTrackInfoWindow* trackWindow = nullptr;
 		CFlightPlanWindow* fltPlnWindow = nullptr;
 		CMessageWindow* msgWindow = nullptr;
+		CNotePad* npWindow = nullptr;
 };
 

@@ -99,13 +99,14 @@ const vector<string> pointsShanwick = { "RATSU",
         "PITAX",
         "PASAS",
         "NILAV",
-        "GONAN" 
+        "GONAN",
+        "ATSUR"
 };
 
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v0.2b";
+const string PLUGIN_VERSION = "v0.3b";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
@@ -123,7 +124,9 @@ const int BTN_PAD_TOP = 6;
 
 // Lists
 const int LIST_INBOUND_WIDTH = 400;
-const int LIST_OTHERS_WIDTH = 100;
+const int LIST_OTHERS_WIDTH = 110;
+const int LIST_RCLS_WIDTH = 110;
+const int LIST_CONFLICT_WIDTH = 150;
 
 // Menu bar
 const int MENBAR_HEIGHT = 100;
@@ -142,12 +145,23 @@ const int WINSZ_TITLEBAR_HEIGHT = 20;
 const int WINSZ_TCKINFO_WIDTH = 450;
 const int WINSZ_TCKINFO_HEIGHT = 250;
 const int WINSZ_FLTPLN_WIDTH = 540;
-const int WINSZ_FLTPLN_HEIGHT_INIT = 170;
-const int WINSZ_FLTPLN_HEIGHT_DATA = 310;
-const int WINSZ_FLTPLN_HEIGHT_CPY = 600;
-const int WINSZ_FLTPLN_HEIGHT_XTRA = 600;
+const int WINSZ_FLTPLN_HEIGHT_INIT = 150;
+const int WINSZ_FLTPLN_HEIGHT_DATA = 165;
+const int WINSZ_FLTPLN_HEIGHT_MANETRY = 175;
+const int WINSZ_FLTPLN_HEIGHT_CPY = 165;
+const int WINSZ_FLTPLN_HEIGHT_MSG = 175;
+const int WINSZ_FLTPLN_HEIGHT_XTRA = 165;
+const int WINSZ_FLTPLN_WIDTH_MDL = 375;
+const int WINSZ_FLTPLN_WIDTH_COORD = 350;
+const int WINSZ_FLTPLN_HEIGHT_COORD = 280;
+const int WINSZ_FLTPLN_HEIGHT_ATCR = 260;
+const int WINSZ_FLTPLN_HEIGHT_HIST = 250;
+const int WINSZ_FLTPLN_WIDTH_HIST = 500;
+const int WINSZ_FLTPLN_HEIGHT_TSFR = 260;
 const int WINSZ_MSG_WIDTH = 550;
-const int WINSZ_MSG_HEIGHT = 300;
+const int WINSZ_MSG_HEIGHT = 315;
+const int WINSZ_NP_WIDTH = 250;
+const int WINSZ_NP_HEIGHT = 300;
 
 // Conflict
 const int SEPTOOL_TIME = 2700; // 45 minutes
@@ -173,6 +187,8 @@ const int FUNC_ALTFILT_HIGH = 202;
 // Lists
 const int LIST_INBOUND = 300;
 const int LIST_OTHERS = 301;
+const int LIST_RCLS = 302;
+const int LIST_CONFLICT = 303;
 
 // Dropdown
 const int DRP_AREA_EGGX = 801;
@@ -241,13 +257,6 @@ enum class CTrackStatus {
     SAME
 };
 
-// Message type
-enum class CMessageType {
-    OK,
-    WARNING,
-    CRITICAL
-};
-
 // Button states
 enum class CInputState {
     INACTIVE,
@@ -263,4 +272,8 @@ enum class CFlightPlanMode {
     DATA_COPY,
     CLEARANCE,
     PROBE
+};
+
+enum class CMessageType {
+
 };

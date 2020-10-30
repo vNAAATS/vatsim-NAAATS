@@ -3,17 +3,19 @@
 
 CBaseList::CBaseList(POINT topLeft) {
 	// Set top left
-	topLeft = topLeft;
+	topleft = topLeft;
 }
 
 POINT CBaseList::GetTopLeft() {
-	return topLeft;
+	return topleft;
 }
 
 void CBaseList::MoveList(CRect area) {
-	topLeft = { area.left, area.top };
+	// Only set Y if it is greater than the top position of the menu bar (to stop clipping over the menu bar)
+	topleft = { area.left, area.top > MENBAR_HEIGHT ? area.top : MENBAR_HEIGHT };
 }
 
-void CBaseList::MoveList(POINT topleft) {
-	topLeft = { topleft.x, topleft.y };
+void CBaseList::MoveList(POINT topLeft) {
+	// Only set Y if it is greater than the top position of the menu bar (to stop clipping over the menu bar)
+	topleft = { topLeft.x, topLeft.y > MENBAR_HEIGHT ? topLeft.y : MENBAR_HEIGHT };
 }

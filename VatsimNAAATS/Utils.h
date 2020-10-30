@@ -10,13 +10,17 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
-class CUtils {
+class CUtils { // TODO: refactor into namespace
 	public:
 		// Variables to save
 		static int InboundX;
 		static int InboundY;
 		static int OthersX;
 		static int OthersY;
+		static int ConflictX; // save
+		static int ConflictY; // save
+		static int RCLX; // save
+		static int RCLY; // save
 		static int TrackWindowX;
 		static int TrackWindowY;
 		static int AltFiltLow;
@@ -38,13 +42,19 @@ class CUtils {
 		static void LoadPluginData(CRadarScreen* screen);
 
 		// Convert other types of coordinates to NN/WW format
-		static string ConvertCoordinatesToSlashFormat(string coordinateString);
+		static string ConvertCoordinateFormat(string coordinateString, int format);
 
 		// Get the aircraft direction
 		static bool GetAircraftDirection(int heading);
 
-		// Check if point is a Gander/Shanwick border point (true = Gander, false = Shanwick)
-		static bool IsEntryExitPoint(string pointName, bool direction);
+		// Check if point is an entry point (direction: true = Gander, false = Shanwick)
+		static bool IsEntryPoint(string pointName, bool direction);
+
+		// Check if point is an exit point (direction: true = Gander, false = Shanwick)
+		static bool IsExitPoint(string pointName, bool direction);
+
+		// Check if the aircraft is to be displayed on the screen
+		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target);
 
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);
@@ -87,4 +97,10 @@ class CUtils {
 
 		// Get intersection of two vectors
 		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
+
+		// We need this struct for threading
+		struct CAsyncData {
+			CRadarScreen* Screen;
+			string Callsign;
+		};
 };

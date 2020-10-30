@@ -1,8 +1,7 @@
 #include "pch.h"
 #include "TrackInfoWindow.h"
 #include "Styles.h"
-#include "Constants.h"
-#include "Overlays.h"
+#include "RoutesHelper.h"
 #include "DataHandler.h"
 
 using namespace Colours;
@@ -45,7 +44,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_TCKINFO_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_TCKINFO_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Track Info - TMI: " + COverlays::CurrentTMI).c_str());
+	dc->TextOutA(titleRect.left + (WINSZ_TCKINFO_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Track Info - TMI: " + CRoutesHelper::CurrentTMI).c_str());
 
 	// Create button bar
 	CRect buttonBarRect(windowRect.left, windowRect.bottom - 50, windowRect.left + WINSZ_TCKINFO_WIDTH, windowRect.bottom);
@@ -86,7 +85,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	dc->TextOutA(((windowRect.right + windowRect.left) / 2) + 10, buttonBarRect.top + 16, MsgDataRefresh.c_str());
 	
 	// Get a rectangle for the content
-	int contentSize = COverlays::CurrentTracks.size() * 45; // We minus 25 because 25 extra is always added on at the end of the loop
+	int contentSize = CRoutesHelper::CurrentTracks.size() * 45; // We minus 25 because 25 extra is always added on at the end of the loop
 	CRect scrollContent(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT, windowRect.right, windowRect.top + WINSZ_TITLEBAR_HEIGHT + contentSize);
 	/// Scroll bar mechanics
 	scrollWindowSize = WINSZ_TCKINFO_HEIGHT - (buttonBarRect.Height() + 3) -  (titleRect.Height() + 1); // Size of the window (which is also the size of the track for the scroll grip)
@@ -129,7 +128,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	int contentOffsetY = 25;
 	string spacer = "SPACE"; // To use GetTextExtent() for a consistent sized spacer
 	// Draw lines
-	for (auto kv : COverlays::CurrentTracks) {
+	for (auto kv : CRoutesHelper::CurrentTracks) {
 		int content = (int)scrollContent.top + contentOffsetY;
 		if (windowRect.top + contentOffsetY >= clipContent.top && windowRect.top + contentOffsetY <= clipContent.bottom) {
 			dc->TextOutA(windowRect.left + offsetX, windowRect.top + offsetY, "TCK");
@@ -195,6 +194,14 @@ void CTrackInfoWindow::ButtonDown(int id) {
 }
 
 void CTrackInfoWindow::ButtonPress(int id) {
+
+}
+
+void CTrackInfoWindow::ButtonUnpress(int id) {
+
+}
+
+void CTrackInfoWindow::SetButtonState(int id, CInputState state) {
 
 }
 

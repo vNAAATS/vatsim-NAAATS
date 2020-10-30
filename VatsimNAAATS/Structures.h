@@ -24,6 +24,18 @@ struct CRoutePosition {
 	int FlightLevel;
 };
 
+// Describes a generic waypoint
+struct CWaypoint {
+	CWaypoint() {}; // Default constructor
+	CWaypoint(string name, double lat, double lon) {
+		Name = name;
+		Position.m_Latitude - lat;
+		Position.m_Longitude = lon;
+	}
+	string Name;
+	CPosition Position;
+};
+
 // Describes an inbound aircraft
 struct CInboundAircraft {
 	CInboundAircraft(string cs, int fA, int cL, string pt, string est, string dest, bool direction) {
@@ -58,6 +70,7 @@ struct CAircraftStatus {
 	int Altitude;
 	int GroundSpeed;
 	int Heading;
+	int Estimate;
 	CPosition Position;
 };
 
@@ -183,12 +196,121 @@ struct CDropDown {
 	int Width;
 };
 
-struct CAcFPStatus {
-	CAcFPStatus() {}; // Default constructor
-	CAcFPStatus(string cs, CFlightPlanMode mode) {
-		Callsign = cs;
-		Mode = mode;
+struct CWinScrollBar {
+	CWinScrollBar() {}
+	CWinScrollBar(int id, int type, int cSize, int fSize, bool isX) {
+		Id = id;
+		Type = type;
+		ContentSize = cSize;
+		FrameSize = fSize;
+		ContentRatio = (double)FrameSize / (double)ContentSize;
+		TotalScrollableArea = ContentSize - FrameSize + 20;
+		IsHorizontal = isX;
+
+		// Grip size (subtract 12 because buttons)
+		GripSize = (FrameSize - 80) * ContentRatio;
+		if (GripSize < 20) GripSize = 20; // Minimum grip size
+		if (GripSize > FrameSize - 12) GripSize = FrameSize - 12; // Maximum grip size
+		PositionDelta = 0;
+		WindowPos = 0;
+
 	}
+	int Id;
+	int Type;
+	int ContentSize;
+	int FrameSize;
+	double ContentRatio;
+	double GripSize;
+	double PositionDelta;
+	double WindowPos;
+	int TotalScrollableArea;
+	bool IsHorizontal;
+};
+
+struct CMessage {
+	CMessage() {}; // Default constructor
+	string To;
+	string From;
+	string MessageRaw;
+	string MessageHuman;
+	CMessageType Type;
+};
+
+struct CFlightRestriction {
+	CFlightRestriction() {}; // Default constructor
+	int Type;
+	string Content;
+};
+
+struct CAircraftFlightPlan {
+	CAircraftFlightPlan() {}; // Default constructor
 	string Callsign;
-	CFlightPlanMode Mode;
+	string Type;
+	string Depart;
+	string Dest;
+	string Etd;
+	string SELCAL;
+	string DLStatus;
+	string Communications;
+	string Sector;
+	string FlightLevel;
+	string Mach;
+	string Track;
+	string State;
+	CMessage CurrentMessage;
+	vector<string> FlightHistory;
+	vector<string> RouteRaw;
+	vector<CWaypoint> Route;
+	vector<CFlightRestriction> Restrictions;
+	bool IsValid;
+	bool IsCleared;
+};
+
+// These gotta go in here because Constants.h doesn't like it?
+const vector<CWaypoint> NatSM = {
+	CWaypoint("SM15W", 50.683, -15.0),
+	CWaypoint("SM20W", 50.833, -20.0),
+	CWaypoint("SM30W", 50.5, -30.0),
+	CWaypoint("SM40W", 49.266, -40.0),
+	CWaypoint("SM50W", 47.05, -50.0),
+	CWaypoint("SM53W", 46.166, -53.0),
+	CWaypoint("SM60W", 44.233, -60.0),
+	CWaypoint("SM65W", 42.766, -65.0),
+	CWaypoint("SM67W", 42.0, -67.0)
+};
+const vector<CWaypoint> NatSN = {
+	CWaypoint("SN67W", 40.416667, -67.0),
+	CWaypoint("SN65W", 41.666667, -65.0),
+	CWaypoint("SN60W", 43.116667, -60.0),
+	CWaypoint("SN525W", 45.166667, -52.5),
+	CWaypoint("SN50W", 45.9, -50.0),
+	CWaypoint("SN40W", 48.166667, -40.0),
+	CWaypoint("SN30W", 49.433333, -30.0),
+	CWaypoint("SN20W", 49.816667, -20.0),
+	CWaypoint("SN15W", 49.683333, -15.0)
+};
+const vector<CWaypoint> NatSO = {
+	CWaypoint("SO15W", 48.666667, -15.0),
+	CWaypoint("SO20W", 48.8, -20.0),
+	CWaypoint("SO30W", 48.366667, -30.0),
+	CWaypoint("SO40W", 47.066667, -40.0),
+	CWaypoint("SO50W", 44.75, -50.0),
+	CWaypoint("SO52W", 44.166667, -52.0),
+	CWaypoint("SO60W", 42.0, -60.0)
+};
+const vector<CWaypoint> NatSL = {
+	CWaypoint("SL50W", 57.0, -50.0),
+	CWaypoint("SL40W", 57.0, -40.0),
+	CWaypoint("SL30W", 56.0, -30.0),
+	CWaypoint("SL20W", 54.0, -20.0),
+	CWaypoint("SL15W", 52.0, -15.0)
+};
+const vector<CWaypoint> NatSP = {
+	CWaypoint("SP20W", 46.816667, -20.0),
+	CWaypoint("SP238W", 45.0, -23.883333),
+	CWaypoint("SP30W", 41.6, -30.0),
+	CWaypoint("SP40W", 34.366667, -40.0),
+	CWaypoint("SP477W", 27.0, -47.783333),
+	CWaypoint("SP50W", 24.633333, -50.0),
+	CWaypoint("SP556W", 18.0, -55.65)
 };

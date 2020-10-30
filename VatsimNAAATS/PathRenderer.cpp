@@ -220,8 +220,7 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 	}
 	else if (type == CPathType::TCKS) { // Draw tracks if the type is tracks
 		// Pen
-		CPen pen(PS_SOLID, 1, TextWhite.ToCOLORREF());
-		dc->SelectObject(pen);
+		Pen pen(TextWhite, 2);
 
 		// Font
 		FontSelector::SelectMonoFont(14, dc);
@@ -229,34 +228,37 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 		dc->SetTextAlign(TA_CENTER);
 
 		// Loop tracks
-		for (auto kv : COverlays::CurrentTracks) {
+		for (auto kv : CRoutesHelper::CurrentTracks) {
 			// Show eastbound/eastbound only if that type is selected
-			if (COverlays::CurrentType == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
+			if (CRoutesHelper::CurrentType == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
 				continue;
 			}
-			else if (COverlays::CurrentType == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
+			else if (CRoutesHelper::CurrentType == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
 				continue;
 			}
 
 			// Move to start and draw 
-			POINT firstPointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
-			dc->MoveTo(firstPointCoord);
+			POINT pointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[0]);
 			string id = kv.first;
 			if (kv.second.Direction == CTrackDirection::EAST) {
-				dc->TextOutA(firstPointCoord.x - 12, firstPointCoord.y - 5, id.c_str());
+				dc->TextOutA(pointCoord.x - 12, pointCoord.y - 5, id.c_str());
 			}
 			else {
-				dc->TextOutA(firstPointCoord.x + 12, firstPointCoord.y - 5, id.c_str());
+				dc->TextOutA(pointCoord.x + 12, pointCoord.y - 5, id.c_str());
 			}
+
+			// Anti-aliasing
+			g->SetSmoothingMode(SmoothingModeAntiAlias);
 
 			// Draw lines
 			for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
-				dc->LineTo(screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]));
+				g->DrawLine(&pen, pointCoord.x, pointCoord.y, screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).x, (screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).y));
+				pointCoord = screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]);
 			}
 		}
 
 		// Cleanup
-		DeleteObject(pen);
+		DeleteObject(&pen);
 	}
 
 	// Restore context
@@ -264,7 +266,9 @@ void CPathRenderer::RenderPath(CDC* dc, Graphics* g, CRadarScreen* screen, CPath
 }
 
 // TODO: Refactor when implementing flight plan window
-pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen, string callsign) {
+pair<bool, vector<CRoutePosition>> CRoutesHelper::GetRoute(CRadarScreen* screen, string callsign) {
+	// Test if a flight data block already exists
+
 	// Get target
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
@@ -327,7 +331,8 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 					position.Estimate = "--";
 					position.DistanceFromLastPoint = 0;
 				}
-			} else if (track.Direction == CTrackDirection::EAST) { // If heading westbound, check if the aircraft is past the point
+			}
+			else if (track.Direction == CTrackDirection::EAST) { // If heading westbound, check if the aircraft is past the point
 				if (target.GetPosition().GetPosition().m_Longitude < track.RouteRaw[i].m_Longitude) {
 					if (totalDistance == 0) {
 						// Calculate distance from aircraft
@@ -374,7 +379,7 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 		// Get the points in the route
 		int counter = 0; // Counter flag
 		for (int i = point == -1 ? route.GetPointsCalculatedIndex() : point; i < route.GetPointsNumber(); i++) {
-			
+
 			// Store whether to cancel route draw
 			bool breakLoop = false;
 			if (CUtils::IsEntryExitPoint(string(route.GetPointName(i)), direction ? false : true)) {
@@ -417,47 +422,7 @@ pair<bool, vector<CRoutePosition>> CPathRenderer::GetRoute(CRadarScreen* screen,
 			if (breakLoop) break;
 		}
 	}
-	
+
 	// Set route draw
 	return make_pair(startAtAircraft, returnRoute);
-}
-
-string CPathRenderer::OnNatTrack(CRadarScreen* screen, string callsign) {
-	// Get flight plan
-	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str());
-
-	// Get route and begin search
-	string route = fp.GetFlightPlanData().GetRoute();
-	size_t found = route.find(string(" NAT"));
-	// If found
-	if (found != string::npos) {
-		// Make sure that it's not a waypoint starting with NAT (check character count)
-		if (route.at(found + 5) == 0x20) { // If it was found (found + 5 was a space character)
-			// Get the ID and return
-			string trackId;
-			trackId.push_back(route.at(found + 4));
-			return trackId;
-		}
-		else {
-			return "";
-		}
-	}
-	else { // Not on a NAT
-		return "";
-	}
-}
-
-int CPathRenderer::ClearCurrentRoute() {
-	// Test if route is already empty
-	if (!RouteToDraw.second.empty()) {
-		// Clear it and return success code
-		RouteToDraw.first = false;
-		RouteToDraw.second.clear();
-		RouteDrawTarget = "";
-		return 0;
-	}
-	else {
-		// Vector was already empty so return fail code
-		return 1;
-	}
 }

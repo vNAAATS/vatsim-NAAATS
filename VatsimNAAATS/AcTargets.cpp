@@ -69,6 +69,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		dc->TextOutA(acPoint.x, acPoint.y - 20, line.c_str());
 	}
 
+	// Anti aliasing
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+
 	// Rotate the graphics object and set the middle to the aircraft position
 	g->RotateTransform(target->GetTrackHeading());
 	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
@@ -154,13 +157,11 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
 
 		// Draw leader
-		CPen pen(PS_SOLID, 1, Colours::TargetOrange.ToCOLORREF());
-		dc->SelectObject(pen);
-		dc->MoveTo(acPoint);
-		dc->LineTo(ptlPoint);
+		Pen pen(Colours::TargetOrange, 1);
+		g->DrawLine(&pen, acPoint.x, acPoint.y, ptlPoint.x, ptlPoint.y);
 
 		// Cleanup
-		DeleteObject(pen);
+		DeleteObject(&pen);
 	}
 
 	// Draw halos
@@ -196,18 +197,11 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Draw halo
 		Rect temp(acPoint.x - radius, acPoint.y - radius, radius * 2, radius * 2);
-		Pen pen(&orangeBrush);
+		Pen pen(&orangeBrush, 1);
 		g->DrawEllipse(&pen, temp);
 
 		// Cleanup
 		DeleteObject(&pen);
-	}
-
-	// If path to be rendered
-	if (CPathRenderer::RouteDrawTarget != "") {
-		if (CPathRenderer::RouteDrawTarget == fp.GetCallsign()) {
-			CPathRenderer::RenderPath(dc, g, screen, CPathType::RTE);
-		}
 	}
 
 	// Restore context
@@ -269,9 +263,6 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
 		}
 	}
-
-	// TAG DEBUG
-	// dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
 	
 	// Pick text colour
 	COLORREF textColour;

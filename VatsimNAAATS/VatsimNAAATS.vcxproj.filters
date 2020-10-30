@@ -42,9 +42,6 @@
     <ClCompile Include="Overlays.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PathRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ConflictDetection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -73,6 +70,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MenuBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NotePad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RoutesHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConflictList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RCLList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,9 +139,6 @@
     <ClInclude Include="Overlays.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PathRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ConflictDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -161,6 +167,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MenuBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NotePad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RoutesHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConflictList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RCLList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

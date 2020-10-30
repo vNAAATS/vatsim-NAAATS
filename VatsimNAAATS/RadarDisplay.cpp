@@ -22,9 +22,12 @@ CRadarDisplay::CRadarDisplay()
 	COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
+	rclList = new CRCLList({ CUtils::RCLX, CUtils::RCLY }); // TODO: settings save
+	conflictList = new CConflictList({ CUtils::ConflictX, CUtils::ConflictY }); // TODO: settings save
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
 	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 }); // TODO: settings save
 	msgWindow = new CMessageWindow({ 500, 500 }); // TODO: settings save
+	npWindow = new CNotePad({ 300, 300 }, { 800, 200 }); // TODO: save settings
 	menuBar = new CMenuBar();
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
@@ -135,6 +138,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (idx->first == asel) {
 					asel = "";
 				}
+
 				// Finally erase the on screen reference
 				idx = aircraftOnScreen.erase(idx);
 			}
@@ -175,6 +179,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		int entryMinutes;
 		bool direction;
 
+		// Draw routes
+		if (CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty() && CRoutesHelper::ActiveRoutes.size() != 0) {
+			CCommonRenders::RenderRoutes(&dc, &g, this);
+		}
+
 		// Loop all aircraft
 		while (ac.IsValid()) {
 			// Very first thing we do is check their altitude, if they are outside the filter, skip them
@@ -198,7 +207,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
 			// Parse inbound & other			
-			if (entryMinutes >= 0 && entryMinutes < 60) {
+			if (CUtils::IsAircraftRelevant(this, &ac)) {
 				// If not there then add the status
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
@@ -236,7 +245,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							int i;
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
 								// They are coming from land so check entry points
-								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
+								if (CUtils::IsEntryPoint(rte.GetPointName(i), direction) || CUtils::IsExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
 									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), false));
@@ -273,7 +282,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 							// They are coming from land so check entry points
 							int i;
 							for (i = 0; i < rte.GetPointsNumber(); i++) {
-								if (CUtils::IsEntryExitPoint(rte.GetPointName(i), direction)) {
+								if (CUtils::IsEntryPoint(rte.GetPointName(i), direction) || CUtils::IsExitPoint(rte.GetPointName(i), direction)) {
 									// Add if within
 									inboundList->AircraftList.push_back(CInboundAircraft(ac.GetCallsign(), fp.GetFinalAltitude(), fp.GetClearedAltitude(),
 										rte.GetPointName(i), CUtils::ParseZuluTime(false, -1, &fp, i), fp.GetFlightPlanData().GetDestination(), true));
@@ -369,10 +378,12 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		/// RENDERING
 		// Draw menu bar
 		menuBar->RenderBar(&dc, &g, this, asel);
-
-		// Check the lists are not empty first, then draw
+		
+		// Draw lists
 		inboundList->RenderList(&g, &dc, this);
 		otherList->RenderList(&g, &dc, this);
+		rclList->RenderList(&g, &dc, this);
+		conflictList->RenderList(&g, &dc, this);
 
 		// SEP draw
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
@@ -394,7 +405,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				// Render
-				CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
+				CConflictDetection::RenderPIV(&dc, &g, this, aircraftSel1, aircraftSel2);
 			}
 		}
 
@@ -411,6 +422,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Draw flight plan window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
 			fltPlnWindow->RenderWindow(&dc, &g, this);
+		}
+
+		// Draw flight plan window if button pressed
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_NOTEPAD)) {
+			npWindow->RenderWindow(&dc, &g, this);
 		}
 
 		// Finally, reset the clocks if time has been exceeded
@@ -431,10 +447,56 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	dc.DeleteDC();
 }
 
+// Ben: In this method we need to run the regular API checks for each callsign updating the data if required.
+// Data updates must be done here asynchronously, see my example in CDataHandler for threading
+void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
+	// Check if they are relevant on the screen
+	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
+		// They are relevant so get the flight plan
+		CAircraftFlightPlan* fp = CDataHandler::GetFlightData(RadarTarget.GetCallsign());
+		
+		// If not valid then it doesn't exist and we need to make it
+		if (!fp->IsValid) {
+			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
+		}
+	}
+	else { // Not relevant
+		// Check if they have a flight plan data object
+		if (CDataHandler::GetFlightData(RadarTarget.GetCallsign())->IsValid) {
+			// Delete the flight data object
+			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
+		}
+	}
+}
+
+void CRadarDisplay::OnControllerDisconnect(CController Controller) {
+	// Erase any route drawing
+	if (CRoutesHelper::ActiveRoutes.size() != 0 || CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty())
+		CRoutesHelper::ActiveRoutes.clear();
+}
+
+void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
+	// Erase any route drawing
+	if (CRoutesHelper::ActiveRoutes.size() != 0 || CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty()) {
+		int found = -1; // Found flag so we can remove if needed
+		for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
+			// If the route is currently on the screen
+			if (CRoutesHelper::ActiveRoutes[i] == FlightPlan.GetCallsign()) {
+				// Set to remove
+				found = i;
+				break;
+			}
+		}
+
+		// Erase if the item was found, otherwise add
+		if (found != -1) {
+			CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
+		}
+	}	
+}
+
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
 {
-	// Mouse pointer
-	mousePointer = Pt;
 	// Move inbound list
 	if (ObjectType == LIST_INBOUND) {
 		inboundList->MoveList(Area);
@@ -450,6 +512,23 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 		CUtils::OthersX = Area.left;
 		CUtils::OthersY = Area.top;
+	}
+
+	// Move conflict list
+	if (ObjectType == LIST_CONFLICT) {
+		conflictList->MoveList(Area);
+
+		// To save
+		CUtils::ConflictX = Area.left;
+		CUtils::ConflictY = Area.top;
+	}
+
+	// Move RCLs list
+	if (ObjectType == LIST_RCLS) {
+		rclList->MoveList(Area);
+
+		CUtils::RCLX = Area.left;
+		CUtils::RCLY = Area.top;
 	}
 
 	// Move tag
@@ -470,8 +549,21 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		if (string(sObjectId) == "MSG")
 			msgWindow->MoveWindow(Area);
 
+		if (string(sObjectId) == "NOTEPAD")
+			npWindow->MoveWindow(Area);
+
 		CUtils::TrackWindowX = Area.left;
 		CUtils::TrackWindowY = Area.top;
+	}
+
+	// Move subwindows for flight plan
+	if (ObjectType == WIN_FLTPLN) {
+		if (atoi(sObjectId) >= 400 && atoi(sObjectId) <= 420) {
+			fltPlnWindow->MoveSubWindow(atoi(sObjectId), { Area.left, Area.top });
+		}
+		if (atoi(sObjectId) >= 500) {
+			fltPlnWindow->Scroll(atoi(sObjectId), Pt, mousePointer);
+		}
 	}
 
 	// Scrolling
@@ -479,12 +571,16 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 		if (string(sObjectId) == "TCKINFO") trackWindow->Scroll(Area, mousePointer);
 	}
 
+	// Mouse pointer
+	mousePointer = Pt;
+
 	// Refresh
 	RequestRefresh();
 }
 
 void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
 {
+	mousePointer = Pt;
 	// Dropdown
 	if (ObjectType == MENBAR) {
 		if (atoi(sObjectId) >= 800) {
@@ -506,6 +602,13 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		else {
 			menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
 		}
+	} else if (ObjectType == WIN_FLTPLN) {
+		if (!fltPlnWindow->IsButtonPressed(atoi(sObjectId))) {
+			fltPlnWindow->ButtonPress(atoi(sObjectId));
+		}
+		else {
+			fltPlnWindow->ButtonUnpress(atoi(sObjectId));
+		}
 	}
 
 	// Left button actions
@@ -518,17 +621,18 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
-				fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+				//fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
 			}			
 
 			// Probing tools
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
-				if (aircraftSel1 == "") {
+				// Make sure flight plans are valid
+				if (aircraftSel1 == "" && CDataHandler::GetFlightData(asel)->IsValid) {
 					aircraftSel1 = asel;
 				}
-				else if (aircraftSel2 == "") {
+				else if (aircraftSel2 == "" && aircraftSel1 != asel && CDataHandler::GetFlightData(asel)->IsValid) {
 					aircraftSel2 = asel;
 				}
 			}
@@ -540,7 +644,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// Flight plan button
 		if (atoi(sObjectId) == CMenuBar::BTN_FLIGHTPLAN) {
-			fltPlnWindow->UpdateData(this, CAcFPStatus(asel, CFlightPlanMode::INIT));
+			//fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
 		}
 
 		// Qck Look button
@@ -632,19 +736,27 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	
 	if (Button == BUTTON_RIGHT) {
 		if (ObjectType == SCREEN_TAG) {
-			// Set the ASEL
-			asel = sObjectId;
-			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
-			GetPlugIn()->SetASELAircraft(fp);
+			/// Set route drawing
+			// Make sure flight plan exists otherwise it will crash, and also that they aren't PIV aircraft
+			if (CDataHandler::GetFlightData(string(sObjectId))->IsValid && string(sObjectId) != aircraftSel1 && string(sObjectId) != aircraftSel2) {
+				int found = -1; // Found flag so we can remove if needed
+				for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
+					// If the route is currently on the screen
+					if (CRoutesHelper::ActiveRoutes[i] == sObjectId) {
+						// Set to remove
+						found = i;
+						break;
+					}
+				}
 
-			// Set route drawing
-			if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
-				CPathRenderer::RouteToDraw = CPathRenderer::GetRoute(this, fp.GetCallsign());
-				CPathRenderer::RouteDrawTarget = fp.GetCallsign();
-			}
-			else {
-				CPathRenderer::ClearCurrentRoute();
-			}
+				// Erase if the item was found, otherwise add
+				if (found != -1) {
+					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
+				}
+				else {
+					CRoutesHelper::ActiveRoutes.push_back(string(sObjectId));
+				}
+			}			
 		}
 	}
 	
@@ -684,7 +796,9 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 			// Close window if the close button
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
 		}
-		fltPlnWindow->ButtonUp(atoi(sObjectId));
+		if (atoi(sObjectId) < 200) {
+			fltPlnWindow->ButtonUp(atoi(sObjectId));
+		}		
 	}
 
 	// Refresh
@@ -720,7 +834,7 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 
 	// If it is a flight plan window text input
 	if (fltPlnWindow->IsTextInput(FunctionId) && string(sItemString) != "") {
-		fltPlnWindow->ChangeDataPoint(this, FunctionId, string(sItemString));
+
 	}
 }
 

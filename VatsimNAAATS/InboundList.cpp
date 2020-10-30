@@ -20,7 +20,7 @@ void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 	int sDC = dc->SaveDC();
 
 	// Make rectangle
-	Rect rectangle(topLeft.x, topLeft.y, LIST_INBOUND_WIDTH, 500);
+	Rect rectangle(topleft.x, topleft.y, LIST_INBOUND_WIDTH, 500);
 	
 	// Text
 	FontSelector::SelectATCFont(18, dc);
@@ -101,6 +101,6 @@ void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 	dc->RestoreDC(sDC);
 
 	// Get object area and add object to screen
-	CRect area(topLeft.x, topLeft.y, topLeft.x + LIST_INBOUND_WIDTH, topLeft.y + 14);
+	CRect area(topleft.x, topleft.y, topleft.x + LIST_INBOUND_WIDTH, topleft.y + 14);
 	screen->AddScreenObject(LIST_INBOUND, "", area, true, "");
 }
