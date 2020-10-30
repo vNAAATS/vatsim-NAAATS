@@ -179,6 +179,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		int entryMinutes;
 		bool direction;
 
+		// Draw routes
+		if (CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty() && CRoutesHelper::ActiveRoutes.size() != 0) {
+			CCommonRenders::RenderRoutes(&dc, &g, this);
+		}
+
 		// Loop all aircraft
 		while (ac.IsValid()) {
 			// Very first thing we do is check their altitude, if they are outside the filter, skip them
@@ -380,11 +385,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		rclList->RenderList(&g, &dc, this);
 		conflictList->RenderList(&g, &dc, this);
 
-		// Draw routes
-		if (CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty() && CRoutesHelper::ActiveRoutes.size() != 0) {
-			CCommonRenders::RenderRoutes(&dc, &g, this);
-		}
-
 		// SEP draw
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 			// If both aircraft selected then draw
@@ -405,7 +405,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				// Render
-				CConflictDetection::RenderPIV(&dc, &g, this);
+				CConflictDetection::RenderPIV(&dc, &g, this, aircraftSel1, aircraftSel2);
 			}
 		}
 
@@ -471,25 +471,28 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 
 void CRadarDisplay::OnControllerDisconnect(CController Controller) {
 	// Erase any route drawing
-	CRoutesHelper::ActiveRoutes.clear();
+	if (CRoutesHelper::ActiveRoutes.size() != 0 || CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty())
+		CRoutesHelper::ActiveRoutes.clear();
 }
 
 void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	// Erase any route drawing
-	int found = -1; // Found flag so we can remove if needed
-	for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
-		// If the route is currently on the screen
-		if (CRoutesHelper::ActiveRoutes[i] == FlightPlan.GetCallsign()) {
-			// Set to remove
-			found = i;
-			break;
+	if (CRoutesHelper::ActiveRoutes.size() != 0 || CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty()) {
+		int found = -1; // Found flag so we can remove if needed
+		for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
+			// If the route is currently on the screen
+			if (CRoutesHelper::ActiveRoutes[i] == FlightPlan.GetCallsign()) {
+				// Set to remove
+				found = i;
+				break;
+			}
 		}
-	}
 
-	// Erase if the item was found, otherwise add
-	if (found != -1) {
-		CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
-	}
+		// Erase if the item was found, otherwise add
+		if (found != -1) {
+			CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
+		}
+	}	
 }
 
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
@@ -625,10 +628,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
-				if (aircraftSel1 == "") {
+				// Make sure flight plans are valid
+				if (aircraftSel1 == "" && CDataHandler::GetFlightData(asel)->IsValid) {
 					aircraftSel1 = asel;
 				}
-				else if (aircraftSel2 == "") {
+				else if (aircraftSel2 == "" && aircraftSel1 != asel && CDataHandler::GetFlightData(asel)->IsValid) {
 					aircraftSel2 = asel;
 				}
 			}

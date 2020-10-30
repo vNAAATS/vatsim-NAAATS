@@ -70,6 +70,7 @@ struct CAircraftStatus {
 	int Altitude;
 	int GroundSpeed;
 	int Heading;
+	int Estimate;
 	CPosition Position;
 };
 

@@ -37,7 +37,7 @@ class CConflictDetection
 		static void PIVTool(CRadarScreen* screen, string targetA, string targetB);
 
 		// Path Intercept Vector tool
-		static void RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen);
+		static void RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB);
 
 		// STCA (run every 10s)
 		static void CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft);
@@ -46,9 +46,9 @@ class CConflictDetection
 
 	private: 
 		// Separation values
-		static const int SEPV_LOW = 1000;
-		static const int SEPV_HIGH = 2000;
-		static const int SEPV_SUPERSONIC = 4000;
+		static const int SEPV_LOW = 950; // Subtract fifty otherwise it's way too sensitive
+		static const int SEPV_HIGH = 1950;
+		static const int SEPV_SUPERSONIC = 3950;
 		static const int SEPLAT_NONREDUCED = 60;
 		static const int SEPLAT_REDUCED = 23;
 		static const int SEPLON_REDUCED = 5;

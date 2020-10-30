@@ -196,13 +196,14 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	}
 }
 
-void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
 	// Save context
 	int iDC = dc->SaveDC();
 
 	// Pens & brush
 	Pen pen(TargetOrange, 2);
 	Pen yellowPen(WarningYellow, 2);
+	Pen thinYellowPen(WarningYellow, 1.5);
 	Pen redPen(CriticalRed, 2);
 	SolidBrush brush(TargetOrange);
 
@@ -214,63 +215,205 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	// Anti-aliasing
 	g->SetSmoothingMode(SmoothingModeAntiAlias);
 
+	// Hold these for drawing between aircraft and point
+	POINT lastPoint1;
+	POINT lastPoint2;
+
 	// Begin drawing
 	if (!PIVRoute1.empty()) { // Failsafe
+		// Radar target
+		CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
+		POINT aircraftPos = screen->ConvertCoordFromPositionToPixel(target.GetPosition().GetPosition());
+		lastPoint1 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute1.begin()->PositionRaw);
 		for (auto i = CConflictDetection::PIVRoute1.begin(); i != CConflictDetection::PIVRoute1.end(); i++) {
-			// Get point, text rectangle & define y offset
-			string text = i->Fix; // To get TextExtent
 			POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
-			CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
-			int offsetY = 0;
+			// Draw text and dot only if not AIRCRAFT fix
+			if (i->Fix != "AIRCRAFT") {
+				// Get point, text rectangle & define y offset
+				string text = i->Fix; // To get TextExtent				
+				CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+				int offsetY = 0;
 
-			// Draw dot
-			Rect pointRect(point.x - 3, point.y - 3, 6, 6);
-			g->FillEllipse(&brush, pointRect);
+				// Draw dot
+				Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+				g->FillEllipse(&brush, pointRect);
 
-			// Print text for fix
-			dc->TextOutA(box.left, box.top, text.c_str());
-			offsetY += 14;
+				// Print text for fix
+				dc->TextOutA(box.left, box.top, text.c_str());
+				offsetY += 14;
 
-			// Print text for estimate
-			text = i->Estimate;
-			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
-			offsetY += 14;
+				// Print text for estimate
+				text = i->Estimate;
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
 
-			// Print text for flight level
-			text = to_string(i->FlightLevel);
-			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				// Print text for flight level
+				text = to_string(i->FlightLevel);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			}
+			// Draw the line between points if there is no estimate (point is behind the aircraft)
+			if (i->Estimate == "--") {
+				// Draw line
+				g->DrawLine(&pen, lastPoint1.x, lastPoint1.y, point.x, point.y);
+				lastPoint1 = point;
+
+				// If next point is either AIRCRAFT, or the estimate is positive draw line between last point and target
+				if (i != PIVRoute1.end() - 1) {
+					if (std::next(i, 1)->Fix == "AIRCRAFT" || std::next(i, 1)->Estimate != "--") {
+						g->DrawLine(&pen, lastPoint1.x, lastPoint1.y, aircraftPos.x, aircraftPos.y);
+						lastPoint1 = aircraftPos;
+					}
+				}
+			}
 		}
 	}
 	if (!PIVRoute2.empty()) { // Failsafe
+		CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
+		POINT aircraftPos = screen->ConvertCoordFromPositionToPixel(target.GetPosition().GetPosition());
+		lastPoint2 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVRoute2.begin()->PositionRaw);
 		for (auto i = CConflictDetection::PIVRoute2.begin(); i != CConflictDetection::PIVRoute2.end(); i++) {
-			// Get point, text rectangle & define y offset
-			string text = i->Fix; // To get TextExtent
 			POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
-			CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
-			int offsetY = 0;
+			// Draw text and dot only if not AIRCRAFT fix
+			if (i->Fix != "AIRCRAFT") {
+				// Get point, text rectangle & define y offset
+				string text = i->Fix; // To get TextExtent
+				CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+				int offsetY = 0;
 
-			// Draw dot
-			Rect pointRect(point.x - 3, point.y - 3, 6, 6);
-			g->FillEllipse(&brush, pointRect);
+				// Draw dot
+				Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+				g->FillEllipse(&brush, pointRect);
 
-			// Print text for fix
-			dc->TextOutA(box.left, box.top, text.c_str());
-			offsetY += 14;
+				// Print text for fix
+				dc->TextOutA(box.left, box.top, text.c_str());
+				offsetY += 14;
 
-			// Print text for estimate
-			text = i->Estimate;
-			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
-			offsetY += 14;
+				// Print text for estimate
+				text = i->Estimate;
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
 
-			// Print text for flight level
-			text = to_string(i->FlightLevel);
-			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				// Print text for flight level
+				text = to_string(i->FlightLevel);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			}
+
+			// Draw the line between points if there is no estimate (point is behind the aircraft)
+			if (i->Estimate == "--") {
+				// Draw line
+				g->DrawLine(&pen, lastPoint2.x, lastPoint2.y, point.x, point.y);
+				lastPoint2 = point;
+
+				// If next point is either AIRCRAFT, or the estimate is positive draw line between last point and target
+				if (i != PIVRoute2.end() - 1) {
+					if (std::next(i, 1)->Fix == "AIRCRAFT" || std::next(i, 1)->Estimate != "--") {
+						g->DrawLine(&pen, lastPoint2.x, lastPoint2.y, aircraftPos.x, aircraftPos.y);
+						lastPoint2 = aircraftPos;
+					}
+				}				
+			}
 		}
+	}
+
+	// Draw conflicts
+	int i = 0;
+	CConflictStatus previousStatus = CConflictDetection::PIVSeparationStatuses.begin()->ConflictStatus;
+	CRadarTarget tA = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
+	CRadarTarget tB = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
+	for (i; i < CConflictDetection::PIVSeparationStatuses.size(); i++) {
+		// Points
+		POINT piv1 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position);
+		POINT piv2 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position);
+		// Select pen
+		if (CConflictDetection::PIVSeparationStatuses.at(i).ConflictStatus == CConflictStatus::OK) {
+			g->DrawLine(&pen, lastPoint1.x, lastPoint1.y, piv1.x, piv1.y);
+			g->DrawLine(&pen, lastPoint2.x, lastPoint2.y, piv2.x, piv2.y);
+		}
+		else if (CConflictDetection::PIVSeparationStatuses.at(i).ConflictStatus == CConflictStatus::WARNING) {
+			g->DrawLine(&yellowPen, lastPoint1.x, lastPoint1.y, piv1.x, piv1.y);
+			g->DrawLine(&yellowPen, lastPoint2.x, lastPoint2.y, piv2.x, piv2.y);
+		}
+		else {
+			g->DrawLine(&redPen, lastPoint1.x, lastPoint1.y, piv1.x, piv1.y);
+			g->DrawLine(&redPen, lastPoint2.x, lastPoint2.y, piv2.x, piv2.y);
+		}
+
+		// Text
+		dc->SetTextColor(WarningYellow.ToCOLORREF());
+		dc->SetTextAlign(TA_CENTER);
+
+		// Draw times
+		if (previousStatus != CConflictDetection::PIVSeparationStatuses.at(i).ConflictStatus) {
+			// Get times (subtract 1 because previous estimate is needed)
+			string time1 = CUtils::ParseZuluTime(false, CConflictDetection::PIVLocations1.at(i).Estimate - 1);
+			string time2 = CUtils::ParseZuluTime(false, CConflictDetection::PIVLocations2.at(i).Estimate - 1);
+
+			// Print text for both
+			dc->TextOutA(lastPoint1.x, lastPoint1.y - 20, time1.c_str());
+			dc->TextOutA(lastPoint2.x, lastPoint2.y - 20, time2.c_str());
+
+			// Draw crosses
+			g->DrawLine(&thinYellowPen, lastPoint1.x - 5, lastPoint1.y - 5, lastPoint1.x + 5, lastPoint1.y + 5); // AC1
+			g->DrawLine(&thinYellowPen, lastPoint1.x - 5, lastPoint1.y + 5, lastPoint1.x + 5, lastPoint1.y - 5); // AC1
+			g->DrawLine(&thinYellowPen, lastPoint2.x - 5, lastPoint2.y - 5, lastPoint2.x + 5, lastPoint2.y + 5); // AC2
+			g->DrawLine(&thinYellowPen, lastPoint2.x - 5, lastPoint2.y + 5, lastPoint2.x + 5, lastPoint2.y - 5); // AC2
+
+		}
+
+		// Set previous status
+		previousStatus = CConflictDetection::PIVSeparationStatuses.at(i).ConflictStatus;
+
+		// Reset points
+		lastPoint1 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position);
+		lastPoint2 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position);
+	}
+
+	// Now draw the remainder of the line for the longer aircraft
+	int length = CConflictDetection::PIVLocations1.size() > CConflictDetection::PIVLocations2.size()
+		? (int)CConflictDetection::PIVLocations1.size() : CConflictDetection::PIVLocations2.size();
+	// Bool to hold which is longer
+	bool isLonger = CConflictDetection::PIVLocations1.size() > CConflictDetection::PIVLocations2.size()
+		? true : false;
+	POINT pointToDraw;
+	if (isLonger) {
+		pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i - 1).Position);
+	}
+	else {
+		pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i - 1).Position);
+	}
+
+	// Iterate and draw
+	for (i; i < length; i++) {
+		// Select orange pen
+		if (isLonger) {
+			try {
+				POINT pt = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position);
+				g->DrawLine(&pen, pointToDraw.x, pointToDraw.y, pt.x, pt.y);
+				dc->MoveTo(pointToDraw);
+				pointToDraw = pt;
+			}
+			catch (exception & ex) {
+				continue;
+			}
+		}
+		else {
+			try {
+				POINT pt = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position);
+				g->DrawLine(&pen, pointToDraw.x, pointToDraw.y, pt.x, pt.y);
+				dc->MoveTo(pointToDraw);
+				pointToDraw = pt;
+			}
+			catch (exception & ex) {
+				continue;
+			}
+		}
+
 	}
 
 	// Cleanup
 	DeleteObject(&pen);
 	DeleteObject(&yellowPen);
+	DeleteObject(&thinYellowPen);
 	DeleteObject(&redPen);
 	DeleteObject(&brush);
 	
@@ -348,6 +491,10 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	int altB = aircraftB->Altitude;
 	int gsA = aircraftA->GroundSpeed;
 	int gsB = aircraftB->GroundSpeed;
+
+	// Targets
+	CRadarTarget targetA = screen->GetPlugIn()->RadarTargetSelect(aircraftA->Callsign.c_str());
+	CRadarTarget targetB = screen->GetPlugIn()->RadarTargetSelect(aircraftB->Callsign.c_str());
 
 	// Default status obj
 	CSepStatus status;
@@ -466,7 +613,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 			verticallySeparated = false;
 		}
 	}
-	// If either are supersonic
+	// If either are supersonic & concorde
 	if (CUtils::GetMach(aircraftA->GroundSpeed, 573) >= 100 || CUtils::GetMach(aircraftB->GroundSpeed, 573) >= 100) {
 		// Vertical sep needs to be greater than 4000 and either type needs to be concorde
 		if (status.AltDifference < 4000 
@@ -494,11 +641,16 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 		}
 	}
 
-	// TODO fix
-	// Check the relative speed, if opposite traffic moving away from each other then status is ok
-	/*if (!status.IsDistanceClosing && status.TrackStatus == CTrackStatus::OPPOSITE) {
-		CConflictStatus conflictStatus = CConflictStatus::OK;
-	}*/
+	// Last positions
+	CPosition targetALast = targetA.GetPreviousPosition(targetA.GetPosition()).GetPosition();
+	CPosition targetBLast = targetB.GetPreviousPosition(targetB.GetPosition()).GetPosition();
+
+	// If last position distance closer than the current position distance they are heading away from each other and no conflict
+	if (targetALast.DistanceTo(targetBLast) < targetA.GetPosition().GetPosition().DistanceTo(targetB.GetPosition().GetPosition()) 
+		&& targetALast.DistanceTo(targetBLast) > 5) { // Greater than 5 miles away to remove the conflict
+		// No conflict
+		conflictStatus = CConflictStatus::OK;
+	}
 
 	// Assign conflict status
 	status.ConflictStatus = conflictStatus;
@@ -527,45 +679,48 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* 
 	// Iterate
 	int counter = 0; // Counter to check if not first pass
 	CPosition prevPos; // Previous position
-	for (auto i = route.begin(); i != route.end(); i++) {
-		if (i->Estimate == "--") { // If fix has been passed then continue
+	int totalTime = 0;
+	for (int i = 0; i < route.size(); i++) {
+		if (route.at(i).Estimate == "--") { // If fix has been passed then continue
 			continue;
 		}
 
 		// Get the time
-		int time = CUtils::GetTimeDistanceSpeed(i->DistanceFromLastPoint, groundSpeed);
+		int time = CUtils::GetTimeDistanceSpeed(route.at(i).DistanceFromLastPoint, groundSpeed);
 
 		// Get the heading
 		int heading;
 		if (counter == 0) { // If the position is the aircraft's location then get that direction
-			heading = acPos.DirectionTo(i->PositionRaw);
+			heading = acPos.DirectionTo(route.at(i).PositionRaw);
 			prevPos = acPos;
 			counter++;
 		}
 		else {
 			// Get the direction from point to point
-			heading = prevPos.DirectionTo(i->PositionRaw);
+			heading = prevPos.DirectionTo(route.at(i).PositionRaw);
 		}
 
 		// Iterate through the times and get the points
 		for (int j = 0; j < time; j++) {
+			totalTime++;
 			CAircraftStatus status;
 			status.Callsign = callsign;
 			status.Altitude = altitude;
 			status.GroundSpeed = groundSpeed;
 			status.Heading = heading;
+			status.Estimate = totalTime;
 			if (statuses.empty()) {
 				status.Position = acPos;
 			}
 			else {
-				status.Position = CUtils::GetPointDistanceBearing(prevPos, ((i->DistanceFromLastPoint * 1852) / time) * j, heading);
+				status.Position = CUtils::GetPointDistanceBearing(prevPos, ((route.at(i).DistanceFromLastPoint * 1852) / time) * j, heading);
 			}
 			// Add status
 			statuses.push_back(status);
 		}
 
 		// Reassign previous position variable
-		prevPos = i->PositionRaw;
+		prevPos = route.at(i).PositionRaw;
 	}
 
 	// Return

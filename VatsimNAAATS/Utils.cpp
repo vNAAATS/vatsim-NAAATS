@@ -25,9 +25,6 @@ bool CUtils::OverlayEnabled = false;
 int CUtils::AreaSelection = 802;
 int CUtils::SelectedOverlay = 800;
 int CUtils::PosType = 802;
-int CUtils::SepMinimaVertical = 1000;
-int CUtils::SepMinimaLateral = 60;
-int CUtils::SepMinimaLongitudinal = 10;
 
 // Save plugin data
 void CUtils::SavePluginData(CRadarScreen* screen) {
@@ -255,10 +252,13 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 	// Time and direction
 	int entryMinutes = fp.GetSectorEntryMinutes();
 
-	// For now it is as simple as this, but I will expand it
+	// If not ever going to enter, or greater than 60 min out
 	if (entryMinutes < 0 || entryMinutes > 60) {
 		valid = false;
 	}
+
+	// However we should keep them on the screen if they aren't long out of the airspace
+	//if ()
 
 	return valid;
 }

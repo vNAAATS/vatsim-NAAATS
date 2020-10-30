@@ -204,13 +204,6 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		DeleteObject(&pen);
 	}
 
-	// If path to be rendered TODO fix up
-	/*if (CPathRenderer::RouteDrawTarget != "") {
-		if (CPathRenderer::RouteDrawTarget == fp.GetCallsign()) {
-			CPathRenderer::RenderPath(dc, g, screen, CPathType::RTE);
-		}
-	}*/
-
 	// Restore context
 	dc->RestoreDC(sDC);
 
@@ -270,9 +263,6 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
 		}
 	}
-
-	// TAG DEBUG
-	// dc->Draw3dRect(tagRect, TextWhite.ToCOLORREF(), TextWhite.ToCOLORREF());
 	
 	// Pick text colour
 	COLORREF textColour;
