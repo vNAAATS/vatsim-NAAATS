@@ -274,7 +274,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 		g->FillPolygon(&brush, btnB, 3);
 
 		// Grip
-		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11 + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0), scrollBarTrack.right - 1, scrollBarTrack.top + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0) + scrollView->GripSize);
+		grip = CRect(scrollBarTrack.left, scrollBarTrack.top + 11 + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0), scrollBarTrack.right - 1, scrollBarTrack.top + 11 + (!isnan(scrollView->PositionDelta) ? scrollView->WindowPos : 0) + scrollView->GripSize);
 		dc->FillSolidRect(grip, ScreenBlue.ToCOLORREF());
 		dc->Draw3dRect(grip, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 		InflateRect(grip, -1, -1);
