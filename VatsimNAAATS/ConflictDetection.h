@@ -36,6 +36,9 @@ class CConflictDetection
 		// Path Intercept Vector tool
 		static void PIVTool(CRadarScreen* screen, string targetA, string targetB);
 
+		// Path Intercept Vector tool
+		static void RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen);
+
 		// STCA (run every 10s)
 		static void CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft);
 

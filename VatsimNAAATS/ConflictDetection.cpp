@@ -190,9 +190,92 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	// Get the length
 	int length = PIVLocations1.size() < PIVLocations2.size() ? (int)PIVLocations1.size() : PIVLocations2.size();
 
+	// Set separation statuses
 	for (int i = 0; i < length; i++) {
 		PIVSeparationStatuses.push_back(DetectStatus(screen, &PIVLocations1.at(i), &PIVLocations2.at(i)));
 	}
+}
+
+void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen) {
+	// Save context
+	int iDC = dc->SaveDC();
+
+	// Pens & brush
+	Pen pen(TargetOrange, 2);
+	Pen yellowPen(WarningYellow, 2);
+	Pen redPen(CriticalRed, 2);
+	SolidBrush brush(TargetOrange);
+
+	// Font
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Anti-aliasing
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+
+	// Begin drawing
+	if (!PIVRoute1.empty()) { // Failsafe
+		for (auto i = CConflictDetection::PIVRoute1.begin(); i != CConflictDetection::PIVRoute1.end(); i++) {
+			// Get point, text rectangle & define y offset
+			string text = i->Fix; // To get TextExtent
+			POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
+			CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+			int offsetY = 0;
+
+			// Draw dot
+			Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+			g->FillEllipse(&brush, pointRect);
+
+			// Print text for fix
+			dc->TextOutA(box.left, box.top, text.c_str());
+			offsetY += 14;
+
+			// Print text for estimate
+			text = i->Estimate;
+			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			offsetY += 14;
+
+			// Print text for flight level
+			text = to_string(i->FlightLevel);
+			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+		}
+	}
+	if (!PIVRoute2.empty()) { // Failsafe
+		for (auto i = CConflictDetection::PIVRoute2.begin(); i != CConflictDetection::PIVRoute2.end(); i++) {
+			// Get point, text rectangle & define y offset
+			string text = i->Fix; // To get TextExtent
+			POINT point = screen->ConvertCoordFromPositionToPixel(i->PositionRaw);
+			CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+			int offsetY = 0;
+
+			// Draw dot
+			Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+			g->FillEllipse(&brush, pointRect);
+
+			// Print text for fix
+			dc->TextOutA(box.left, box.top, text.c_str());
+			offsetY += 14;
+
+			// Print text for estimate
+			text = i->Estimate;
+			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			offsetY += 14;
+
+			// Print text for flight level
+			text = to_string(i->FlightLevel);
+			dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+		}
+	}
+
+	// Cleanup
+	DeleteObject(&pen);
+	DeleteObject(&yellowPen);
+	DeleteObject(&redPen);
+	DeleteObject(&brush);
+	
+	// Restore context
+	dc->RestoreDC(iDC);
 }
 
 void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft) {
@@ -398,13 +481,13 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 	/// Check separation (eventually base it on equipment code, therefore adding a use for the CTrackStatus flag)
 	/// Separation currently fixed to: Lateral = 23NM, Longitudinal = 5 minutes overall inside the OCA
-	if (status.DistanceAsTime <= SEPLON_REDUCEDWARN && status.DistanceAsTime > SEPLON_REDUCED) {
+	if (status.DistanceAsTime <= SEPLON_REDUCEDWARN && status.DistanceAsTime >= SEPLON_REDUCED) {
 		// Distance not met, so check altitude
 		if (!verticallySeparated) {
 			conflictStatus = CConflictStatus::WARNING;
 		}
 	}
-	else if (status.DistanceAsTime <= SEPLON_REDUCED) {
+	else if (status.DistanceAsTime < SEPLON_REDUCED) {
 		// Distance not met, so check altitude
 		if (!verticallySeparated) {
 			conflictStatus = CConflictStatus::CRITICAL;

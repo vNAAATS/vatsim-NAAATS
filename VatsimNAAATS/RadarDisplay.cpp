@@ -405,7 +405,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			// If both aircraft selected then draw
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
 				// Render
-				//CPathRenderer::RenderPath(&dc, &g, this, CPathType::PIV);
+				CConflictDetection::RenderPIV(&dc, &g, this);
 			}
 		}
 
@@ -733,8 +733,8 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	if (Button == BUTTON_RIGHT) {
 		if (ObjectType == SCREEN_TAG) {
 			/// Set route drawing
-			// Make sure flight plan exists otherwise it will crash
-			if (CDataHandler::GetFlightData(string(sObjectId))->IsValid) {
+			// Make sure flight plan exists otherwise it will crash, and also that they aren't PIV aircraft
+			if (CDataHandler::GetFlightData(string(sObjectId))->IsValid && string(sObjectId) != aircraftSel1 && string(sObjectId) != aircraftSel2) {
 				int found = -1; // Found flag so we can remove if needed
 				for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
 					// If the route is currently on the screen
