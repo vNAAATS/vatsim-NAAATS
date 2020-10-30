@@ -99,7 +99,8 @@ const vector<string> pointsShanwick = { "RATSU",
         "PITAX",
         "PASAS",
         "NILAV",
-        "GONAN" 
+        "GONAN",
+        "ATSUR"
 };
 
 /// VALUES

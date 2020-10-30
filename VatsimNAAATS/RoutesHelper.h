@@ -16,6 +16,9 @@ class CRoutesHelper
 		// Current TMI
 		static string CurrentTMI;
 
+		// Active aircraft routes to draw
+		static vector<string> ActiveRoutes;
+
 		// Get a route
 		static vector<CRoutePosition> GetRoute(CRadarScreen* screen, string callsign);
 

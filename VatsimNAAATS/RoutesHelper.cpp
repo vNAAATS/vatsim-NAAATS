@@ -6,9 +6,16 @@ map<string, CTrack> CRoutesHelper::CurrentTracks;
 
 string CRoutesHelper::CurrentTMI = "";
 
+vector<string> CRoutesHelper::ActiveRoutes;
+
 vector<CRoutePosition> CRoutesHelper::GetRoute(CRadarScreen* screen, string callsign) {
 	// Get the flight plan
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+
+	// Check validity
+	if (!fp->IsValid || fp->Route.size() == 0) {
+		return vector<CRoutePosition>(); // Return empty vector
+	}
 
 	// Get target
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
@@ -74,7 +81,7 @@ vector<CRoutePosition> CRoutesHelper::GetRoute(CRadarScreen* screen, string call
 		}
 
 		// Altitude
-		position.FlightLevel = stoi(fp->FlightLevel);
+		position.FlightLevel = target.GetPosition().GetFlightLevel() / 100;
 
 		// Add the position
 		returnRoute.push_back(position);
@@ -160,30 +167,60 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 		trackReturned = OnNatTrack(data->Screen, data->Callsign.c_str());
 		CTrack track;
 		if (trackReturned != "") { // If on a track
-			bool loopBreak = false;
-			for (auto kv : CRoutesHelper::CurrentTracks) {
-				if (kv.first == trackReturned) { // Assign track to the returned box
-					track = kv.second;
-					loopBreak = true;
-					break;
+			// Check if it is concorde first
+			if (trackReturned.size() == 1) {	
+				bool loopBreak = false;
+				for (auto kv : CRoutesHelper::CurrentTracks) {
+					if (kv.first == trackReturned) { // Assign track to the returned box
+						track = kv.second;
+						loopBreak = true;
+						break;
+					}
 				}
-			}
-			if (!loopBreak) { // If for some reason the pilot's track doesn't exist, ignore it
-				trackReturned = "";
+				if (!loopBreak) { // If for some reason the pilot's track doesn't exist, ignore it
+					trackReturned = "";
+				}
 			}
 		}
 
 		// If on track
+		bool routeFetched = false;
 		if (trackReturned != "") {
-			for (int i = 0; i < track.RouteRaw.size(); i++) {
-				// Make waypoint
-				CWaypoint point;
-				point.Name = track.Route[i];
-				point.Position = track.RouteRaw[i];
-
-				// Add to route vector
-				parsedRoute.push_back(point);
+			// Check concorde
+			if (trackReturned.size() == 2) {
+				if (trackReturned == "SM") {
+					parsedRoute = NatSM;
+					routeFetched = true;
+				}
+				else if (trackReturned == "SN") {
+					parsedRoute = NatSN;
+					routeFetched = true;
+				}
+				else if (trackReturned == "SP") {
+					parsedRoute = NatSP;
+					routeFetched = true;
+				}
+				else if (trackReturned == "SL") {
+					parsedRoute = NatSL;
+					routeFetched = true;
+				}
+				else {
+					parsedRoute = NatSO;
+					routeFetched = true;
+				}
 			}
+			
+			if (!routeFetched) {
+				for (int i = 0; i < track.RouteRaw.size(); i++) {
+					// Make waypoint
+					CWaypoint point;
+					point.Name = track.Route[i];
+					point.Position = track.RouteRaw[i];
+
+					// Add to route vector
+					parsedRoute.push_back(point);
+				}
+			}			
 		} 
 		else {
 			// Find our entry and exit points
@@ -205,23 +242,33 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 				}
 			}
 
-			// Get the points in the route between entry and exit points
+			// Entry and exit points
 			int start = entryPoint == -1 ? route.GetPointsCalculatedIndex() : entryPoint;
 			int stop = exitPoint == -1 ? route.GetPointsNumber() : exitPoint + 1;
+
+			// First add the aircraft position if entry point is -1
+			if (entryPoint == -1) {
+				// Waypoint
+				CWaypoint point;
+				point.Name = "AIRCRAFT";
+				point.Position = target.GetPosition().GetPosition();
+
+				// Add to the vector
+				parsedRoute.push_back(point);
+			}
+
+			// Get entry and exit points
 			for (int i = start; i < stop; i++) {
 				// First check if position is within reasonable longitudinal bounds
-				if (route.GetPointPosition(i).m_Longitude <= -65 && route.GetPointPosition(i).m_Longitude >= -5) {
-					// Continue
-					continue;
+				if (route.GetPointPosition(i).m_Longitude >= -65 && route.GetPointPosition(i).m_Longitude <= -5) {
+					// Now make the waypoint
+					CWaypoint point;
+					point.Name = CUtils::ConvertCoordinateFormat(route.GetPointName(i), 0);
+					point.Position = route.GetPointPosition(i);
+
+					// Add waypoint to parsed vector
+					parsedRoute.push_back(point);
 				}
-
-				// Now make the waypoint
-				CWaypoint point;
-				point.Name = route.GetPointName(i);
-				point.Position = route.GetPointPosition(i);
-
-				// Add waypoint to parsed vector
-				parsedRoute.push_back(point);
 			}
 		}		
 	}	
@@ -255,7 +302,7 @@ string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {
 
 			// Get the ID and return
 			string trackId;
-			trackId.push_back(route.at(found + 5));
+			trackId.push_back(route.at(found + 4) + route.at(found+5));
 			return trackId;
 		}
 		else {

@@ -313,6 +313,9 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
+	// Anti-aliasing
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+
 	// Loop tracks
 	for (auto kv : CRoutesHelper::CurrentTracks) {
 		// Show eastbound/eastbound only if that type is selected
@@ -333,9 +336,6 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 			dc->TextOutA(pointCoord.x + 12, pointCoord.y - 5, id.c_str());
 		}
 
-		// Anti-aliasing
-		g->SetSmoothingMode(SmoothingModeAntiAlias);
-
 		// Draw lines
 		for (int i = 0; i < kv.second.RouteRaw.size(); i++) {
 			g->DrawLine(&pen, pointCoord.x, pointCoord.y, screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).x, (screen->ConvertCoordFromPositionToPixel(kv.second.RouteRaw[i]).y));
@@ -345,6 +345,77 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 
 	// Cleanup
 	DeleteObject(&pen);
+
+	// Restore context
+	dc->RestoreDC(iDC);
+}
+
+void CCommonRenders::RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen) {
+	// Save context
+	int iDC = dc->SaveDC();
+
+	// Pen & brush
+	Pen pen(TargetOrange, 2);
+	SolidBrush brush(TargetOrange);
+
+	// Font
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TargetOrange.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Anti-aliasing
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+
+
+	// Loop through each aircraft in the vector
+	for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
+		// Get route
+		vector<CRoutePosition> route = CRoutesHelper::GetRoute(screen, CRoutesHelper::ActiveRoutes.at(i));
+
+		// If route not there then we skip
+		if (route.size() == route.empty()) {
+			continue;
+		}
+
+		// Now we loop through each waypoint and draw the route
+		POINT lastPoint = screen->ConvertCoordFromPositionToPixel(route.at(0).PositionRaw);
+		for (int j = 0; j < route.size(); j++) {
+			// Get point, text rectangle & define y offset
+			string text = route.at(j).Fix; // To get TextExtent & check if AIRCRAFT
+
+			// Only draw text if not aircraft position
+			if (text != "AIRCRAFT") { 
+				POINT point = screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw);
+				CRect box(point.x - (dc->GetTextExtent(text.c_str()).cx / 2), point.y + 10, point.x + (dc->GetTextExtent(text.c_str()).cx), point.y + 50);
+				int offsetY = 0;
+
+				// Draw dot
+				Rect pointRect(point.x - 3, point.y - 3, 6, 6);
+				g->FillEllipse(&brush, pointRect);
+
+				// Print text for fix
+				dc->TextOutA(box.left, box.top, text.c_str());
+				offsetY += 14;
+
+				// Print text for estimate
+				text = route.at(j).Estimate;
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+				offsetY += 14;
+
+				// Print text for flight level
+				text = to_string(route.at(j).FlightLevel);
+				dc->TextOutA(box.left, box.top + offsetY, text.c_str());
+			}
+			
+			// Draw line to
+			g->DrawLine(&pen, lastPoint.x, lastPoint.y, screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw).x, (screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw).y));
+			lastPoint = screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw);
+		}
+	}
+
+	// Cleanup
+	DeleteObject(&pen);
+	DeleteObject(&brush);
 
 	// Restore context
 	dc->RestoreDC(iDC);

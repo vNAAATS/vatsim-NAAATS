@@ -385,7 +385,10 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	}
 	// If either are supersonic
 	if (CUtils::GetMach(aircraftA->GroundSpeed, 573) >= 100 || CUtils::GetMach(aircraftB->GroundSpeed, 573) >= 100) {
-		if (status.AltDifference < 4000) { // Vertical sep needs to be greater than 4000
+		// Vertical sep needs to be greater than 4000 and either type needs to be concorde
+		if (status.AltDifference < 4000 
+			&& (screen->GetPlugIn()->FlightPlanSelect(aircraftA->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC"
+				|| screen->GetPlugIn()->FlightPlanSelect(aircraftB->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC")) { 
 			verticallySeparated = false;
 		}
 	}

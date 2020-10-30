@@ -26,6 +26,12 @@ struct CRoutePosition {
 
 // Describes a generic waypoint
 struct CWaypoint {
+	CWaypoint() {}; // Default constructor
+	CWaypoint(string name, double lat, double lon) {
+		Name = name;
+		Position.m_Latitude - lat;
+		Position.m_Longitude = lon;
+	}
 	string Name;
 	CPosition Position;
 };
@@ -257,4 +263,53 @@ struct CAircraftFlightPlan {
 	vector<CFlightRestriction> Restrictions;
 	bool IsValid;
 	bool IsCleared;
+};
+
+// These gotta go in here because Constants.h doesn't like it?
+const vector<CWaypoint> NatSM = {
+	CWaypoint("SM15W", 50.683, -15.0),
+	CWaypoint("SM20W", 50.833, -20.0),
+	CWaypoint("SM30W", 50.5, -30.0),
+	CWaypoint("SM40W", 49.266, -40.0),
+	CWaypoint("SM50W", 47.05, -50.0),
+	CWaypoint("SM53W", 46.166, -53.0),
+	CWaypoint("SM60W", 44.233, -60.0),
+	CWaypoint("SM65W", 42.766, -65.0),
+	CWaypoint("SM67W", 42.0, -67.0)
+};
+const vector<CWaypoint> NatSN = {
+	CWaypoint("SN67W", 40.416667, -67.0),
+	CWaypoint("SN65W", 41.666667, -65.0),
+	CWaypoint("SN60W", 43.116667, -60.0),
+	CWaypoint("SN525W", 45.166667, -52.5),
+	CWaypoint("SN50W", 45.9, -50.0),
+	CWaypoint("SN40W", 48.166667, -40.0),
+	CWaypoint("SN30W", 49.433333, -30.0),
+	CWaypoint("SN20W", 49.816667, -20.0),
+	CWaypoint("SN15W", 49.683333, -15.0)
+};
+const vector<CWaypoint> NatSO = {
+	CWaypoint("SO15W", 48.666667, -15.0),
+	CWaypoint("SO20W", 48.8, -20.0),
+	CWaypoint("SO30W", 48.366667, -30.0),
+	CWaypoint("SO40W", 47.066667, -40.0),
+	CWaypoint("SO50W", 44.75, -50.0),
+	CWaypoint("SO52W", 44.166667, -52.0),
+	CWaypoint("SO60W", 42.0, -60.0)
+};
+const vector<CWaypoint> NatSL = {
+	CWaypoint("SL50W", 57.0, -50.0),
+	CWaypoint("SL40W", 57.0, -40.0),
+	CWaypoint("SL30W", 56.0, -30.0),
+	CWaypoint("SL20W", 54.0, -20.0),
+	CWaypoint("SL15W", 52.0, -15.0)
+};
+const vector<CWaypoint> NatSP = {
+	CWaypoint("SP20W", 46.816667, -20.0),
+	CWaypoint("SP238W", 45.0, -23.883333),
+	CWaypoint("SP30W", 41.6, -30.0),
+	CWaypoint("SP40W", 34.366667, -40.0),
+	CWaypoint("SP477W", 27.0, -47.783333),
+	CWaypoint("SP50W", 24.633333, -50.0),
+	CWaypoint("SP556W", 18.0, -55.65)
 };

@@ -138,6 +138,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				if (idx->first == asel) {
 					asel = "";
 				}
+
 				// Finally erase the on screen reference
 				idx = aircraftOnScreen.erase(idx);
 			}
@@ -379,6 +380,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		rclList->RenderList(&g, &dc, this);
 		conflictList->RenderList(&g, &dc, this);
 
+		// Draw routes
+		if (CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty() && CRoutesHelper::ActiveRoutes.size() != 0) {
+			CCommonRenders::RenderRoutes(&dc, &g, this);
+		}
+
 		// SEP draw
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 			// If both aircraft selected then draw
@@ -460,6 +466,29 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 			// Delete the flight data object
 			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
 		}
+	}
+}
+
+void CRadarDisplay::OnControllerDisconnect(CController Controller) {
+	// Erase any route drawing
+	CRoutesHelper::ActiveRoutes.clear();
+}
+
+void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
+	// Erase any route drawing
+	int found = -1; // Found flag so we can remove if needed
+	for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
+		// If the route is currently on the screen
+		if (CRoutesHelper::ActiveRoutes[i] == FlightPlan.GetCallsign()) {
+			// Set to remove
+			found = i;
+			break;
+		}
+	}
+
+	// Erase if the item was found, otherwise add
+	if (found != -1) {
+		CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
 	}
 }
 
@@ -703,19 +732,27 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	
 	if (Button == BUTTON_RIGHT) {
 		if (ObjectType == SCREEN_TAG) {
-			// Set the ASEL
-			asel = sObjectId;
-			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
-			GetPlugIn()->SetASELAircraft(fp);
+			/// Set route drawing
+			// Make sure flight plan exists otherwise it will crash
+			if (CDataHandler::GetFlightData(string(sObjectId))->IsValid) {
+				int found = -1; // Found flag so we can remove if needed
+				for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
+					// If the route is currently on the screen
+					if (CRoutesHelper::ActiveRoutes[i] == sObjectId) {
+						// Set to remove
+						found = i;
+						break;
+					}
+				}
 
-			// Set route drawing TODO fix
-			/*if (CPathRenderer::RouteDrawTarget == "" || fp.GetCallsign() != CPathRenderer::RouteDrawTarget) {
-				CPathRenderer::RouteToDraw = CPathRenderer::GetRoute(this, fp.GetCallsign());
-				CPathRenderer::RouteDrawTarget = fp.GetCallsign();
-			}
-			else {
-				CPathRenderer::ClearCurrentRoute();
-			}*/
+				// Erase if the item was found, otherwise add
+				if (found != -1) {
+					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
+				}
+				else {
+					CRoutesHelper::ActiveRoutes.push_back(string(sObjectId));
+				}
+			}			
 		}
 	}
 	

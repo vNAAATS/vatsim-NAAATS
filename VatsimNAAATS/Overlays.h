@@ -7,6 +7,8 @@
 #include "CommonRenders.h"
 
 using namespace std;
+using namespace Gdiplus;
+using namespace EuroScopePlugIn;
 
 class COverlays
 {
@@ -19,9 +21,6 @@ class COverlays
 
 		// Grid reference
 		static void ShowHideGridReference(CRadarScreen* screen, bool show);
-
-		// Clear route
-		static int ClearCurrentRoute();
 };
 
 
