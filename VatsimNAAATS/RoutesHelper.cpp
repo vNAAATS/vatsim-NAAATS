@@ -93,6 +93,9 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 
 	// Final route vector
 	vector<CWaypoint> parsedRoute;
+
+	// Track
+	string trackReturned = "";
 	
 	// First we check if they have a route string
 	if (fp != nullptr && !fp->RouteRaw.empty() && fp->RouteRaw.size() > 0) { // Get their route as per the route string
@@ -153,47 +156,78 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 		CFlightPlan fpData = data->Screen->GetPlugIn()->FlightPlanSelect(target.GetCallsign());
 		CFlightPlanExtractedRoute route = fpData.GetExtractedRoute();
 
-		// Find our entry and exit points
-		int entryPoint = -1;
-		int exitPoint = -1;
-		bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
-		for (int i = 0; i < route.GetPointsNumber(); i++) {
-			if (entryPoint == -1) { // Check entry point
-				if (CUtils::IsEntryPoint(string(route.GetPointName(i)), direction ? true : false)) {
-					entryPoint = i;
-					continue;
-				}
-			}
-			if (exitPoint == -1) { // Exit point
-				if (CUtils::IsExitPoint(string(route.GetPointName(i)), direction ? true : false)) {
-					exitPoint = i;
+		// Get NAT track (if they are on it)
+		trackReturned = OnNatTrack(data->Screen, data->Callsign.c_str());
+		CTrack track;
+		if (trackReturned != "") { // If on a track
+			bool loopBreak = false;
+			for (auto kv : CRoutesHelper::CurrentTracks) {
+				if (kv.first == trackReturned) { // Assign track to the returned box
+					track = kv.second;
+					loopBreak = true;
 					break;
 				}
 			}
+			if (!loopBreak) { // If for some reason the pilot's track doesn't exist, ignore it
+				trackReturned = "";
+			}
 		}
 
-		// Get the points in the route between entry and exit points
-		int start = entryPoint == -1 ? route.GetPointsCalculatedIndex() : entryPoint;
-		int stop  = exitPoint == -1 ? route.GetPointsNumber() : exitPoint + 1;
-		for (int i = start; i < stop; i++) {
-			// First check if position is within reasonable longitudinal bounds
-			if (route.GetPointPosition(i).m_Longitude <= -65 && route.GetPointPosition(i).m_Longitude >= -5) {
-				// Continue
-				continue;
+		// If on track
+		if (trackReturned != "") {
+			for (int i = 0; i < track.RouteRaw.size(); i++) {
+				// Make waypoint
+				CWaypoint point;
+				point.Name = track.Route[i];
+				point.Position = track.RouteRaw[i];
+
+				// Add to route vector
+				parsedRoute.push_back(point);
+			}
+		} 
+		else {
+			// Find our entry and exit points
+			int entryPoint = -1;
+			int exitPoint = -1;
+			bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+			for (int i = 0; i < route.GetPointsNumber(); i++) {
+				if (entryPoint == -1) { // Check entry point
+					if (CUtils::IsEntryPoint(string(route.GetPointName(i)), direction ? true : false)) {
+						entryPoint = i;
+						continue;
+					}
+				}
+				if (exitPoint == -1) { // Exit point
+					if (CUtils::IsExitPoint(string(route.GetPointName(i)), direction ? true : false)) {
+						exitPoint = i;
+						break;
+					}
+				}
 			}
 
-			// Now make the waypoint
-			CWaypoint point;
-			point.Name = route.GetPointName(i);
-			point.Position = route.GetPointPosition(i);
+			// Get the points in the route between entry and exit points
+			int start = entryPoint == -1 ? route.GetPointsCalculatedIndex() : entryPoint;
+			int stop = exitPoint == -1 ? route.GetPointsNumber() : exitPoint + 1;
+			for (int i = start; i < stop; i++) {
+				// First check if position is within reasonable longitudinal bounds
+				if (route.GetPointPosition(i).m_Longitude <= -65 && route.GetPointPosition(i).m_Longitude >= -5) {
+					// Continue
+					continue;
+				}
 
-			// Add waypoint to parsed vector
-			parsedRoute.push_back(point);
-		}
+				// Now make the waypoint
+				CWaypoint point;
+				point.Name = route.GetPointName(i);
+				point.Position = route.GetPointPosition(i);
+
+				// Add waypoint to parsed vector
+				parsedRoute.push_back(point);
+			}
+		}		
 	}	
 
 	// Return the vector
-	CDataHandler::SetRoute(data->Callsign, &parsedRoute);
+	CDataHandler::SetRoute(data->Callsign, &parsedRoute, trackReturned);
 
 	// Cleanup
 	delete args;

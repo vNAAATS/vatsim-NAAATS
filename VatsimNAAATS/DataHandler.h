@@ -28,7 +28,7 @@ class CDataHandler
 		static int DeleteFlightData(string callsign);
 
 		// Set route
-		static int SetRoute(string callsign, vector<CWaypoint>* route);
+		static int SetRoute(string callsign, vector<CWaypoint>* route, string track);
 
 	private:
 		// NAT Track URL

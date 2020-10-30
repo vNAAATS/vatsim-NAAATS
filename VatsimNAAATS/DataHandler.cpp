@@ -15,7 +15,7 @@ map<string, CAircraftFlightPlan> CDataHandler::flights;
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
-	string responseString;;
+	string responseString;
 	try {
 		// Convert URL to LPCSTR type
 		LPCSTR lpcURL = TrackURL.c_str();
@@ -172,10 +172,18 @@ int CDataHandler::DeleteFlightData(string callsign) {
 	}
 }
 
-int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route) {
+int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string track) {
 	if (flights.find(callsign) != flights.end()) {
 		// Set route if flight exists
 		flights.find(callsign)->second.Route = *route;
+
+		// Set track if not nothing
+		if (track != "")
+			flights.find(callsign)->second.Track = track;
+		else 
+			flights.find(callsign)->second.Track = "RR";
+
+		// Success code
 		return 0;
 	}
 	else {

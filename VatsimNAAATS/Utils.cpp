@@ -183,10 +183,10 @@ string CUtils::ConvertCoordinateFormat(string coordinateString, int format) { //
 
 
 bool CUtils::GetAircraftDirection(int heading) {
-	if ((heading <= 359) && (heading >= 181)) {
+	if ((heading <= 359) && (heading >= 180)) {
 		return false; // Westbound
 	}
-	else if ((heading >= 1) && (heading <= 179)) {
+	else if ((heading >= 0) && (heading <= 179)) {
 
 		return true; // Eastbound
 	}
