@@ -619,11 +619,16 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 {
 	// If menu button
 	if (ObjectType == MENBAR) {
-		if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
+		if (Button == BUTTON_RIGHT) { // Toggle buttons
 			menuBar->ButtonPress(atoi(sObjectId), Button, this);
 		}
 		else {
-			menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
+			if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
+				menuBar->ButtonPress(atoi(sObjectId), Button, this);
+			}
+			else {
+				menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
+			}
 		}
 	} else if (ObjectType == WIN_FLTPLN) {
 		if (!fltPlnWindow->IsButtonPressed(atoi(sObjectId))) {
