@@ -110,6 +110,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		otherList->AircraftList.clear();
 	}
 
+	// Set the ASEL if it is different to the current one in program
+	if (GetPlugIn()->FlightPlanSelectASEL().GetCallsign() != asel) {
+		asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+	}
+
 	// Reset currently on screen list
 	if (tenSecT >= 10 && !aircraftOnScreen.empty()) {
 		// Loop on screen aircraft
@@ -134,8 +139,33 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 						menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 					}
 				}
+				// Erase ASEL
 				if (idx->first == asel) {
 					asel = "";
+				}
+
+				// Erase STCA if exists
+				auto jdx = CConflictDetection::CurrentSTCA.begin();
+				// Loop this way to avoid a vector overflow
+				while (jdx != CConflictDetection::CurrentSTCA.end()) {
+					if (idx->first == jdx->CallsignA || idx->first == jdx->CallsignB) {
+						jdx = CConflictDetection::CurrentSTCA.erase(jdx);
+					}
+					else {
+						jdx++;
+					}
+				}
+
+				// Erase route if exists
+				auto kdx = CRoutesHelper::ActiveRoutes.begin();
+				// Loop this way to avoid a vector overflow
+				while (kdx != CRoutesHelper::ActiveRoutes.end()) {
+					if (idx->first == *kdx || idx->first == *kdx) {
+						kdx = CRoutesHelper::ActiveRoutes.erase(kdx);
+					}
+					else {
+						kdx++;
+					}
 				}
 
 				// Finally erase the on screen reference
@@ -466,12 +496,6 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
 		}
 	}
-}
-
-void CRadarDisplay::OnControllerDisconnect(CController Controller) {
-	// Erase any route drawing
-	if (CRoutesHelper::ActiveRoutes.size() != 0 || CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty())
-		CRoutesHelper::ActiveRoutes.clear();
 }
 
 void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {

@@ -450,18 +450,6 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 
 		// Now we switch the status
 		switch (status.ConflictStatus) {
-			case CConflictStatus::WARNING:
-				// Check if they already exist
-				if (alreadyExist) {
-					// Set the flag if the flag is not warning
-					if (idx->ConflictStatus != CConflictStatus::WARNING) idx->ConflictStatus = CConflictStatus::WARNING;
-					idx->DistanceAsTime = status.DistanceAsTime;
-				}
-				else {
-					// Add if don't exist
-					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::WARNING, status.DistanceAsTime));
-				}
-				break;
 			case CConflictStatus::CRITICAL:
 				// Check if they already exist
 				if (alreadyExist) {
@@ -472,6 +460,18 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 				else {
 					// Add if don't exist
 					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::CRITICAL, status.DistanceAsTime));
+				}
+				break;
+			case CConflictStatus::WARNING:
+				// Check if they already exist
+				if (alreadyExist) {
+					// Set the flag if the flag is not warning
+					if (idx->ConflictStatus != CConflictStatus::WARNING) idx->ConflictStatus = CConflictStatus::WARNING;
+					idx->DistanceAsTime = status.DistanceAsTime;
+				}
+				else {
+					// Add if don't exist
+					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::WARNING, status.DistanceAsTime));
 				}
 				break;
 			case CConflictStatus::OK:
@@ -649,7 +649,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 	// If last position distance closer than the current position distance they are heading away from each other and no conflict
 	if (targetALast.DistanceTo(targetBLast) < targetA.GetPosition().GetPosition().DistanceTo(targetB.GetPosition().GetPosition()) 
-		&& targetALast.DistanceTo(targetBLast) > 5) { // Greater than 5 miles away to remove the conflict
+		&& targetALast.DistanceTo(targetBLast) > 5 && status.TrackStatus != CTrackStatus::SAME) { // Greater than 5 miles away to remove the conflict
 		// No conflict
 		conflictStatus = CConflictStatus::OK;
 	}

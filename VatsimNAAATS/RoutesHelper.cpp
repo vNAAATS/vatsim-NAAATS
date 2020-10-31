@@ -290,6 +290,10 @@ string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {
 	// If found
 	if (found != string::npos) {
 		// Make sure that it's not a waypoint starting with NAT (check character count)
+		while (found != string::npos && route.at(found + 5) != 0x20) {
+			route = route.substr(found + 5, route.size() - found + 5 - 1);
+			found = route.find(string(" NAT"));
+		}
 		if (route.at(found + 5) == 0x20) { // If it was found (found + 5 was a space character)
 			// Get the ID and return
 			string trackId;
