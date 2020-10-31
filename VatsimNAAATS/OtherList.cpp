@@ -7,9 +7,7 @@ using namespace Colours;
 
 vector<string> COtherList::AircraftList;
 
-COtherList::COtherList(POINT topLeft) : CBaseList(topLeft) {
-
-}
+COtherList::COtherList(POINT topLeft) : CBaseList(topLeft) {}
 
 // TODO: implement expand/retract button
 void COtherList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {

@@ -7,6 +7,7 @@
 #include <EuroScopePlugIn.h>
 #include "Structures.h"
 #include "BaseList.h"
+#include "ConflictDetection.h"
 
 using namespace std;
 using namespace Gdiplus;
@@ -18,4 +19,3 @@ class CConflictList : public CBaseList
 		CConflictList(POINT topLeft);
 		virtual void RenderList(Graphics* g, CDC* dc, CRadarScreen* screen);
 };
-

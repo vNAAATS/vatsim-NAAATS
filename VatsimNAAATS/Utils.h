@@ -41,7 +41,7 @@ class CUtils { // TODO: refactor into namespace
 		static void SavePluginData(CRadarScreen* screen);
 		static void LoadPluginData(CRadarScreen* screen);
 
-		// Convert other types of coordinates to NN/WW format
+		// Convert coordinates to various type
 		static string ConvertCoordinateFormat(string coordinateString, int format);
 
 		// Get the aircraft direction

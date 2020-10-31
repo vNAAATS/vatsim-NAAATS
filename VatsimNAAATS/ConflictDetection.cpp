@@ -455,10 +455,11 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 				if (alreadyExist) {
 					// Set the flag if the flag is not warning
 					if (idx->ConflictStatus != CConflictStatus::WARNING) idx->ConflictStatus = CConflictStatus::WARNING;
+					idx->DistanceAsTime = status.DistanceAsTime;
 				}
 				else {
 					// Add if don't exist
-					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::WARNING));
+					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::WARNING, status.DistanceAsTime));
 				}
 				break;
 			case CConflictStatus::CRITICAL:
@@ -466,10 +467,11 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 				if (alreadyExist) {
 					// Set the flag if the flag is not critical
 					if (idx->ConflictStatus != CConflictStatus::CRITICAL) idx->ConflictStatus = CConflictStatus::CRITICAL;
+					idx->DistanceAsTime = status.DistanceAsTime;
 				}
 				else {
 					// Add if don't exist
-					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::CRITICAL));
+					CurrentSTCA.push_back(CSTCAStatus(targetAc.Callsign, acTest.Callsign, CConflictStatus::CRITICAL, status.DistanceAsTime));
 				}
 				break;
 			case CConflictStatus::OK:
@@ -604,19 +606,19 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	// Check altitude
 	bool verticallySeparated = true;
 	if (rvsm) {
-		if (status.AltDifference < 1000) {
+		if (status.AltDifference < SEPV_LOW) {
 			verticallySeparated = false;
 		}
 	}
 	else {
-		if (status.AltDifference < 2000) {
+		if (status.AltDifference < SEPV_HIGH) {
 			verticallySeparated = false;
 		}
 	}
 	// If either are supersonic & concorde
 	if (CUtils::GetMach(aircraftA->GroundSpeed, 573) >= 100 || CUtils::GetMach(aircraftB->GroundSpeed, 573) >= 100) {
 		// Vertical sep needs to be greater than 4000 and either type needs to be concorde
-		if (status.AltDifference < 4000 
+		if (status.AltDifference < SEPV_SUPERSONIC 
 			&& (screen->GetPlugIn()->FlightPlanSelect(aircraftA->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC"
 				|| screen->GetPlugIn()->FlightPlanSelect(aircraftB->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC")) { 
 			verticallySeparated = false;

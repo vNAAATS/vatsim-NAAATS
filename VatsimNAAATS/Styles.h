@@ -24,6 +24,7 @@ namespace Colours {
 	const Color WindowBorder(187, 214, 238);
 	const Color WarningYellow(240, 231, 76);
 	const Color CriticalRed(195, 67, 67);
+	const Color CriticalRedLight(225, 96, 96);
 }
 
 // Fonts
