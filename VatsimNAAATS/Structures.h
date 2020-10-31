@@ -77,14 +77,16 @@ struct CAircraftStatus {
 // STCA status
 struct CSTCAStatus {
 	CSTCAStatus() {}; // Default constructor
-	CSTCAStatus(string csA, string csB, CConflictStatus status) {
+	CSTCAStatus(string csA, string csB, CConflictStatus status, int distance) {
 		CallsignA = csA;
 		CallsignB = csB;
 		ConflictStatus = status;
+		DistanceAsTime = distance;
 	}
 	string CallsignA;
 	string CallsignB;
 	CConflictStatus ConflictStatus;
+	int DistanceAsTime;
 };
 
 // Describes a separation status

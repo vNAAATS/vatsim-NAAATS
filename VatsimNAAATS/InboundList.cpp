@@ -47,7 +47,7 @@ void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 		offsetX += 140;
 
 		// Draw entry point
-		line = ac->Point;		
+		line = CUtils::ConvertCoordinateFormat(ac->Point, 0);		
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 		offsetX += 70;
 

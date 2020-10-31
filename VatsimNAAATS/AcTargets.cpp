@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "AcTargets.h"
 #include "Utils.h"
-#include "PathRenderer.h"
 #include "ConflictDetection.h"
 #include "MenuBar.h"
 

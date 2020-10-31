@@ -4,7 +4,6 @@
 #include "AcTargets.h"
 #include "InboundList.h"
 #include "Constants.h"
-#include "PathRenderer.h"
 #include "DataHandler.h"
 #include "Utils.h"
 #include "ConflictDetection.h"
@@ -333,7 +332,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 
 				// Get STCA so it can be drawn
-				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK); // Create default
+				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK, -1); // Create default
 				auto idx = CConflictDetection::CurrentSTCA.begin();
 				for (idx = CConflictDetection::CurrentSTCA.begin(); idx != CConflictDetection::CurrentSTCA.end(); idx++) {
 					if (ac.GetCallsign() == idx->CallsignA || ac.GetCallsign() == idx->CallsignB) {
