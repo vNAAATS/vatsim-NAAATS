@@ -53,16 +53,16 @@ void CRadarDisplay::PopulateProgramData() {
 	menuBar->SetDropDownValue(CMenuBar::DRP_TYPESEL, CUtils::PosType);
 
 	// Buttons
-	if (CUtils::TagsEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_TAGS)) {
+	if (CUtils::TagsEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_TAGS)) {
 		menuBar->SetButtonState(CMenuBar::BTN_TAGS, CInputState::ACTIVE);
 	}
-	if (CUtils::GridEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_GRID)) {
+	if (CUtils::GridEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_GRID)) {
 		menuBar->SetButtonState(CMenuBar::BTN_GRID, CInputState::ACTIVE);
 	}
-	if (CUtils::OverlayEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
+	if (CUtils::OverlayEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
 		menuBar->SetButtonState(CMenuBar::BTN_OVERLAYS, CInputState::ACTIVE);
 	}
-	if (CUtils::QckLookEnabled && menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK)) {
+	if (CUtils::QckLookEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK)) {
 		menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::ACTIVE);
 	}
 
@@ -760,6 +760,18 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), "");
 			}
 		}
+
+		// If it is a hide show button for a list
+		if (ObjectType == LIST_INBOUND) {
+			if (string(sObjectId) == "HIDESHOW") {
+				inboundList->HideShowButton = inboundList->HideShowButton == true ? false : true;
+			}
+		}
+		if (ObjectType == LIST_OTHERS) {
+			if (string(sObjectId) == "HIDESHOW") {
+				otherList->HideShowButton = otherList->HideShowButton == true ? false : true;
+			}
+		}
 	}
 	
 	if (Button == BUTTON_RIGHT) {
@@ -803,6 +815,11 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 		fltPlnWindow->ButtonDown(atoi(sObjectId));
 	}
 
+	// Note pad window
+	if (ObjectType == WIN_NOTEPAD) {
+		npWindow->ButtonDown(atoi(sObjectId));
+	}
+
 	// Refresh
 	RequestRefresh();
 }
@@ -827,6 +844,15 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 		if (atoi(sObjectId) < 200) {
 			fltPlnWindow->ButtonUp(atoi(sObjectId));
 		}		
+	}
+
+	// Note pad window
+	if (ObjectType == WIN_NOTEPAD) {
+		if (atoi(sObjectId) == CNotePad::BTN_CLOSE) {
+			// Close window if the close button
+			menuBar->SetButtonState(CMenuBar::BTN_NOTEPAD, CInputState::INACTIVE);
+		}
+		npWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Refresh

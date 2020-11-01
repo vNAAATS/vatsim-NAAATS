@@ -19,4 +19,7 @@ class COtherList : public CBaseList
 
 		// Aircraft list
 		static vector<string> AircraftList;
+
+		// Hides and shows
+		bool HideShowButton = true;
 };

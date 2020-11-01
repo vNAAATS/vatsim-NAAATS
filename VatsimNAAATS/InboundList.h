@@ -20,5 +20,8 @@ class CInboundList : public CBaseList
 
 		// Aircraft list
 		static vector<CInboundAircraft> AircraftList;
+
+		// Hides and shows
+		bool HideShowButton = true;
 };
 

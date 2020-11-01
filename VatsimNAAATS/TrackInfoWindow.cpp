@@ -18,7 +18,7 @@ CTrackInfoWindow::CTrackInfoWindow(POINT topLeft) : CBaseWindow(topLeft) {
 };
 
 void CTrackInfoWindow::MakeWindowItems() {
-	windowButtons[BTN_REFRESH] = CWinButton(BTN_REFRESH, WIN_TCKINFO, "Refresh NAT Data", CInputState::INACTIVE);
+	windowButtons[BTN_REFRESH] = CWinButton(BTN_REFRESH, WIN_TCKINFO, "Refresh Tck Data", CInputState::INACTIVE);
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_TCKINFO, "Close", CInputState::INACTIVE);
 }
 

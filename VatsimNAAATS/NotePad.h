@@ -24,15 +24,12 @@ class CNotePad : public CBaseWindow, public CBaseList
 		virtual void SetButtonState(int id, CInputState state);
 		virtual void RenderList(Graphics* g, CDC* dc, CRadarScreen* screen);
 
-		// Window methods
-		void Scroll(CRect area, POINT mousePtr);
+		// Button definitions
+		static const int BTN_CLOSE;
+		static const int BTN_SAVE;
 
 	private:
-		string notePadContent;
-		double trackScrollAreaSize;
-		double gripPosDelta = 0;
-		double gripSize;
-		CRect currentScrollPos = CRect(0, 0, 0, 0);
-		int scrollWindowSize;
+		string savedNotePadContent;
+		string newNotePadContent;
 };
 
