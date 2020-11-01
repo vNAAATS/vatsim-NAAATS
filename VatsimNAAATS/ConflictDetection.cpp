@@ -13,9 +13,9 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	int iDC = dc->SaveDC();
 
 	// Make pens
-	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
-	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
-	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
+	Pen orangePen(TargetOrange, 2);
+	Pen yellowPen(WarningYellow, 2);
+	Pen redPen(CriticalRed, 2);
 
 	// Positions
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
@@ -32,18 +32,14 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 
 	// Select pen
 	if (status.ConflictStatus == CConflictStatus::OK) {
-		dc->SelectObject(orangePen);
+		g->DrawLine(&orangePen, t1Point.x, t1Point.y, t2Point.x, t2Point.y);
 	}
 	else if (status.ConflictStatus == CConflictStatus::WARNING) {
-		dc->SelectObject(yellowPen);
+		g->DrawLine(&yellowPen, t1Point.x, t1Point.y, t2Point.x, t2Point.y);
 	}
 	else {
-		dc->SelectObject(redPen);
+		g->DrawLine(&redPen, t1Point.x, t1Point.y, t2Point.x, t2Point.y);
 	}
-
-	// Draw the line
-	dc->MoveTo(t1Point);
-	dc->LineTo(t2Point);
 
 	// Now draw the text
 	POINT midpoint = CUtils::GetMidPoint(t1Point, t2Point);
@@ -59,7 +55,9 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	dc->RestoreDC(iDC);
 
 	// Clean up
-	DeleteObject(orangePen);
+	DeleteObject(&orangePen);
+	DeleteObject(&yellowPen);
+	DeleteObject(&redPen);
 }
 
 void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
@@ -67,10 +65,9 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	int iDC = dc->SaveDC();
 
 	// Make pens
-	CPen orangePen(PS_SOLID, 1, TargetOrange.ToCOLORREF());
-	CPen orangeDottedPen(PS_DOT, 1, TargetOrange.ToCOLORREF());
-	CPen yellowPen(PS_SOLID, 1, WarningYellow.ToCOLORREF());
-	CPen redPen(PS_SOLID, 1, CriticalRed.ToCOLORREF());
+	Pen orangePen(TargetOrange, 2);
+	Pen yellowPen(WarningYellow, 2);
+	Pen redPen(CriticalRed, 2);
 
 	// Radar targets & aircraft objects
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
@@ -120,43 +117,49 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	}
 
 	// Draw line for aircraft A
-	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(originalPos1));
 	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
 		// Select pen
 		if (status->ConflictStatus == CConflictStatus::OK) {
-			dc->SelectObject(orangePen);
+			g->DrawLine(&orangePen, screen->ConvertCoordFromPositionToPixel(originalPos1).x, screen->ConvertCoordFromPositionToPixel(originalPos1).y,
+				screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first).x, screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first).y);
 		}
 		else if (status->ConflictStatus == CConflictStatus::WARNING) {
-			dc->SelectObject(yellowPen);
+			g->DrawLine(&yellowPen, screen->ConvertCoordFromPositionToPixel(originalPos1).x, screen->ConvertCoordFromPositionToPixel(originalPos1).y,
+				screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first).x, screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first).y);
 		}
 		else {
-			dc->SelectObject(redPen);
+			g->DrawLine(&redPen, screen->ConvertCoordFromPositionToPixel(originalPos1).x, screen->ConvertCoordFromPositionToPixel(originalPos1).y,
+				screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first).x, screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first).y);
 		}
-		// Draw line
-		dc->LineTo(screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.first));
+
+		// Set pos
+		originalPos1 = status->AircraftLocations.first;
 	}
 
 	// Draw line for aircraft B
-	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(originalPos2));
 	for (vector<CSepStatus>::iterator status = statuses.begin() + 1; status != statuses.end(); status++) {
 		// Select pen
 		if (status->ConflictStatus == CConflictStatus::OK) {
-			dc->SelectObject(orangePen);
+			g->DrawLine(&orangePen, screen->ConvertCoordFromPositionToPixel(originalPos2).x, screen->ConvertCoordFromPositionToPixel(originalPos2).y,
+				screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second).x, screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second).y);
 		}
 		else if (status->ConflictStatus == CConflictStatus::WARNING) {
-			dc->SelectObject(yellowPen);
+			g->DrawLine(&yellowPen, screen->ConvertCoordFromPositionToPixel(originalPos2).x, screen->ConvertCoordFromPositionToPixel(originalPos2).y,
+				screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second).x, screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second).y);
 		}
 		else {
-			dc->SelectObject(redPen);
+			g->DrawLine(&redPen, screen->ConvertCoordFromPositionToPixel(originalPos2).x, screen->ConvertCoordFromPositionToPixel(originalPos2).y,
+				screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second).x, screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second).y);
 		}
-		// Draw line
-		dc->LineTo(screen->ConvertCoordFromPositionToPixel(status->AircraftLocations.second));
+		// Set pos
+		originalPos2 = status->AircraftLocations.second;
 	}
 
 	// Draw line between points and finish
-	dc->SelectObject(orangeDottedPen);
-	dc->MoveTo(screen->ConvertCoordFromPositionToPixel(status1.Position));
-	dc->LineTo(screen->ConvertCoordFromPositionToPixel(status2.Position));
+	orangePen.SetDashStyle(DashStyleDash);
+	orangePen.SetDashCap(DashCapRound);
+	g->DrawLine(&orangePen, screen->ConvertCoordFromPositionToPixel(status1.Position).x, screen->ConvertCoordFromPositionToPixel(status1.Position).y,
+		screen->ConvertCoordFromPositionToPixel(status2.Position).x, screen->ConvertCoordFromPositionToPixel(status2.Position).y);
 	POINT midpoint = CUtils::GetMidPoint(screen->ConvertCoordFromPositionToPixel(status1.Position), screen->ConvertCoordFromPositionToPixel(status2.Position));
 	
 	// Text label plus colour switching
@@ -170,10 +173,9 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	dc->RestoreDC(iDC);
 
 	// Clean up
-	DeleteObject(orangePen);
-	DeleteObject(orangeDottedPen);
-	DeleteObject(yellowPen);
-	DeleteObject(redPen);
+	DeleteObject(&orangePen);
+	DeleteObject(&yellowPen);
+	DeleteObject(&redPen);
 }
 
 void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string targetB) {
@@ -203,7 +205,6 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 	// Pens & brush
 	Pen pen(TargetOrange, 2);
 	Pen yellowPen(WarningYellow, 2);
-	Pen thinYellowPen(WarningYellow, 1.5);
 	Pen redPen(CriticalRed, 2);
 	SolidBrush brush(TargetOrange);
 
@@ -353,10 +354,11 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 			dc->TextOutA(lastPoint2.x, lastPoint2.y - 20, time2.c_str());
 
 			// Draw crosses
-			g->DrawLine(&thinYellowPen, lastPoint1.x - 5, lastPoint1.y - 5, lastPoint1.x + 5, lastPoint1.y + 5); // AC1
-			g->DrawLine(&thinYellowPen, lastPoint1.x - 5, lastPoint1.y + 5, lastPoint1.x + 5, lastPoint1.y - 5); // AC1
-			g->DrawLine(&thinYellowPen, lastPoint2.x - 5, lastPoint2.y - 5, lastPoint2.x + 5, lastPoint2.y + 5); // AC2
-			g->DrawLine(&thinYellowPen, lastPoint2.x - 5, lastPoint2.y + 5, lastPoint2.x + 5, lastPoint2.y - 5); // AC2
+			yellowPen.SetLineCap(LineCapRound, LineCapRound, DashCapRound);
+			g->DrawLine(&yellowPen, lastPoint1.x - 5, lastPoint1.y - 5, lastPoint1.x + 5, lastPoint1.y + 5); // AC1
+			g->DrawLine(&yellowPen, lastPoint1.x - 5, lastPoint1.y + 5, lastPoint1.x + 5, lastPoint1.y - 5); // AC1
+			g->DrawLine(&yellowPen, lastPoint2.x - 5, lastPoint2.y - 5, lastPoint2.x + 5, lastPoint2.y + 5); // AC2
+			g->DrawLine(&yellowPen, lastPoint2.x - 5, lastPoint2.y + 5, lastPoint2.x + 5, lastPoint2.y - 5); // AC2
 
 		}
 
@@ -381,6 +383,9 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 	else {
 		pointToDraw = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i - 1).Position);
 	}
+
+	// Cap type
+	yellowPen.SetLineCap(LineCapSquare, LineCapSquare, DashCapRound);
 
 	// Iterate and draw
 	for (i; i < length; i++) {
@@ -413,7 +418,6 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 	// Cleanup
 	DeleteObject(&pen);
 	DeleteObject(&yellowPen);
-	DeleteObject(&thinYellowPen);
 	DeleteObject(&redPen);
 	DeleteObject(&brush);
 	
