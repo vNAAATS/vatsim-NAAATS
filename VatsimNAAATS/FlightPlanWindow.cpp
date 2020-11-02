@@ -824,10 +824,20 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 
 		offsetX = buttonBarRect.right - 73;
 	}
-
+	// BUG: last element with header overdrwa the window
+	//		TEMP FIX: use counter
 	// Draw checkboxes
 	int offsetY = 0;
 	int contentOffsetY = 0;
+	int totalcontent = 0;
+	int count = 1;
+	for (int i = CHK_COORD_CZQOV; i <= CHK_COORD_ENRV; i++) {
+		if (i == CHK_COORD_CZQOV || i == CHK_COORD_EISNV || i == CHK_COORD_PLANV)
+		{
+			totalcontent += 40; continue;
+		}
+		totalcontent += 20;
+	}
 	for (int i = CHK_COORD_CZQOV; i <= CHK_COORD_ENRV; i++) {
 		bool headerOffset = false;
 		if (!(contentOffsetY < scrollBars[SCRL_COORD_STATIONS].WindowPos)) {
@@ -847,6 +857,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 					headerOffset = true;
 				}
 				else if (i == CHK_COORD_PLANV) {
+					if (count == 8) break;
 					dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
 					dc->TextOutA(stations.left + 35, stations.top + offsetY, "Misc");
 					offsetY += 20;
@@ -865,13 +876,17 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 			// Text
 			dc->TextOutA(box.right + 15, box.top - 1, checkBoxes.at(i).Label.c_str());
 			offsetY += 20;
+			count++;
 		}
 		contentOffsetY += headerOffset ? 40 : 20;
 	}
 
 	// Scroll bar values
 	if (scrollBars[SCRL_COORD_STATIONS].FrameSize == 0)
-		scrollBars[SCRL_COORD_STATIONS] = CWinScrollBar(SCRL_COORD_STATIONS, WIN_FLTPLN, contentOffsetY, stations.Height() - 10, false);
+	{
+		scrollBars[SCRL_COORD_STATIONS] = CWinScrollBar(SCRL_COORD_STATIONS, WIN_FLTPLN, totalcontent, stations.Height(), false);
+		scrollBars[SCRL_COORD_STATIONS].GripSize -= 30; // temporary fix for grip bug
+	}
 	if (scrollBars[SCRL_COORD_HIST].FrameSize == 0)
 		scrollBars[SCRL_COORD_HIST] = CWinScrollBar(SCRL_COORD_HIST, WIN_FLTPLN, history.Height(), history.Height(), false);
 
