@@ -257,9 +257,21 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		valid = false;
 	}
 
-	// However we should keep them on the screen if they aren't long out of the airspace
-	//if ()
+	/// However we should keep them on the screen if they aren't long out of the airspace
+	CAircraftFlightPlan* acFp = CDataHandler::GetFlightData(target->GetCallsign());
+	if (acFp->IsValid) {
+		// Current time
+		time_t now = time(0);
 
+		// Get the difference in seconds
+		int diffSecs = (int)now - ((int)now + ((int)acFp->ExitTime * 60));
+
+		// If greater than 10 minutes
+		if (diffSecs > 600) {
+			valid = false;
+		}
+	}
+	
 	return valid;
 }
 

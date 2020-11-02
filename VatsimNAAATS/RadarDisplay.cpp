@@ -488,6 +488,13 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 		if (!fp->IsValid) {
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
 		}
+		else {
+			// Update exit time
+			int exitMinutes = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign()).GetSectorExitMinutes();
+			if (exitMinutes != -1) {
+				fp->ExitTime = exitMinutes;
+			}
+		}
 	}
 	else { // Not relevant
 		// Check if they have a flight plan data object

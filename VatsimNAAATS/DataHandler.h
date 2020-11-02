@@ -33,7 +33,7 @@ class CDataHandler
 	private:
 		// NAT Track URL
 		static const string TrackURL;
-		static const string CTPTrackUrl;
+		static const string EventTrackUrl;
 		static map<string, CAircraftFlightPlan> flights;
 };
 

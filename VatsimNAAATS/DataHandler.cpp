@@ -10,7 +10,7 @@
 using json = nlohmann::json;
 
 const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
-const string CDataHandler::CTPTrackUrl = "https://tracks.ganderoceanic.com/ctp";
+const string CDataHandler::EventTrackUrl = "https://tracks.ganderoceanic.com/event";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
@@ -18,7 +18,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	string responseString;
 	try {
 		// Convert URL to LPCSTR type
-		LPCSTR lpcURL = TrackURL.c_str();
+		LPCSTR lpcURL = EventTrackUrl.c_str();
 
 		// Delete cache data
 		DeleteUrlCacheEntry(lpcURL);
@@ -144,6 +144,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	fp.Callsign = callsign;
 	fp.IsValid = true;
 	fp.IsCleared = false; // Ben: this was temporary for my needs, make it so it updates dynamically to true if natTrak clearance
+	fp.ExitTime = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str()).GetSectorExitMinutes();
 
 	// Ben: So here I have done what I needed for the routes, I need you to initialise everything else
 	// either from natTrak if the data is there, or from Euroscope values if no natTrak data existing for the pilot

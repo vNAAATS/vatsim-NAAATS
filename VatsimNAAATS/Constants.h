@@ -142,7 +142,7 @@ const int RECT8_WIDTH = 90;
 
 // Window sizes
 const int WINSZ_TITLEBAR_HEIGHT = 20;
-const int WINSZ_TCKINFO_WIDTH = 450;
+const int WINSZ_TCKINFO_WIDTH = 500;
 const int WINSZ_TCKINFO_HEIGHT = 250;
 const int WINSZ_FLTPLN_WIDTH = 540;
 const int WINSZ_FLTPLN_HEIGHT_INIT = 150;
