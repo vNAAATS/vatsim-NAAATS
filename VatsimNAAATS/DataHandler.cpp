@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <WinInet.h>
+#include <winhttp.h>
+#include "ApiSettings.h"
 #pragma comment(lib,"WinInet.Lib" )
 
 // Include dependency
@@ -237,4 +239,40 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	else {
 		return 1; // Non-success code occurs when flight doesn't exist
 	}
+}
+
+CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
+{
+	//open up a WinHttp handle
+	HINTERNET hSession = nullptr,
+		hConnect = nullptr,
+		hRequest = nullptr;
+	bool bResults;
+	
+	hSession = WinHttpOpen(L"vNAAATS ES Plugin/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+
+	//check if we were able to open up a handle
+	if(hSession)
+		hConnect = WinHttpConnect(hSession, ApiSettings::apiUrl.c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+
+	//check if we were able to open a connection. if so, open a request handle
+	if (hConnect)
+	{
+		stringstream url;
+		url << "/flight_data/get.php/?apiKey" << ApiSettings::apiKey << "&callsign=" << callsign;
+		char* urlChar = (char*)url.str().c_str();
+		
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", (LPCWSTR)urlChar, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+	}
+	
+	//send req
+	if (hRequest)
+		bResults = WinHttpSendRequest(hRequest,
+			WINHTTP_NO_ADDITIONAL_HEADERS,
+			0, WINHTTP_NO_REQUEST_DATA, 0,
+			0, 0);
+
+	if (!bResults)
+		return new CAircraftFlightPlan(); //error
+		
 }

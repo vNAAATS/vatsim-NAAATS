@@ -31,16 +31,16 @@ class CDataHandler
 	static int SetRoute(string callsign, vector<CWaypoint>* route, string track);
 
 	//get flight_data for a/c
-	static CAircraftFlightPlan ApiGetFlightData(string callsign);
+	static CAircraftFlightPlan* ApiGetFlightData(string callsign);
 
 	//get messages for controller (that aren't actioned)
 	static CMessage* ApiGetMessages(string callsign, string controller);
 
 	//get ALL messages from all a/c (regardless of actioned)
-	static CMessage* ApiGetAllMessages(string controller);
+	static CMessage** ApiGetAllMessages(string controller);
 
 	//get ALL flight_data where logged_onto is equal to the controller's callsign
-	static CMessage* ApiGetAllFlightData(string controller);
+	static CMessage** ApiGetAllFlightData(string controller);
 
 	//make messages
 	static int ApiPostMessage(string apiKey, string sent_by, string sent_to, string contents_raw, string type, bool is_actioned = FALSE, bool to_domestic = FALSE);
