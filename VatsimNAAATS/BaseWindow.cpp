@@ -42,6 +42,15 @@ void CBaseWindow::Scroll(int id, POINT newPtr, POINT oldPtr) {
 	scrollBars[id].WindowPos = (scrollBars[id].PositionDelta / (scrollBars[id].FrameSize - 12 - scrollBars[id].GripSize)) * scrollBars[id].TotalScrollableArea;
 }
 
+string CBaseWindow::GetTextValue(int id) {
+	if (textInputs.find(id) != textInputs.end()) {
+		return textInputs.find(id)->second.Content;
+	}
+	else {
+		return "";
+	}
+}
+
 bool CBaseWindow::IsButton(int id) {
 	// If exists return true
 	if (windowButtons.find(id) != windowButtons.end()) return true;

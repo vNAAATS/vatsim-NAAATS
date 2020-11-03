@@ -103,6 +103,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Next Authority", "NONE", 160, CInputState::INACTIVE);
+	textInputs[TXT_MAN_RTE] = CTextInput(TXT_MAN_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 
 	/// Dropdown defaults
 	map<string, bool> map;
@@ -693,7 +694,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	FontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(idBox.left + (idBox.Width() / 2), manEntryPanel.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
+	dc->TextOutA(idBox.left + (idBox.Width() / 2), idBox.top + (idBox.Height() / 2) - 10, primedPlan->Callsign.c_str());
 
 	// Create the route box
 	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, manEntryPanel.right - 150, idBox.bottom + 94);
@@ -701,6 +702,52 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(rteBox, -1, -1);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Route box to text input
+	CTextInput* route = &textInputs.find(TXT_MAN_RTE)->second;
+	CTextInput* track = &textInputs.find(TXT_MAN_TCK)->second;
+	screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
+	
+	// Text align
+	FontSelector::SelectATCFont(16, dc);
+	dc->SetTextAlign(TA_LEFT);
+
+	// Parse the route text
+	int offsetX = 5;
+	int offsetY = 2;
+	if (route->Error || track->Error) { // If there is an error
+		dc->TextOutA(rteBox.left + 4, rteBox.top + 2, "SYNTAX OR TCK ERROR! Check format.");
+	}
+	else if (route->Content == "") { // If the content is empty
+		// Display "Enter route here" message
+		dc->TextOutA(rteBox.left + 4, rteBox.top + 2, "Enter route here. Lat/lon format: 50/30.");
+	}
+	else {
+		// Draw the route and estimates
+		vector<CRoutePosition> rte = CRoutesHelper::GetRoute(screen, primedPlan->Callsign);
+		for (int i = 0; i < rte.size(); i++) {
+			// If a waypoint
+			if (CUtils::IsAllAlpha(rte[i].Fix)) {
+				// Write fix down
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
+				offsetY += 56;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+				offsetY = 2;
+				offsetX += dc->GetTextExtent("2323").cx + 15;
+			}
+			else {
+				// Write coordinate down
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
+				offsetY += 28;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
+				offsetY += 28;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+				offsetY = 2;
+				offsetX += dc->GetTextExtent("2323").cx + 15;
+			}
+		}
+	}
+	
 
 	// Scroll bar values
 	if (scrollBars[SCRL_MANENTRY].FrameSize == 0)
@@ -710,8 +757,8 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left - 1, rteBox.bottom + 3 }, &scrollBars[SCRL_MANENTRY]);
 
 	// Draw text (6 text boxes)
-	int offsetX = 5;
-	int offsetY = 12;
+	offsetX = 5;
+	offsetY = 12;
 	for (int idx = TXT_MAN_FL; idx <= TXT_MAN_EPTIME; idx++) {
 		// Font
 		FontSelector::SelectNormalFont(15, dc);
@@ -1183,52 +1230,137 @@ bool CFlightPlanWindow::IsButtonPressed(int id) {
 	return false; // Not pressed
 }
 
-void CFlightPlanWindow::UpdateData(CRadarScreen* screen, CAircraftFlightPlan plan) {
+void CFlightPlanWindow::Instantiate(CRadarScreen* screen, string callsign) {
 	// Get the data
-	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(plan.Callsign.c_str());
-	CFlightPlanData data = screen->GetPlugIn()->FlightPlanSelect(plan.Callsign.c_str()).GetFlightPlanData();
+	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+	primedPlan = fp;
 
-	// Get SELCAL code
-	string remarks = data.GetRemarks();
-	size_t found = remarks.find(string("SEL/"));
-	// If found
-	if (found != string::npos) {
-		textInputs[TXT_SELCAL].Content = remarks.substr(found + 4, 4);
-	}
-	else {
-		textInputs[TXT_SELCAL].Content = "N/A";
-	}
-
-	// Get communication mode
-	string comType;
-	comType += toupper(data.GetCommunicationType());
-	if (comType == "V") { // Switch each of the values
-		comType = "VOX";
-	}
-	else if (comType == "T") {
-		comType = "TXT";
-	}
-	else if (comType == "R") {
-		comType = "RCV";
-	}
-	else {
-		comType = "VOX"; // We assume voice if it defaults
+	// Set the open windows depending on state of plan
+	if (fp->IsCleared) {
+		IsData = true;
 	}
 
 	// Fill data points
-	textInputs[TXT_ACID].Content = fp.GetCallsign();
-	textInputs[TXT_TYPE].Content = data.GetAircraftFPType();
-	textInputs[TXT_DEPART].Content = data.GetOrigin();
-	textInputs[TXT_ETD].Content = CUtils::ParseZuluTime(false, atoi(data.GetEstimatedDepartureTime()));
-	textInputs[TXT_DATALINK].Content = "N/A";
-	textInputs[TXT_COMMS].Content = comType;
-	textInputs[TXT_OWNERSHIP].Content = "34";
+	textInputs[TXT_ACID].Content = primedPlan->Callsign;
+	textInputs[TXT_TYPE].Content = primedPlan->Type;
+	textInputs[TXT_DEPART].Content = primedPlan->Depart;
+	textInputs[TXT_ETD].Content = primedPlan->Etd;
+	textInputs[TXT_DATALINK].Content = primedPlan->DLStatus;
+	textInputs[TXT_COMMS].Content = primedPlan->Communications;
+	textInputs[TXT_OWNERSHIP].Content = primedPlan->Sector;
+	textInputs[TXT_SELCAL].Content = primedPlan->SELCAL;
 
 	// TEMPORARY FOR BETA TESTING
-	int mach = fp.GetControllerAssignedData().GetAssignedMach();
+	/*int mach = fp.GetControllerAssignedData().GetAssignedMach();
 	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, fp.GetControllerAssignedData().GetAssignedMach());
 	textInputs[TXT_LEVEL].Content = to_string(fp.GetControllerAssignedData().GetClearedAltitude());
-	textInputs[TXT_DEST].Content = data.GetDestination();
+	textInputs[TXT_DEST].Content = data.GetDestination();*/
+}
+
+void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string content) {
+	// Mach numbers
+	if (id == TXT_SPD || id == TXT_SPD_CPY || id == TXT_MAN_SPD) {
+		// Validation (range & length)
+		// Check if it is a string
+		bool isNumber = true;
+		for (int i = 0; i < content.size(); i++) { // Check if string
+			if (!isdigit(content[i])) return;
+		}
+		// It's a number, check the length
+		if (stoi(content) > 200 || stoi(content) < 1) return;
+
+		// We reached here so set the mach
+		content = string("M") + CUtils::PadWithZeros(3, stoi(content));
+	}
+	// Tracks
+	if (id == TXT_TCK || id == TXT_TCK_CPY || id == TXT_MAN_TCK) {
+		// Validation (range & length)
+		// Check if it is a string
+		bool isNumber = false;
+		for (int i = 0; i < content.size(); i++) { // Check if string
+			if (!isalpha(content[i])) return;
+			else toupper(content[i]);
+		}
+
+		// It's a string, check the length
+		if (content.size() > 2 || content.size() < 1) return;
+
+		// Parse the track
+		int status = CRoutesHelper::ParseRoute(primedPlan->Callsign, content, true);
+		if (status == 1) { // Validation failed
+			textInputs.find(id)->second.Error = true;
+		}
+		else {
+			if (status == 0) { // Validation success
+				// Generate the route
+				CUtils::CAsyncData* data = new CUtils::CAsyncData();
+				data->Screen = screen;
+				data->Callsign = primedPlan->Callsign;
+				_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*)data); // Async
+
+				// Set the error to false
+				textInputs.find(id)->second.Error = false;
+
+				// So we can put the content for the route boxes, make a string
+				string routeString;
+				for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {
+					routeString += primedPlan->RouteRaw[i] + " ";
+				}
+				// Set the contents
+				if (id == TXT_RTE) {
+					textInputs.find(TXT_TCK)->second.Content = routeString;
+					textInputs.find(TXT_MAN_RTE)->second.Error = false;
+				} else if (id == TXT_TCK_CPY) {
+					textInputs.find(TXT_CPY_RTE)->second.Content = routeString;
+					textInputs.find(TXT_MAN_RTE)->second.Error = false;
+				}
+				else {
+					textInputs.find(TXT_MAN_RTE)->second.Content = routeString;
+					textInputs.find(TXT_MAN_RTE)->second.Error = false;
+				}
+			}
+		}
+	}
+	// Routes
+	if (id == TXT_RTE  || id == TXT_MAN_RTE || id == TXT_CPY_RTE) {
+		// Parse the route
+		int status = CRoutesHelper::ParseRoute(primedPlan->Callsign, content);
+		if (status == 1) { // Validation failed
+			// Errored
+			textInputs.find(id)->second.Error = true;
+		}
+		else {
+			if (status == 0) { // Validation success
+				// Generate the route
+				CUtils::CAsyncData* data = new CUtils::CAsyncData();
+				data->Screen = screen;
+				data->Callsign = primedPlan->Callsign;
+				_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*) data); // Async
+
+				// Set the error to false
+				textInputs.find(id)->second.Error = false;
+
+				// Set the contents
+				if (id == TXT_TCK) {
+					textInputs.find(TXT_TCK)->second.Content = primedPlan->Track;
+					textInputs.find(TXT_TCK)->second.Error = false;
+				}
+				else if (id == TXT_TCK_CPY) {
+					textInputs.find(TXT_TCK_CPY)->second.Content = primedPlan->Track;
+					textInputs.find(TXT_TCK_CPY)->second.Error = false;
+				}
+				else {
+					textInputs.find(TXT_MAN_TCK)->second.Content = primedPlan->Track;
+					textInputs.find(TXT_MAN_TCK)->second.Error = false;
+				}
+			}
+		}
+	}
+
+	// Set the text
+	if (textInputs.find(id) != textInputs.end()) {
+		textInputs.find(id)->second.Content = content;
+	}
 }
 
 void CFlightPlanWindow::OnCloseFlightPlanWindow() {

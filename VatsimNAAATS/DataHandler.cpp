@@ -18,7 +18,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	string responseString;
 	try {
 		// Convert URL to LPCSTR type
-		LPCSTR lpcURL = EventTrackUrl.c_str();
+		LPCSTR lpcURL = TrackURL.c_str();
 
 		// Delete cache data
 		DeleteUrlCacheEntry(lpcURL);
@@ -26,6 +26,12 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		// Download data
 		CComPtr<IStream> pStream;
 		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+		// If failed
+		if (FAILED(hr)) {
+			// Show user message
+			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data.", true, true, true, true, true);
+			return 1;
+		}
 		// Put data into buffer
 		char tempBuffer[2048];
 		DWORD bytesRead = 0;
@@ -33,12 +39,6 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		// Put data into string
 		for (int i = 0; i < bytesRead; i++) {
 			responseString += tempBuffer[i];
-		}
-		// If failed
-		if (FAILED(hr)) {
-			// Show user message
-			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data.", true, true, true, true, true);
-			return 1;
 		}
 	}
 	catch (exception & e) {
@@ -139,20 +139,66 @@ int CDataHandler::UpdateFlightData(CRadarScreen* screen, string callsign, bool u
 }
 
 int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
-	// FP object
-	CAircraftFlightPlan fp;	
-	fp.Callsign = callsign;
-	fp.IsValid = true;
-	fp.IsCleared = false; // Ben: this was temporary for my needs, make it so it updates dynamically to true if natTrak clearance
-	fp.ExitTime = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str()).GetSectorExitMinutes();
+	// MISSING VALUES:
+	// DLStatus
+	// FLIGHT LEVEL
+	// MACH
+	// SECTOR
+	// STATE
 
-	// Ben: So here I have done what I needed for the routes, I need you to initialise everything else
-	// either from natTrak if the data is there, or from Euroscope values if no natTrak data existing for the pilot
+	// Euroscope flight plan and my flight plan
+	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str());
+	CAircraftFlightPlan fp;	
+	// Instantiate aircraft information
+	fp.Callsign = callsign;
+	fp.Type = fpData.GetFlightPlanData().GetAircraftFPType();
+	fp.Depart = fpData.GetFlightPlanData().GetOrigin();
+	fp.Dest = fpData.GetFlightPlanData().GetDestination();
+	fp.Etd = CUtils::ParseZuluTime(false, atoi(fpData.GetFlightPlanData().GetEstimatedDepartureTime()));
+	fp.ExitTime = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str()).GetSectorExitMinutes();
+	fp.DLStatus = ""; // TEMPORARY
+	fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
+
+	// Get SELCAL code
+	string remarks = fpData.GetFlightPlanData().GetRemarks();
+	size_t found = remarks.find(string("SEL/"));
+	// If found
+	if (found != string::npos) {
+		fp.SELCAL = remarks.substr(found + 4, 4);
+	}
+	else {
+		fp.SELCAL= "";
+	}
+
+	// Get communication mode
+	string comType;
+	comType += toupper(fpData.GetFlightPlanData().GetCommunicationType());
+	if (comType == "V") { // Switch each of the values
+		comType = "VOX";
+	}
+	else if (comType == "T") {
+		comType = "TXT";
+	}
+	else if (comType == "R") {
+		comType = "RCV";
+	}
+	else {
+		comType = "VOX"; // We assume voice if it defaults
+	}
+	fp.Communications = comType; // Set the type
+
+	// TODO: PULL NATTRAK DATA AND FILL RESTRICTIONS, CURRENTMESSAGE AND FLIGHTHISTORY, ALSO ROUTERAW IF IT IS THERE, SAME WITH ISCLEARED
+
+	// Set IsCleared (TEMPORARY)
+	fp.IsCleared = false;
+
+	// Flight plan is valid
+	fp.IsValid = true;
 
 	// Add FP to map
 	flights[callsign] = fp;
 
-	// Generate route (Ben: this must be the last thing done in this method)
+	// Generate route
 	CUtils::CAsyncData* data = new CUtils::CAsyncData();
 	data->Screen = screen;
 	data->Callsign = callsign;
@@ -176,6 +222,7 @@ int CDataHandler::DeleteFlightData(string callsign) {
 int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string track) {
 	if (flights.find(callsign) != flights.end()) {
 		// Set route if flight exists
+		flights.find(callsign)->second.Route.clear();
 		flights.find(callsign)->second.Route = *route;
 
 		// Set track if not nothing

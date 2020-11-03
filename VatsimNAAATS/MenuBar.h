@@ -21,6 +21,7 @@ class CMenuBar
 		string GetDropDownValue(int id);
 		map<int, CWinButton> GetToggleButtons();
 		void SetButtonState(int id, CInputState state);
+		CInputState GetButtonState(int id);
 		void OnOverDropDownItem(int id);
 		void SetDropDownValue(int id, int value);
 		void ButtonDown(int id, int button);

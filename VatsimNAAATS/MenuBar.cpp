@@ -18,12 +18,12 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_MISC] = CWinButton(BTN_MISC, MENBAR, "Misc", CInputState::DISABLED, 41);
 	buttons[BTN_MESSAGE] = CWinButton(BTN_MESSAGE, MENBAR, "Message", CInputState::INACTIVE, 73);
 	buttons[BTN_TAGS] = CWinButton(BTN_TAGS, MENBAR, "Tags", CInputState::ACTIVE, 46);
-	buttons[BTN_FLIGHTPLAN] = CWinButton(BTN_FLIGHTPLAN, MENBAR, "Flight Plan", CInputState::INACTIVE, 78);
+	buttons[BTN_FLIGHTPLAN] = CWinButton(BTN_FLIGHTPLAN, MENBAR, "Flight Plan", CInputState::DISABLED, 78);
 	buttons[BTN_DETAILED] = CWinButton(BTN_DETAILED, MENBAR, "Detailed", CInputState::INACTIVE, 73);
-	buttons[BTN_AREASEL] = CWinButton(BTN_AREASEL, MENBAR, "Area Sel", CInputState::INACTIVE, 83);
+	buttons[BTN_AREASEL] = CWinButton(BTN_AREASEL, MENBAR, "Area Sel", CInputState::DISABLED, 83);
 	buttons[BTN_TCKCTRL] = CWinButton(BTN_TCKCTRL, MENBAR, "Tck Control", CInputState::INACTIVE, 88);
 	buttons[BTN_OVERLAYS] = CWinButton(BTN_OVERLAYS, MENBAR, "Overlays", CInputState::INACTIVE, 73);
-	buttons[BTN_TYPESEL] = CWinButton(BTN_TYPESEL, MENBAR, "Select", CInputState::INACTIVE, 68);
+	buttons[BTN_TYPESEL] = CWinButton(BTN_TYPESEL, MENBAR, "Select", CInputState::DISABLED, 68);
 	buttons[BTN_ALTFILT] = CWinButton(BTN_ALTFILT, MENBAR, "Alt Filter", CInputState::INACTIVE, 86);
 	buttons[BTN_HALO] = CWinButton(BTN_HALO, MENBAR, "Halo 5", CInputState::INACTIVE, 68, 0);
 	buttons[BTN_RBL] = CWinButton(BTN_RBL, MENBAR, "RBL", CInputState::INACTIVE, 48);
@@ -289,10 +289,21 @@ void CMenuBar::SetButtonState(int id, CInputState state) {
 		}
 	}
 	else { // normal button
-		if (buttons.find(id)->second.State != CInputState::DISABLED) {
-			if (buttons.find(id) != buttons.end()) {
-				buttons[id].State = state;
-			}
+		if (buttons.find(id) != buttons.end()) {
+			buttons[id].State = state;
+		}
+	}
+}
+
+CInputState CMenuBar::GetButtonState(int id) {
+	if (id >= 100) { // dropdown
+		if (dropDowns.find(id) != dropDowns.end()) {
+			return dropDowns.find(id)->second.State;
+		}
+	}
+	else {
+		if (buttons.find(id) != buttons.end()) {
+			return buttons.find(id)->second.State;
 		}
 	}
 }

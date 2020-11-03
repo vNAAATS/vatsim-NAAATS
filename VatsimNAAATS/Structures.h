@@ -110,6 +110,7 @@ struct CTextInput {
 		Content = content;
 		Width = width;
 		State = state;
+		Error = false;
 	}
 	int Id;
 	int Type;
@@ -117,6 +118,7 @@ struct CTextInput {
 	string Content;
 	int Width;
 	CInputState State;
+	bool Error;
 };
 
 // Describes a window check box
@@ -270,6 +272,7 @@ struct CAircraftFlightPlan {
 	int ExitTime;
 	bool IsValid;
 	bool IsCleared;
+	int AsyncState;
 };
 
 // These gotta go in here because Constants.h doesn't like it?

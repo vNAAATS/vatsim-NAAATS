@@ -36,7 +36,6 @@ class CUtils { // TODO: refactor into namespace
 		static int SepMinimaLateral;
 		static int SepMinimaLongitudinal;
 
-
 		// Load/save methods
 		static void SavePluginData(CRadarScreen* screen);
 		static void LoadPluginData(CRadarScreen* screen);
@@ -64,6 +63,9 @@ class CUtils { // TODO: refactor into namespace
 
 		// Pad zeroes
 		static string PadWithZeros(int width, int number);
+
+		// Check all alpha
+		static bool IsAllAlpha(string str);
 
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, int deltaTime = -1, CFlightPlan* fp = nullptr, int ep = -1);

@@ -115,6 +115,16 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	}
 
+	// Set the flight plan button state
+	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid) {
+		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) != CInputState::DISABLED)
+			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::DISABLED);
+	}
+	else {
+		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) == CInputState::DISABLED)
+			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
+	}
+
 	// Reset currently on screen list
 	if (tenSecT >= 10 && !aircraftOnScreen.empty()) {
 		// Loop on screen aircraft
@@ -653,11 +663,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			// Set the ASEL
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
-			GetPlugIn()->SetASELAircraft(fp);
-
-			if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
-				//fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
-			}			
+			GetPlugIn()->SetASELAircraft(fp);	
 
 			// Probing tools
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
@@ -678,8 +684,8 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// Flight plan button
-		if (atoi(sObjectId) == CMenuBar::BTN_FLIGHTPLAN) {
-			//fltPlnWindow->UpdateData(this, CAircraftFlightPlan(asel));
+		if (atoi(sObjectId) == CMenuBar::BTN_FLIGHTPLAN && menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
+			fltPlnWindow->Instantiate(this, asel);
 		}
 
 		// Qck Look button
@@ -764,7 +770,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		// If a flight plan window text entry
 		if (ObjectType == WIN_FLTPLN) {
 			if (fltPlnWindow->IsTextInput(atoi(sObjectId))) {
-				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), "");
+				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), fltPlnWindow->GetTextValue(atoi(sObjectId)).c_str());
 			}
 		}
 
@@ -879,7 +885,6 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 		if (isNumber && (atoi(sItemString) < 1000 && atoi(sItemString) > 0)) {
 			CUtils::AltFiltLow = atoi(sItemString); // Return if in range
 		}
-		
 	}
 	// Set high alt filter
 	if (FunctionId == FUNC_ALTFILT_HIGH) {
@@ -894,8 +899,8 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 	}
 
 	// If it is a flight plan window text input
-	if (fltPlnWindow->IsTextInput(FunctionId) && string(sItemString) != "") {
-
+	if (fltPlnWindow->IsTextInput(FunctionId)) {
+		fltPlnWindow->SetTextValue(this, FunctionId, string(sItemString));
 	}
 }
 

@@ -13,8 +13,9 @@ using namespace EuroScopePlugIn;
 class CFlightPlanWindow : public CBaseWindow
 {
 	private: 
-		CAircraftFlightPlan primedPlan;
-		CAircraftFlightPlan copiedPlan;
+		CAircraftFlightPlan* primedPlan;
+		CAircraftFlightPlan* copiedPlan;
+		map<string, CAircraftFlightPlan*> ongoingFlightPlans; // Currently ongoing (in progress) flight plan edits
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
 		int selectedRestriction = 0;
@@ -40,18 +41,15 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void ButtonPress(int id);
 		virtual void ButtonUnpress(int id);
 		virtual void SetButtonState(int id, CInputState state);
+		void SetTextValue(CRadarScreen* screen, int id, string content);
 		bool IsButtonPressed(int id);
 
 		// Fill data
-		void UpdateData(CRadarScreen* screen, CAircraftFlightPlan status);
+		void Instantiate(CRadarScreen* screen, string callsign);
 		void OnCloseFlightPlanWindow();
 
-		// Data
-		pair<string, CAircraftFlightPlan> CurrentFlightPlan; // We have a flight plan object in the second position for the copy
-		map<string, CAircraftFlightPlan> SavedFlightPlans; // Currently saved (in progress) flight plan edits
-
 		// Panel states
-		bool IsData = true;
+		bool IsData = false;
 		bool IsCopyMade = false;
 		bool IsConflictWindow = false;
 		bool IsClearanceOpen = false;
@@ -142,6 +140,9 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int TXT_MAN_EPTIME = 123;
 		static const int TXT_XCHANGE_CURRENT = 124;
 		static const int TXT_XCHANGE_NEXT = 125;
+		static const int TXT_MAN_RTE = 126;
+		static const int TXT_RTE = 127;
+		static const int TXT_CPY_RTE = 128;
 
 		// Checkbox definitions
 		static const int CHK_CLRC_ORCA = 300;

@@ -95,6 +95,7 @@ vector<CRoutePosition> CRoutesHelper::GetRoute(CRadarScreen* screen, string call
 void CRoutesHelper::InitialiseRoute(void* args) {
 	// Convert args
 	CUtils::CAsyncData* data = (CUtils::CAsyncData*) args;
+
 	// Flight plan
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(data->Callsign);
 
@@ -106,55 +107,97 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 	
 	// First we check if they have a route string
 	if (fp != nullptr && !fp->RouteRaw.empty() && fp->RouteRaw.size() > 0) { // Get their route as per the route string
-		for (auto i = fp->RouteRaw.begin(); i != fp->RouteRaw.end();  i++) {
-			// Waypoint obj
-			CWaypoint point;
-
-			// We check whether there are any numbers in the item
-			bool isAllAlpha = true;
-			for (int j = 0; j < i->size(); j++) {
-				if (isdigit(i->at(j))) {
-					isAllAlpha = false;
-				}
-			}
-
-			// If it's a waypoint we need to search the sector file for the reference
-			if (isAllAlpha) {
-				// Get sector file
-				data->Screen->GetPlugIn()->SelectScreenSectorfile(data->Screen);
-				CSectorElement fix(data->Screen->GetPlugIn()->SectorFileElementSelectFirst(5)); // Fixes element
-
-				// Select waypoint
-				bool found = false;
-				while (string(fix.GetName()) != *i) {
-					fix = data->Screen->GetPlugIn()->SectorFileElementSelectNext(fix, 5);
-				}
-
-				// Check here in case not found
-				CPosition pos;
-				if (*i == fix.GetName() && fix.GetPosition(&pos, 0)) { // If found then add
-					point.Name = *i;
-					point.Position = pos;
-					
-				}
-				else { // If not then set the default (highly unlikely but a fallback just in case)
-					pos.m_Latitude = 0.0;
-					pos.m_Longitude = 0.0;
-					point.Name = *i;
-					point.Position = pos;
+		// We check now if they have a track
+		if (fp->Track != "RR") {
+			if (fp->Track.size() < 2) {
+				for (int i = 0; i < CurrentTracks.find(fp->Track)->second.RouteRaw.size(); i++) {
+					CWaypoint point;
+					point.Name = CurrentTracks.find(fp->Track)->second.Route[i];
+					point.Position = CurrentTracks.find(fp->Track)->second.RouteRaw[i];
+					parsedRoute.push_back(point);
 				}
 			}
 			else {
-				// Make position from the string lat and lon
-				CPosition pos;
-				pos.m_Latitude = stod(i->substr(0, 2));
-				pos.m_Latitude = stod(i->substr(2, 2));
-				point.Name = *i;
-				point.Position = pos;
+				// Concorde route
+				if (trackReturned.size() == 2) {
+					if (trackReturned == "SM") {
+						parsedRoute = NatSM;
+					}
+					else if (trackReturned == "SN") {
+						parsedRoute = NatSN;
+					}
+					else if (trackReturned == "SP") {
+						parsedRoute = NatSP;
+					}
+					else if (trackReturned == "SL") {
+						parsedRoute = NatSL;
+					}
+					else {
+						parsedRoute = NatSO;
+					}
+				}
 			}
+		}
+		else { // It's a random routing
+			for (int i = 0; i < fp->RouteRaw.size(); i++) {
+				// Waypoint obj
+				CWaypoint point;
 
-			// Append the waypoint object
-			parsedRoute.push_back(point);
+				// We check whether there are any numbers in the item
+				bool isAllAlpha = true;
+				for (int j = 0; j < fp->RouteRaw[i].size(); j++) {
+					if (isdigit(fp->RouteRaw[i].at(j))) {
+						isAllAlpha = false;
+					}
+				}
+
+				// If it's a waypoint we need to search the sector file for the reference
+				if (isAllAlpha) {
+					// Get sector file
+					data->Screen->GetPlugIn()->SelectScreenSectorfile(data->Screen);
+					CSectorElement fix; // Fixes element
+
+					// Select waypoint
+					try {
+						for (fix = data->Screen->GetPlugIn()->SectorFileElementSelectFirst(EuroScopePlugIn::SECTOR_ELEMENT_FIX);
+							fix.IsValid();
+							fix = data->Screen->GetPlugIn()->SectorFileElementSelectNext(fix, EuroScopePlugIn::SECTOR_ELEMENT_FIX)) {
+							string fixName = fix.GetName();
+							if (!strcmp(fixName.c_str(), fp->RouteRaw.at(i).c_str())) {
+								break;
+							}
+						}
+					}
+					catch (std::out_of_range ex) {
+						// Leave blank
+					}
+
+					// Check here in case not found
+					CPosition pos;
+					if (fp->RouteRaw[i] == fix.GetName() && fix.GetPosition(&pos, 0)) { // If found then add
+						point.Name = fp->RouteRaw[i];
+						point.Position = pos;
+
+					}
+					else { // If not then set the default (highly unlikely but a fallback just in case)
+						pos.m_Latitude = 0.0;
+						pos.m_Longitude = 0.0;
+						point.Name = fp->RouteRaw[i];
+						point.Position = pos;
+					}
+				}
+				else {
+					// Make position from the string lat and lon
+					CPosition pos;
+					pos.m_Latitude = stod(fp->RouteRaw[i].substr(0, 2));
+					pos.m_Longitude = -(stod(fp->RouteRaw[i].substr(3, 2)));
+					point.Name = fp->RouteRaw[i];
+					point.Position = pos;
+				}
+
+				// Append the waypoint object
+				parsedRoute.push_back(point);
+			}
 		}
 	}
 	else { // We get the route as per their VATSIM flight plan if no route string
@@ -259,8 +302,9 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 
 			// Get entry and exit points
 			for (int i = start; i < stop; i++) {
-				// First check if position is within reasonable longitudinal bounds
-				if (route.GetPointPosition(i).m_Longitude >= -65 && route.GetPointPosition(i).m_Longitude <= -5) {
+				// First check if position is within reasonable longitudinal and lateral bounds
+				if (route.GetPointPosition(i).m_Longitude >= -65 && route.GetPointPosition(i).m_Longitude <= -5
+					&& route.GetPointPosition(i).m_Latitude >= 40 && route.GetPointPosition(i).m_Latitude <= 70) {
 					// Now make the waypoint
 					CWaypoint point;
 					point.Name = CUtils::ConvertCoordinateFormat(route.GetPointName(i), 0);
@@ -278,6 +322,136 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 
 	// Cleanup
 	delete args;
+}
+
+int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack) {
+	// Return vector
+	vector<string> route;
+
+	// Track
+	string track;
+
+	// Deal with track
+	if (isTrack) {
+		if (rawInput.size() < 2) {
+			if (CRoutesHelper::CurrentTracks.find(rawInput) != CRoutesHelper::CurrentTracks.end()) {
+				route = CRoutesHelper::CurrentTracks.at(rawInput).Route;
+				track = CRoutesHelper::CurrentTracks.at(rawInput).Identifier;
+			}
+			else {
+				return 1;
+			}
+		}
+		else {
+			// Check concorde
+			if (rawInput == "SM") {
+				for (int i = 0; i < NatSM.size(); i++) {
+					route.push_back(NatSM[i].Name);
+					track = rawInput;
+				}
+			}
+			else if (rawInput == "SN") {
+				for (int i = 0; i < NatSN.size(); i++) {
+					track = rawInput;
+				}
+			}
+			else if (rawInput == "SP") {
+				for (int i = 0; i < NatSP.size(); i++) {
+					track = rawInput;
+				}
+			}
+			else if (rawInput == "SL") {
+				for (int i = 0; i < NatSL.size(); i++) {
+					track = rawInput;
+				}
+			}
+			else if (rawInput == "SO") {
+				for (int i = 0; i < NatSO.size(); i++) {
+					track = rawInput;
+				}
+			}
+			else {
+				return 1;
+			}
+		}
+	}
+	else {
+		/// Validation
+		// Tokens for split string
+		vector<string> tokens;
+
+		// String stream
+		stringstream stream(rawInput);
+
+		// Intermediate value
+		string intermediate;
+
+		track = "RR";
+
+		// Tokenise the string
+		while (getline(stream, intermediate, ' '))
+		{
+			tokens.push_back(intermediate);
+		}
+
+		// Loop the tokens
+		for (int i = 0; i < tokens.size(); i++) {
+			// Check if digits
+			bool isAllAlpha = true;
+			for (int j = 0; j < tokens.at(i).size(); j++) {
+				if (isdigit(tokens.at(i).at(j))) {
+					isAllAlpha = false;
+				}
+			}
+
+			// If waypoint check the size
+			if (isAllAlpha) {
+				// Reject if greater or less than 5
+				if (tokens.at(i).size() < 5 || tokens.at(i).size() > 5) {
+					return 1;
+				}
+				else {
+					// Otherwise make uppercase and push back
+					string waypoint;
+					for (int j = 0; j < tokens.at(i).size(); j++) {
+						waypoint += toupper(tokens.at(i)[j]);
+					}
+					route.push_back(waypoint);
+				}
+			}
+			else { // It's a coordinate
+				if (tokens.at(i).size() < 5 || tokens.at(i).size() > 5) {
+					return 1;
+				}
+				else {
+					// Check manually
+					if (!isdigit(tokens.at(i)[0]))
+						return 1;
+					if (!isdigit(tokens.at(i)[1]))
+						return 1;
+					if (tokens.at(i)[2] != '/')
+						return 1;
+					if (!isdigit(tokens.at(i)[3]))
+						return 1;
+					if (!isdigit(tokens.at(i)[4]))
+						return 1;
+
+					// We got here so push it
+					route.push_back(tokens.at(i));
+				}
+			}
+		}
+	}
+
+	
+
+	// We got here, so set the route and return success code
+	CDataHandler::GetFlightData(callsign)->Track = track;
+	CDataHandler::GetFlightData(callsign)->RouteRaw.clear();
+	for (int i = 0; i < route.size(); i++) {
+		CDataHandler::GetFlightData(callsign)->RouteRaw.push_back(route[i]);
+	}
+	return 0;
 }
 
 string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {

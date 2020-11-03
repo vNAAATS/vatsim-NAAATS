@@ -21,6 +21,7 @@ class CBaseWindow
 		POINT GetTopLeft();
 		void MoveWindow(CRect topleft);
 		void Scroll(int id, POINT newPtr, POINT oldPtr);
+		string GetTextValue(int id);
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) = 0;
 		virtual void MakeWindowItems() = 0;
 		virtual void ButtonDown(int id) = 0;

@@ -252,9 +252,38 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 	// Time and direction
 	int entryMinutes = fp.GetSectorEntryMinutes();
 
-	// If not ever going to enter, or greater than 60 min out
-	if (entryMinutes < 0 || entryMinutes > 60) {
-		valid = false;
+	/// We check the selection values
+	// Track control
+
+	// Position type
+	if (PosType == 800) {
+		// Direction & area selection
+		bool direction = GetAircraftDirection(target->GetTrackHeading());
+		int areaSel = AreaSelection;
+		// If greater than sixty minutes out or already in the airspace
+		if (entryMinutes <= 0 || entryMinutes > 60) {
+			valid = false;
+		}
+		
+		// If wrong direction don't show
+		if (direction && areaSel == 802) {
+			valid = false;
+		}
+		if (!direction && areaSel == 801) {
+			valid = false;
+		}
+	}
+	else if (PosType == 801) {
+		// If not ever going to enter, or greater than 60 min out
+		if (entryMinutes < 0 || entryMinutes > 60) {
+			valid = false;
+		}
+	}
+	else {
+		// If not ever going to enter, or greater than 20 min out
+		if (entryMinutes < 0 || entryMinutes > 20) {
+			valid = false;
+		}
 	}
 
 	/// However we should keep them on the screen if they aren't long out of the airspace
@@ -269,6 +298,9 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		// If greater than 10 minutes
 		if (diffSecs > 600) {
 			valid = false;
+		}
+		if (diffSecs >= 0 && diffSecs <= 600 && PosType == 802) {
+			valid = true; // Override postype stuff
 		}
 	}
 	
@@ -361,6 +393,18 @@ string CUtils::PadWithZeros(int width, int number) {
 	std::stringstream ss;
 	ss << setfill('0') << setw(width) << number;
 	return ss.str();
+}
+
+bool CUtils::IsAllAlpha(string str) {
+	// Check whether there are any numbers in the item
+	bool isAllAlpha = true;
+	for (int i = 0; i < str.size(); i++) {
+		if (isdigit(str[i])) {
+			isAllAlpha = false;
+		}
+	}
+
+	return isAllAlpha;
 }
 
 string CUtils::ParseZuluTime(bool delimit, int deltaTime, CFlightPlan* fp, int fix) {
