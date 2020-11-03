@@ -240,7 +240,6 @@ struct CMessage {
 	string To;
 	string From;
 	string MessageRaw;
-	string MessageHuman;
 	CMessageType Type;
 };
 

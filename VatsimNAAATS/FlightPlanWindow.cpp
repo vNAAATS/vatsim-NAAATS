@@ -364,12 +364,62 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
 
+	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, stoi(primedPlan->Mach));
+	textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
+	textInputs[TXT_DEST].Content = primedPlan->Dest;
+	SetTextValue(screen, TXT_TCK, primedPlan->Track);
+
 	// Create the route box
 	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, dataBarRect.right - 100, idBox.bottom + 84);
 	dc->FillRect(rteBox, &routeBox);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(rteBox, -1, -1);
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Route box to text input
+	CTextInput* route = &textInputs.find(TXT_RTE)->second;
+	CTextInput* track = &textInputs.find(TXT_TCK)->second;
+	screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
+
+	// Text align
+	FontSelector::SelectATCFont(16, dc);
+	dc->SetTextAlign(TA_LEFT);
+
+	// Parse the route text
+	int offsetX = 5;
+	int offsetY = 2;
+	if (route->Error || track->Error) { // If there is an error
+		dc->TextOutA(rteBox.left + 4, rteBox.top + 2, "SYNTAX OR TCK ERROR! Check format.");
+	}
+	else if (route->Content == "") { // If the content is empty
+		// Display "Enter route here" message
+		dc->TextOutA(rteBox.left + 4, rteBox.top + 2, "Enter route here. Lat/lon format: 50/30.");
+	}
+	else {
+		// Draw the route and estimates
+		vector<CRoutePosition> rte = CRoutesHelper::GetRoute(screen, primedPlan->Callsign);
+		for (int i = 0; i < rte.size(); i++) {
+			// If a waypoint
+			if (CUtils::IsAllAlpha(rte[i].Fix)) {
+				// Write fix down
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
+				offsetY += 56;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+				offsetY = 2;
+				offsetX += dc->GetTextExtent("2323").cx + 15;
+			}
+			else {
+				// Write coordinate down
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
+				offsetY += 28;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
+				offsetY += 28;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+				offsetY = 2;
+				offsetX += dc->GetTextExtent("2323").cx + 15;
+			}
+		}
+	}
 
 	// Scroll bar values
 	if (!isCopy && scrollBars[SCRL_DATA].FrameSize == 0)
@@ -380,8 +430,6 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 
 	// Draw route scroll bar
 	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left-1, rteBox.bottom + 3 }, &scrollBars[isCopy ? SCRL_CPY : SCRL_DATA]);
-
-	// Draw text in route box
 
 	// Make inputs
 	bool txtValid = true;
@@ -1233,6 +1281,7 @@ bool CFlightPlanWindow::IsButtonPressed(int id) {
 void CFlightPlanWindow::Instantiate(CRadarScreen* screen, string callsign) {
 	// Get the data
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+	if (!fp->IsValid) return;
 	primedPlan = fp;
 
 	// Set the open windows depending on state of plan
