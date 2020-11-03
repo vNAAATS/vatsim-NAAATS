@@ -236,6 +236,7 @@ struct CWinScrollBar {
 
 struct CMessage {
 	CMessage() {}; // Default constructor
+	int Id;
 	string To;
 	string From;
 	string MessageRaw;

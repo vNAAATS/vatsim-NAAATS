@@ -184,6 +184,7 @@ const int WIN_NOTEPAD = 105;
 const int ALTFILT_TEXT = 200;
 const int FUNC_ALTFILT_LOW = 201;
 const int FUNC_ALTFILT_HIGH = 202;
+const int ACTV_MESSAGE = 203;
 
 // Lists
 const int LIST_INBOUND = 300;
@@ -276,5 +277,18 @@ enum class CFlightPlanMode {
 };
 
 enum class CMessageType {
-
+    LOG_ON,
+    LOG_ON_CONFIRM,
+    TRANSFER,
+    TRANSFER_ACCEPT,
+    TRANSFER_REJECT,
+    CLEARANCE_REQ,
+    REVISION_REQ,
+    CLEARANCE_ISSUE,
+    REVISION_ISSUE,
+    REVISION_REJECT,
+    ATC_RESTRICTION,
+    STATION_PROFILE,
+    PROFILE_READBACK,
+    READBACK
 };

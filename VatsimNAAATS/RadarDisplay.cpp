@@ -833,6 +833,11 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 		npWindow->ButtonDown(atoi(sObjectId));
 	}
 
+	// Message window
+	if (ObjectType == WIN_MSG) {
+		msgWindow->ButtonDown(atoi(sObjectId));
+	}
+
 	// Refresh
 	RequestRefresh();
 }
@@ -866,6 +871,15 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 			menuBar->SetButtonState(CMenuBar::BTN_NOTEPAD, CInputState::INACTIVE);
 		}
 		npWindow->ButtonUp(atoi(sObjectId));
+	}
+
+	// Message window
+	if (ObjectType == WIN_MSG) {
+		if (atoi(sObjectId) == CMessageWindow::BTN_CLOSE) {
+			// Close window if the close button
+			menuBar->SetButtonState(CMenuBar::BTN_MESSAGE, CInputState::INACTIVE);
+		}
+		msgWindow->ButtonUp(atoi(sObjectId));
 	}
 
 	// Refresh

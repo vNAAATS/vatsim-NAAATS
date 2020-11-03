@@ -43,12 +43,36 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_MSG_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_MSG_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), "Messages");
+	dc->TextOutA(titleRect.left + (WINSZ_MSG_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), "Messages (" + to_string(ActiveMessages.size()) + ")");
+
+	// Create button bar
+	CRect buttonBarRect(windowRect.left, windowRect.bottom - 50, windowRect.left + WINSZ_MSG_WIDTH, windowRect.bottom);
+	dc->FillRect(buttonBarRect, &darkerBrush);
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
+	InflateRect(buttonBarRect, -1, -1);
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());	
 
 	// Add screen objects
 	screen->AddScreenObject(WINDOW, "WIN_MSG", windowRect, true, ""); // So that we can't click anything under the flight plan window
 	screen->AddScreenObject(WINDOW, "MSG", titleRect, true, ""); // Movable
 
+	// Close button
+	CCommonRenders::RenderButton(dc, screen, { buttonBarRect.left + 10, buttonBarRect.top + 10 }, 55, 30, &windowButtons.at(BTN_CLOSE));
+
+	// Drawing messages
+	int offsetX = 5;
+	int offsetY = WINSZ_TITLEBAR_HEIGHT + 2;
+	for (int i = 0; i < ActiveMessages.size(); i++) {
+		CRect message(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY, windowRect.right, 0); // Set to 0 here
+
+		// CODE HERE
+
+		// Set messages rectangle bottom
+		message.bottom = offsetY;
+
+		// Add screen object for message
+		screen->AddScreenObject(ACTV_MESSAGE, to_string(ActiveMessages[i].Id).c_str(), message, false, ""); // Movable
+	}
 
 	// Create borders
 	dc->DrawEdge(windowRect, EDGE_SUNKEN, BF_RECT);
@@ -66,14 +90,13 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 }
 
 void CMessageWindow::ButtonUp(int id) {
-	if (id == CMessageWindow::BTN_CLOSE) { // Close button
-		// If the close button close window
-		IsClosed = true;
-	}
+	// Press button
+	windowButtons.find(id)->second.State = CInputState::INACTIVE;
 }
 
 void CMessageWindow::ButtonDown(int id) {
-
+	// Press button
+	windowButtons.find(id)->second.State = CInputState::ACTIVE;
 }
 
 void CMessageWindow::ButtonPress(int id) {

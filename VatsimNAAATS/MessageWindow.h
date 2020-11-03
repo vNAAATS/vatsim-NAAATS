@@ -25,5 +25,9 @@ class CMessageWindow : public CBaseWindow
 
 		// Button definitions
 		static const int BTN_CLOSE;
+
+		// Currently active messages
+		vector<CMessage> ActiveMessages;
+		int SelectedMessage;
 };
 
