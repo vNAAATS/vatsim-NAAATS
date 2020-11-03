@@ -459,7 +459,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// Draw flight plan window if button pressed
-		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN) || fltPlnWindow->IsOpen) {
+			if (!fltPlnWindow->IsOpen)  fltPlnWindow->IsOpen = true;
+			if (!menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::ACTIVE);
 			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
 
@@ -688,6 +690,10 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			fltPlnWindow->Instantiate(this, asel);
 		}
 
+		if (!menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
+			fltPlnWindow->IsOpen = false;
+		}
+
 		// Qck Look button
 		if (atoi(sObjectId) == CMenuBar::BTN_QCKLOOK) {
 			aselDetailed = false;
@@ -784,6 +790,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			if (string(sObjectId) == "HIDESHOW") {
 				otherList->HideShowButton = otherList->HideShowButton == true ? false : true;
 			}
+		}
+
+		// If it is a message
+		if (ObjectType == ACTV_MESSAGE) {
+			msgWindow->SelectedMessage = atoi(sObjectId);
 		}
 	}
 	
@@ -920,7 +931,10 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 
 void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-
+	// If it is a message
+	if (ObjectType == ACTV_MESSAGE) {
+		msgWindow->ButtonDoubleClick(this, atoi(sObjectId), fltPlnWindow);
+	}
 }
 
 void CRadarDisplay::OnAsrContentToBeSaved(void)

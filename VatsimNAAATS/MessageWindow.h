@@ -5,6 +5,7 @@
 #include <map>
 #include <gdiplus.h>
 #include "BaseWindow.h"
+#include "FlightPlanWindow.h"
 
 using namespace std;
 using namespace Gdiplus;
@@ -20,6 +21,7 @@ class CMessageWindow : public CBaseWindow
 		virtual void ButtonDown(int id);
 		virtual void ButtonUp(int id);
 		virtual void ButtonPress(int id);
+		void ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlanWindow* fltPlnWin);
 		virtual void ButtonUnpress(int id);
 		virtual void SetButtonState(int id, CInputState state);
 
@@ -27,7 +29,7 @@ class CMessageWindow : public CBaseWindow
 		static const int BTN_CLOSE;
 
 		// Currently active messages
-		vector<CMessage> ActiveMessages;
-		int SelectedMessage;
+		map<int, CMessage> ActiveMessages;
+		int SelectedMessage = -1;
 };
 

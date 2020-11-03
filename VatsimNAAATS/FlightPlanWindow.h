@@ -13,13 +13,13 @@ using namespace EuroScopePlugIn;
 class CFlightPlanWindow : public CBaseWindow
 {
 	private: 
-		CAircraftFlightPlan* primedPlan;
 		CAircraftFlightPlan* copiedPlan;
 		map<string, CAircraftFlightPlan*> ongoingFlightPlans; // Currently ongoing (in progress) flight plan edits
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
 		int selectedRestriction = 0;
 	public:
+		CAircraftFlightPlan* primedPlan;
 		// Inherited methods
 		CFlightPlanWindow(POINT topLeft);
 		virtual void MakeWindowItems();
@@ -59,6 +59,7 @@ class CFlightPlanWindow : public CBaseWindow
 		bool IsHistoryOpen = false;
 		bool IsATCRestrictionsOpen = false;
 		bool IsTransferOpen = false;
+		bool IsOpen = false;
 
 		// Subwindow definitions
 		static const int SUBWIN_ATCR = 400;
