@@ -104,6 +104,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Next Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_MAN_RTE] = CTextInput(TXT_MAN_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RTE] = CTextInput(TXT_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_CPY_RTE] = CTextInput(TXT_CPY_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 
 	/// Dropdown defaults
 	map<string, bool> map;
@@ -434,8 +436,8 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	// Make inputs
 	bool txtValid = true;
 	int counter = isCopy ? TXT_SPD_CPY : TXT_SPD;
-	int offsetX = idBox.Width() + 10;
-	int offsetY = 11;
+	offsetX = idBox.Width() + 10;
+	offsetY = 11;
 	while (txtValid) {
 		// Get index
 		if (counter == TXT_SPD_CPY && !isCopy) break; // Break if end

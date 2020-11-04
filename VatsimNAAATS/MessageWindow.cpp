@@ -23,7 +23,7 @@ void CMessageWindow::MakeWindowItems() {
 	msg.Id = 0;
 	msg.From = "DLH414";
 	msg.To = "CZQX_FSS";
-	msg.MessageRaw = "AAL578:CLR_REQ:ARR:KMCO:DCT:ENTRY:TEST:EST:1000Z:TRACK:RR:F410:M81:END_OF_MESSAGE";
+	msg.MessageRaw = "AAL578:CLR_REQ:ARR:KMCO:DCT:ENTRY:TEST:EST:1000:TRACK:RR:410:81:END_OF_MESSAGE";
 	msg.Type = CMessageType::CLEARANCE_REQ;
 	ActiveMessages[msg.Id] = msg;
 
@@ -144,10 +144,69 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->RadarTargetSelect(msg->From.c_str()));
 	}
 	else if (msg->Type == CMessageType::CLEARANCE_REQ) {
+		/// Parse the message
+		// Tokens for split string
+		vector<string> tokens;
+
+		// String stream
+		stringstream stream(msg->MessageRaw);
+
+		// Intermediate value
+		string intermediate;
+
+		// Tokenise the string
+		while (getline(stream, intermediate, ':'))
+		{
+			tokens.push_back(intermediate);
+		}
+		// Values
+		string arrival;
+		string track;
+		string route = "";
+		string ep;
+		string epEst;
+		string level;
+		string speed;
+		// Loop tokens
+		for (int i = 0; i < tokens.size(); i++) {
+			if (tokens[i] == "ARR") {
+				arrival = tokens[i + 1];
+				route = tokens[i + 2] != "NULL" ? tokens[i + 2] : "";
+			}
+			else if (tokens[i] == "ENTRY") {
+				ep = tokens[i + 1];
+				epEst = tokens[i + 3];
+			}
+			else if (tokens[i] == "TRACK") {
+				track = tokens[i + 1];
+				level = tokens[i + 2];
+				speed = tokens[i + 3];
+			}
+		}
+		
+		// Instantiate flight plan window
 		fltPlnWin->Instantiate(screen, msg->From);
-		// Fix parsing here
 		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsData = true;
+		fltPlnWin->primedPlan->Track = track;
+		fltPlnWin->primedPlan->Mach = speed;
+		fltPlnWin->primedPlan->FlightLevel = level;
+		fltPlnWin->primedPlan->Track = track;
+		fltPlnWin->primedPlan->Dest = arrival;
+		CRoutesHelper::ParseRoute(msg->From, route, track != "RR" ? true : false);
+		// Generate route
+		CUtils::CAsyncData* data = new CUtils::CAsyncData();
+		data->Screen = screen;
+		data->Callsign = msg->From;
+		_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*)data); // Async
+
+		// Instantiate flight plan variables
+		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_SPD, speed);
+		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_LEVEL, level);
+		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_TCK, track);
+		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
+		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_DEST, arrival);
+
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->RadarTargetSelect(msg->From.c_str()));
 	}
 }

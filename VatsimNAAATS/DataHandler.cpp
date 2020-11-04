@@ -4,8 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <WinInet.h>
-#include <winhttp.h>
-#include "ApiSettings.h"
+//#include <winhttp.h>
+//#include "ApiSettings.h"
 #pragma comment(lib,"WinInet.Lib" )
 
 // Include dependency
@@ -241,7 +241,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	}
 }
 
-CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
+/*CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 {
 	//open up a WinHttp handle
 	HINTERNET hSession = nullptr,
@@ -275,4 +275,4 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 	if (!bResults)
 		return new CAircraftFlightPlan(); //error
 		
-}
+}*/
