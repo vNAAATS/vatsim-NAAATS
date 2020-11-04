@@ -38,7 +38,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::DISABLED);
 	windowButtons[BTN_UNCLEAR] = CWinButton(BTN_UNCLEAR, WIN_FLTPLN, "Unclear", CInputState::DISABLED);
 	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
-	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::INACTIVE);
+	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::DISABLED);
 	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::DISABLED);
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::DISABLED);
@@ -88,7 +88,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_SPD] = CTextInput(TXT_SPD, WIN_FLTPLN, "Spd", "", 50, CInputState::ACTIVE);
 	textInputs[TXT_LEVEL] = CTextInput(TXT_LEVEL, WIN_FLTPLN, "FL", "", 90, CInputState::ACTIVE);
 	textInputs[TXT_DEST] = CTextInput(TXT_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
-	textInputs[TXT_TCK] = CTextInput(TXT_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::DISABLED);
+	textInputs[TXT_TCK] = CTextInput(TXT_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::ACTIVE);
 	textInputs[TXT_STATE] = CTextInput(TXT_STATE, WIN_FLTPLN, "State", "", 30, CInputState::DISABLED);
 	textInputs[TXT_SPD_CPY] = CTextInput(TXT_SPD_CPY, WIN_FLTPLN, "Spd", "", 50, CInputState::ACTIVE);
 	textInputs[TXT_LEVEL_CPY] = CTextInput(TXT_LEVEL_CPY, WIN_FLTPLN, "FL", "", 90, CInputState::ACTIVE);
@@ -369,7 +369,13 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, stoi(primedPlan->Mach));
 	textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
 	textInputs[TXT_DEST].Content = primedPlan->Dest;
-	SetTextValue(screen, TXT_TCK, primedPlan->Track);
+	if (primedPlan->Track == "RR") {
+		textInputs[TXT_TCK].Content = primedPlan->Track;
+	}
+	else {
+		SetTextValue(screen, TXT_TCK, primedPlan->Track);
+	}
+	
 
 	// Create the route box
 	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, dataBarRect.right - 100, idBox.bottom + 84);
@@ -1358,12 +1364,12 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 					routeString += primedPlan->RouteRaw[i] + " ";
 				}
 				// Set the contents
-				if (id == TXT_RTE) {
-					textInputs.find(TXT_TCK)->second.Content = routeString;
-					textInputs.find(TXT_MAN_RTE)->second.Error = false;
+				if (id == TXT_TCK) {
+					textInputs.find(TXT_RTE)->second.Content = routeString;
+					textInputs.find(TXT_RTE)->second.Error = false;
 				} else if (id == TXT_TCK_CPY) {
 					textInputs.find(TXT_CPY_RTE)->second.Content = routeString;
-					textInputs.find(TXT_MAN_RTE)->second.Error = false;
+					textInputs.find(TXT_CPY_RTE)->second.Error = false;
 				}
 				else {
 					textInputs.find(TXT_MAN_RTE)->second.Content = routeString;
@@ -1392,11 +1398,11 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 				textInputs.find(id)->second.Error = false;
 
 				// Set the contents
-				if (id == TXT_TCK) {
+				if (id == TXT_RTE) {
 					textInputs.find(TXT_TCK)->second.Content = primedPlan->Track;
 					textInputs.find(TXT_TCK)->second.Error = false;
 				}
-				else if (id == TXT_TCK_CPY) {
+				else if (id == TXT_MAN_RTE) {
 					textInputs.find(TXT_TCK_CPY)->second.Content = primedPlan->Track;
 					textInputs.find(TXT_TCK_CPY)->second.Error = false;
 				}

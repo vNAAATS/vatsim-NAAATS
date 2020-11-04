@@ -51,8 +51,8 @@ class CConflictDetection
 		static const int SEPV_SUPERSONIC = 3950;
 		static const int SEPLAT_NONREDUCED = 60;
 		static const int SEPLAT_REDUCED = 23;
-		static const int SEPLON_REDUCED = 5;
-		static const int SEPLON_REDUCEDWARN = 8;
+		static const int SEPLON_REDUCED = 10;
+		static const int SEPLON_REDUCEDWARN = 14;
 		static const int SEPLON_NONRED_SAMEANDX = 15;
 		static const int SEPLON_NONRED_MNT = 10;
 
