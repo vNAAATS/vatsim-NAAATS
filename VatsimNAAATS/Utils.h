@@ -52,9 +52,15 @@ class CUtils { // TODO: refactor into namespace
 		// Check if point is an exit point (direction: true = Gander, false = Shanwick)
 		static bool IsExitPoint(string pointName, bool direction);
 
+		// Entry minutes
+		static int GetEntryMinutes(CRadarScreen* screen, CRadarTarget* target);
+
+		// Exit minutes
+		static int GetExitMinutes(CRadarScreen* screen, CRadarTarget* target);
+
 		// Check if the aircraft is to be displayed on the screen
 		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target);
-
+		
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);
 
