@@ -179,6 +179,7 @@ const int WIN_FLTPLN = 102;
 const int WIN_SCROLLBAR = 103;
 const int WIN_MSG = 104;
 const int WIN_NOTEPAD = 105;
+const int WIN_FLTPLN_TSFR = 106;
 
 // Text inputs and functions
 const int ALTFILT_TEXT = 200;

@@ -38,7 +38,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_COPY] = CWinButton(BTN_COPY, WIN_FLTPLN, "Copy", CInputState::DISABLED);
 	windowButtons[BTN_UNCLEAR] = CWinButton(BTN_UNCLEAR, WIN_FLTPLN, "Unclear", CInputState::DISABLED);
 	windowButtons[BTN_COORD] = CWinButton(BTN_COORD, WIN_FLTPLN, "Co-ord", CInputState::INACTIVE);
-	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::DISABLED);
+	windowButtons[BTN_MANENTRY] = CWinButton(BTN_MANENTRY, WIN_FLTPLN, "ManEntry", CInputState::INACTIVE);
 	windowButtons[BTN_PROBE] = CWinButton(BTN_PROBE, WIN_FLTPLN, "Probe", CInputState::DISABLED);
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::DISABLED);
@@ -68,9 +68,9 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_ATCR_OK] = CWinButton(BTN_ATCR_OK, WIN_FLTPLN, "OK", CInputState::INACTIVE);
 	windowButtons[BTN_XCHANGE_NOTIFY] = CWinButton(BTN_XCHANGE_NOTIFY, WIN_FLTPLN, "Notify", CInputState::INACTIVE);
 	windowButtons[BTN_XCHANGE_CLOSE] = CWinButton(BTN_XCHANGE_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
-	windowButtons[BTN_XCHANGE_ACCEPT] = CWinButton(BTN_XCHANGE_ACCEPT, WIN_FLTPLN, "Accept", CInputState::INACTIVE);
-	windowButtons[BTN_XCHANGE_TRANSFER] = CWinButton(BTN_XCHANGE_TRANSFER, WIN_FLTPLN, "Transfer", CInputState::INACTIVE);
-	windowButtons[BTN_XCHANGE_REJECT] = CWinButton(BTN_XCHANGE_REJECT, WIN_FLTPLN, "Reject", CInputState::INACTIVE);
+	windowButtons[BTN_XCHANGE_ACCEPT] = CWinButton(BTN_XCHANGE_ACCEPT, WIN_FLTPLN, "Accept", CInputState::DISABLED);
+	windowButtons[BTN_XCHANGE_TRANSFER] = CWinButton(BTN_XCHANGE_TRANSFER, WIN_FLTPLN, "Transfer", CInputState::DISABLED);
+	windowButtons[BTN_XCHANGE_REJECT] = CWinButton(BTN_XCHANGE_REJECT, WIN_FLTPLN, "Reject", CInputState::DISABLED);
 	windowButtons[BTN_XCHANGE_TRACK] = CWinButton(BTN_XCHANGE_TRACK, WIN_FLTPLN, "Track", CInputState::INACTIVE);
 	windowButtons[BTN_COORD_CLOSE] = CWinButton(BTN_COORD_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COORD_SENDOK] = CWinButton(BTN_COORD_SENDOK, WIN_FLTPLN, "Send/OK", CInputState::INACTIVE);
@@ -102,7 +102,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
-	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Next Authority", "NONE", 160, CInputState::INACTIVE);
+	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Selected Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_MAN_RTE] = CTextInput(TXT_MAN_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RTE] = CTextInput(TXT_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_CPY_RTE] = CTextInput(TXT_CPY_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
@@ -1192,6 +1192,10 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	if (subWindowPositions[SUBWIN_XCHANGE].x == 0 && subWindowPositions[SUBWIN_XCHANGE].y == 0) {
 		subWindowPositions[SUBWIN_XCHANGE] = { topLeft.x, topLeft.y };
 	}
+	
+	// If selected controller enable the button
+	if (selectedAuthority != "" && windowButtons[BTN_XCHANGE_TRANSFER].State == CInputState::DISABLED)
+		SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::INACTIVE);
 
 	// Create coordination window
 	CRect coordWindow(subWindowPositions[SUBWIN_XCHANGE].x, subWindowPositions[SUBWIN_XCHANGE].y + 1, subWindowPositions[SUBWIN_XCHANGE].x + WINSZ_FLTPLN_WIDTH_MDL, subWindowPositions[SUBWIN_XCHANGE].y + WINSZ_FLTPLN_HEIGHT_COORD);
@@ -1223,13 +1227,35 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	if (scrollBars[SCRL_XCHANGE].FrameSize == 0)
 		scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, content.Height(), content.Height(), false);
 
-
-	// Draw scroll bars
+	// Draw scroll bar
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_XCHANGE]);
 
+	// Select font
+	FontSelector::SelectNormalFont(15, dc);
+
+	// List content
+	int offsetX = 2;
+	int offsetY = 2;
+	for (auto kv : onlineControllers) {
+		CRect rect(content.left, content.top + offsetY, content.right, content.top + offsetY + dc->GetTextExtent("ABCD").cy);
+		if (kv.first == selectedAuthority)
+			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
+		dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetPositionId());
+		offsetX += 30;
+		dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetCallsign());
+		offsetX = 0;
+		offsetY += dc->GetTextExtent("ABCD").cy;
+		screen->AddScreenObject(WIN_FLTPLN_TSFR, kv.second.GetCallsign(), rect, true, "");
+	}
+
+	// Get authorities
+	string currentController = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+	textInputs[TXT_XCHANGE_CURRENT].Content = currentController != "" ? currentController : "UNTRACKED";
+	textInputs[TXT_XCHANGE_NEXT].Content = selectedAuthority != "" ? selectedAuthority : "NONE";
+
 	// Draw buttons (6 buttons)
-	int offsetX = coordWindow.left + 5;
-	int offsetY = coordWindow.bottom - 107;
+	offsetX = coordWindow.left + 5;
+	offsetY = coordWindow.bottom - 107;
 	for (int idx = BTN_XCHANGE_NOTIFY; idx <= BTN_XCHANGE_TRACK; idx++) {
 		// Draw the button
 		CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, 85, 30, &windowButtons.at(idx));
@@ -1306,12 +1332,6 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen, string callsign) {
 	textInputs[TXT_COMMS].Content = primedPlan->Communications;
 	textInputs[TXT_OWNERSHIP].Content = primedPlan->Sector;
 	textInputs[TXT_SELCAL].Content = primedPlan->SELCAL;
-
-	// TEMPORARY FOR BETA TESTING
-	/*int mach = fp.GetControllerAssignedData().GetAssignedMach();
-	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, fp.GetControllerAssignedData().GetAssignedMach());
-	textInputs[TXT_LEVEL].Content = to_string(fp.GetControllerAssignedData().GetClearedAltitude());
-	textInputs[TXT_DEST].Content = data.GetDestination();*/
 }
 
 void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string content) {
@@ -1504,6 +1524,8 @@ void CFlightPlanWindow::ButtonUp(int id) {
 			IsMessageOpen = !IsMessageOpen ? true : false;
 		}
 		if (id == BTN_COORD || id == BTN_XCHANGE_CLOSE) {
+			selectedAuthority = "";
+			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
 			IsTransferOpen = !IsTransferOpen ? true : false;
 		}
 		if (id == BTN_COORD_SENDOK) {

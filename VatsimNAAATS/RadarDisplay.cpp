@@ -109,6 +109,19 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	if (fiveSecT >= 5 && !otherList->AircraftList.empty()) {
 		otherList->AircraftList.clear();
 	}
+	
+	// Online controllers
+	if (fiveSecT >= 5) {
+		// Clear online controllers first
+		if (!fltPlnWindow->onlineControllers.empty())
+			fltPlnWindow->onlineControllers.clear();
+		// Get controllers
+		CController controller;
+		for (controller = GetPlugIn()->ControllerSelectFirst(); controller.IsValid(); controller = GetPlugIn()->ControllerSelectNext(controller)) {
+			if (string(controller.GetCallsign()).find("CTR") != string::npos || string(controller.GetCallsign()).find("FSS") != string::npos)
+			fltPlnWindow->onlineControllers[controller.GetCallsign()] = controller;
+		}
+	}
 
 	// Set the ASEL if it is different to the current one in program
 	if (GetPlugIn()->FlightPlanSelectASEL().GetCallsign() != asel) {
@@ -177,6 +190,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 						kdx++;
 					}
 				}
+
+				// Erase flight plan window
+				menuBar->SetButtonState(menuBar->BTN_FLIGHTPLAN, CInputState::DISABLED);
 
 				// Finally erase the on screen reference
 				idx = aircraftOnScreen.erase(idx);
@@ -795,6 +811,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		// If it is a message
 		if (ObjectType == ACTV_MESSAGE) {
 			msgWindow->SelectedMessage = atoi(sObjectId);
+		}
+
+		// If a coordination
+		if (ObjectType == WIN_FLTPLN_TSFR) {
+			fltPlnWindow->selectedAuthority = sObjectId;
 		}
 	}
 	

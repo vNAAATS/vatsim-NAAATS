@@ -17,9 +17,12 @@ class CFlightPlanWindow : public CBaseWindow
 		map<string, CAircraftFlightPlan*> ongoingFlightPlans; // Currently ongoing (in progress) flight plan edits
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
-		int selectedRestriction = 0;
+		int selectedRestriction = -1;
+		
 	public:
 		CAircraftFlightPlan* primedPlan;
+		unordered_map<string, CController> onlineControllers;
+		string selectedAuthority = "";
 		// Inherited methods
 		CFlightPlanWindow(POINT topLeft);
 		virtual void MakeWindowItems();
