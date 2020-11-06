@@ -4,9 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <WinInet.h>
-//#include <winhttp.h>
-//#include "ApiSettings.h"
-#pragma comment(lib,"WinInet.Lib" )
+#include "ApiSettings.h"
+#include "curl/curl.h"
+#pragma comment(lib,"WinInet.Lib")
 
 // Include dependency
 using json = nlohmann::json;
@@ -241,38 +241,52 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	}
 }
 
-/*CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
+size_t CDataHandler::ApiCallback(void* buffer, size_t size, size_t nmemb, void* param)
 {
-	//open up a WinHttp handle
-	HINTERNET hSession = nullptr,
-		hConnect = nullptr,
-		hRequest = nullptr;
-	bool bResults;
-	
-	hSession = WinHttpOpen(L"vNAAATS ES Plugin/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	string result = *static_cast<string*>(param);
+	size_t total_size = size * nmemb;
+	result.append(static_cast<char*>(buffer), total_size);
+	return total_size;
+}
 
-	//check if we were able to open up a handle
-	if(hSession)
-		hConnect = WinHttpConnect(hSession, ApiSettings::apiUrl.c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
 
-	//check if we were able to open a connection. if so, open a request handle
-	if (hConnect)
+CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
+{
+	string result;
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+	if (curl)
 	{
 		stringstream url;
-		url << "/flight_data/get.php/?apiKey" << ApiSettings::apiKey << "&callsign=" << callsign;
-		char* urlChar = (char*)url.str().c_str();
-		
-		hRequest = WinHttpOpenRequest(hConnect, L"GET", (LPCWSTR)urlChar, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
-	}
-	
-	//send req
-	if (hRequest)
-		bResults = WinHttpSendRequest(hRequest,
-			WINHTTP_NO_ADDITIONAL_HEADERS,
-			0, WINHTTP_NO_REQUEST_DATA, 0,
-			0, 0);
+		url << ApiSettings::apiUrl << "/flight_data/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign;
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::ApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 
-	if (!bResults)
-		return new CAircraftFlightPlan(); //error
+		result_code = curl_easy_perform(curl);
+		OutputDebugString("Result: ");
+		OutputDebugString(result.c_str());
 		
-}*/
+		curl_easy_cleanup(curl);
+
+		if (CURLE_OK != result_code)
+		{
+			auto* flight_plan = new CAircraftFlightPlan;
+			return flight_plan;
+		}
+		else
+		{
+			OutputDebugString(result.c_str());
+			auto const presult = nlohmann::json::parse(result);
+			auto* flight_plan = new CAircraftFlightPlan(
+				
+			);
+			return flight_plan; 
+		}
+	}
+}

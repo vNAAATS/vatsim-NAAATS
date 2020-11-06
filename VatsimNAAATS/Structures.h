@@ -4,6 +4,7 @@
 #include <vector>
 #include "Constants.h"
 #include <map>
+//#include "RoutesHelper.h"
 
 // Describes a NAT track
 struct CTrack {
@@ -252,6 +253,55 @@ struct CFlightRestriction {
 
 struct CAircraftFlightPlan {
 	CAircraftFlightPlan() {}; // Default constructor
+	CAircraftFlightPlan(
+		string PassedRoute,
+		string PassedCallsign,
+		string PassedType,
+		string PassedDepart,
+		string PassedDest,
+		string PassedEtd,
+		string PassedSELCAL,
+		string PassedDLStatus,
+		string PassedCommunications,
+		string PassedSector,
+		string PassedFlightLevel,
+		string PassedMach,
+		string PassedTrack,
+		string PassedState,
+		int PassedExitTime,
+		bool PassedIsCleared,
+		bool PassedIsValid,
+		int PassedAsyncState
+	)
+	{
+		Callsign = PassedCallsign;
+		Type = PassedType;
+		Depart = PassedDepart;
+		Dest = PassedDest;
+		Etd = PassedEtd;
+		SELCAL = PassedSELCAL;
+		DLStatus = PassedDLStatus;
+		Communications = PassedCommunications;
+		Sector = PassedSector;
+		FlightLevel = PassedFlightLevel;
+		Mach = PassedMach;
+		Track = PassedTrack;
+		State = PassedState;
+		ExitTime = PassedExitTime;
+		IsCleared = PassedIsCleared;
+		AsyncState = PassedAsyncState;
+		IsValid = PassedIsValid;
+
+		auto is_track = true;
+		if (Track == "RR")
+		{
+			is_track = false;
+		}
+		else
+		{
+			PassedRoute = "NULL";
+		}
+	}
 	string Callsign;
 	string Type;
 	string Depart;
@@ -275,6 +325,7 @@ struct CAircraftFlightPlan {
 	bool IsCleared;
 	int AsyncState;
 };
+
 
 // These gotta go in here because Constants.h doesn't like it?
 const vector<CWaypoint> NatSM = {

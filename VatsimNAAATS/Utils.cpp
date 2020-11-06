@@ -243,22 +243,22 @@ bool CUtils::IsExitPoint(string pointName, bool side) {
 }
 
 // Entry minutes
-int CUtils::GetEntryMinutes(CRadarScreen* screen, CRadarTarget* target) {
-	// Get direction
-	bool direction = GetAircraftDirection(target->GetTrackHeading());
-	CPosition pos = target->GetPosition().GetPosition();
-
-	if (direction) {
-		if (pos.m_Latitude > 57.45) { // Above AVUTI
-
-		}
-	}
-}
+//int CUtils::GetEntryMinutes(CRadarScreen* screen, CRadarTarget* target) {
+//	// Get direction
+//	bool direction = GetAircraftDirection(target->GetTrackHeading());
+//	CPosition pos = target->GetPosition().GetPosition();
+//
+//	if (direction) {
+//		if (pos.m_Latitude > 57.45) { // Above AVUTI
+//
+//		}
+//	}
+//}
 
 // Exit minutes
-int CUtils::GetExitMinutes(CRadarScreen* screen, CRadarTarget* target) {
-
-}
+//int CUtils::GetExitMinutes(CRadarScreen* screen, CRadarTarget* target) {
+//
+//}
 
 bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 	// Flag

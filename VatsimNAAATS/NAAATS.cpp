@@ -1,6 +1,9 @@
 #pragma once
 #include "pch.h"
 #include "NAAATS.h"
+
+#include <iostream>
+
 #include "Constants.h"
 #include "RadarDisplay.h"
 #include "Utils.h"

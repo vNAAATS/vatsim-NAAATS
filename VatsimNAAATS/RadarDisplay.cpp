@@ -7,9 +7,11 @@
 #include "DataHandler.h"
 #include "Utils.h"
 #include "ConflictDetection.h"
+#include "DataHandler.h"
 #include <thread> 
 #include <gdiplus.h>
 #include <ctype.h>
+#include <iostream>
 
 
 using namespace Gdiplus;
@@ -90,6 +92,9 @@ void CRadarDisplay::PopulateProgramData() {
 // On radar screen refresh (occurs about once a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
+	OutputDebugString("Hello from CRadarDisplay::OnRefresh");
+	//test for getting flight_data
+	CDataHandler::ApiGetFlightData("AAL578");
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
@@ -516,7 +521,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 		if (!fp->IsValid) {
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
 		}
-		else {
+		else {			
 			// Update exit time
 			int exitMinutes = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign()).GetSectorExitMinutes();
 			if (exitMinutes != -1) {
