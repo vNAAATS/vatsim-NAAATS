@@ -3,6 +3,7 @@
 #include "RoutesHelper.h"
 #include <iostream>
 #include <fstream>
+#include <json.hpp>
 #include <WinInet.h>
 #include "ApiSettings.h"
 #include "curl/curl.h"
@@ -269,8 +270,6 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 
 		result_code = curl_easy_perform(curl);
-		OutputDebugString("Result: ");
-		OutputDebugString(result.c_str());
 		
 		curl_easy_cleanup(curl);
 
