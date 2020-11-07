@@ -299,36 +299,57 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 			if(!row.at("route").is_null())
 			{
 				route = (string)row.at("route");
+			} else
+			{
+				route = nullptr;
 			}
 
 			if (!row.at("callsign").is_null())
 			{
 				callsign = (string)row.at("callsign");
+			} else
+			{
+				callsign = nullptr;
 			}
 			
 			if (!row.at("destination").is_null())
 			{
 				destination = (string)row.at("destination");
+			} else
+			{
+				destination = nullptr;
 			}
 			
 			if (!row.at("logged_onto").is_null())
 			{
 				logged_onto = (string)row.at("logged_onto");
-			} 
+			} else
+			{
+				logged_onto = nullptr;
+			}
 			
 			if (!row.at("assigned_level").is_null())
 			{
 				assigned_level = (string)row.at("assigned_level");
+			} else
+			{
+				assigned_level = nullptr;
 			}
 			
 			if (!row.at("assigned_mach").is_null())
 			{
 				assigned_mach = (string)row.at("assigned_mach");
+			} else
+			{
+				assigned_mach = nullptr;
 			}
 			
 			if (!row.at("track").is_null())
 			{
 				track = (string)row.at("track");
+			} else
+			{
+				track = nullptr;
 			}
 
 			//end null checking

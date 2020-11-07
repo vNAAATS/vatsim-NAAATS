@@ -31,7 +31,7 @@ class CDataHandler
 	static int SetRoute(string callsign, vector<CWaypoint>* route, string track);
 
 	//callback method for curl
-	static size_t ApiCallback(void* buffer, size_t size, size_t nmemb, void* param);
+	static size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp);
 
 	//get flight_data for a/c
 	static CAircraftFlightPlan* ApiGetFlightData(string callsign);

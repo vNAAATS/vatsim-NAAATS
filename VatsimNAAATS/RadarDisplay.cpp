@@ -92,9 +92,9 @@ void CRadarDisplay::PopulateProgramData() {
 // On radar screen refresh (occurs about once a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
-	/*OutputDebugString("Hello from CRadarDisplay::OnRefresh");
 	//test for getting flight_data
-	CDataHandler::ApiGetFlightData("AAL578");*/
+	CDataHandler::ApiGetFlightData("AAL578");
+	
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
