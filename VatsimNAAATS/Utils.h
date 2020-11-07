@@ -46,6 +46,9 @@ class CUtils { // TODO: refactor into namespace
 		// Split string
 		static bool StringSplit(string str, char splitBy, vector<string>* ptrTokens);
 
+		// Phraseology parser
+		static string ParseToPhraseology(string rawInput, CMessageType type);
+
 		// Convert coordinates to various type
 		static string ConvertCoordinateFormat(string coordinateString, int format);
 

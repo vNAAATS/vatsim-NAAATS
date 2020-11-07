@@ -70,7 +70,7 @@ bool CUtils::WrapText(CDC* dc, string textToWrap, char wrapChar, int contentWidt
 		if (dc->GetTextExtent(beforeAdd.c_str()).cx > contentWidth) {
 			// Add the intermediate string to the return vector and clear the intermediate
 			ptrWrappedText->push_back(intermediate);
-			intermediate = "";
+			intermediate = tokens[i] + wrapChar;
 		}
 		else {
 			// Add the token to the intermediate string
@@ -100,6 +100,36 @@ bool CUtils::StringSplit(string str, char splitBy, vector<string>* ptrTokens) {
 	}
 
 	return 0;
+}
+
+// Phraseology parser
+string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
+	// Split the string
+	vector<string> splitString;
+	StringSplit(rawInput, ':', &splitString);
+
+	// Logon message (CALLSIGN:LOG_ON:CONTROLLER)
+	if (type == CMessageType::LOG_ON) {
+		return "- REQ DATALINK LOG-ON STATION " + splitString[2];
+	}
+	// Clearance request (CALLSIGN:CLR_REQ:ARR:XXXX:ROUTE:ENTRY:WAYPOINT:EST:TIMEZ:TRACK:LETTER OR RR:LEVEL:MACH:END_OF_MESSAGE)
+	else if (type == CMessageType::CLEARANCE_REQ) {
+		string returnString = "- OCA CLR REQ: CLA TO " + splitString[3] + " VIA " ;
+		if (splitString[4] != "NULL") {
+			returnString += "RANDOM " + splitString[4] + ".";
+		}
+		else {
+			returnString += "TRACK " + splitString[10] + ".";
+		}
+		// Flight level and mach
+		returnString += " F" + splitString[11] + " M" + PadWithZeros(3, stoi(splitString[12]));
+		// Estimated time
+		returnString += " EST " + splitString[6] + " AT " + splitString[8];
+		return returnString;
+	}
+	else {
+		return rawInput;
+	}
 }
 
 // Load plugin data

@@ -24,7 +24,7 @@ void CMessageWindow::MakeWindowItems() {
 	msg.Id = 0;
 	msg.From = "DLH414";
 	msg.To = "CZQX_FSS";
-	msg.MessageRaw = "DLH414:CLR_REQ:ARR:KMCO:NULL:ENTRY:TEST:EST:1000:TRACK:A:410:81:END_OF_MESSAGE";
+	msg.MessageRaw = "DLH414:CLR_REQ:ARR:KMCO:NULL:ENTRY:NEEKO:EST:1000:TRACK:A:410:81:END_OF_MESSAGE";
 	msg.Type = CMessageType::CLEARANCE_REQ;
 	ActiveMessages[msg.Id] = msg;
 
@@ -89,11 +89,14 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 		CRect message(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY, windowRect.right, 0); // Set to 0 here
 		offsetY += dc->GetTextExtent("ABC").cy + 2;
 
+		// Parse the message
+		string parsed = CUtils::ParseToPhraseology(ActiveMessages[i].MessageRaw, ActiveMessages[i].Type);
+
 		// Get the wrapped text
 		vector<string> wrappedText;
 		int contentSize = windowRect.Width() - (offsetX + 60) - 2;
-		if (dc->GetTextExtent(ActiveMessages[i].MessageRaw.c_str()).cx > contentSize) {
-			CUtils::WrapText(dc, ActiveMessages[i].MessageRaw, ':', contentSize, &wrappedText);
+		if (dc->GetTextExtent(parsed.c_str()).cx > contentSize) {
+			CUtils::WrapText(dc, parsed, ' ', contentSize, &wrappedText);
 		}
 
 		// Set messages rectangle bottom
@@ -120,7 +123,7 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 		}
 		else {
 			// Write without iterating
-			dc->TextOutA(message.left + offsetX, message.top + 2, ActiveMessages[i].MessageRaw.c_str());
+			dc->TextOutA(message.left + offsetX, message.top + 2, parsed.c_str());
 		}		
 
 		// Add screen object for message
