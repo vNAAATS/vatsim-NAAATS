@@ -333,21 +333,21 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 
 			//end null checking
 			
-			auto* flight_plan = new CAircraftFlightPlan(
+			CAircraftFlightPlan* flight_plan = new CAircraftFlightPlan(
 				route,
 				callsign,
-				nullptr,
-				nullptr,
+				"",
+				"",
 				destination,
-				nullptr,
-				nullptr,
-				nullptr,
-				nullptr,
+				"",
+				"",
+				"",
+				"",
 				logged_onto,
 				assigned_level,
 				assigned_mach,
 				track,
-				nullptr,
+				"",
 				0,
 				false,
 				true 
