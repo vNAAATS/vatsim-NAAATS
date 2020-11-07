@@ -4,9 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
-#include <WinInet.h>
 #include "ApiSettings.h"
-#include "curl/curl.h"
+#include <WinInet.h>
+//#include "curl/curl.h"
 #pragma comment(lib,"WinInet.Lib")
 
 // Include dependency
@@ -161,6 +161,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	fp.ExitTime = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str()).GetSectorExitMinutes();
 	fp.DLStatus = ""; // TEMPORARY
 	fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
+	fp.CurrentMessage = nullptr;
 
 	// Get SELCAL code
 	string remarks = fpData.GetFlightPlanData().GetRemarks();
@@ -242,7 +243,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	}
 }
 
-size_t CDataHandler::ApiCallback(void* buffer, size_t size, size_t nmemb, void* param)
+/*size_t CDataHandler::ApiCallback(void* buffer, size_t size, size_t nmemb, void* param)
 {
 	string result = *static_cast<string*>(param);
 	size_t total_size = size * nmemb;
@@ -288,4 +289,4 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 			return flight_plan; 
 		}
 	}
-}
+}*/

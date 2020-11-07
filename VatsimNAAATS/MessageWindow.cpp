@@ -8,6 +8,7 @@
 using namespace Colours;
 
 const int CMessageWindow::BTN_CLOSE = 2;
+unordered_map<int, CMessage*> CMessageWindow::OngoingMessages;
 
 CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
@@ -23,14 +24,14 @@ void CMessageWindow::MakeWindowItems() {
 	msg.Id = 0;
 	msg.From = "DLH414";
 	msg.To = "CZQX_FSS";
-	msg.MessageRaw = "AAL578:CLR_REQ:ARR:KMCO:NULL:ENTRY:TEST:EST:1000:TRACK:A:410:81:END_OF_MESSAGE";
+	msg.MessageRaw = "DLH414:CLR_REQ:ARR:KMCO:NULL:ENTRY:TEST:EST:1000:TRACK:A:410:81:END_OF_MESSAGE";
 	msg.Type = CMessageType::CLEARANCE_REQ;
 	ActiveMessages[msg.Id] = msg;
 
 	msg.Id = 1;
 	msg.From = "DLH414";
 	msg.To = "CZQX_FSS";
-	msg.MessageRaw = "AAL578:LOG_ON:CZQX_FSS";
+	msg.MessageRaw = "DLH414:LOG_ON:CZQX_FSS";
 	msg.Type = CMessageType::LOG_ON;
 	ActiveMessages[msg.Id] = msg;
 }
@@ -81,26 +82,55 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	int offsetX = 5;
 	int offsetY = 2;
 	for (int i = 0; i < ActiveMessages.size(); i++) {
+		// Skip displaying if the message is active
+		if (OngoingMessages.find(ActiveMessages[i].Id) != OngoingMessages.end()) {
+			continue;
+		}
 		CRect message(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY, windowRect.right, 0); // Set to 0 here
 		offsetY += dc->GetTextExtent("ABC").cy + 2;
 
+		// Get the wrapped text
+		vector<string> wrappedText;
+		int contentSize = windowRect.Width() - (offsetX + 60) - 2;
+		if (dc->GetTextExtent(ActiveMessages[i].MessageRaw.c_str()).cx > contentSize) {
+			CUtils::WrapText(dc, ActiveMessages[i].MessageRaw, ':', contentSize, &wrappedText);
+		}
+
 		// Set messages rectangle bottom
-		message.bottom = windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY + 2;
+		message.bottom = windowRect.top + WINSZ_TITLEBAR_HEIGHT + (!wrappedText.empty() ? dc->GetTextExtent("ABCD").cy * wrappedText.size() + 7 : offsetY) + 2;
 
 		if (ActiveMessages[i].Id == SelectedMessage) {
 			dc->FillRect(message, &evenDarkerBrush);
 		}
 
-		// Text
+		// Text 'from'
 		dc->TextOutA(message.left + offsetX, message.top + 2, ActiveMessages[i].From.c_str());
 		offsetX += 60;
-		dc->TextOutA(message.left + offsetX, message.top + 2, ActiveMessages[i].MessageRaw.c_str());
+
+		// If the text is wrapped
+		int wrapOffsetY = 0;
+		if (!wrappedText.empty()) {
+			// Iterate to display
+			wrapOffsetY = 2;
+			for (int i = 0; i < wrappedText.size(); i++) {
+				// Write the message
+				dc->TextOutA(message.left + offsetX, message.top + wrapOffsetY, wrappedText[i].c_str());
+				wrapOffsetY += dc->GetTextExtent("ABCD").cy + 2;
+			}
+		}
+		else {
+			// Write without iterating
+			dc->TextOutA(message.left + offsetX, message.top + 2, ActiveMessages[i].MessageRaw.c_str());
+		}		
 
 		// Add screen object for message
 		screen->AddScreenObject(ACTV_MESSAGE, to_string(ActiveMessages[i].Id).c_str(), message, false, "");
 
 		// Reset X offset
 		offsetX = 5;
+		
+		// Add wrapped text size to y offset
+		offsetY += wrapOffsetY != 0 ? wrapOffsetY - (dc->GetTextExtent("ABC").cy + 2) : 0;
 	}
 
 	// Create borders
@@ -134,35 +164,30 @@ void CMessageWindow::ButtonPress(int id) {
 }
 
 void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlanWindow* fltPlnWin) {
+	// Message pointer
 	CMessage* msg = &ActiveMessages[id];
+
+	// Get rid of selected message so if requeued the click highlight doesn't reappear
+	SelectedMessage = -1;
 
 	if (!screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()).IsValid()) {
 		ActiveMessages.erase(id);
 		return;
 	}
 	if (msg->Type == CMessageType::LOG_ON) {
-		fltPlnWin->Instantiate(screen, msg->From);
+		fltPlnWin->Instantiate(screen, msg->From, msg);
 		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsTransferOpen = true;
 		fltPlnWin->IsData = false;
-		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->RadarTargetSelect(msg->From.c_str()));
+		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()));
+		OngoingMessages[msg->Id] = msg;
 	}
 	else if (msg->Type == CMessageType::CLEARANCE_REQ) {
 		/// Parse the message
-		// Tokens for split string
+		// Split string
 		vector<string> tokens;
+		CUtils::StringSplit(msg->MessageRaw, ':', &tokens);
 
-		// String stream
-		stringstream stream(msg->MessageRaw);
-
-		// Intermediate value
-		string intermediate;
-
-		// Tokenise the string
-		while (getline(stream, intermediate, ':'))
-		{
-			tokens.push_back(intermediate);
-		}
 		// Values
 		string arrival;
 		string track;
@@ -189,7 +214,7 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		}
 		
 		// Instantiate flight plan window
-		fltPlnWin->Instantiate(screen, msg->From);
+		fltPlnWin->Instantiate(screen, msg->From, msg);
 		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsData = true;
 		fltPlnWin->primedPlan->Track = track;

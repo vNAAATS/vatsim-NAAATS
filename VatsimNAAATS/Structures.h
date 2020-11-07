@@ -4,7 +4,6 @@
 #include <vector>
 #include "Constants.h"
 #include <map>
-//#include "RoutesHelper.h"
 
 // Describes a NAT track
 struct CTrack {
@@ -270,8 +269,7 @@ struct CAircraftFlightPlan {
 		string PassedState,
 		int PassedExitTime,
 		bool PassedIsCleared,
-		bool PassedIsValid,
-		int PassedAsyncState
+		bool PassedIsValid
 	)
 	{
 		Callsign = PassedCallsign;
@@ -289,8 +287,8 @@ struct CAircraftFlightPlan {
 		State = PassedState;
 		ExitTime = PassedExitTime;
 		IsCleared = PassedIsCleared;
-		AsyncState = PassedAsyncState;
 		IsValid = PassedIsValid;
+		CurrentMessage = nullptr;
 
 		auto is_track = true;
 		if (Track == "RR")
@@ -315,7 +313,7 @@ struct CAircraftFlightPlan {
 	string Mach;
 	string Track;
 	string State;
-	CMessage CurrentMessage;
+	CMessage* CurrentMessage;
 	vector<string> FlightHistory;
 	vector<string> RouteRaw;
 	vector<CWaypoint> Route;
@@ -323,7 +321,6 @@ struct CAircraftFlightPlan {
 	int ExitTime;
 	bool IsValid;
 	bool IsCleared;
-	int AsyncState;
 };
 
 

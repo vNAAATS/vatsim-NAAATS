@@ -40,6 +40,12 @@ class CUtils { // TODO: refactor into namespace
 		static void SavePluginData(CRadarScreen* screen);
 		static void LoadPluginData(CRadarScreen* screen);
 
+		// Text wrapping
+		static bool WrapText(CDC* dc, string textToWrap, char wrapChar, int contentWidth, vector<string>* ptrWrappedText);
+
+		// Split string
+		static bool StringSplit(string str, char splitBy, vector<string>* ptrTokens);
+
 		// Convert coordinates to various type
 		static string ConvertCoordinateFormat(string coordinateString, int format);
 
@@ -51,12 +57,6 @@ class CUtils { // TODO: refactor into namespace
 
 		// Check if point is an exit point (direction: true = Gander, false = Shanwick)
 		static bool IsExitPoint(string pointName, bool direction);
-
-		// Entry minutes
-		static int GetEntryMinutes(CRadarScreen* screen, CRadarTarget* target);
-
-		// Exit minutes
-		static int GetExitMinutes(CRadarScreen* screen, CRadarTarget* target);
 
 		// Check if the aircraft is to be displayed on the screen
 		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target);

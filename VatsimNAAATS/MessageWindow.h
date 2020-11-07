@@ -30,6 +30,7 @@ class CMessageWindow : public CBaseWindow
 
 		// Currently active messages
 		map<int, CMessage> ActiveMessages;
+		static unordered_map<int, CMessage*> OngoingMessages;
 		int SelectedMessage = -1;
 };
 

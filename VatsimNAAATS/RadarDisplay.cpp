@@ -26,7 +26,7 @@ CRadarDisplay::CRadarDisplay()
 	rclList = new CRCLList({ CUtils::RCLX, CUtils::RCLY }); // TODO: settings save
 	conflictList = new CConflictList({ CUtils::ConflictX, CUtils::ConflictY }); // TODO: settings save
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
-	fltPlnWindow = new CFlightPlanWindow({ 1000, 200 }); // TODO: settings save
+	fltPlnWindow = new CFlightPlanWindow({ 1000, 300 }); // TODO: settings save
 	msgWindow = new CMessageWindow({ 500, 500 }); // TODO: settings save
 	npWindow = new CNotePad({ 300, 300 }, { 800, 200 }); // TODO: save settings
 	menuBar = new CMenuBar();
@@ -92,9 +92,9 @@ void CRadarDisplay::PopulateProgramData() {
 // On radar screen refresh (occurs about once a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
-	OutputDebugString("Hello from CRadarDisplay::OnRefresh");
+	/*OutputDebugString("Hello from CRadarDisplay::OnRefresh");
 	//test for getting flight_data
-	CDataHandler::ApiGetFlightData("AAL578");
+	CDataHandler::ApiGetFlightData("AAL578");*/
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
@@ -129,6 +129,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	}
 
 	// Set the ASEL if it is different to the current one in program
+	string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	if (GetPlugIn()->FlightPlanSelectASEL().GetCallsign() != asel) {
 		asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	}
@@ -480,9 +481,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// Draw flight plan window if button pressed
-		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN) || fltPlnWindow->IsOpen) {
-			if (!fltPlnWindow->IsOpen)  fltPlnWindow->IsOpen = true;
-			if (!menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::ACTIVE);
+		if (fltPlnWindow->IsOpen && !menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
+			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::ACTIVE);
+		}
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
 			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
 

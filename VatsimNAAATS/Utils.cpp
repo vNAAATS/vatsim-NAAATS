@@ -53,6 +53,55 @@ void CUtils::SavePluginData(CRadarScreen* screen) {
 	screen->SaveDataToAsr(SET_POSTYPESEL.c_str(), "Selected position type.", to_string(PosType).c_str());
 }
 
+bool CUtils::WrapText(CDC* dc, string textToWrap, char wrapChar, int contentWidth,  vector<string>* ptrWrappedText) {
+	// Split string
+	vector<string> tokens;
+	StringSplit(textToWrap, wrapChar, &tokens);
+
+	// Intermediate string to store line data whilst length is being calculated
+	string intermediate = "";
+
+	// Iterate through and calculate text extent along the way
+	for (int i = 0; i < tokens.size(); i++) {
+		// Variable to calculate text extent before adding it to the intermediate line
+		string beforeAdd = intermediate + tokens[i] + wrapChar;
+
+		// If the text extent of the temporary variable is now greater than the content width
+		if (dc->GetTextExtent(beforeAdd.c_str()).cx > contentWidth) {
+			// Add the intermediate string to the return vector and clear the intermediate
+			ptrWrappedText->push_back(intermediate);
+			intermediate = "";
+		}
+		else {
+			// Add the token to the intermediate string
+			intermediate += tokens[i] + wrapChar;
+		}
+	}
+
+	// Reached the end, there may be a bit of left over string, if so, add it
+	if (intermediate != "") {
+		ptrWrappedText->push_back(intermediate);
+	}
+
+	return 0;
+}
+
+bool CUtils::StringSplit(string str, char splitBy, vector<string>* ptrTokens) {
+	// String stream
+	stringstream stream(str);
+
+	// Intermediate value
+	string intermediate;
+
+	// Tokenise the string
+	while (getline(stream, intermediate, splitBy))
+	{
+		ptrTokens->push_back(intermediate);
+	}
+
+	return 0;
+}
+
 // Load plugin data
 void CUtils::LoadPluginData(CRadarScreen* screen) {
 	// Strings to parse data
@@ -241,24 +290,6 @@ bool CUtils::IsExitPoint(string pointName, bool side) {
 		}
 	}
 }
-
-// Entry minutes
-//int CUtils::GetEntryMinutes(CRadarScreen* screen, CRadarTarget* target) {
-//	// Get direction
-//	bool direction = GetAircraftDirection(target->GetTrackHeading());
-//	CPosition pos = target->GetPosition().GetPosition();
-//
-//	if (direction) {
-//		if (pos.m_Latitude > 57.45) { // Above AVUTI
-//
-//		}
-//	}
-//}
-
-// Exit minutes
-//int CUtils::GetExitMinutes(CRadarScreen* screen, CRadarTarget* target) {
-//
-//}
 
 bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 	// Flag

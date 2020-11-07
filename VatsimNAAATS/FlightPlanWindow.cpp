@@ -3,6 +3,7 @@
 #include "Constants.h"
 #include "Styles.h"
 #include "Utils.h"
+#include "MessageWindow.h"
 
 using namespace Colours;
 
@@ -43,16 +44,16 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_DELETE] = CWinButton(BTN_DELETE, WIN_FLTPLN, "Delete", CInputState::DISABLED);
 	windowButtons[BTN_ADS] = CWinButton(BTN_ADS, WIN_FLTPLN, "ADS", CInputState::DISABLED);
 	windowButtons[BTN_READBK] = CWinButton(BTN_READBK, WIN_FLTPLN, "ReadBK", CInputState::DISABLED);
-	windowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::INACTIVE);
+	windowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::DISABLED);
 	windowButtons[BTN_HIST] = CWinButton(BTN_HIST, WIN_FLTPLN, "History", CInputState::INACTIVE);
 	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::DISABLED);
 	windowButtons[BTN_ATCR] = CWinButton(BTN_ATCR, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
 	windowButtons[BTN_ATCR_CPY] = CWinButton(BTN_ATCR_CPY, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
-	windowButtons[BTN_MSG_REMOVE] = CWinButton(BTN_MSG_REMOVE, WIN_FLTPLN, "Remove", CInputState::INACTIVE);
-	windowButtons[BTN_MSG_DONE] = CWinButton(BTN_MSG_DONE, WIN_FLTPLN, "Done", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_REMOVE] = CWinButton(BTN_MSG_REMOVE, WIN_FLTPLN, "Remove", CInputState::DISABLED);
+	windowButtons[BTN_MSG_DONE] = CWinButton(BTN_MSG_DONE, WIN_FLTPLN, "Done", CInputState::DISABLED);
 	windowButtons[BTN_MSG_CLOSE] = CWinButton(BTN_MSG_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_MSG_REQUEUE] = CWinButton(BTN_MSG_REQUEUE, WIN_FLTPLN, "Requeue", CInputState::INACTIVE);
-	windowButtons[BTN_MSG_FORWARD] = CWinButton(BTN_MSG_FORWARD, WIN_FLTPLN, "Forward", CInputState::INACTIVE);
+	windowButtons[BTN_MSG_FORWARD] = CWinButton(BTN_MSG_FORWARD, WIN_FLTPLN, "Forward", CInputState::DISABLED);
 	windowButtons[BTN_CONF_ACCCL] = CWinButton(BTN_CONF_ACCCL, WIN_FLTPLN, "ACCCL", CInputState::INACTIVE);
 	windowButtons[BTN_CONF_MANCL] = CWinButton(BTN_CONF_MANCL, WIN_FLTPLN, "MANCL", CInputState::INACTIVE);
 	windowButtons[BTN_CONF_COORD] = CWinButton(BTN_CONF_COORD, WIN_FLTPLN, "CO-ORD", CInputState::INACTIVE);
@@ -587,7 +588,7 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	CRect titleRect(messagePanel.left, messagePanel.top, messagePanel.left + WINSZ_FLTPLN_WIDTH, messagePanel.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("FROM: ").c_str()); // TODO: show who from properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("FROM: " + (primedPlan->CurrentMessage != nullptr ? primedPlan->CurrentMessage->From : "")).c_str()); // TODO: show who from properly
 
 	// Create button bar
 	CRect buttonBarRect(messagePanel.left - 1, messagePanel.bottom - 40, messagePanel.left + WINSZ_FLTPLN_WIDTH, messagePanel.bottom);
@@ -601,6 +602,38 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Select title font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Draw content
+	if (primedPlan->CurrentMessage != nullptr) {
+		// TODO: PARSE MESSAGE INTO HUMAN READABLE
+		string message = primedPlan->CurrentMessage->MessageRaw;
+
+		// Get the wrapped text
+		vector<string> wrappedText;
+		int contentSize = content.Width() - 10;
+		if (dc->GetTextExtent(message.c_str()).cx > contentSize) {
+			CUtils::WrapText(dc, message, ':', contentSize, &wrappedText);
+		}
+
+		// If text is to be wrapped
+		if (!wrappedText.empty()) {
+			// Iterate to display
+			int offsetY = 5;
+			for (int i = 0; i < wrappedText.size(); i++) {
+				dc->TextOutA(content.left + 5, content.top + offsetY, wrappedText[i].c_str());
+				offsetY += dc->GetTextExtent("ABCD").cy + 2;
+			}
+		}
+		else {
+			// Just display
+			dc->TextOutA(content.left + 5, content.top + 5, message.c_str());
+		}
+	}
 
 	// Scroll bar values
 	if (scrollBars[SCRL_MSG].FrameSize == 0)
@@ -1241,7 +1274,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 		if (kv.first == selectedAuthority)
 			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
 		dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetPositionId());
-		offsetX += 30;
+		offsetX += 45;
 		dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetCallsign());
 		offsetX = 0;
 		offsetY += dc->GetTextExtent("ABCD").cy;
@@ -1252,6 +1285,14 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	string currentController = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 	textInputs[TXT_XCHANGE_CURRENT].Content = currentController != "" ? currentController : "UNTRACKED";
 	textInputs[TXT_XCHANGE_NEXT].Content = selectedAuthority != "" ? selectedAuthority : "NONE";
+
+	// Set buttons
+	if (primedPlan->CurrentMessage != nullptr && primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
+		if (windowButtons[BTN_XCHANGE_ACCEPT].State == CInputState::DISABLED && windowButtons[BTN_XCHANGE_REJECT].State == CInputState::DISABLED) {
+			windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::INACTIVE;
+			windowButtons[BTN_XCHANGE_REJECT].State = CInputState::INACTIVE;
+		}
+	}
 
 	// Draw buttons (6 buttons)
 	offsetX = coordWindow.left + 5;
@@ -1312,7 +1353,7 @@ bool CFlightPlanWindow::IsButtonPressed(int id) {
 	return false; // Not pressed
 }
 
-void CFlightPlanWindow::Instantiate(CRadarScreen* screen, string callsign) {
+void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessage* msg) {
 	// Get the data
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
 	if (!fp->IsValid) return;
@@ -1321,6 +1362,17 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen, string callsign) {
 	// Set the open windows depending on state of plan
 	if (fp->IsCleared) {
 		IsData = true;
+	}
+
+	// Add message
+	if (msg != nullptr || primedPlan->CurrentMessage != nullptr) {
+		primedPlan->CurrentMessage = msg;
+		IsMessageOpen = true;
+		windowButtons[BTN_MSG].State = CInputState::INACTIVE;
+	}
+	else {
+		IsMessageOpen = false;
+		windowButtons[BTN_MSG].State = CInputState::DISABLED;
 	}
 
 	// Fill data points
@@ -1449,6 +1501,7 @@ void CFlightPlanWindow::ButtonUp(int id) {
 	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
 		// If the close button close window
 		IsClosed = true;
+		IsOpen = false;
 	}
 
 	// Failsafe
@@ -1526,6 +1579,8 @@ void CFlightPlanWindow::ButtonUp(int id) {
 		if (id == BTN_COORD || id == BTN_XCHANGE_CLOSE) {
 			selectedAuthority = "";
 			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+			windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
+			windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
 			IsTransferOpen = !IsTransferOpen ? true : false;
 		}
 		if (id == BTN_COORD_SENDOK) {
@@ -1539,6 +1594,21 @@ void CFlightPlanWindow::ButtonUp(int id) {
 		}
 		if (id == BTN_HIST || id == BTN_HIST_CLOSE) {
 			IsHistoryOpen = !IsHistoryOpen ? true : false;
+		}
+
+		// MESSAGE WINDOW
+		if (id == BTN_MSG_REQUEUE) {
+			// If the message is a logon message or transfer message
+			if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
+				// Reset the accept/reject buttons
+				SetButtonState(BTN_XCHANGE_ACCEPT, CInputState::DISABLED);
+				SetButtonState(BTN_XCHANGE_REJECT, CInputState::DISABLED);
+			}
+			// Erase the message from the aircraft and properly requeue it
+			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
+			primedPlan->CurrentMessage = nullptr;
+			IsMessageOpen = false;
+			SetButtonState(BTN_MSG, CInputState::DISABLED);
 		}
 	}
 	

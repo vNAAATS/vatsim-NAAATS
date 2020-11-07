@@ -20,7 +20,7 @@ class CFlightPlanWindow : public CBaseWindow
 		int selectedRestriction = -1;
 		
 	public:
-		CAircraftFlightPlan* primedPlan;
+		CAircraftFlightPlan* primedPlan = nullptr;
 		unordered_map<string, CController> onlineControllers;
 		string selectedAuthority = "";
 		// Inherited methods
@@ -48,7 +48,7 @@ class CFlightPlanWindow : public CBaseWindow
 		bool IsButtonPressed(int id);
 
 		// Fill data
-		void Instantiate(CRadarScreen* screen, string callsign);
+		void Instantiate(CRadarScreen* screen, string callsign, CMessage* msg = nullptr);
 		void OnCloseFlightPlanWindow();
 
 		// Panel states
