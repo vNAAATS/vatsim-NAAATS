@@ -236,6 +236,15 @@ struct CWinScrollBar {
 
 struct CMessage {
 	CMessage() {}; // Default constructor
+	CMessage(int id, string to, string from, string messageRaw, string createdAt, CMessageType type)
+	{
+		Id = id;
+		To = to;
+		From = from;
+		MessageRaw = messageRaw;
+		CreatedAt = createdAt;
+		Type = type;
+	}
 	int Id;
 	string To;
 	string From;

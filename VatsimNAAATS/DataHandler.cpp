@@ -365,3 +365,75 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 		}
 	}
 }
+
+vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller)
+{
+	string result;
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+	if(curl)
+	{
+		stringstream url;
+		url << ApiSettings::apiUrl << "/messages/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&action=from";
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+		result_code = curl_easy_perform(curl);
+
+		curl_easy_cleanup(curl);
+
+		if (CURLE_OK != result_code && result.length() <= 0)
+		{
+
+		} else
+		{
+			auto const presult = nlohmann::json::parse(result);
+			
+			//vector to store message(s)
+			vector<CMessage> messages;
+			if (presult.size() <= 0) //if no rows were returned
+			{
+				messages.push_back({});
+				return messages;
+			} else
+			{
+				for(int i = 0; i < presult.size(); i++) //loop thru messages
+				{
+					auto row = presult[i];
+					try
+					{
+						if ((string)row.at("sent_to") == controller && (string)row.at("is_actioned") == "0") //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
+						{
+							const int id = stoi((string)row.at("id"));
+						
+							CMessageType type = row.at("type"); //declare type of message, as per the CMessageType enum
+
+							messages.push_back({ //add message to the messages vector
+								id,
+								(string)row.at("sent_to"),
+								(string)row.at("sent_from"),
+								(string)row.at("contents_raw"),
+								(string)row.at("created_at"),
+								type
+							});
+						}
+						//else, do nothing (continue w/ loop)
+					}
+					catch (exception& ex)
+					{
+						messages.push_back({});
+						return messages;
+					}
+				}
+				//once done, return the messages vector
+				return messages;
+			}
+		}
+	}
+}
