@@ -18,6 +18,7 @@ class CFlightPlanWindow : public CBaseWindow
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
 		int selectedRestriction = -1;
+		clock_t fiveSecondTimer = clock();
 		
 	public:
 		CAircraftFlightPlan* primedPlan = nullptr;

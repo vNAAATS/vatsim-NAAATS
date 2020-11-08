@@ -108,26 +108,68 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 	vector<string> splitString;
 	StringSplit(rawInput, ':', &splitString);
 
-	// Logon message (CALLSIGN:LOG_ON:CONTROLLER)
+	// CALLSIGN:LOG_ON:CONTROLLER
 	if (type == CMessageType::LOG_ON) {
-		return "- REQ DATALINK LOG-ON STATION " + splitString[2];
+		return "REQ DATALINK LOG-ON STATION " + splitString[2];
 	}
-	// Clearance request (CALLSIGN:CLR_REQ:ARR:XXXX:ROUTE:ENTRY:WAYPOINT:EST:TIMEZ:TRACK:LETTER OR RR:LEVEL:MACH:END_OF_MESSAGE)
+	// STATION_CALLSIGN:TRANSFER:AIRCRAFT_CALLSIGN
+	else if (type == CMessageType::TRANSFER) {
+		return "STATION " + splitString[0] + " REQUEST TRANSFER " + splitString[2] + " TO YOU";
+	}
+	// STATION_CALLSIGN:TRANSFER_ACCEPT:AIRCRAFT_CALLSIGN
+	else if (type == CMessageType::TRANSFER_ACCEPT) {
+		return "STATION " + splitString[0] + " ACCEPTED TRANSFER " + splitString[2];
+	}
+	// STATION_CALLSIGN:TRANSFER_REJECT:AIRCRAFT_CALLSIGN
+	else if (type == CMessageType::TRANSFER_REJECT) {
+		return "STATION " + splitString[0] + " REJECTED TRANSFER " + splitString[2];
+	}
+	// CALLSIGN:CLEARANCE_REQUEST:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:<FREETEXT>
 	else if (type == CMessageType::CLEARANCE_REQ) {
-		string returnString = "- OCA CLR REQ: CLA TO " + splitString[3] + " VIA " ;
-		if (splitString[4] != "NULL") {
-			returnString += "RANDOM " + splitString[4] + ".";
+		string returnString = "OCA CLR REQ: CLA TO " + splitString[2] + " VIA ";
+		if (splitString[3] != "NULL") {
+			returnString += "RANDOM ROUTING " + splitString[3] + ".";
 		}
 		else {
-			returnString += "TRACK " + splitString[10] + ".";
+			returnString += "TRACK " + splitString[6] + ".";
 		}
 		// Flight level and mach
-		returnString += " F" + splitString[11] + " M" + PadWithZeros(3, stoi(splitString[12]));
+		returnString += " F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
 		// Estimated time
-		returnString += " EST " + splitString[6] + " AT " + splitString[8];
+		returnString += " EST " + splitString[4] + " AT " + splitString[5];
+		// Freetext
+		//returnString += ". FREE: " + splitString[9];
 		return returnString;
 	}
-	else {
+	// CALLSIGN:REVISION_REQ:MCHG:CONTENT:LCHG:CONTENT:RERUTE:CONTENT
+	else if (type == CMessageType::REVISION_REQ) {
+		string returnString = "REQUEST [";
+		int counter = 0; // How many revisions (so that comma can be placed)
+		for (int i = 0; i < splitString.size(); i++) {
+			if (splitString[i] == "MCHG") {
+				returnString += "M" + PadWithZeros(3, stoi(splitString[i + 1])) + "]";
+			}
+			if (splitString[i] == "LCHG") {
+				returnString += "[F" + splitString[i + 1] + "] ";
+			}
+			if (splitString[i] == "RERUTE") {
+				returnString += "[" + splitString[i + 1] + "] ";
+			}
+		}
+	}
+	// CALLSIGN:WILCO
+	else if (type == CMessageType::WILCO) {
+		return "WILCO LAST MSG";
+	}
+	// CALLSIGN:UNABLE
+	else if (type == CMessageType::UNABLE) {
+		return "UNABLE LAST REQUEST";
+	}
+	// CALLSIGN:ROGER
+	else if (type == CMessageType::ROGER) {
+		return "ROGER LAST MSG";
+	}
+	else { // Default
 		return rawInput;
 	}
 }

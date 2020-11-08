@@ -228,7 +228,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 		// Set route if flight exists
 		flights.find(callsign)->second.Route.clear();
 		flights.find(callsign)->second.Route = *route;
-
+		flights.find(callsign)->second.Route.shrink_to_fit();
 		// Set track if not nothing
 		if (track != "")
 			flights.find(callsign)->second.Track = track;
@@ -393,7 +393,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 
 		} else
 		{
-			auto const presult = nlohmann::json::parse(result);
+			auto presult = nlohmann::json::parse(result);
 			
 			//vector to store message(s)
 			vector<CMessage> messages;
@@ -405,21 +405,73 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 			{
 				for(int i = 0; i < presult.size(); i++) //loop thru messages
 				{
-					auto row = presult[i];
 					try
 					{
-						if ((string)row.at("sent_to") == controller && (string)row.at("is_actioned") == "0") //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
+						if ((string)presult[i].at("sent_to") == controller && (int)presult[i].at("is_actioned") == 0) //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
 						{
-							const int id = stoi((string)row.at("id"));
-						
-							CMessageType type = row.at("type"); //declare type of message, as per the CMessageType enum
+							//declare type of message, as per the CMessageType enum
+							string type_string = presult[i].at("type");
+							
+							CMessageType type;
 
+							if(type_string == "LOG_ON")
+							{
+								type = CMessageType::LOG_ON;
+							} else if(type_string == "LOG_ON_CONFIRM")
+							{
+								type = CMessageType::LOG_ON_CONFIRM;
+							} else if(type_string == "LOG_ON_REJECT")
+							{
+								type = CMessageType::LOG_ON_REJECT;
+							} else if(type_string == "TRANSFER")
+							{
+								type = CMessageType::TRANSFER;
+							} else if (type_string == "TRANSFER_ACCEPT")
+							{
+								type = CMessageType::TRANSFER_ACCEPT;
+							}
+							else if (type_string == "TRANSFER_REJECT")
+							{
+								type = CMessageType::TRANSFER_REJECT;
+							} else if (type_string == "CLEARANCE_REQ")
+							{
+								type = CMessageType::CLEARANCE_REQ;
+							} else if (type_string == "CLEARANCE_ISSUE")
+							{
+								type = CMessageType::CLEARANCE_ISSUE;
+							} else if (type_string == "CLEARANCE_REJECT")
+							{
+								type = CMessageType::CLEARANCE_REJECT;
+							} else if (type_string == "REVISION_REQ")
+							{
+								type = CMessageType::REVISION_REQ;
+							} else if (type_string == "REVISION_ISSUE")
+							{
+								type = CMessageType::REVISION_ISSUE;
+							} else if (type_string == "REVISION_REJECT")
+							{
+								type = CMessageType::REVISION_REJECT;
+							} else if (type_string == "WILCO")
+							{
+								type = CMessageType::WILCO;
+							} else if (type_string == "ROGER")
+							{
+								type = CMessageType::ROGER;
+							} else if (type_string == "UNABLE")
+							{
+								type = CMessageType::UNABLE;
+							} else
+							{
+								messages.push_back({});
+								return messages;
+							}
+							
 							messages.push_back({ //add message to the messages vector
-								id,
-								(string)row.at("sent_to"),
-								(string)row.at("sent_from"),
-								(string)row.at("contents_raw"),
-								(string)row.at("created_at"),
+								presult[i].at("id"),
+								presult[i].at("sent_to"),
+								presult[i].at("sent_from"),
+								presult[i].at("contents_raw"),
+								presult[i].at("created_at"),
 								type
 							});
 						}

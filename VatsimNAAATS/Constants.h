@@ -279,16 +279,18 @@ enum class CFlightPlanMode {
 
 enum class CMessageType {
     LOG_ON,
-    LOG_ON_REJECT,
     LOG_ON_CONFIRM,
+    LOG_ON_REJECT,
     TRANSFER,
     TRANSFER_ACCEPT,
     TRANSFER_REJECT,
     CLEARANCE_REQ,
-    REVISION_REQ,
     CLEARANCE_ISSUE,
+    CLEARANCE_REJECT,
+    REVISION_REQ,
     REVISION_ISSUE,
     REVISION_REJECT,
     WILCO,
+    ROGER,
     UNABLE
 };

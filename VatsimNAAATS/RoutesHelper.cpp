@@ -8,88 +8,84 @@ string CRoutesHelper::CurrentTMI = "";
 
 vector<string> CRoutesHelper::ActiveRoutes;
 
-vector<CRoutePosition> CRoutesHelper::GetRoute(CRadarScreen* screen, string callsign) {
+bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* routeVector, string callsign) {
 	// Get the flight plan
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
 
 	// Check validity
 	if (!fp->IsValid || fp->Route.size() == 0) {
-		return vector<CRoutePosition>(); // Return empty vector
+		return false;
 	}
 
 	// Get target
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
-	// The fetched route
-	vector<CWaypoint>* fetchedRoute = &fp->Route;
-
-	// Vector to store the final route
-	vector<CRoutePosition> returnRoute;
-	
 	// Get aircraft direction
 	bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
 	
 	// Loop through each route item
 	int totalDistance = 0;
-	int i = 0;
-	for (auto idx = fetchedRoute->begin(); idx != fetchedRoute->end(); idx++) {
-		// Create position	
-		CRoutePosition position;
+	for (int idx = 0; idx < fp->Route.size(); idx++) {
+		try {
+			// Create position	
+			CRoutePosition position;
 
-		// Fix
-		position.Fix = idx->Name;		
-		position.PositionRaw = idx->Position;
-		
-		// Get estimate
-		if (!direction) { // Westbound
-			if (target.GetPosition().GetPosition().m_Longitude > idx->Position.m_Longitude) {
-				if (totalDistance == 0) {
-					// Calculate distance from aircraft
-					totalDistance += target.GetPosition().GetPosition().DistanceTo(idx->Position);
-					position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(idx->Position);
+			// Fix
+			position.Fix = fp->Route[idx].Name;
+			position.PositionRaw = fp->Route[idx].Position;
+
+			// Get estimate
+			if (!direction) { // Westbound
+				if (target.GetPosition().GetPosition().m_Longitude > fp->Route[idx].Position.m_Longitude) {
+					if (totalDistance == 0) {
+						// Calculate distance from aircraft
+						totalDistance += target.GetPosition().GetPosition().DistanceTo(fp->Route[idx].Position);
+						position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(fp->Route[idx].Position);
+					}
+					else {
+						// Calculate distance point to point
+						totalDistance += fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
+						position.DistanceFromLastPoint = fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
+					}
+					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
 				}
 				else {
-					// Calculate distance point to point
-					totalDistance += fetchedRoute->at(i - 1).Position.DistanceTo(fetchedRoute->at(i).Position);
-					position.DistanceFromLastPoint = fetchedRoute->at(i - 1).Position.DistanceTo(fetchedRoute->at(i).Position);
+					position.Estimate = "--";
+					position.DistanceFromLastPoint = 0;
 				}
-				position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
 			}
-			else {
-				position.Estimate = "--";
-				position.DistanceFromLastPoint = 0;
-			}
-		} 
-		else { // Eastbound
-			if (target.GetPosition().GetPosition().m_Longitude < idx->Position.m_Longitude) {
-				if (totalDistance == 0) {
-					// Calculate distance from aircraft
-					totalDistance += target.GetPosition().GetPosition().DistanceTo(idx->Position);
-					position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(idx->Position);
+			else { // Eastbound
+				if (target.GetPosition().GetPosition().m_Longitude < fp->Route[idx].Position.m_Longitude) {
+					if (totalDistance == 0) {
+						// Calculate distance from aircraft
+						totalDistance += target.GetPosition().GetPosition().DistanceTo(fp->Route[idx].Position);
+						position.DistanceFromLastPoint = target.GetPosition().GetPosition().DistanceTo(fp->Route[idx].Position);
+					}
+					else {
+						// Calculate distance point to point
+						totalDistance += fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
+						position.DistanceFromLastPoint = fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
+					}
+					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
 				}
 				else {
-					// Calculate distance point to point
-					totalDistance += fetchedRoute->at(i - 1).Position.DistanceTo(fetchedRoute->at(i).Position);
-					position.DistanceFromLastPoint = fetchedRoute->at(i - 1).Position.DistanceTo(fetchedRoute->at(i).Position);
+					position.Estimate = "--";
+					position.DistanceFromLastPoint = 0;
 				}
-				position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
 			}
-			else {
-				position.Estimate = "--";
-				position.DistanceFromLastPoint = 0;
-			}
+
+			// Altitude
+			position.FlightLevel = target.GetPosition().GetFlightLevel() / 100;
+
+			// Add the position
+			routeVector->push_back(position);
 		}
-
-		// Altitude
-		position.FlightLevel = target.GetPosition().GetFlightLevel() / 100;
-
-		// Add the position
-		returnRoute.push_back(position);
-
-		i++;
+		catch (std::out_of_range & ex) {
+			continue;
+		}
 	}
 
-	return returnRoute;
+	return true;
 }
 
 void CRoutesHelper::InitialiseRoute(void* args) {
@@ -137,6 +133,7 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 					}
 				}
 			}
+			trackReturned = fp->Track;
 		}
 		else { // It's a random routing
 			for (int i = 0; i < fp->RouteRaw.size(); i++) {
@@ -442,8 +439,6 @@ int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack) {
 			}
 		}
 	}
-
-	
 
 	// We got here, so set the route and return success code
 	CDataHandler::GetFlightData(callsign)->Track = track;

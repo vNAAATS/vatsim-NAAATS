@@ -653,6 +653,10 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 			menuBar->OnOverDropDownItem(atoi(sObjectId));
 		}
 	}
+	// If it is a message
+	if (ObjectType == ACTV_MESSAGE) {
+		msgWindow->SelectedMessage = atoi(sObjectId);
+	}
 
 	// Refresh
 	RequestRefresh();

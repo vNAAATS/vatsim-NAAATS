@@ -370,7 +370,8 @@ void CCommonRenders::RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	// Loop through each aircraft in the vector
 	for (int i = 0; i < CRoutesHelper::ActiveRoutes.size(); i++) {
 		// Get route
-		vector<CRoutePosition> route = CRoutesHelper::GetRoute(screen, CRoutesHelper::ActiveRoutes.at(i));
+		vector<CRoutePosition> route;
+		CRoutesHelper::GetRoute(screen, &route, CRoutesHelper::ActiveRoutes.at(i));
 
 		// If route not there then we skip
 		if (route.size() == route.empty()) {
