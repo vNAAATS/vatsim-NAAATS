@@ -243,7 +243,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	}
 }
 
-size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp)
+/*size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
@@ -393,24 +393,24 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 
 		} else
 		{
-			auto presult = nlohmann::json::parse(result);
+			auto jsonArray = json::parse(result);
 			
 			//vector to store message(s)
 			vector<CMessage> messages;
-			if (presult.size() <= 0) //if no rows were returned
+			if (jsonArray.size() <= 0) //if no rows were returned
 			{
 				messages.push_back({});
 				return messages;
 			} else
 			{
-				for(int i = 0; i < presult.size(); i++) //loop thru messages
+				for(int i = 0; i < jsonArray.size(); i++) //loop thru messages
 				{
 					try
 					{
-						if ((string)presult[i].at("sent_to") == controller && (int)presult[i].at("is_actioned") == 0) //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
+						if ((string)jsonArray[i].at("sent_to") == controller && (int)jsonArray[i].at("is_actioned") == 0) //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
 						{
 							//declare type of message, as per the CMessageType enum
-							string type_string = presult[i].at("type");
+							string type_string = jsonArray[i].at("type");
 							
 							CMessageType type;
 
@@ -467,11 +467,11 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 							}
 							
 							messages.push_back({ //add message to the messages vector
-								presult[i].at("id"),
-								presult[i].at("sent_to"),
-								presult[i].at("sent_from"),
-								presult[i].at("contents_raw"),
-								presult[i].at("created_at"),
+								jsonArray[i].at("id"),
+								jsonArray[i].at("sent_to"),
+								jsonArray[i].at("sent_from"),
+								jsonArray[i].at("contents_raw"),
+								jsonArray[i].at("created_at"),
 								type
 							});
 						}
@@ -488,4 +488,4 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 			}
 		}
 	}
-}
+}*/

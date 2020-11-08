@@ -94,7 +94,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	//test for getting flight_data
 	//CDataHandler::ApiGetFlightData("AAL578");
-	CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
+	//CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
 	
 	// Create device context
 	CDC dc;
@@ -654,7 +654,7 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 		}
 	}
 	// If it is a message
-	if (ObjectType == ACTV_MESSAGE) {
+	else if (ObjectType == ACTV_MESSAGE) {
 		msgWindow->SelectedMessage = atoi(sObjectId);
 	}
 
@@ -904,7 +904,7 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
 		}
 		if (atoi(sObjectId) < 200) {
-			fltPlnWindow->ButtonUp(atoi(sObjectId));
+			fltPlnWindow->ButtonUp(atoi(sObjectId), this);
 		}		
 	}
 

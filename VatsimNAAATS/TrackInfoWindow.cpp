@@ -174,7 +174,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	dc->RestoreDC(iDC);
 }
 
-void CTrackInfoWindow::ButtonUp(int id) {
+void CTrackInfoWindow::ButtonUp(int id, CRadarScreen* screen) {
 	if (id == CTrackInfoWindow::BTN_CLOSE) { // Close button
 		// Reset window state
 		MsgDataRefresh = "";

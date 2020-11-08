@@ -151,7 +151,7 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	dc->RestoreDC(iDC);
 }
 
-void CMessageWindow::ButtonUp(int id) {
+void CMessageWindow::ButtonUp(int id, CRadarScreen* screen) {
 	// Press button
 	windowButtons.find(id)->second.State = CInputState::INACTIVE;
 	SelectedMessage = -1;
@@ -211,10 +211,9 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsData = true;
 		fltPlnWin->SetButtonState(CFlightPlanWindow::BTN_PROBE, CInputState::INACTIVE);
-		fltPlnWin->primedPlan->Track = track;
 		fltPlnWin->primedPlan->Mach = speed;
-		fltPlnWin->primedPlan->FlightLevel = level;
 		fltPlnWin->primedPlan->Track = track;
+		fltPlnWin->primedPlan->FlightLevel = level;
 		fltPlnWin->primedPlan->Dest = arrival;
 
 		// Instantiate flight plan variables

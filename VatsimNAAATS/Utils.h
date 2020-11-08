@@ -49,6 +49,9 @@ class CUtils { // TODO: refactor into namespace
 		// Phraseology parser
 		static string ParseToPhraseology(string rawInput, CMessageType type);
 
+		// Raw format parser
+		static string ParseToRaw(string callsign, CMessageType type);
+
 		// Convert coordinates to various type
 		static string ConvertCoordinateFormat(string coordinateString, int format);
 

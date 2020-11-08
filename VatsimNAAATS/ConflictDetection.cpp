@@ -7,6 +7,7 @@ vector<CRoutePosition> CConflictDetection::PIVRoute1;
 vector<CRoutePosition> CConflictDetection::PIVRoute2;
 vector<CSepStatus> CConflictDetection::PIVSeparationStatuses;
 vector<CSTCAStatus> CConflictDetection::CurrentSTCA;
+map<string, int>* CConflictDetection::aircraftOnScreen;
 
 void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, string target1, string target2) {
 	// Save context
@@ -196,6 +197,52 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	for (int i = 0; i < length; i++) {
 		PIVSeparationStatuses.push_back(DetectStatus(screen, &PIVLocations1.at(i), &PIVLocations2.at(i)));
 	}
+}
+
+bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector<vector<CSepStatus>>* statuses) {
+	// Get the aircraft flight plan
+	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+
+	// Radar target
+	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
+
+	// Statuses for query aircraft
+	vector<CAircraftStatus> acStatuses = GetStatusesAlongRoutePoints(screen, callsign, target.GetGS(), target.GetPosition().GetPressureAltitude());
+
+	// Check statuses against on screen aircraft
+	for (auto i = aircraftOnScreen->begin(); i != aircraftOnScreen->end(); i++) {
+		// Sep status vector
+		vector<CSepStatus> sepStatuses;
+
+		// Tartget and statuses
+		target = screen->GetPlugIn()->RadarTargetSelect(i->first.c_str());
+		vector<CAircraftStatus> loopAcStatuses = GetStatusesAlongRoutePoints(screen, i->first, target.GetGS(), target.GetPosition().GetPressureAltitude());
+
+		// Get the shortest vector (this is what we set the loop end to so we don't get an overflow)
+		int end = loopAcStatuses.size() > acStatuses.size() ? acStatuses.size() : loopAcStatuses.size();
+
+		// Has a warning or critical
+		bool addToVector = false;
+
+		// Loop through main aircraft statuses
+		for (int i = 0; i < end; i++) {
+			// Separation status
+			CSepStatus separation = DetectStatus(screen, &acStatuses[i], &loopAcStatuses[i]);
+
+			// If there is a conflict then set the boolean
+			if (separation.ConflictStatus == CConflictStatus::CRITICAL || separation.ConflictStatus == CConflictStatus::WARNING)
+				addToVector = true;
+
+			// Push back
+			sepStatuses.push_back(separation);
+		}
+
+		// Push back the vector if a conflict
+		if (addToVector)
+			statuses->push_back(sepStatuses);
+	}
+
+	return 1;
 }
 
 void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, string targetA, string targetB) {
@@ -426,6 +473,9 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 }
 
 void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft) {
+	// Set on screen aircraft
+	aircraftOnScreen = onScreenAircraft;
+
 	// Status for target
 	CAircraftStatus targetAc(target->GetCallsign(), target->GetPosition().GetPressureAltitude(), 
 		target->GetGS(), target->GetTrackHeading(), target->GetPosition().GetPosition());
@@ -725,6 +775,65 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* 
 			// Add status
 			statuses.push_back(status);
 		}
+
+		// Reassign previous position variable
+		prevPos = route.at(i).PositionRaw;
+	}
+
+	// Return
+	return statuses;
+}
+
+vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoutePoints(CRadarScreen* screen, string callsign, int groundSpeed, int altitude) {
+	// Get the route
+	vector<CRoutePosition> route;
+	CRoutesHelper::GetRoute(screen, &route, callsign);
+
+	// Status vector
+	vector<CAircraftStatus> statuses;
+
+	// Aircraft position
+	CPosition acPos = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetPosition();
+
+	// Iterate
+	int counter = 0; // Counter to check if not first pass
+	CPosition prevPos; // Previous position
+	int totalTime = 0;
+	for (int i = 0; i < route.size(); i++) {
+		if (route.at(i).Estimate == "--") { // If fix has been passed then continue
+			continue;
+		}
+
+		// Get the time
+		int time = CUtils::GetTimeDistanceSpeed(route.at(i).DistanceFromLastPoint, groundSpeed);
+		totalTime += time;
+
+		// Get the heading
+		int heading;
+		if (counter == 0) { // If the position is the aircraft's location then get that direction
+			heading = acPos.DirectionTo(route.at(i).PositionRaw);
+			prevPos = acPos;
+			counter++;
+		}
+		else {
+			// Get the direction from point to point
+			heading = prevPos.DirectionTo(route.at(i).PositionRaw);
+		}
+
+		CAircraftStatus status;
+		status.Callsign = callsign;
+		status.Altitude = altitude;
+		status.GroundSpeed = groundSpeed;
+		status.Heading = heading;
+		status.Estimate = totalTime;
+		if (statuses.empty()) {
+			status.Position = acPos;
+		}
+		else {
+			status.Position = route.at(i).PositionRaw;
+		}
+		// Add status
+		statuses.push_back(status);
 
 		// Reassign previous position variable
 		prevPos = route.at(i).PositionRaw;

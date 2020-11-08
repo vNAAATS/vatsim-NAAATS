@@ -25,7 +25,7 @@ class CBaseWindow
 		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) = 0;
 		virtual void MakeWindowItems() = 0;
 		virtual void ButtonDown(int id) = 0;
-		virtual void ButtonUp(int id) = 0;
+		virtual void ButtonUp(int id, CRadarScreen* screen = nullptr) = 0;
 		virtual void ButtonPress(int id) = 0;
 		virtual void ButtonUnpress(int id) = 0;
 		virtual void SetButtonState(int id, CInputState state) = 0;

@@ -87,7 +87,7 @@ void CNotePad::ButtonDown(int id) {
 	windowButtons.find(id)->second.State = CInputState::ACTIVE;
 }
 
-void CNotePad::ButtonUp(int id) {
+void CNotePad::ButtonUp(int id, CRadarScreen* screen) {
 	// Unpress the button
 	windowButtons.find(id)->second.State = CInputState::INACTIVE;
 }

@@ -141,6 +141,24 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 		//returnString += ". FREE: " + splitString[9];
 		return returnString;
 	}
+	// TODO get proper position
+	// CALLSIGN:CLEARANCE_ISSUE:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:ATC/:LCHG:MCHG:RERUTE
+	else if (type == CMessageType::CLEARANCE_ISSUE) {
+		string returnString = "CZQX CLRNCE: CLA TO " + splitString[2] + " VIA ";
+		if (splitString[3] != "NULL") {
+			returnString += "RANDOM ROUTING " + splitString[3] + ".";
+		}
+		else {
+			returnString += "TRACK " + splitString[6] + ".";
+		}
+		// Flight level and mach
+		returnString += " F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
+		// Estimated time
+		returnString += " EST " + splitString[4] + " AT " + splitString[5];
+		// Freetext
+		//returnString += ". FREE: " + splitString[9];
+		return returnString;
+	}
 	// CALLSIGN:REVISION_REQ:MCHG:CONTENT:LCHG:CONTENT:RERUTE:CONTENT
 	else if (type == CMessageType::REVISION_REQ) {
 		string returnString = "REQUEST [";
@@ -174,6 +192,30 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 	}
 }
 
+// Raw format parser
+string CUtils::ParseToRaw(string callsign, CMessageType type) {
+	// Flight data
+	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+
+	if (type == CMessageType::CLEARANCE_ISSUE) {
+		// Split the current message
+		vector<string> splitString;
+		StringSplit(fp->CurrentMessage->MessageRaw, ':', &splitString);
+
+		// Get the route
+		string routeString;
+		if (fp->Track == "RR") {
+			for (int i = 0; i < fp->RouteRaw.size(); i++) {
+				routeString += fp->RouteRaw[i] + " ";
+			}
+			routeString = routeString.substr(0, routeString.size() - 2);
+		}
+		else {
+			routeString = "NULL";
+		}
+		return fp->Callsign + ":CLEARANCE_ISSUE:" + fp->Dest + ":" + routeString + ":" + splitString[4] + ":" + splitString[5] + ":" + fp->Track + ":" + fp->FlightLevel + ":" + fp->Mach + ":" + "ATC/:NULL";
+	}
+}
 // Load plugin data
 void CUtils::LoadPluginData(CRadarScreen* screen) {
 	// Strings to parse data

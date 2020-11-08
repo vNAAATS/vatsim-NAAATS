@@ -56,7 +56,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_MSG_FORWARD] = CWinButton(BTN_MSG_FORWARD, WIN_FLTPLN, "Forward", CInputState::DISABLED);
 	windowButtons[BTN_CONF_ACCCL] = CWinButton(BTN_CONF_ACCCL, WIN_FLTPLN, "ACCCL", CInputState::INACTIVE);
 	windowButtons[BTN_CONF_MANCL] = CWinButton(BTN_CONF_MANCL, WIN_FLTPLN, "MANCL", CInputState::INACTIVE);
-	windowButtons[BTN_CONF_COORD] = CWinButton(BTN_CONF_COORD, WIN_FLTPLN, "CO-ORD", CInputState::INACTIVE);
+	windowButtons[BTN_CONF_COORD] = CWinButton(BTN_CONF_COORD, WIN_FLTPLN, "CO-ORD", CInputState::DISABLED);
 	windowButtons[BTN_CONF_CLOSE] = CWinButton(BTN_CONF_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_MAN_CANCEL] = CWinButton(BTN_MAN_CANCEL, WIN_FLTPLN, "Cancel", CInputState::INACTIVE);
 	windowButtons[BTN_MAN_SUBMIT] = CWinButton(BTN_MAN_SUBMIT, WIN_FLTPLN, "Submit", CInputState::INACTIVE);
@@ -203,7 +203,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_FLTPLN_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string(string("Flight Plan") + string(" - ") + string(textInputs[TXT_ACID].Content)).c_str());
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string(string("Flight Plan") + string(" - ") + primedPlan->Callsign).c_str());
 
 	// Add screen objects
 	screen->AddScreenObject(WINDOW, "WIN_FLTPLN", windowRect, true, ""); // So that we can't click anything under the flight plan window
@@ -365,7 +365,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	FontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, textInputs[TXT_ACID].Content.c_str());
+	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, primedPlan->Callsign.c_str());
 
 	textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, stoi(primedPlan->Mach));
 	textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
@@ -374,9 +374,8 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		textInputs[TXT_TCK].Content = "RR";
 	}
 	else {
-		SetTextValue(screen, TXT_TCK, primedPlan->Track);
+		textInputs[TXT_TCK].Content = primedPlan->Track;
 	}
-	
 
 	// Create the route box
 	CRect rteBox(topLeft.x + 5, idBox.bottom + 8, dataBarRect.right - 100, idBox.bottom + 84);
@@ -407,7 +406,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	else {
 		// Draw the route and estimates
 		vector<CRoutePosition> rte;
-		CRoutesHelper::GetRoute(screen, &rte,  primedPlan->Callsign);
+		CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
 			if (CUtils::IsAllAlpha(rte[i].Fix)) {
@@ -532,7 +531,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CRect titleRect(conflictPanel.left, conflictPanel.top, conflictPanel.left + WINSZ_FLTPLN_WIDTH, conflictPanel.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Conflict Window - ").c_str()); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Conflict Window - " + primedPlan->Callsign).c_str()); // TODO: show callsign properly
 	
 	// Create content panel
 	CRect content(conflictPanel.left + 2, titleRect.bottom + 2, conflictPanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2.4), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 43);
@@ -547,6 +546,22 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	// Scroll bar values
 	if (scrollBars[SCRL_CONF_Y].FrameSize == 0)
 		scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, content.Height(), content.Height(), false);
+
+	// Select content font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Iterate through conflicts (NEED BOTH VERTICAL AND HORIZONTAL SCROLL)
+	if (currentProbeStatuses.empty()) {
+		dc->TextOutA(content.left + 5, content.top + 5, "No predicted conflicts.");
+	}
+	else {
+		for (int i = 0; i < currentProbeStatuses.size(); i++) {
+
+		}
+	}
+	
 
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.left - 1, content.bottom + 3 }, &scrollBars[SCRL_CONF_X]);
@@ -611,7 +626,6 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 
 	// Draw content
 	if (primedPlan->CurrentMessage != nullptr) {
-		// TODO: PARSE MESSAGE INTO HUMAN READABLE
 		string message = CUtils::ParseToPhraseology(primedPlan->CurrentMessage->MessageRaw, primedPlan->CurrentMessage->Type);
 
 		// Get the wrapped text
@@ -683,7 +697,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	CRect titleRect(clearancePanel.left, clearancePanel.top, clearancePanel.left + WINSZ_FLTPLN_WIDTH, clearancePanel.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Clearance") + string(" - ")).c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Clearance") + string(" - ") + primedPlan->Callsign).c_str())); // TODO: show callsign properly
 
 	// Create content panel 1
 	CRect contentA(clearancePanel.left + 5, titleRect.bottom + 5, clearancePanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2) - 10, titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 90);
@@ -776,7 +790,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CRect titleRect(manEntryPanel.left, manEntryPanel.top, manEntryPanel.left + WINSZ_FLTPLN_WIDTH, manEntryPanel.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Manual Entry") + string(" - ")).c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string(string("Manual Entry") + string(" - ") + primedPlan->Callsign).c_str())); // TODO: show callsign properly
 
 	// Show callsign in coloured box
 	CRect idBox(topLeft.x + 6, titleRect.bottom + 8, topLeft.x + 150, titleRect.bottom + 36);
@@ -922,7 +936,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	CRect titleRect(coordWindow.left, coordWindow.top, coordWindow.left + WINSZ_FLTPLN_WIDTH_COORD, coordWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_COORD / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Co-ordination Window - ").c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_COORD / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Co-ordination Window - " + primedPlan->Callsign).c_str())); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_COORD).c_str(), titleRect, true, "");
 
 	// Create the stations panel
@@ -1071,7 +1085,7 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	CRect titleRect(histWindow.left, histWindow.top, histWindow.left + WINSZ_FLTPLN_WIDTH_HIST, histWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_HIST / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Flight History - ").c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_HIST / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("Flight History - " + primedPlan->Callsign).c_str())); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_HIST).c_str(), titleRect, true, "");
 
 	// Create content panel
@@ -1243,7 +1257,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	CRect titleRect(coordWindow.left, coordWindow.top, coordWindow.left + WINSZ_FLTPLN_WIDTH_MDL, coordWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Active Co-ordination - ").c_str()); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Active Co-ordination - " + primedPlan->Callsign).c_str()); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_XCHANGE).c_str(), titleRect, true, "");
 
 	// Select font
@@ -1495,11 +1509,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 	}
 }
 
-void CFlightPlanWindow::OnCloseFlightPlanWindow() {
-
-}
-
-void CFlightPlanWindow::ButtonUp(int id) {
+void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 
 	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
 		// If the close button close window
@@ -1534,6 +1544,16 @@ void CFlightPlanWindow::ButtonUp(int id) {
 		if (id == BTN_PROBE) {
 			IsConflictWindow = true;
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
+			CConflictDetection::ProbeTool(screen, primedPlan->Callsign, &currentProbeStatuses);
+			
+			if (currentProbeStatuses.empty()) {
+				SetButtonState(BTN_CONF_ACCCL, CInputState::INACTIVE);
+				SetButtonState(BTN_CONF_MANCL, CInputState::DISABLED);
+			}
+			else {
+				SetButtonState(BTN_CONF_MANCL, CInputState::INACTIVE);
+				SetButtonState(BTN_CONF_ACCCL, CInputState::DISABLED);
+			}
 		}
 		if (id == BTN_CONF_CLOSE) {
 			IsConflictWindow = false;
@@ -1617,12 +1637,16 @@ void CFlightPlanWindow::ButtonUp(int id) {
 				primedPlan->FlightLevel = "";
 				primedPlan->Track = "";
 				primedPlan->Dest = "";
+				SetButtonState(BTN_COPY, CInputState::DISABLED);
+				SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
+				SetButtonState(BTN_PROBE, CInputState::DISABLED);
 			}
 			// Erase the message from the aircraft and properly requeue it
 			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
 			primedPlan->CurrentMessage = nullptr;
 			IsMessageOpen = false;
 			SetButtonState(BTN_MSG, CInputState::DISABLED);
+			Instantiate(screen, primedPlan->Callsign);
 		}
 	}
 	
@@ -1654,6 +1678,27 @@ void CFlightPlanWindow::ButtonPress(int id) {
 	if (id >= 300) {
 		if (checkBoxes.find(id) != checkBoxes.end()) {
 			checkBoxes.at(id).IsChecked = checkBoxes.at(id).IsChecked ? false : true;
+
+			if (id == CHK_CLRC_CPDLC) {
+				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+
+			} else if (id == CHK_CLRC_ORCA) {
+				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+
+			} else if (id == CHK_CLRC_TXT) {
+				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+
+			} else if (id == CHK_CLRC_VOX) {
+				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+			}
 		}
 	}
 

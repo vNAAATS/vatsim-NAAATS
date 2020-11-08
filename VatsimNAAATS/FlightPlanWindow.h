@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "EuroScopePlugIn.h"
+#include "ConflictDetection.h"
 #include <string>
 #include <map>
 #include <gdiplus.h>
@@ -17,6 +18,7 @@ class CFlightPlanWindow : public CBaseWindow
 		map<string, CAircraftFlightPlan*> ongoingFlightPlans; // Currently ongoing (in progress) flight plan edits
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
+		vector<vector<CSepStatus>> currentProbeStatuses;
 		int selectedRestriction = -1;
 		clock_t fiveSecondTimer = clock();
 		
@@ -41,7 +43,7 @@ class CFlightPlanWindow : public CBaseWindow
 
 		// Button clicks
 		virtual void ButtonDown(int id);
-		virtual void ButtonUp(int id);
+		virtual void ButtonUp(int id, CRadarScreen* screen = nullptr);
 		virtual void ButtonPress(int id);
 		virtual void ButtonUnpress(int id);
 		virtual void SetButtonState(int id, CInputState state);
@@ -50,7 +52,6 @@ class CFlightPlanWindow : public CBaseWindow
 
 		// Fill data
 		void Instantiate(CRadarScreen* screen, string callsign, CMessage* msg = nullptr);
-		void OnCloseFlightPlanWindow();
 
 		// Panel states
 		bool IsData = false;

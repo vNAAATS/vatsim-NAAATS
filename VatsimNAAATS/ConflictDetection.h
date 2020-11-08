@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "Structures.h"
 #include "RoutesHelper.h"
+#include "DataHandler.h"
 #include "Styles.h"
 #include <gdiplus.h>
 #include <map>
@@ -23,6 +24,7 @@ class CConflictDetection
 		static vector<CRoutePosition> PIVRoute1;
 		static vector<CRoutePosition> PIVRoute2;
 		static vector<CSepStatus> PIVSeparationStatuses;
+		static map<string, int>* aircraftOnScreen;
 
 		// STCA
 		static vector<CSTCAStatus> CurrentSTCA;
@@ -42,7 +44,8 @@ class CConflictDetection
 		// STCA (run every 10s)
 		static void CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft);
 
-		// Probe
+		// Probe tool
+		static bool ProbeTool(CRadarScreen* screen, string callsign, vector<vector<CSepStatus>>* statuses);
 
 	private: 
 		// Separation values
@@ -61,6 +64,9 @@ class CConflictDetection
 
 		// Get an aircraft's status along its route
 		static vector<CAircraftStatus> GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude, int pivID);
+
+		// Get statuses along the route points
+		static vector<CAircraftStatus> GetStatusesAlongRoutePoints(CRadarScreen* screen, string callsign, int groundSpeed, int altitude);
 
 		// Mach number technique
 		static int MachNumberTechnique(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB, string point);

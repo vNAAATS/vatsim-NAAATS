@@ -133,7 +133,6 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 					}
 				}
 			}
-			trackReturned = fp->Track;
 		}
 		else { // It's a random routing
 			for (int i = 0; i < fp->RouteRaw.size(); i++) {
@@ -315,7 +314,7 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 	}	
 
 	// Return the vector
-	CDataHandler::SetRoute(data->Callsign, &parsedRoute, trackReturned);
+	CDataHandler::SetRoute(data->Callsign, &parsedRoute, fp->Track);
 
 	// Cleanup
 	delete args;
