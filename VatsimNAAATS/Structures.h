@@ -29,7 +29,7 @@ struct CWaypoint {
 	CWaypoint() {}; // Default constructor
 	CWaypoint(string name, double lat, double lon) {
 		Name = name;
-		Position.m_Latitude - lat;
+		Position.m_Latitude = lat;
 		Position.m_Longitude = lon;
 	}
 	string Name;

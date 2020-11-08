@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
-#include "ApiSettings.h"
+//#include "ApiSettings.h"
 #include <WinInet.h>
 #include "curl/curl.h"
 #pragma comment(lib,"WinInet.Lib")
