@@ -243,7 +243,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	}
 }
 
-/*size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp)
+size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
@@ -375,6 +375,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 	curl = curl_easy_init();
+	
 	if(curl)
 	{
 		stringstream url;
@@ -387,30 +388,34 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 		result_code = curl_easy_perform(curl);
 
 		curl_easy_cleanup(curl);
-
+		
+		//vector to store message(s)
+		vector<CMessage> messages;
+		
 		if (CURLE_OK != result_code && result.length() <= 0)
 		{
-
+			messages.push_back({});
+			return messages;
 		} else
 		{
 			auto jsonArray = json::parse(result);
-			
-			//vector to store message(s)
-			vector<CMessage> messages;
 			if (jsonArray.size() <= 0) //if no rows were returned
 			{
 				messages.push_back({});
 				return messages;
 			} else
 			{
-				for(int i = 0; i < jsonArray.size(); i++) //loop thru messages
+				
+				for(auto &row : jsonArray) //loop thru messages
 				{
 					try
 					{
-						if ((string)jsonArray[i].at("sent_to") == controller && (int)jsonArray[i].at("is_actioned") == 0) //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
+						
+						if ((string)row.at("sent_to") == controller && (int)row.at("is_actioned") == 0) //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
 						{
+
 							//declare type of message, as per the CMessageType enum
-							string type_string = jsonArray[i].at("type");
+							string type_string = row.at("type");
 							
 							CMessageType type;
 
@@ -466,16 +471,17 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 								return messages;
 							}
 							
+							
 							messages.push_back({ //add message to the messages vector
-								jsonArray[i].at("id"),
-								jsonArray[i].at("sent_to"),
-								jsonArray[i].at("sent_from"),
-								jsonArray[i].at("contents_raw"),
-								jsonArray[i].at("created_at"),
+								row.at("id"),
+								row.at("sent_to"),
+								row.at("sent_from"),
+								row.at("contents_raw"),
+								row.at("created_at"),
 								type
 							});
 						}
-						//else, do nothing (continue w/ loop)
+						//else, do nothing (continue w/ loop) 
 					}
 					catch (exception& ex)
 					{
@@ -488,4 +494,4 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 			}
 		}
 	}
-}*/
+}
