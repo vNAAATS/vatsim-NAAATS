@@ -278,14 +278,14 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 		}
 		else
 		{
-			auto const presult = nlohmann::json::parse(result);
-			if(presult.size() > 1) //if >1 row was returned (shouldn't be any dupes!)
+			auto jsonArray = json::parse(result);
+			if(jsonArray.size() > 1) //if >1 row was returned (shouldn't be any dupes!)
 			{
 				auto* flight_plan = new CAircraftFlightPlan;
 				return flight_plan;
 			}
 
-			auto const row = presult[0];
+			auto row = jsonArray[0];
 
 			string route,
 				   callsign,
