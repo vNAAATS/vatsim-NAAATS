@@ -112,7 +112,7 @@ const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
 // Sector file & geo constants
 const int SECTELEMENT_COORD_IDX = 7;
-const int RADIUS_EARTH_NM = 3440.1;
+const int RADIUS_EARTH_NM = 3440;
 
 // Screen details
 #define DISPLAY_NAME "vNAAATS Display"
