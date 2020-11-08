@@ -20,7 +20,7 @@ class CRoutesHelper
 		static vector<string> ActiveRoutes;
 
 		// Get a route
-		static vector<CRoutePosition> GetRoute(CRadarScreen* screen, string callsign);
+		static bool GetRoute(CRadarScreen* screen, vector<CRoutePosition>* routeVector, string callsign);
 
 		// Initialise route
 		static void InitialiseRoute(void* args);

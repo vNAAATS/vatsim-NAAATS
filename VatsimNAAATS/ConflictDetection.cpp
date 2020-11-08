@@ -667,7 +667,8 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude, int pivID) {
 	// Get the route
-	vector<CRoutePosition> route = CRoutesHelper::GetRoute(screen, callsign);
+	vector<CRoutePosition> route;
+	CRoutesHelper::GetRoute(screen, &route, callsign);
 
 	if (pivID == 1) {
 		PIVRoute1 = route;

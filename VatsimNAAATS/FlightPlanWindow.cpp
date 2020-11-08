@@ -371,7 +371,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
 	textInputs[TXT_DEST].Content = primedPlan->Dest;
 	if (primedPlan->Track == "RR") {
-		textInputs[TXT_TCK].Content = primedPlan->Track;
+		textInputs[TXT_TCK].Content = "RR";
 	}
 	else {
 		SetTextValue(screen, TXT_TCK, primedPlan->Track);
@@ -406,7 +406,8 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	}
 	else {
 		// Draw the route and estimates
-		vector<CRoutePosition> rte = CRoutesHelper::GetRoute(screen, primedPlan->Callsign);
+		vector<CRoutePosition> rte;
+		CRoutesHelper::GetRoute(screen, &rte,  primedPlan->Callsign);
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
 			if (CUtils::IsAllAlpha(rte[i].Fix)) {
@@ -611,13 +612,13 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	// Draw content
 	if (primedPlan->CurrentMessage != nullptr) {
 		// TODO: PARSE MESSAGE INTO HUMAN READABLE
-		string message = primedPlan->CurrentMessage->MessageRaw;
+		string message = CUtils::ParseToPhraseology(primedPlan->CurrentMessage->MessageRaw, primedPlan->CurrentMessage->Type);
 
 		// Get the wrapped text
 		vector<string> wrappedText;
 		int contentSize = content.Width() - 10;
 		if (dc->GetTextExtent(message.c_str()).cx > contentSize) {
-			CUtils::WrapText(dc, message, ':', contentSize, &wrappedText);
+			CUtils::WrapText(dc, message, ' ', contentSize, &wrappedText);
 		}
 
 		// If text is to be wrapped
@@ -813,7 +814,8 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	}
 	else {
 		// Draw the route and estimates
-		vector<CRoutePosition> rte = CRoutesHelper::GetRoute(screen, primedPlan->Callsign);
+		vector<CRoutePosition> rte;
+		CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
 			if (CUtils::IsAllAlpha(rte[i].Fix)) {
@@ -1354,6 +1356,7 @@ bool CFlightPlanWindow::IsButtonPressed(int id) {
 }
 
 void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessage* msg) {
+	fiveSecondTimer = clock();
 	// Get the data
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
 	if (!fp->IsValid) return;
@@ -1603,6 +1606,17 @@ void CFlightPlanWindow::ButtonUp(int id) {
 				// Reset the accept/reject buttons
 				SetButtonState(BTN_XCHANGE_ACCEPT, CInputState::DISABLED);
 				SetButtonState(BTN_XCHANGE_REJECT, CInputState::DISABLED);
+			}
+			else if (primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
+				IsData = false;
+				primedPlan->Track = "";
+				primedPlan->RouteRaw.clear();
+				primedPlan->Route.clear();
+				primedPlan->Restrictions.clear();
+				primedPlan->Mach = "";
+				primedPlan->FlightLevel = "";
+				primedPlan->Track = "";
+				primedPlan->Dest = "";
 			}
 			// Erase the message from the aircraft and properly requeue it
 			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);

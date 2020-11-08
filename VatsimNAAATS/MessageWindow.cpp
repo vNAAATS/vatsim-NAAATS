@@ -24,7 +24,7 @@ void CMessageWindow::MakeWindowItems() {
 	msg.Id = 0;
 	msg.From = "DLH414";
 	msg.To = "CZQX_FSS";
-	msg.MessageRaw = "DLH414:CLR_REQ:ARR:KMCO:NULL:ENTRY:NEEKO:EST:1000:TRACK:A:410:81:END_OF_MESSAGE";
+	msg.MessageRaw = "DLH414:CLEARANCE_REQUEST:KMCO:NULL:NEEKO:1000:A:410:81:FREETEXT";
 	msg.Type = CMessageType::CLEARANCE_REQ;
 	ActiveMessages[msg.Id] = msg;
 
@@ -80,50 +80,50 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 
 	// Drawing messages
 	int offsetX = 5;
-	int offsetY = 2;
+	int offsetY = 0;
 	for (int i = 0; i < ActiveMessages.size(); i++) {
 		// Skip displaying if the message is active
 		if (OngoingMessages.find(ActiveMessages[i].Id) != OngoingMessages.end()) {
 			continue;
 		}
 		CRect message(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY, windowRect.right, 0); // Set to 0 here
-		offsetY += dc->GetTextExtent("ABC").cy + 2;
+		offsetY += dc->GetTextExtent("ABC").cy + 5;
 
 		// Parse the message
 		string parsed = CUtils::ParseToPhraseology(ActiveMessages[i].MessageRaw, ActiveMessages[i].Type);
 
 		// Get the wrapped text
 		vector<string> wrappedText;
-		int contentSize = windowRect.Width() - (offsetX + 60) - 2;
+		int contentSize = windowRect.Width() - (offsetX + 70) - 15;
 		if (dc->GetTextExtent(parsed.c_str()).cx > contentSize) {
 			CUtils::WrapText(dc, parsed, ' ', contentSize, &wrappedText);
 		}
 
 		// Set messages rectangle bottom
-		message.bottom = windowRect.top + WINSZ_TITLEBAR_HEIGHT + (!wrappedText.empty() ? dc->GetTextExtent("ABCD").cy * wrappedText.size() + 7 : offsetY) + 2;
+		message.bottom = windowRect.top + WINSZ_TITLEBAR_HEIGHT + (!wrappedText.empty() ? dc->GetTextExtent("ABCD").cy * wrappedText.size() + 15 : offsetY) + 5;
 
 		if (ActiveMessages[i].Id == SelectedMessage) {
 			dc->FillRect(message, &evenDarkerBrush);
 		}
 
 		// Text 'from'
-		dc->TextOutA(message.left + offsetX, message.top + 2, ActiveMessages[i].From.c_str());
-		offsetX += 60;
+		dc->TextOutA(message.left + offsetX, message.top + 5, ActiveMessages[i].From.c_str());
+		offsetX += 70;
 
 		// If the text is wrapped
 		int wrapOffsetY = 0;
 		if (!wrappedText.empty()) {
 			// Iterate to display
-			wrapOffsetY = 2;
+			wrapOffsetY = 5;
 			for (int i = 0; i < wrappedText.size(); i++) {
 				// Write the message
 				dc->TextOutA(message.left + offsetX, message.top + wrapOffsetY, wrappedText[i].c_str());
-				wrapOffsetY += dc->GetTextExtent("ABCD").cy + 2;
+				wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
 			}
 		}
 		else {
 			// Write without iterating
-			dc->TextOutA(message.left + offsetX, message.top + 2, parsed.c_str());
+			dc->TextOutA(message.left + offsetX, message.top + 5, parsed.c_str());
 		}		
 
 		// Add screen object for message
@@ -177,11 +177,10 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		ActiveMessages.erase(id);
 		return;
 	}
-	if (msg->Type == CMessageType::LOG_ON) {
+	if (msg->Type == CMessageType::LOG_ON || msg->Type == CMessageType::TRANSFER) {
 		fltPlnWin->Instantiate(screen, msg->From, msg);
 		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsTransferOpen = true;
-		fltPlnWin->IsData = false;
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()));
 		OngoingMessages[msg->Id] = msg;
 	}
@@ -200,26 +199,18 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		string level;
 		string speed;
 		// Loop tokens
-		for (int i = 0; i < tokens.size(); i++) {
-			if (tokens[i] == "ARR") {
-				arrival = tokens[i + 1];
-				route = tokens[i + 2] != "NULL" ? tokens[i + 2] : "";
-			}
-			else if (tokens[i] == "ENTRY") {
-				ep = tokens[i + 1];
-				epEst = tokens[i + 3];
-			}
-			else if (tokens[i] == "TRACK") {
-				track = tokens[i + 1];
-				level = tokens[i + 2];
-				speed = tokens[i + 3];
-			}
-		}
-		
+		arrival = tokens[2];
+		route = tokens[3] != "NULL" && tokens[6] == "RR" ? tokens[3] : "";
+		track = tokens[6] != "RR" ? tokens[6] : "RR";
+		ep = tokens[4];
+		epEst = tokens[5];
+		level = tokens[7];
+		speed = tokens[8];
 		// Instantiate flight plan window
 		fltPlnWin->Instantiate(screen, msg->From, msg);
 		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsData = true;
+		fltPlnWin->SetButtonState(CFlightPlanWindow::BTN_PROBE, CInputState::INACTIVE);
 		fltPlnWin->primedPlan->Track = track;
 		fltPlnWin->primedPlan->Mach = speed;
 		fltPlnWin->primedPlan->FlightLevel = level;
@@ -230,13 +221,14 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_SPD, speed);
 		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_LEVEL, level);
 		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_DEST, arrival);
-		if (route == "") {
+		if (track != "RR") {
 			fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_TCK, track);
 		}
 		else {
 			fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
 		}
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()));
+		OngoingMessages[msg->Id] = msg;
 	}
 }
 

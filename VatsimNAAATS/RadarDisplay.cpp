@@ -93,7 +93,7 @@ void CRadarDisplay::PopulateProgramData() {
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	//test for getting flight_data
-	CDataHandler::ApiGetFlightData("AAL578");
+	//CDataHandler::ApiGetFlightData("AAL578");
 	
 	// Create device context
 	CDC dc;
@@ -651,6 +651,10 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 		if (atoi(sObjectId) >= 800) {
 			menuBar->OnOverDropDownItem(atoi(sObjectId));
 		}
+	}
+	// If it is a message
+	if (ObjectType == ACTV_MESSAGE) {
+		msgWindow->SelectedMessage = atoi(sObjectId);
 	}
 
 	// Refresh

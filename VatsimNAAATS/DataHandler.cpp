@@ -228,7 +228,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 		// Set route if flight exists
 		flights.find(callsign)->second.Route.clear();
 		flights.find(callsign)->second.Route = *route;
-
+		flights.find(callsign)->second.Route.shrink_to_fit();
 		// Set track if not nothing
 		if (track != "")
 			flights.find(callsign)->second.Track = track;
@@ -243,7 +243,7 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	}
 }
 
-size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp)
+/*size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
@@ -364,4 +364,4 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 			return flight_plan;
 		}
 	}
-}
+}*/

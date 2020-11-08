@@ -29,7 +29,7 @@ class CMessageWindow : public CBaseWindow
 		static const int BTN_CLOSE;
 
 		// Currently active messages
-		map<int, CMessage> ActiveMessages;
+		unordered_map<int, CMessage> ActiveMessages;
 		static unordered_map<int, CMessage*> OngoingMessages;
 		int SelectedMessage = -1;
 };
