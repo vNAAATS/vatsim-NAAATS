@@ -408,7 +408,9 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	// Route box to text input
 	CTextInput* route = &textInputs.find(TXT_RTE)->second;
 	CTextInput* track = &textInputs.find(TXT_TCK)->second;
-	screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
+	// Add object if not disabled
+	if (route->State == CInputState::ACTIVE)
+		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
 
 	// Text align
 	FontSelector::SelectATCFont(16, dc);
@@ -732,6 +734,34 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	InflateRect(contentB, -1, -1);
 	dc->Draw3dRect(contentB, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
+	// Select title font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Get the wrapped text
+	vector<string> wrappedText;
+	int contentSize = contentA.Width() - 10;
+	if (dc->GetTextExtent(currentClearanceText.c_str()).cx > contentSize) {
+		CUtils::WrapText(dc, currentClearanceText, ' ', contentSize, &wrappedText);
+	}
+
+	// If the text is wrapped
+	int wrapOffsetY = 5;
+	if (!wrappedText.empty()) {
+		// Iterate to display
+		wrapOffsetY = 5;
+		for (int i = 0; i < wrappedText.size(); i++) {
+			// Write the message
+			dc->TextOutA(contentA.left + 5, contentA.top + wrapOffsetY, wrappedText[i].c_str());
+			wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
+		}
+	}
+	else {
+		// Write without iterating
+		dc->TextOutA(contentA.left + 5, contentA.top + 5, currentClearanceText.c_str());
+	}
+
 	// Scroll bar values
 	if (scrollBars[SCRL_CLRC].FrameSize == 0)
 		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentA.Height(), contentA.Height(), false);
@@ -742,11 +772,6 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { contentA.right + 3, contentA.top - 1 }, &scrollBars[SCRL_CLRC]);
 	CCommonRenders::RenderScrollBar(dc, g, screen, { contentB.right + 3, contentB.top - 1 }, &scrollBars[SCRL_CLRC_XTRA]);
-
-	// Font
-	FontSelector::SelectNormalFont(15, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
-	dc->SetTextAlign(TA_LEFT);
 
 	// Checkboxes
 	int offsetX = 25;
@@ -831,7 +856,8 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	// Route box to text input
 	CTextInput* route = &textInputs.find(TXT_MAN_RTE)->second;
 	CTextInput* track = &textInputs.find(TXT_MAN_TCK)->second;
-	screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
+	if (route->State == CInputState::ACTIVE)
+		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
 	
 	// Text align
 	FontSelector::SelectATCFont(16, dc);
@@ -1530,6 +1556,15 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 	}
 }
 
+CInputState CFlightPlanWindow::GetInputState(int id) {
+	if (IsTextInput(id)) {
+		return textInputs[id].State;
+	}
+	else if (IsButton(id)) {
+		return windowButtons[id].State;
+	}
+}
+
 void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 
 	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
@@ -1564,6 +1599,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_PROBE) {
 			IsConflictWindow = true;
+			SetButtonState(BTN_MSG_REQUEUE, CInputState::DISABLED);
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 			CConflictDetection::ProbeTool(screen, primedPlan->Callsign, &currentProbeStatuses);
 			
@@ -1589,7 +1625,29 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 			SetButtonState(BTN_UNCLEAR, CInputState::INACTIVE);
 			SetButtonState(BTN_DELETE, CInputState::DISABLED);
+
+			// Switch the clearance type
+			CMessageType type;
+			if (primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
+				type = CMessageType::CLEARANCE_ISSUE;
+				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = true;
+				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_ORCA).State = CInputState::INACTIVE;
+				checkBoxes.at(CHK_CLRC_CPDLC).State = CInputState::DISABLED;
+				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+			}
+			else if (primedPlan->CurrentMessage->Type == CMessageType::REVISION_REQ){
+				type = CMessageType::REVISION_ISSUE;
+				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_CPDLC).State = CInputState::INACTIVE;
+				checkBoxes.at(CHK_CLRC_ORCA).State = CInputState::DISABLED;
+				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = true;
+				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+			}
 			IsClearanceOpen = true;
+			currentClearanceText = CUtils::ParseToPhraseology(CUtils::ParseToRaw(primedPlan->Callsign, type), type);
 		}
 		if (id == BTN_CLRC_REJECT) {
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
@@ -1599,14 +1657,27 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_UNCLEAR, CInputState::DISABLED);
 			SetButtonState(BTN_READBK, CInputState::INACTIVE);
 			IsClearanceOpen = false;
+			if (primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
+				primedPlan->IsCleared = true;
+				SetButtonState(BTN_ATCR, CInputState::DISABLED);
+				dropDowns[DRP_ATCR].State = CInputState::DISABLED;
+				textInputs[TXT_SPD].State = CInputState::DISABLED;
+				textInputs[TXT_LEVEL].State = CInputState::DISABLED;
+				textInputs[TXT_DEST].State = CInputState::DISABLED;
+				textInputs[TXT_TCK].State = CInputState::DISABLED;
+				textInputs[TXT_RTE].State = CInputState::DISABLED;
+				// Send clearance to natTrak here
+			}
 		}
 		if (id == BTN_READBK) {
 			if (windowButtons[BTN_READBK].State == CInputState::ACTIVE) {
 				IsClearanceOpen = false;
 				IsCopyMade = false;
+				SetButtonState(BTN_MSG_DONE, CInputState::INACTIVE);
 				SetButtonState(BTN_READBK, CInputState::DISABLED);
 				SetButtonState(BTN_DELETE, CInputState::DISABLED);
 				SetButtonState(BTN_COPY, CInputState::INACTIVE);
+				// Update flight data here on natTrak
 			}
 		}
 		if (id == BTN_UNCLEAR) {
@@ -1668,6 +1739,12 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			IsMessageOpen = false;
 			SetButtonState(BTN_MSG, CInputState::DISABLED);
 			Instantiate(screen, primedPlan->Callsign);
+		}
+		if (id == BTN_MSG_DONE) {
+			IsMessageOpen = false;
+			// Mark message as done here
+			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
+			primedPlan->CurrentMessage = nullptr;
 		}
 	}
 	

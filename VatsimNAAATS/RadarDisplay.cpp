@@ -803,7 +803,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// If a flight plan window text entry
 		if (ObjectType == WIN_FLTPLN) {
-			if (fltPlnWindow->IsTextInput(atoi(sObjectId))) {
+			if (fltPlnWindow->IsTextInput(atoi(sObjectId)) && (fltPlnWindow->GetInputState(atoi(sObjectId)) != CInputState::DISABLED || fltPlnWindow->GetInputState(atoi(sObjectId)) != CInputState::INACTIVE)) {
 				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), fltPlnWindow->GetTextValue(atoi(sObjectId)).c_str());
 			}
 		}
