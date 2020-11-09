@@ -91,11 +91,7 @@ void CRadarDisplay::PopulateProgramData() {
 
 // On radar screen refresh (occurs about once a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
-{
-	//test for getting flight_data
-	//CDataHandler::ApiGetFlightData("AAL578");
-	CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
-	
+{	
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
@@ -515,6 +511,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 // Ben: In this method we need to run the regular API checks for each callsign updating the data if required.
 // Data updates must be done here asynchronously, see my example in CDataHandler for threading
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
+	//CDataHandler::ApiGetFlightData("AAL578");
+	//CDataHandler::ApiGetMessagesForController("AAL578", "CZQX_FSS");
+	//CDataHandler::ApiGetMessages("AAL578");
+	
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
 		// They are relevant so get the flight plan
