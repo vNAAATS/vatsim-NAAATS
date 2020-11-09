@@ -223,6 +223,7 @@
   <ItemGroup>
     <ClInclude Include="..\lib\include\EuroScopePlugIn.h" />
     <ClInclude Include="AcTargets.h" />
+    <ClInclude Include="ApiSettings.example.h" />
     <ClInclude Include="ApiSettings.h" />
     <ClInclude Include="BaseList.h" />
     <ClInclude Include="BaseWindow.h" />
