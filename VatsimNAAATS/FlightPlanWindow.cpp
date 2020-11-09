@@ -388,6 +388,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	// Parse the route text
 	int offsetX = 5;
 	int offsetY = 2;
+	int contentoffsetX = 5;
 	if (route->Error || track->Error) { // If there is an error
 		dc->TextOutA(rteBox.left + 4, rteBox.top + 2, "SYNTAX OR TCK ERROR! Check format.");
 	}
@@ -401,33 +402,57 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
-			if (CUtils::IsAllAlpha(rte[i].Fix)) {
-				// Write fix down
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
-				offsetY += 56;
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
-				offsetY = 2;
-				offsetX += dc->GetTextExtent("2323").cx + 15;
+			if (!(contentoffsetX < scrollBars[SCRL_DATA].WindowPos))
+			{
+				if (!(contentoffsetX > scrollBars[SCRL_DATA].WindowPos + scrollBars[SCRL_DATA].FrameSize - 15))
+				{
+					if (CUtils::IsAllAlpha(rte[i].Fix)) {
+						// Write fix down
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
+						offsetY += 56;
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+						offsetY = 2;
+						offsetX += dc->GetTextExtent("2323").cx + 15;
+					}
+					else {
+						// Write coordinate down
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
+						offsetY += 28;
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
+						offsetY += 28;
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+						offsetY = 2;
+						offsetX += dc->GetTextExtent("2323").cx + 15;
+					}
+				}
 			}
-			else {
-				// Write coordinate down
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
-				offsetY += 28;
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
-				offsetY += 28;
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
-				offsetY = 2;
-				offsetX += dc->GetTextExtent("2323").cx + 15;
-			}
+			contentoffsetX += dc->GetTextExtent("2323").cx + 15;
 		}
 	}
 
 	// Scroll bar values
-	if (!isCopy && scrollBars[SCRL_DATA].FrameSize == 0)
-		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), true);
 
-	if (isCopy && scrollBars[SCRL_CPY].FrameSize == 0)
-		scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, rteBox.Width(), rteBox.Width(), true);
+	if (scrollBars[SCRL_DATA].FrameSize == 0 || (scrollBars[SCRL_DATA].ContentSize != contentoffsetX && scrollBars[SCRL_DATA].PositionDelta == 0 && scrollBars[SCRL_DATA].ContentRatio != 1))
+	{
+		int framebox = rteBox.Width();
+		scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, contentoffsetX, framebox, true);
+		if (contentoffsetX != framebox)
+		{
+			//scrollBars[SCRL_DATA].GripSize -= 30; // temporary fix for grip bug
+			scrollBars[SCRL_DATA].TotalScrollableArea = framebox - scrollBars[SCRL_DATA].GripSize;
+		}
+	}
+
+	if (scrollBars[SCRL_CPY].FrameSize == 0 || (scrollBars[SCRL_CPY].ContentSize != contentoffsetX && scrollBars[SCRL_CPY].PositionDelta == 0 && scrollBars[SCRL_CPY].ContentRatio != 1))
+	{
+		int framebox = rteBox.Width();
+		scrollBars[SCRL_CPY] = CWinScrollBar(SCRL_CPY, WIN_FLTPLN, contentoffsetX, framebox, true);
+		if (contentoffsetX != framebox)
+		{
+			//scrollBars[SCRL_CPY].GripSize -= 30; // temporary fix for grip bug
+			scrollBars[SCRL_CPY].TotalScrollableArea = framebox - scrollBars[SCRL_CPY].GripSize;
+		}
+	}
 
 	// Draw route scroll bar
 	CCommonRenders::RenderScrollBar(dc, g, screen, { rteBox.left-1, rteBox.bottom + 3 }, &scrollBars[isCopy ? SCRL_CPY : SCRL_DATA]);
@@ -616,6 +641,8 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
+	int offsetY = 0;
+	int contentoffsetY = 0;
 	// Draw content
 	if (primedPlan->CurrentMessage != nullptr) {
 		string message = CUtils::ParseToPhraseology(primedPlan->CurrentMessage->MessageRaw, primedPlan->CurrentMessage->Type);
@@ -630,21 +657,38 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 		// If text is to be wrapped
 		if (!wrappedText.empty()) {
 			// Iterate to display
-			int offsetY = 5;
+			offsetY = 5;
+			contentoffsetY = 5;
 			for (int i = 0; i < wrappedText.size(); i++) {
-				dc->TextOutA(content.left + 5, content.top + offsetY, wrappedText[i].c_str());
-				offsetY += dc->GetTextExtent("ABCD").cy + 2;
+				if (!(contentoffsetY < scrollBars[SCRL_MSG].WindowPos))
+				{
+					if (!(contentoffsetY > scrollBars[SCRL_MSG].WindowPos + scrollBars[SCRL_MSG].FrameSize-25))
+					{
+						dc->TextOutA(content.left + 5, content.top + offsetY, wrappedText[i].c_str());
+						offsetY += dc->GetTextExtent("ABCD").cy + 2;
+					}
+				}
+				contentoffsetY += dc->GetTextExtent("ABCD").cy + 2;
 			}
 		}
 		else {
 			// Just display
 			dc->TextOutA(content.left + 5, content.top + 5, message.c_str());
+			contentoffsetY = content.Height()+2;
 		}
 	}
 
 	// Scroll bar values
-	if (scrollBars[SCRL_MSG].FrameSize == 0)
-		scrollBars[SCRL_MSG] = CWinScrollBar(SCRL_MSG, WIN_FLTPLN, content.Height(), content.Height() + 2, false);
+	if(scrollBars[SCRL_MSG].FrameSize == 0 || (scrollBars[SCRL_MSG].ContentSize != contentoffsetY && scrollBars[SCRL_MSG].PositionDelta == 0 && scrollBars[SCRL_MSG].ContentRatio != 1))
+	{
+		int framebox = content.Height()+2;
+		scrollBars[SCRL_MSG] = CWinScrollBar(SCRL_MSG, WIN_FLTPLN, contentoffsetY, framebox, false);
+		if (contentoffsetY != framebox)
+		{
+			scrollBars[SCRL_MSG].GripSize -= 30; // temporary fix for grip bug
+			scrollBars[SCRL_MSG].TotalScrollableArea = framebox - scrollBars[SCRL_MSG].GripSize;
+		}
+	}
 
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_MSG]);
@@ -1288,30 +1332,50 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	dc->TextOutA(content.left + 3, content.top - dc->GetTextExtent("Active Authorities").cy - 2, "Active Authorities");
 
-	// Scroll bar values
-	if (scrollBars[SCRL_XCHANGE].FrameSize == 0)
-		scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, content.Height(), content.Height(), false);
-
-	// Draw scroll bar
-	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_XCHANGE]);
-
 	// Select font
 	FontSelector::SelectNormalFont(15, dc);
 
 	// List content
 	int offsetX = 2;
 	int offsetY = 2;
+	int contentoffsetY = offsetY;
 	for (auto kv : onlineControllers) {
 		CRect rect(content.left, content.top + offsetY, content.right, content.top + offsetY + dc->GetTextExtent("ABCD").cy);
-		if (kv.first == selectedAuthority)
-			dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
-		dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetPositionId());
-		offsetX += 45;
-		dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetCallsign());
-		offsetX = 0;
-		offsetY += dc->GetTextExtent("ABCD").cy;
-		screen->AddScreenObject(WIN_FLTPLN_TSFR, kv.second.GetCallsign(), rect, true, "");
+		if (!(contentoffsetY < scrollBars[SCRL_XCHANGE].WindowPos))
+		{
+			if (!(contentoffsetY > scrollBars[SCRL_XCHANGE].WindowPos + scrollBars[SCRL_XCHANGE].FrameSize - 15))
+			{
+				if (kv.first == selectedAuthority)
+					dc->FillSolidRect(rect, ButtonPressed.ToCOLORREF());
+				dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetPositionId());
+				offsetX += 45;
+				dc->TextOutA(content.left + offsetX, content.top + offsetY, kv.second.GetCallsign());
+				offsetX = 0;
+				offsetY += dc->GetTextExtent("ABCD").cy;
+				screen->AddScreenObject(WIN_FLTPLN_TSFR, kv.second.GetCallsign(), rect, true, "");
+			}
+		}
+		contentoffsetY += dc->GetTextExtent("ABCD").cy;
 	}
+
+	// Scroll bar values
+	if (scrollBars[SCRL_XCHANGE].FrameSize == 0 || (scrollBars[SCRL_XCHANGE].ContentSize != contentoffsetY && scrollBars[SCRL_XCHANGE].PositionDelta == 0 && scrollBars[SCRL_XCHANGE].ContentRatio != 1))
+	{
+		int framebox = content.Height();
+		scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, contentoffsetY, framebox, false);
+		if (contentoffsetY != framebox)
+		{
+			scrollBars[SCRL_XCHANGE].GripSize -= 30; // temporary fix for grip bug
+			scrollBars[SCRL_XCHANGE].TotalScrollableArea = framebox - scrollBars[SCRL_XCHANGE].GripSize;
+		}
+		if (scrollBars[SCRL_XCHANGE].ContentRatio > 1)
+		{
+			scrollBars[SCRL_XCHANGE] = CWinScrollBar(SCRL_XCHANGE, WIN_FLTPLN, framebox, framebox, false);
+		}
+	}
+
+	// Draw scroll bar
+	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_XCHANGE]);
 
 	// Get authorities
 	string currentController = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
@@ -1356,9 +1420,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 		int textHeight = dc->GetTextExtent(textInputs.at(idx).Label.c_str()).cy;
 		dc->TextOutA(offsetX, offsetY, textInputs.at(idx).Label.c_str());
 		CCommonRenders::RenderTextInput(dc, screen, { offsetX, offsetY + textHeight + 5 }, textInputs.at(idx).Width, textHeight + 5, &textInputs.at(idx));
-		
 		offsetY += textHeight * 2 + 20;
-	
 	}
 
 	// Create borders
