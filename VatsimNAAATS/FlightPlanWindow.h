@@ -20,6 +20,7 @@ class CFlightPlanWindow : public CBaseWindow
 		map<int, string> restrictionSelections;
 		vector<vector<CSepStatus>> currentProbeStatuses;
 		int selectedRestriction = -1;
+		string currentClearanceText;
 		clock_t fiveSecondTimer = clock();
 		
 	public:
@@ -48,6 +49,7 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void ButtonUnpress(int id);
 		virtual void SetButtonState(int id, CInputState state);
 		void SetTextValue(CRadarScreen* screen, int id, string content);
+		CInputState GetInputState(int id);
 		bool IsButtonPressed(int id);
 
 		// Fill data

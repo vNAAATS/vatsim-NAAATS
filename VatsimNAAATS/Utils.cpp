@@ -141,7 +141,7 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 		//returnString += ". FREE: " + splitString[9];
 		return returnString;
 	}
-	// TODO get proper position
+	// TODO get proper position & deal with restrictions
 	// CALLSIGN:CLEARANCE_ISSUE:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:ATC/:LCHG:MCHG:RERUTE
 	else if (type == CMessageType::CLEARANCE_ISSUE) {
 		string returnString = "CZQX CLRNCE: CLA TO " + splitString[2] + " VIA ";
@@ -149,12 +149,12 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 			returnString += "RANDOM ROUTING " + splitString[3] + ".";
 		}
 		else {
-			returnString += "TRACK " + splitString[6] + ".";
+			returnString += splitString[4] + " NAT TRACK " + splitString[6] + ".";
 		}
+		// Estimate
+		returnString += " FM " + splitString[4] + "/" + splitString[5];
 		// Flight level and mach
-		returnString += " F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
-		// Estimated time
-		returnString += " EST " + splitString[4] + " AT " + splitString[5];
+		returnString += " MNTN F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
 		// Freetext
 		//returnString += ". FREE: " + splitString[9];
 		return returnString;
@@ -213,6 +213,7 @@ string CUtils::ParseToRaw(string callsign, CMessageType type) {
 		else {
 			routeString = "NULL";
 		}
+		// TODO restrictions
 		return fp->Callsign + ":CLEARANCE_ISSUE:" + fp->Dest + ":" + routeString + ":" + splitString[4] + ":" + splitString[5] + ":" + fp->Track + ":" + fp->FlightLevel + ":" + fp->Mach + ":" + "ATC/:NULL";
 	}
 }
