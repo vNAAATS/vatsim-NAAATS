@@ -376,7 +376,7 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 	}
 }
 
-vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller)
+vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, string controller)
 {
 	string result = "";
 	CURL* curl;
@@ -503,6 +503,142 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 								obj["contents_raw"].get<std::string>(),
 								obj["created_at"].get<std::string>(),
 								type});
+
+		}
+	}
+
+	return messages;
+}
+
+vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
+{
+	string result = "";
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+
+	if (curl)
+	{
+		stringstream url;
+		url << ApiSettings::apiUrl << "/messages/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&action=from";
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+		result_code = curl_easy_perform(curl);
+
+		if (result_code != CURLE_OK) {
+			curl_easy_cleanup(curl);
+			return {};
+		}
+
+		curl_easy_cleanup(curl);
+
+		if (result == "-1")
+		{
+			return {};
+		}
+	}
+
+	json j;
+	try
+	{
+		j = json::parse(result);
+
+	}
+	catch (nlohmann::detail::parse_error& ex)
+	{
+		return {};
+	}
+
+	if (j.is_null())
+	{
+		return {};
+	}
+
+	vector<CMessage> messages;
+	for (auto obj : j) {
+		if (static_cast<int>(obj["is_actioned"]) == 1) {
+			OutputDebugString("in if! ");
+			
+			string type_string = obj["type"];
+
+			CMessageType type;
+
+			if (type_string == "LOG_ON")
+			{
+				type = CMessageType::LOG_ON;
+			}
+			else if (type_string == "LOG_ON_CONFIRM")
+			{
+				type = CMessageType::LOG_ON_CONFIRM;
+			}
+			else if (type_string == "LOG_ON_REJECT")
+			{
+				type = CMessageType::LOG_ON_REJECT;
+			}
+			else if (type_string == "TRANSFER")
+			{
+				type = CMessageType::TRANSFER;
+			}
+			else if (type_string == "TRANSFER_ACCEPT")
+			{
+				type = CMessageType::TRANSFER_ACCEPT;
+			}
+			else if (type_string == "TRANSFER_REJECT")
+			{
+				type = CMessageType::TRANSFER_REJECT;
+			}
+			else if (type_string == "CLEARANCE_REQ")
+			{
+				type = CMessageType::CLEARANCE_REQ;
+			}
+			else if (type_string == "CLEARANCE_ISSUE")
+			{
+				type = CMessageType::CLEARANCE_ISSUE;
+			}
+			else if (type_string == "CLEARANCE_REJECT")
+			{
+				type = CMessageType::CLEARANCE_REJECT;
+			}
+			else if (type_string == "REVISION_REQ")
+			{
+				type = CMessageType::REVISION_REQ;
+			}
+			else if (type_string == "REVISION_ISSUE")
+			{
+				type = CMessageType::REVISION_ISSUE;
+			}
+			else if (type_string == "REVISION_REJECT")
+			{
+				type = CMessageType::REVISION_REJECT;
+			}
+			else if (type_string == "WILCO")
+			{
+				type = CMessageType::WILCO;
+			}
+			else if (type_string == "ROGER")
+			{
+				type = CMessageType::ROGER;
+			}
+			else if (type_string == "UNABLE")
+			{
+				type = CMessageType::UNABLE;
+			}
+			else
+			{
+				continue;
+			}
+			messages.push_back({ obj["id"],
+								obj["sent_to"].get<std::string>(),
+								obj["sent_by"].get<std::string>(),
+								obj["contents_raw"].get<std::string>(),
+								obj["created_at"].get<std::string>(),
+								type });
 
 		}
 	}

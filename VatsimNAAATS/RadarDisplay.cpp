@@ -8,7 +8,7 @@
 #include "Utils.h"
 #include "ConflictDetection.h"
 #include "DataHandler.h"
-#include <thread> 
+#include <thread>
 #include <gdiplus.h>
 #include <ctype.h>
 #include <iostream>
@@ -18,7 +18,7 @@ using namespace Gdiplus;
 using namespace std;
 using namespace EuroScopePlugIn;
 
-CRadarDisplay::CRadarDisplay() 
+CRadarDisplay::CRadarDisplay()
 {
 	COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
@@ -35,7 +35,7 @@ CRadarDisplay::CRadarDisplay()
 	tenSecondTimer = clock();
 }
 
-CRadarDisplay::~CRadarDisplay() 
+CRadarDisplay::~CRadarDisplay()
 {
 	delete inboundList;
 	delete otherList;
@@ -95,7 +95,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	//test for getting flight_data
 	//CDataHandler::ApiGetFlightData("AAL578");
 	//CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
-	
+
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
@@ -115,7 +115,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	if (fiveSecT >= 5 && !otherList->AircraftList.empty()) {
 		otherList->AircraftList.clear();
 	}
-	
+
 	// Online controllers
 	if (fiveSecT >= 5) {
 		// Clear online controllers first
@@ -217,7 +217,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CConflictDetection::PIVSeparationStatuses.clear();
 		CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
 	}
-	
+
 	// Check if the altitude filter is on
 	bool altFiltEnabled = false;
 	if (menuBar->IsButtonPressed(CMenuBar::BTN_ALTFILT)) altFiltEnabled = true;
@@ -268,7 +268,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			entryMinutes = fp.GetSectorEntryMinutes();
 			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
-			// Parse inbound & other			
+			// Parse inbound & other
 			if (CUtils::IsAircraftRelevant(this, &ac)) {
 				// If not there then add the status
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
@@ -362,7 +362,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				// Store whether detailed tags are enabled
 				bool detailedEnabled = false;
 
-				// Now we check if all the tags are selected as detailed				
+				// Now we check if all the tags are selected as detailed
 				if (menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK)) {
 					detailedEnabled = true; // Set detailed on
 
@@ -411,7 +411,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					kv->second.first = detailedEnabled; // Set detailed on
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
 					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
-					
+
 				}
 				else {
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
@@ -440,7 +440,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		/// RENDERING
 		// Draw menu bar
 		menuBar->RenderBar(&dc, &g, this, asel);
-		
+
 		// Draw lists
 		inboundList->RenderList(&g, &dc, this);
 		otherList->RenderList(&g, &dc, this);
@@ -515,16 +515,20 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 // Ben: In this method we need to run the regular API checks for each callsign updating the data if required.
 // Data updates must be done here asynchronously, see my example in CDataHandler for threading
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
+	//CDataHandler::ApiGetFlightData("AAL578");
+	//CDataHandler::ApiGetMessagesForController("AAL578", "CZQX_FSS");
+	//CDataHandler::ApiGetMessages("AAL578");
+
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
 		// They are relevant so get the flight plan
 		CAircraftFlightPlan* fp = CDataHandler::GetFlightData(RadarTarget.GetCallsign());
-		
+
 		// If not valid then it doesn't exist and we need to make it
 		if (!fp->IsValid) {
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
 		}
-		else {			
+		else {
 			// Update exit time
 			int exitMinutes = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign()).GetSectorExitMinutes();
 			if (exitMinutes != -1) {
@@ -558,7 +562,7 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 		if (found != -1) {
 			CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
 		}
-	}	
+	}
 }
 
 void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, bool Released)
@@ -644,7 +648,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	RequestRefresh();
 }
 
-void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area) 
+void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area)
 {
 	mousePointer = Pt;
 	// Dropdown
@@ -693,7 +697,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			// Set the ASEL
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
-			GetPlugIn()->SetASELAircraft(fp);	
+			GetPlugIn()->SetASELAircraft(fp);
 
 			// Probing tools
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
@@ -766,7 +770,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
-			
+
 			// Reset ASELs
 			aircraftSel1 = "";
 			aircraftSel2 = "";
@@ -830,7 +834,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			fltPlnWindow->selectedAuthority = sObjectId;
 		}
 	}
-	
+
 	if (Button == BUTTON_RIGHT) {
 		if (ObjectType == SCREEN_TAG) {
 			/// Set route drawing
@@ -853,10 +857,10 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				else {
 					CRoutesHelper::ActiveRoutes.push_back(string(sObjectId));
 				}
-			}			
+			}
 		}
 	}
-	
+
 	RequestRefresh();
 }
 
@@ -905,7 +909,7 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 		}
 		if (atoi(sObjectId) < 200) {
 			fltPlnWindow->ButtonUp(atoi(sObjectId), this);
-		}		
+		}
 	}
 
 	// Note pad window
