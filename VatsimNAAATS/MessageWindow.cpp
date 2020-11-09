@@ -9,6 +9,7 @@ using namespace Colours;
 
 const int CMessageWindow::BTN_CLOSE = 2;
 unordered_map<int, CMessage*> CMessageWindow::OngoingMessages;
+unordered_map<int, CMessage> CMessageWindow::ActiveMessages;
 
 CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons

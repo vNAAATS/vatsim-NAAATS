@@ -94,7 +94,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	//test for getting flight_data
 	//CDataHandler::ApiGetFlightData("AAL578");
-	CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
+	//CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
 	
 	// Create device context
 	CDC dc;

@@ -209,6 +209,8 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 	// Statuses for query aircraft
 	vector<CAircraftStatus> acStatuses = GetStatusesAlongRoutePoints(screen, callsign, target.GetGS(), target.GetPosition().GetPressureAltitude());
 
+	vector<string> loopAcs;
+
 	// Check statuses against on screen aircraft
 	for (auto i = aircraftOnScreen->begin(); i != aircraftOnScreen->end(); i++) {
 		// Sep status vector
@@ -239,6 +241,7 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 
 		// Push back the vector if a conflict
 		if (addToVector)
+			loopAcs.push_back(i->first);
 			statuses->push_back(sepStatuses);
 	}
 
