@@ -21,7 +21,8 @@ CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 
 void CMessageWindow::MakeWindowItems() {
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_MSG, "Close", CInputState::INACTIVE);
-	CMessage msg;
+	scrollBars[SCRL_MSGWNDW] = CWinScrollBar(SCRL_MSGWNDW, WIN_SCROLLBAR, 0, 0, false);
+	/*CMessage msg;
 	msg.Id = 0;
 	msg.From = "DLH414";
 	msg.To = "CZQX_FSS";
@@ -34,7 +35,30 @@ void CMessageWindow::MakeWindowItems() {
 	msg.To = "CZQX_FSS";
 	msg.MessageRaw = "DLH414:LOG_ON:CZQX_FSS";
 	msg.Type = CMessageType::LOG_ON;
-	ActiveMessages[msg.Id] = msg;
+	ActiveMessages[msg.Id] = msg;*/
+
+	CMessage msg;
+
+	for (int x = 0; x <= 5; x++)
+	{
+		msg.Id = x;
+		msg.From = "VIR7" + std::to_string(x);
+		msg.To = "CZQX_FSS";
+		msg.MessageRaw = msg.From + std::string(":CLEARANCE_REQUEST:KMCO:NULL:NEEKO:1000:A:410:81:FREETEXT");
+		msg.Type = CMessageType::CLEARANCE_REQ;
+		ActiveMessages[msg.Id] = msg;
+
+
+	}
+	for (int x = 6; x <= 10; x++)
+	{
+		msg.Id = x;
+		msg.From = "DLH41" + std::to_string(x);
+		msg.To = "CZQX_FSS";
+		msg.MessageRaw = msg.From + std::string(":LOG_ON:CZQX_FSS");
+		msg.Type = CMessageType::LOG_ON;
+		ActiveMessages[msg.Id] = msg;
+	}
 }
 
 void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
@@ -82,60 +106,122 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	// Drawing messages
 	int offsetX = 5;
 	int offsetY = 0;
-	for (int i = 0; i < ActiveMessages.size(); i++) {
+	int contentOffsetY = 0;
+	int totalcontent = 0;
+	/*for (int i = 0; i < ActiveMessages.size(); i++) {
 		// Skip displaying if the message is active
-		if (OngoingMessages.find(ActiveMessages[i].Id) != OngoingMessages.end()) {
-			continue;
-		}
-		CRect message(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY, windowRect.right, 0); // Set to 0 here
-		offsetY += dc->GetTextExtent("ABC").cy + 5;
+		//if (OngoingMessages.find(ActiveMessages[i].Id) != OngoingMessages.end()) {
+		//	continue;
+		//}
+		totalcontent += dc->GetTextExtent("ABC").cy + 5;
 
 		// Parse the message
 		string parsed = CUtils::ParseToPhraseology(ActiveMessages[i].MessageRaw, ActiveMessages[i].Type);
 
 		// Get the wrapped text
 		vector<string> wrappedText;
-		int contentSize = windowRect.Width() - (offsetX + 70) - 15;
+		int contentSize = windowRect.Width() - (5 + 70) - 15;
 		if (dc->GetTextExtent(parsed.c_str()).cx > contentSize) {
 			CUtils::WrapText(dc, parsed, ' ', contentSize, &wrappedText);
 		}
 
-		// Set messages rectangle bottom
-		message.bottom = windowRect.top + WINSZ_TITLEBAR_HEIGHT + (!wrappedText.empty() ? dc->GetTextExtent("ABCD").cy * wrappedText.size() + 15 : offsetY) + 5;
+		totalcontent += (!wrappedText.empty() ? dc->GetTextExtent("ABCD").cy * wrappedText.size() + 15 : 5) + 5;
 
-		if (ActiveMessages[i].Id == SelectedMessage) {
-			dc->FillRect(message, &evenDarkerBrush);
-		}
-
-		// Text 'from'
-		dc->TextOutA(message.left + offsetX, message.top + 5, ActiveMessages[i].From.c_str());
-		offsetX += 70;
-
-		// If the text is wrapped
 		int wrapOffsetY = 0;
 		if (!wrappedText.empty()) {
-			// Iterate to display
-			wrapOffsetY = 5;
 			for (int i = 0; i < wrappedText.size(); i++) {
-				// Write the message
-				dc->TextOutA(message.left + offsetX, message.top + wrapOffsetY, wrappedText[i].c_str());
 				wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
 			}
 		}
-		else {
-			// Write without iterating
-			dc->TextOutA(message.left + offsetX, message.top + 5, parsed.c_str());
-		}		
 
-		// Add screen object for message
-		screen->AddScreenObject(ACTV_MESSAGE, to_string(ActiveMessages[i].Id).c_str(), message, false, "");
-
-		// Reset X offset
-		offsetX = 5;
-		
-		// Add wrapped text size to y offset
-		offsetY += wrapOffsetY != 0 ? wrapOffsetY - (dc->GetTextExtent("ABC").cy + 2) : 0;
+		// Set messages rectangle bottom
+		totalcontent += wrapOffsetY != 0 ? wrapOffsetY - (dc->GetTextExtent("ABC").cy + 2) : 0;
+	}*/
+	for (int i = 0; i < ActiveMessages.size(); i++) {
+		totalcontent += 50;
 	}
+	for (int i = 0; i < ActiveMessages.size(); i++) {
+		// Skip displaying if the message is active
+		if (OngoingMessages.find(ActiveMessages[i].Id) != OngoingMessages.end()) {
+			continue;
+		}
+		if (!ActiveMessages[i].MessageRaw.length()) continue;
+		int deltaoffsetY = offsetY;
+		if (!(contentOffsetY < scrollBars[SCRL_MSGWNDW].WindowPos))
+		{
+			if (!(contentOffsetY > scrollBars[SCRL_MSGWNDW].WindowPos + scrollBars[SCRL_MSGWNDW].FrameSize - 25))
+			{
+				CRect message(windowRect.left, windowRect.top + WINSZ_TITLEBAR_HEIGHT + offsetY, windowRect.right, 0); // Set to 0 here
+				offsetY += dc->GetTextExtent("ABC").cy + 5;
+
+				// Parse the message
+				string parsed = CUtils::ParseToPhraseology(ActiveMessages[i].MessageRaw, ActiveMessages[i].Type);
+
+				// Get the wrapped text
+				vector<string> wrappedText;
+				int contentSize = windowRect.Width() - (offsetX + 70) - 15;
+				if (dc->GetTextExtent(parsed.c_str()).cx > contentSize) {
+					CUtils::WrapText(dc, parsed, ' ', contentSize, &wrappedText);
+				}
+
+				// Set messages rectangle bottom
+				message.bottom = windowRect.top + WINSZ_TITLEBAR_HEIGHT + (!wrappedText.empty() ? dc->GetTextExtent("ABCD").cy * wrappedText.size() + 15 + deltaoffsetY : offsetY) + 5;
+
+				if (ActiveMessages[i].Id == SelectedMessage) {
+					dc->FillRect(message, &evenDarkerBrush);
+				}
+
+				// Text 'from'
+				dc->TextOutA(message.left + offsetX, message.top + 5, ActiveMessages[i].From.c_str());
+				offsetX += 70;
+
+				// If the text is wrapped
+				int wrapOffsetY = 0;
+				if (!wrappedText.empty()) {
+					// Iterate to display
+					wrapOffsetY = 5;
+					for (int i = 0; i < wrappedText.size(); i++) {
+						// Write the message
+						dc->TextOutA(message.left + offsetX, message.top + wrapOffsetY, wrappedText[i].c_str());
+						wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
+					}
+				}
+				else {
+					// Write without iterating
+					dc->TextOutA(message.left + offsetX, message.top + 5, parsed.c_str());
+				}
+
+				// Add screen object for message
+				screen->AddScreenObject(ACTV_MESSAGE, to_string(ActiveMessages[i].Id).c_str(), message, false, "");
+
+				// Reset X offset
+				offsetX = 5;
+
+				// Add wrapped text size to y offset
+				offsetY += wrapOffsetY != 0 ? wrapOffsetY - (dc->GetTextExtent("ABC").cy + 2) : 0;
+			}
+		}
+		//contentOffsetY += 50;
+		//contentOffsetY += (offsetY - deltaoffsetY);
+		contentOffsetY += (offsetY - deltaoffsetY) == 0 ? 50 : (offsetY - deltaoffsetY);
+	}
+
+	// Scroll bar values
+	if (scrollBars[SCRL_MSGWNDW].FrameSize == 0 || (scrollBars[SCRL_MSGWNDW].ContentSize != contentOffsetY && scrollBars[SCRL_MSGWNDW].PositionDelta == 0 && scrollBars[SCRL_MSGWNDW].ContentRatio != 1))
+	{
+		int framebox = windowRect.Height() - 65;
+		if (contentOffsetY == 0)
+			contentOffsetY = framebox; // ratio 1:1
+		scrollBars[SCRL_MSGWNDW] = CWinScrollBar(SCRL_MSGWNDW, WIN_SCROLLBAR, contentOffsetY, framebox, false);
+		if (contentOffsetY != framebox)
+		{
+			scrollBars[SCRL_MSGWNDW].GripSize -= 30; // temporary fix for grip bug
+			scrollBars[SCRL_MSGWNDW].TotalScrollableArea = framebox - scrollBars[SCRL_MSGWNDW].GripSize;
+		}
+	}
+
+	// Draw scroll bars
+	CCommonRenders::RenderScrollBar(dc, g, screen, { windowRect.right - 12, windowRect.top + 20 }, &scrollBars[SCRL_MSGWNDW]);
 
 	// Create borders
 	dc->DrawEdge(windowRect, EDGE_SUNKEN, BF_RECT);

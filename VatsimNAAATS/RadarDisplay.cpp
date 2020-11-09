@@ -648,6 +648,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	// Scrolling
 	if (ObjectType == WIN_SCROLLBAR) {
 		if (string(sObjectId) == "TCKINFO") trackWindow->Scroll(Area, mousePointer);
+		if (string(sObjectId) == "520") msgWindow->Scroll(atoi(sObjectId), Pt, mousePointer);
 	}
 
 	// Mouse pointer
