@@ -1811,6 +1811,10 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
 			primedPlan->CurrentMessage = nullptr;
 		}
+		if (id == BTN_RESTRI_EDIT_CLOSE) {
+			RestrictionSubModalType = -1;
+			// Todo: cleanup all the data in all fields
+		}
 	}
 	
 	// Finally unpress the button if not disabled (and id is actually a button and not set manually)
