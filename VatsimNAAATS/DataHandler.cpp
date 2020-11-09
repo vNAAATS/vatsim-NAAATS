@@ -248,10 +248,10 @@ size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb,
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
-
+/*
 CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 {
-	string result;
+	string result = "[{'id':90,'sent_by':'AAL578','sent_to':'CZQX_FSS','contents_raw':'AAL578:LOG_ON:CZQX_FSS','type':'LOG_ON','is_actioned':0,'to_domestic':0,'created_at':'2020-11-06 14:10:11'},{'id':92,'sent_by':'AAL578','sent_to':'FDSFGDS','contents_raw':'AAL578:LOG_ON:FDSFGDS','type':'LOG_ON','is_actioned':0,'to_domestic':0,'created_at':'2020-11-06 14:21:17'},{'id':94,'sent_by':'AAL578','sent_to':'czqx_fss','contents_raw':'AAL578:CLR_REQ:ARR:KJAX:DWQEWQE:ENTRY:WEWE:EST:1234Z:TRACK:NULL:F234:M82:END_OF_MESSAGE','type':'CLEARANCE_REQ','is_actioned':0,'to_domestic':0,'created_at':'2020-11-07 05:56:03'}]";
 	CURL* curl;
 	CURLcode result_code;
 
@@ -260,18 +260,18 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 	curl = curl_easy_init();
 	if (curl)
 	{
-		stringstream url;
-		url << ApiSettings::apiUrl << "/flight_data/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign;
-		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
-		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+		//stringstream url;
+		//url << ApiSettings::apiUrl << "/flight_data/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign;
+		//curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		//curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		//curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 
-		result_code = curl_easy_perform(curl);
+		//result_code = curl_easy_perform(curl);
 		
 		curl_easy_cleanup(curl);
 
-		if (CURLE_OK != result_code && result.length() <= 0)
+		if (result.length() <= 0)
 		{
 			auto* flight_plan = new CAircraftFlightPlan;
 			return flight_plan;
@@ -365,10 +365,10 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 		}
 	}
 }
-
+*/ 
 vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller)
 {
-	string result;
+	string result = "[]";
 	CURL* curl;
 	CURLcode result_code;
 
@@ -387,111 +387,107 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 
 		result_code = curl_easy_perform(curl);
 
+		if (result_code != CURLE_OK) {
+			curl_easy_cleanup(curl);
+			return {};
+		}
+
 		curl_easy_cleanup(curl);
-		
-		//vector to store message(s)
-		vector<CMessage> messages;
-		
-		if (CURLE_OK != result_code && result.length() <= 0)
-		{
-			messages.push_back({});
-			return messages;
-		} else
-		{
-			auto jsonArray = json::parse(result);
-			if (jsonArray.size() <= 0) //if no rows were returned
+
+	}
+	
+	json j;
+	try
+	{
+		j = json::parse(result);
+
+	}
+	catch (nlohmann::detail::parse_error& ex)
+	{
+		std::cerr << "parse error at byte " << ex.byte << std::endl;
+	}
+
+	vector<CMessage> messages;
+	for (auto obj : j) {
+		if (obj["sent_to"] == controller && obj["is_actioned"] == 0) {
+			string type_string = obj["type"];
+
+			CMessageType type;
+
+			if (type_string == "LOG_ON")
+			{
+				type = CMessageType::LOG_ON;
+			}
+			else if (type_string == "LOG_ON_CONFIRM")
+			{
+				type = CMessageType::LOG_ON_CONFIRM;
+			}
+			else if (type_string == "LOG_ON_REJECT")
+			{
+				type = CMessageType::LOG_ON_REJECT;
+			}
+			else if (type_string == "TRANSFER")
+			{
+				type = CMessageType::TRANSFER;
+			}
+			else if (type_string == "TRANSFER_ACCEPT")
+			{
+				type = CMessageType::TRANSFER_ACCEPT;
+			}
+			else if (type_string == "TRANSFER_REJECT")
+			{
+				type = CMessageType::TRANSFER_REJECT;
+			}
+			else if (type_string == "CLEARANCE_REQ")
+			{
+				type = CMessageType::CLEARANCE_REQ;
+			}
+			else if (type_string == "CLEARANCE_ISSUE")
+			{
+				type = CMessageType::CLEARANCE_ISSUE;
+			}
+			else if (type_string == "CLEARANCE_REJECT")
+			{
+				type = CMessageType::CLEARANCE_REJECT;
+			}
+			else if (type_string == "REVISION_REQ")
+			{
+				type = CMessageType::REVISION_REQ;
+			}
+			else if (type_string == "REVISION_ISSUE")
+			{
+				type = CMessageType::REVISION_ISSUE;
+			}
+			else if (type_string == "REVISION_REJECT")
+			{
+				type = CMessageType::REVISION_REJECT;
+			}
+			else if (type_string == "WILCO")
+			{
+				type = CMessageType::WILCO;
+			}
+			else if (type_string == "ROGER")
+			{
+				type = CMessageType::ROGER;
+			}
+			else if (type_string == "UNABLE")
+			{
+				type = CMessageType::UNABLE;
+			}
+			else
 			{
 				messages.push_back({});
-				return messages;
-			} else
-			{
-				
-				for(auto &row : jsonArray) //loop thru messages
-				{
-					try
-					{
-						
-						if ((string)row.at("sent_to") == controller && (int)row.at("is_actioned") == 0) //checks if message is sent to the specified controller && checks that the message hasn't been actioned yet.
-						{
-
-							//declare type of message, as per the CMessageType enum
-							string type_string = row.at("type");
-							
-							CMessageType type;
-
-							if(type_string == "LOG_ON")
-							{
-								type = CMessageType::LOG_ON;
-							} else if(type_string == "LOG_ON_CONFIRM")
-							{
-								type = CMessageType::LOG_ON_CONFIRM;
-							} else if(type_string == "LOG_ON_REJECT")
-							{
-								type = CMessageType::LOG_ON_REJECT;
-							} else if(type_string == "TRANSFER")
-							{
-								type = CMessageType::TRANSFER;
-							} else if (type_string == "TRANSFER_ACCEPT")
-							{
-								type = CMessageType::TRANSFER_ACCEPT;
-							}
-							else if (type_string == "TRANSFER_REJECT")
-							{
-								type = CMessageType::TRANSFER_REJECT;
-							} else if (type_string == "CLEARANCE_REQ")
-							{
-								type = CMessageType::CLEARANCE_REQ;
-							} else if (type_string == "CLEARANCE_ISSUE")
-							{
-								type = CMessageType::CLEARANCE_ISSUE;
-							} else if (type_string == "CLEARANCE_REJECT")
-							{
-								type = CMessageType::CLEARANCE_REJECT;
-							} else if (type_string == "REVISION_REQ")
-							{
-								type = CMessageType::REVISION_REQ;
-							} else if (type_string == "REVISION_ISSUE")
-							{
-								type = CMessageType::REVISION_ISSUE;
-							} else if (type_string == "REVISION_REJECT")
-							{
-								type = CMessageType::REVISION_REJECT;
-							} else if (type_string == "WILCO")
-							{
-								type = CMessageType::WILCO;
-							} else if (type_string == "ROGER")
-							{
-								type = CMessageType::ROGER;
-							} else if (type_string == "UNABLE")
-							{
-								type = CMessageType::UNABLE;
-							} else
-							{
-								messages.push_back({});
-								return messages;
-							}
-							
-							
-							messages.push_back({ //add message to the messages vector
-								row.at("id"),
-								row.at("sent_to"),
-								row.at("sent_from"),
-								row.at("contents_raw"),
-								row.at("created_at"),
-								type
-							});
-						}
-						//else, do nothing (continue w/ loop) 
-					}
-					catch (exception& ex)
-					{
-						messages.push_back({});
-						return messages;
-					}
-				}
-				//once done, return the messages vector
-				return messages;
 			}
+
+			messages.push_back({obj["id"],
+								obj["sent_to"].get<std::string>(),
+								obj["sent_from"].get<std::string>(),
+								obj["contents_raw"].get<std::string>(),
+								obj["created_at"].get<std::string>(),
+								type});
+
 		}
 	}
+
+	return messages;
 }
