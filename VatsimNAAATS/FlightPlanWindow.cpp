@@ -358,6 +358,11 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		RenderATCRestrictModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 30 });
 	}
 
+	// Restrictions type sub-modal
+	if (RestrictionSubModalType > 0) {
+		RenderATCRestrictSubModal(dc, g, screen, { windowRect.left + 80, windowRect.top + 30 });
+	}
+
 	// Cleanup
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
@@ -1404,6 +1409,66 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	DeleteObject(lighterBrush);
 }
 
+void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
+{
+	// Create brushes
+	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
+	CBrush lighterBrush(WindowBorder.ToCOLORREF());
+
+	// Select title font
+	FontSelector::SelectNormalFont(16, dc);
+	dc->SetTextColor(Black.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Create restrictions sub window
+	CRect atcrWindow(topLeft.x, topLeft.y, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_ATCR);
+	dc->FillRect(atcrWindow, &darkerBrush);
+	dc->Draw3dRect(atcrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(atcrWindow, -1, -1);
+	dc->Draw3dRect(atcrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+
+	// Create titlebar
+	CRect titleRect(atcrWindow.left, atcrWindow.top, atcrWindow.left + WINSZ_FLTPLN_WIDTH_MDL, atcrWindow.top + WINSZ_TITLEBAR_HEIGHT);
+	dc->FillRect(titleRect, &lighterBrush);
+	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC/ " + restrictionSelections[RestrictionSubModalType] + " - " + copiedPlan->Callsign).c_str()));
+	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
+
+	// Select font
+	FontSelector::SelectNormalFont(15, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	
+	// TODO: Add per type of restrictions the different inputs
+
+	/*// Draw buttons (3 buttons)
+	int offsetX = restrictions.left;
+	for (int idx = BTN_ATCR_ADD; idx <= BTN_ATCR_OK; idx++) {
+		// Draw the button
+		CCommonRenders::RenderButton(dc, screen, { offsetX, restrictions.bottom + 5 }, 75, 30, &windowButtons.at(idx));
+
+		if (idx == BTN_ATCR_ADD) {
+			offsetX = content.right - 155;
+		}
+		else {
+			offsetX += 80;
+		}
+	}*/
+
+
+	// Create borders
+	dc->DrawEdge(atcrWindow, EDGE_SUNKEN, BF_RECT);
+	InflateRect(atcrWindow, 1, 1);
+	dc->Draw3dRect(atcrWindow, WindowBorder.ToCOLORREF(), WindowBorder.ToCOLORREF());
+	InflateRect(atcrWindow, 1, 1);
+	dc->DrawEdge(atcrWindow, EDGE_RAISED, BF_RECT);
+
+	// Clean up
+	DeleteObject(darkerBrush);
+	DeleteObject(lighterBrush);
+}
+
 bool CFlightPlanWindow::IsButtonPressed(int id) {
 	// If button pressed
 	if (id >= 200) { // dropdown
@@ -1818,6 +1883,12 @@ void CFlightPlanWindow::ButtonUnpress(int id) {
 	if (IsDropDown(id)) {
 		SetButtonState(id, CInputState::INACTIVE);
 	}
+}
+
+void CFlightPlanWindow::ButtonDoubleClick(int id)
+{
+	if (id >= SEL_ATCR_LCHG && id <= SEL_ATCR_INT)
+		RestrictionSubModalType = id;
 }
 
 void CFlightPlanWindow::SetButtonState(int id, CInputState state) {

@@ -40,6 +40,7 @@ class CFlightPlanWindow : public CBaseWindow
 		void RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
+		void RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft);
 		void MoveSubWindow(int id, POINT topLeft);
 
 		// Button clicks
@@ -47,6 +48,7 @@ class CFlightPlanWindow : public CBaseWindow
 		virtual void ButtonUp(int id, CRadarScreen* screen = nullptr);
 		virtual void ButtonPress(int id);
 		virtual void ButtonUnpress(int id);
+		virtual void ButtonDoubleClick(int id);
 		virtual void SetButtonState(int id, CInputState state);
 		void SetTextValue(CRadarScreen* screen, int id, string content);
 		CInputState GetInputState(int id);
@@ -67,6 +69,7 @@ class CFlightPlanWindow : public CBaseWindow
 		bool IsATCRestrictionsOpen = false;
 		bool IsTransferOpen = false;
 		bool IsOpen = false;
+		int RestrictionSubModalType = -1;
 
 		// Subwindow definitions
 		static const int SUBWIN_ATCR = 400;

@@ -94,7 +94,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	//test for getting flight_data
 	//CDataHandler::ApiGetFlightData("AAL578");
-	CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
+	//CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
 	
 	// Create device context
 	CDC dc;
@@ -967,6 +967,10 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 	// If it is a message
 	if (ObjectType == ACTV_MESSAGE) {
 		msgWindow->ButtonDoubleClick(this, atoi(sObjectId), fltPlnWindow);
+	}
+	// If it concerns the flight plan window
+	if (ObjectType == WIN_FLTPLN) {
+		fltPlnWindow->ButtonDoubleClick(atoi(sObjectId));
 	}
 }
 
