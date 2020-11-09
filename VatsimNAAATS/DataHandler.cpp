@@ -476,7 +476,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 			}
 			else
 			{
-				messages.push_back({});
+				continue;
 			}
 
 			messages.push_back({obj["id"],
