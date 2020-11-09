@@ -76,6 +76,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_COORD_CLOSE] = CWinButton(BTN_COORD_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COORD_SENDOK] = CWinButton(BTN_COORD_SENDOK, WIN_FLTPLN, "Send/OK", CInputState::INACTIVE);
 	windowButtons[BTN_HIST_CLOSE] = CWinButton(BTN_HIST_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_RESTRI_EDIT_CLOSE] = CWinButton(BTN_RESTRI_EDIT_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
+	windowButtons[BTN_RESTRI_EDIT_OK] = CWinButton(BTN_RESTRI_EDIT_OK, WIN_FLTPLN, "Ok", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -107,6 +109,20 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_RTE] = CTextInput(TXT_MAN_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RTE] = CTextInput(TXT_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_CPY_RTE] = CTextInput(TXT_CPY_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_CPY_RTE] = CTextInput(TXT_CPY_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_LCHG_LATLON] = CTextInput(TXT_RESTRI_LCHG_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_LCHG_TIME] = CTextInput(TXT_RESTRI_LCHG_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::INACTIVE);
+	textInputs[TXT_RESTRI_MCHG_LATLON] = CTextInput(TXT_RESTRI_MCHG_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_MCHG_TIME] = CTextInput(TXT_RESTRI_MCHG_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::INACTIVE);
+	textInputs[TXT_RESTRI_ATA_LATLON] = CTextInput(TXT_RESTRI_ATA_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_ATA_TIME] = CTextInput(TXT_RESTRI_ATA_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_ATB_LATLON] = CTextInput(TXT_RESTRI_ATB_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_ATB_TIME] = CTextInput(TXT_RESTRI_ATB_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_XAT_LATLON] = CTextInput(TXT_RESTRI_XAT_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_XAT_TIME] = CTextInput(TXT_RESTRI_XAT_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_INT_CALLSIGN] = CTextInput(TXT_RESTRI_INT_CALLSIGN, WIN_FLTPLN, "Callsign", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_INT_INTERVAL] = CTextInput(TXT_RESTRI_INT_INTERVAL, WIN_FLTPLN, "", "Interval", 0, CInputState::ACTIVE);
+
 
 	/// Dropdown defaults
 	map<string, bool> map;
@@ -144,6 +160,11 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_COORD_LFRRT] = CCheckBox(CHK_COORD_LFRRT, WIN_FLTPLN, "Brest", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_PLANT] = CCheckBox(CHK_COORD_PLANT, WIN_FLTPLN, "Planning", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_ENRT] = CCheckBox(CHK_COORD_ENRT, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_LCHG] = CCheckBox(CHK_RESTRI_LCHG, WIN_FLTPLN, "Use time", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_MCHG] = CCheckBox(CHK_RESTRI_MCHG, WIN_FLTPLN, "Use time", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_RERUTE_SPD] = CCheckBox(CHK_RESTRI_RERUTE_SPD, WIN_FLTPLN, "Speed", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_RERUTE_LVL] = CCheckBox(CHK_RESTRI_RERUTE_LVL, WIN_FLTPLN, "Level", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_RERUTE_RTE] = CCheckBox(CHK_RESTRI_RERUTE_RTE, WIN_FLTPLN, "Route", false, CInputState::INACTIVE);
 
 	// Scroll bars
 	scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, 0, 0, true);

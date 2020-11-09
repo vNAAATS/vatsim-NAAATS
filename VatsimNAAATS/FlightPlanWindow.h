@@ -114,6 +114,8 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int BTN_COORD_CLOSE = 38;
 		static const int BTN_COORD_SENDOK = 39;
 		static const int BTN_HIST_CLOSE = 40;
+		static const int BTN_RESTRI_EDIT_CLOSE = 41;
+		static const int BTN_RESTRI_EDIT_OK = 42;
 
 		// Dropdown definitions
 		static const int DRP_ATCR = 200;
@@ -149,6 +151,18 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int TXT_MAN_RTE = 126;
 		static const int TXT_RTE = 127;
 		static const int TXT_CPY_RTE = 128;
+		static const int TXT_RESTRI_LCHG_LATLON = 129;
+		static const int TXT_RESTRI_LCHG_TIME = 130;
+		static const int TXT_RESTRI_MCHG_LATLON = 131;
+		static const int TXT_RESTRI_MCHG_TIME = 132;
+		static const int TXT_RESTRI_ATA_LATLON = 133;
+		static const int TXT_RESTRI_ATA_TIME = 134;
+		static const int TXT_RESTRI_ATB_LATLON = 135;
+		static const int TXT_RESTRI_ATB_TIME = 136;
+		static const int TXT_RESTRI_XAT_LATLON = 137;
+		static const int TXT_RESTRI_XAT_TIME = 138;
+		static const int TXT_RESTRI_INT_CALLSIGN = 139;
+		static const int TXT_RESTRI_INT_INTERVAL = 140;
 
 		// Checkbox definitions
 		static const int CHK_CLRC_ORCA = 300;
@@ -180,6 +194,11 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int CHK_COORD_LFRRT = 369;
 		static const int CHK_COORD_PLANT = 370;
 		static const int CHK_COORD_ENRT = 371;
+		static const int CHK_RESTRI_LCHG = 372;
+		static const int CHK_RESTRI_MCHG = 373;
+		static const int CHK_RESTRI_RERUTE_SPD = 374;
+		static const int CHK_RESTRI_RERUTE_LVL = 375;
+		static const int CHK_RESTRI_RERUTE_RTE = 376;
 
 		// Selection definitions
 		static const int SEL_ATCR_LCHG = 400;
