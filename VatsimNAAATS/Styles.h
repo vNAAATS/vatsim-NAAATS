@@ -12,6 +12,7 @@ namespace Colours {
 	const Color Black(0, 0, 0);
 	const Color Grey(237, 237, 237);
 	const Color TargetOrange(255, 128, 0);
+	const Color TargetBlue(130, 175, 192);
 	const Color LightGreen(81, 188, 161);
 	const Color ScreenBlue(59, 110, 179);
 	const Color LightBackground(165, 199, 249);

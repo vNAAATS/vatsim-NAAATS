@@ -150,7 +150,7 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 				// If it's a waypoint we need to search the sector file for the reference
 				if (isAllAlpha) {
 					// Get sector file
-					data->Screen->GetPlugIn()->SelectScreenSectorfile(data->Screen);
+					data->Screen->GetPlugIn()->SelectActiveSectorfile();
 					CSectorElement fix; // Fixes element
 
 					// Select waypoint

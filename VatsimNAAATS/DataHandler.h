@@ -37,11 +37,11 @@ class CDataHandler
 	static CAircraftFlightPlan* ApiGetFlightData(string callsign);
 
 	//get messages for controller for an a/c (that aren't actioned)
-	static vector<CMessage> ApiGetMessages(string callsign, string controller);
+	static vector<CMessage> ApiGetMessagesForController(string callsign, string controller);
 
-	//get ALL messages from all a/c (regardless of actioned)
-	static CMessage* ApiGetAllMessages(string controller);
-
+	//get messages of an a/c (that ARE actioned)
+	static vector<CMessage> ApiGetMessages(string callsign);
+	
 	//get ALL flight_data where logged_onto is equal to the controller's callsign
 	static CMessage* ApiGetAllFlightData(string controller);
 

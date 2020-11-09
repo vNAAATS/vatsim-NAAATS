@@ -6,6 +6,8 @@
 #include <json.hpp>
 //#include "ApiSettings.h"
 #include <WinInet.h>
+
+#include "ApiSettings.h"
 #include "curl/curl.h"
 #pragma comment(lib,"WinInet.Lib")
 
@@ -248,10 +250,10 @@ size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb,
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
-/*
+
 CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 {
-	string result = "[{'id':90,'sent_by':'AAL578','sent_to':'CZQX_FSS','contents_raw':'AAL578:LOG_ON:CZQX_FSS','type':'LOG_ON','is_actioned':0,'to_domestic':0,'created_at':'2020-11-06 14:10:11'},{'id':92,'sent_by':'AAL578','sent_to':'FDSFGDS','contents_raw':'AAL578:LOG_ON:FDSFGDS','type':'LOG_ON','is_actioned':0,'to_domestic':0,'created_at':'2020-11-06 14:21:17'},{'id':94,'sent_by':'AAL578','sent_to':'czqx_fss','contents_raw':'AAL578:CLR_REQ:ARR:KJAX:DWQEWQE:ENTRY:WEWE:EST:1234Z:TRACK:NULL:F234:M82:END_OF_MESSAGE','type':'CLEARANCE_REQ','is_actioned':0,'to_domestic':0,'created_at':'2020-11-07 05:56:03'}]";
+	string result = "";
 	CURL* curl;
 	CURLcode result_code;
 
@@ -260,29 +262,37 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 	curl = curl_easy_init();
 	if (curl)
 	{
-		//stringstream url;
-		//url << ApiSettings::apiUrl << "/flight_data/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign;
-		//curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
-		//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
-		//curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
-		//curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+		stringstream url;
+		url << ApiSettings::apiUrl << "/flight_data/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign;
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 
-		//result_code = curl_easy_perform(curl);
+		result_code = curl_easy_perform(curl);
 		
 		curl_easy_cleanup(curl);
 
 		if (result.length() <= 0)
 		{
-			auto* flight_plan = new CAircraftFlightPlan;
-			return flight_plan;
-		}
-		else
+			return {};
+		} else if (result == "-1")
 		{
-			auto jsonArray = json::parse(result);
+			return {};
+		} else
+		{
+			json jsonArray;
+			try
+			{
+				jsonArray = json::parse(result);
+			} catch(nlohmann::detail::parse_error& ex)
+			{
+				return {};
+			}
+			
 			if(jsonArray.size() > 1) //if >1 row was returned (shouldn't be any dupes!)
 			{
-				auto* flight_plan = new CAircraftFlightPlan;
-				return flight_plan;
+				return {};
 			}
 
 			auto row = jsonArray[0];
@@ -365,10 +375,10 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 		}
 	}
 }
-*/ 
-vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller)
+
+vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, string controller)
 {
-	string result = "[]";
+	string result = "";
 	CURL* curl;
 	CURLcode result_code;
 
@@ -394,6 +404,10 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 
 		curl_easy_cleanup(curl);
 
+		if(result == "-1")
+		{
+			return {};
+		}
 	}
 	
 	json j;
@@ -404,12 +418,17 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 	}
 	catch (nlohmann::detail::parse_error& ex)
 	{
-		std::cerr << "parse error at byte " << ex.byte << std::endl;
+		return {};
+	}
+
+	if(j.is_null())
+	{
+		return {};
 	}
 
 	vector<CMessage> messages;
 	for (auto obj : j) {
-		if (obj["sent_to"] == controller && obj["is_actioned"] == 0) {
+		if (obj["sent_to"].get<std::string>() == controller && obj["is_actioned"] == 0) {
 			string type_string = obj["type"];
 
 			CMessageType type;
@@ -478,13 +497,148 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 			{
 				continue;
 			}
-
 			messages.push_back({obj["id"],
 								obj["sent_to"].get<std::string>(),
-								obj["sent_from"].get<std::string>(),
+								obj["sent_by"].get<std::string>(),
 								obj["contents_raw"].get<std::string>(),
 								obj["created_at"].get<std::string>(),
 								type});
+
+		}
+	}
+
+	return messages;
+}
+
+vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
+{
+	string result = "";
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+
+	if (curl)
+	{
+		stringstream url;
+		url << ApiSettings::apiUrl << "/messages/get.php?apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&action=from";
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+		result_code = curl_easy_perform(curl);
+
+		if (result_code != CURLE_OK) {
+			curl_easy_cleanup(curl);
+			return {};
+		}
+
+		curl_easy_cleanup(curl);
+
+		if (result == "-1")
+		{
+			return {};
+		}
+	}
+
+	json j;
+	try
+	{
+		j = json::parse(result);
+
+	}
+	catch (nlohmann::detail::parse_error& ex)
+	{
+		return {};
+	}
+
+	if (j.is_null())
+	{
+		return {};
+	}
+
+	vector<CMessage> messages;
+	for (auto obj : j) {
+		if (static_cast<int>(obj["is_actioned"]) == 1) {
+			OutputDebugString("in if! ");
+			
+			string type_string = obj["type"];
+
+			CMessageType type;
+
+			if (type_string == "LOG_ON")
+			{
+				type = CMessageType::LOG_ON;
+			}
+			else if (type_string == "LOG_ON_CONFIRM")
+			{
+				type = CMessageType::LOG_ON_CONFIRM;
+			}
+			else if (type_string == "LOG_ON_REJECT")
+			{
+				type = CMessageType::LOG_ON_REJECT;
+			}
+			else if (type_string == "TRANSFER")
+			{
+				type = CMessageType::TRANSFER;
+			}
+			else if (type_string == "TRANSFER_ACCEPT")
+			{
+				type = CMessageType::TRANSFER_ACCEPT;
+			}
+			else if (type_string == "TRANSFER_REJECT")
+			{
+				type = CMessageType::TRANSFER_REJECT;
+			}
+			else if (type_string == "CLEARANCE_REQ")
+			{
+				type = CMessageType::CLEARANCE_REQ;
+			}
+			else if (type_string == "CLEARANCE_ISSUE")
+			{
+				type = CMessageType::CLEARANCE_ISSUE;
+			}
+			else if (type_string == "CLEARANCE_REJECT")
+			{
+				type = CMessageType::CLEARANCE_REJECT;
+			}
+			else if (type_string == "REVISION_REQ")
+			{
+				type = CMessageType::REVISION_REQ;
+			}
+			else if (type_string == "REVISION_ISSUE")
+			{
+				type = CMessageType::REVISION_ISSUE;
+			}
+			else if (type_string == "REVISION_REJECT")
+			{
+				type = CMessageType::REVISION_REJECT;
+			}
+			else if (type_string == "WILCO")
+			{
+				type = CMessageType::WILCO;
+			}
+			else if (type_string == "ROGER")
+			{
+				type = CMessageType::ROGER;
+			}
+			else if (type_string == "UNABLE")
+			{
+				type = CMessageType::UNABLE;
+			}
+			else
+			{
+				continue;
+			}
+			messages.push_back({ obj["id"],
+								obj["sent_to"].get<std::string>(),
+								obj["sent_by"].get<std::string>(),
+								obj["contents_raw"].get<std::string>(),
+								obj["created_at"].get<std::string>(),
+								type });
 
 		}
 	}

@@ -203,14 +203,24 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 	// Get the aircraft flight plan
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
 
+	// Clear statuses first up
+	statuses->clear();
+
 	// Radar target
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
 	// Statuses for query aircraft
 	vector<CAircraftStatus> acStatuses = GetStatusesAlongRoutePoints(screen, callsign, target.GetGS(), target.GetPosition().GetPressureAltitude());
 
+	vector<string> loopAcs;
+
 	// Check statuses against on screen aircraft
 	for (auto i = aircraftOnScreen->begin(); i != aircraftOnScreen->end(); i++) {
+		// Of course, skip the instance of the same aircraft
+		if (i->first == callsign) {
+			continue;
+		}
+
 		// Sep status vector
 		vector<CSepStatus> sepStatuses;
 
@@ -238,8 +248,10 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 		}
 
 		// Push back the vector if a conflict
-		if (addToVector)
+		if (addToVector) {
+			loopAcs.push_back(i->first);
 			statuses->push_back(sepStatuses);
+		}
 	}
 
 	return 1;

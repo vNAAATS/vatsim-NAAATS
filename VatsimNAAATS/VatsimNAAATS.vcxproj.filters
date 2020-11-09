@@ -184,6 +184,9 @@
     <ClInclude Include="ApiSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ApiSettings.example.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VatsimNAAATS.rc">

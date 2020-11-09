@@ -23,6 +23,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 	// Define brushes and a container for the target
 	SolidBrush orangeBrush(TargetOrange);
+	SolidBrush blueBrush(TargetBlue);
 	SolidBrush yellowBrush(WarningYellow);
 	SolidBrush redBrush(CriticalRed);
 	SolidBrush whiteBrush(TextWhite);
@@ -64,55 +65,81 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Anti aliasing
 	g->SetSmoothingMode(SmoothingModeAntiAlias);
 
-	// Rotate the graphics object and set the middle to the aircraft position
-	g->RotateTransform(target->GetTrackHeading());
-	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
+	// Check jurisdiction
+	if (!fp.GetTrackingControllerIsMe()) {
+		// Set middle
+		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 
-	// This is the icon
-	Point points[19] = {
-		Point(0,-8),
-		Point(-1,-7),
-		Point(-1,-2),
-		Point(-8,3),
-		Point(-8,4),
-		Point(-1,2),
-		Point(-1,7),
-		Point(-4,9),
-		Point(-4,10),
-		Point(0,9),
-		Point(4,10),
-		Point(4,9),
-		Point(1,7),
-		Point(1,2),
-		Point(8,4),
-		Point(8,3),
-		Point(1,-2),
-		Point(1,-7),
-		Point(0,-8)
-	};
+		// Pen
+		Pen pen(&blueBrush, 1);
 
-	// Fill the polygon with the appropriate colour and finish
-	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
-		// Critical conflict status, so flash white and red every second
-		if (twoSecT >= 1.1) {
-			g->FillPolygon(&whiteBrush, points, 19);
+		// Make diamond
+		Point points[4] = {
+			Point(-6, 0),
+			Point(0, 6),
+			Point(6, 0),
+			Point(0, -6)
+		};
+
+		g->DrawPolygon(&pen, points, 4);
+		g->EndContainer(gContainer);
+
+		DeleteObject(&points);
+	}
+	else {
+		// Rotate the graphics object and set the middle to the aircraft position
+		g->RotateTransform(target->GetTrackHeading());
+		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
+
+		// This is the icon
+		Point points[19] = {
+			Point(0,-8),
+			Point(-1,-7),
+			Point(-1,-2),
+			Point(-8,3),
+			Point(-8,4),
+			Point(-1,2),
+			Point(-1,7),
+			Point(-4,9),
+			Point(-4,10),
+			Point(0,9),
+			Point(4,10),
+			Point(4,9),
+			Point(1,7),
+			Point(1,2),
+			Point(8,4),
+			Point(8,3),
+			Point(1,-2),
+			Point(1,-7),
+			Point(0,-8)
+		};
+
+		// Fill the polygon with the appropriate colour and finish
+		if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+			// Critical conflict status, so flash white and red every second
+			if (twoSecT >= 1.1) {
+				g->FillPolygon(&whiteBrush, points, 19);
+				g->EndContainer(gContainer);
+			}
+			else {
+				g->FillPolygon(&redBrush, points, 19);
+				g->EndContainer(gContainer);
+			}
+		}
+		else if (status->ConflictStatus == CConflictStatus::WARNING) {
+			// Warning status, turn target yellow
+			g->FillPolygon(&yellowBrush, points, 19);
 			g->EndContainer(gContainer);
 		}
 		else {
-			g->FillPolygon(&redBrush, points, 19);
+			// No conflict, draw orange
+			g->FillPolygon(&orangeBrush, points, 19);
 			g->EndContainer(gContainer);
 		}
+
+		DeleteObject(&points);
 	}
-	else if (status->ConflictStatus == CConflictStatus::WARNING) {
-		// Warning status, turn target yellow
-		g->FillPolygon(&yellowBrush, points, 19);
-		g->EndContainer(gContainer);
-	}
-	else {
-		// No conflict, draw orange
-		g->FillPolygon(&orangeBrush, points, 19);
-		g->EndContainer(gContainer);
-	}
+	
 
 	// Check if leader lines are selected
 	if (ptl) {
@@ -204,7 +231,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&yellowBrush);
 	DeleteObject(&redBrush);
 	DeleteObject(&whiteBrush);
-	DeleteObject(&points);
+	DeleteObject(&blueBrush);
 	DeleteObject(&gContainer);
 	DeleteObject(&acPoint);
 }
@@ -267,9 +294,23 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 			textColour = CriticalRed.ToCOLORREF();
 		}
 	}
+	else if (status->ConflictStatus == CConflictStatus::WARNING) {
+		// Check jurisdiction
+		if (!acFP.GetTrackingControllerIsMe()) {
+			textColour = WarningYellow.ToCOLORREF();
+		}
+	}
 	else {
-		// No conflict or only warning, tag orange
-		textColour = TargetOrange.ToCOLORREF();
+		// Check jurisdiction
+		if (!acFP.GetTrackingControllerIsMe()) {
+			// Callsign blue, no critical conflict
+			textColour = TargetBlue.ToCOLORREF();
+		}
+		else {
+			// No conflict or only warning, tag orange
+			textColour = TargetOrange.ToCOLORREF();
+		}
+		
 	}
 
 	// Pick font for callsign
@@ -291,6 +332,10 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
 		// Critical conflict status, so turn tag red
 		textColour = CriticalRed.ToCOLORREF();
+	}
+	// Check jurisdiction
+	if (!acFP.GetTrackingControllerIsMe()) {
+		textColour = TargetBlue.ToCOLORREF();
 	}
 	FontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(textColour);
