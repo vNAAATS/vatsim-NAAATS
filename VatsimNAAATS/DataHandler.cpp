@@ -375,6 +375,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 	curl = curl_easy_init();
+	
 	if(curl)
 	{
 		stringstream url;
@@ -392,6 +393,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign, string controller
 		}
 
 		curl_easy_cleanup(curl);
+
 	}
 	
 	json j;
