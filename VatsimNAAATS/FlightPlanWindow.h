@@ -14,7 +14,7 @@ using namespace EuroScopePlugIn;
 class CFlightPlanWindow : public CBaseWindow
 {
 	private: 
-		CAircraftFlightPlan* copiedPlan;
+		CAircraftFlightPlan copiedPlan;
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
 		vector<vector<CSepStatus>> currentProbeStatuses;

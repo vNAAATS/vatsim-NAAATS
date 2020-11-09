@@ -185,6 +185,13 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()));
 		OngoingMessages[msg->Id] = msg;
 	}
+	else if (msg->Type == CMessageType::TRANSFER_ACCEPT ||
+		msg->Type == CMessageType::TRANSFER_ACCEPT ||
+		msg->Type == CMessageType::WILCO ||
+		msg->Type == CMessageType::UNABLE ||
+		msg->Type == CMessageType::ROGER) {
+		ActiveMessages.erase(id);
+	}
 	else if (msg->Type == CMessageType::CLEARANCE_REQ) {
 		/// Parse the message
 		// Split string
@@ -216,11 +223,13 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		fltPlnWin->primedPlan->Track = track;
 		fltPlnWin->primedPlan->FlightLevel = level;
 		fltPlnWin->primedPlan->Dest = arrival;
+		fltPlnWin->primedPlan->State = "UA";
 
 		// Instantiate flight plan variables
 		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_SPD, speed);
 		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_LEVEL, level);
 		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_DEST, arrival);
+		fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_STATE, "UA");
 		if (track != "RR") {
 			fltPlnWin->SetTextValue(screen, CFlightPlanWindow::TXT_TCK, track);
 		}
@@ -229,6 +238,11 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		}
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()));
 		OngoingMessages[msg->Id] = msg;
+	}
+	else if (msg->Type == CMessageType::REVISION_REQ) {
+		// Split string
+		vector<string> tokens;
+		CUtils::StringSplit(msg->MessageRaw, ':', &tokens);
 	}
 }
 

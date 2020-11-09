@@ -12,12 +12,12 @@ void COverlays::ShowCurrentOverlay(CDC* dc, Graphics* g, CRadarScreen* screen) {
 void COverlays::ShowHideGridReference(CRadarScreen* screen, bool show) {
 	if (show) { // If to be shown
 		// Get sector file and element
-		screen->GetPlugIn()->SelectScreenSectorfile(screen);
+		screen->GetPlugIn()->SelectActiveSectorfile();
 		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
 		string gridName = string(grid.GetName());
 		
 		// Find the grid
-		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
+		while (gridName != "CZQO Landmark Positional Grid Reference" || gridName != "EGGX Landmark Positional Grid Reference") {
 			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
 			gridName = string(grid.GetName());
 		}
@@ -25,7 +25,7 @@ void COverlays::ShowHideGridReference(CRadarScreen* screen, bool show) {
 		// Find the grid number freetext
 		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos || freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
 		}
@@ -44,12 +44,12 @@ void COverlays::ShowHideGridReference(CRadarScreen* screen, bool show) {
 	}
 	else { // Not showing it
 		// Get sector file and element
-		screen->GetPlugIn()->SelectScreenSectorfile(screen);
+		screen->GetPlugIn()->SelectActiveSectorfile();
 		CSectorElement grid(screen->GetPlugIn()->SectorFileElementSelectFirst(13));
 		string gridName = string(grid.GetName());
 
 		// Find the grid
-		while (gridName != "CZQO Positional Grid Reference" && gridName != "EGGX Landmark Positional Grid Reference") {
+		while (gridName != "CZQO Landmark Positional Grid Reference" || gridName != "EGGX Landmark Positional Grid Reference") {
 			grid = screen->GetPlugIn()->SectorFileElementSelectNext(grid, 13);
 			gridName = string(grid.GetName());
 		}
@@ -57,7 +57,7 @@ void COverlays::ShowHideGridReference(CRadarScreen* screen, bool show) {
 		// Find the grid number freetext
 		CSectorElement freetext(screen->GetPlugIn()->SectorFileElementSelectFirst(14));
 		string freetextName = string(freetext.GetName());
-		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos && freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
+		while (freetextName.find("CZQO Grid Reference Numbers.") == string::npos || freetextName.find("EGGX Grid Reference Numbers.") == string::npos) {
 			freetext = screen->GetPlugIn()->SectorFileElementSelectNext(freetext, 14);
 			freetextName = string(freetext.GetName());
 		}

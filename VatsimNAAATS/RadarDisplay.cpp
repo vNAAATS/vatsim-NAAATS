@@ -20,7 +20,7 @@ using namespace EuroScopePlugIn;
 
 CRadarDisplay::CRadarDisplay()
 {
-	COverlays::ShowHideGridReference(this, false);
+	//COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
 	rclList = new CRCLList({ CUtils::RCLX, CUtils::RCLY }); // TODO: settings save
@@ -198,8 +198,13 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					}
 				}
 
+				if (CDataHandler::GetFlightData(idx->first)->IsValid) {
+					CDataHandler::DeleteFlightData(idx->first);
+				}
+
 				// Erase flight plan window
 				menuBar->SetButtonState(menuBar->BTN_FLIGHTPLAN, CInputState::DISABLED);
+				fltPlnWindow->IsOpen = false;
 
 				// Finally erase the on screen reference
 				idx = aircraftOnScreen.erase(idx);
@@ -539,8 +544,12 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	else { // Not relevant
 		// Check if they have a flight plan data object
 		if (CDataHandler::GetFlightData(RadarTarget.GetCallsign())->IsValid) {
+			// For now just disable the flight plan window/
+			//menuBar->SetButtonState(menuBar->BTN_FLIGHTPLAN, CInputState::DISABLED);
+			//fltPlnWindow->IsOpen = false;
+
 			// Delete the flight data object
-			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
+			//CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
 		}
 	}
 }
