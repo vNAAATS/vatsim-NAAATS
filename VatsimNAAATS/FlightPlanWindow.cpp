@@ -76,8 +76,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_COORD_CLOSE] = CWinButton(BTN_COORD_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_COORD_SENDOK] = CWinButton(BTN_COORD_SENDOK, WIN_FLTPLN, "Send/OK", CInputState::INACTIVE);
 	windowButtons[BTN_HIST_CLOSE] = CWinButton(BTN_HIST_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
-	windowButtons[BTN_RESTRI_EDIT_CLOSE] = CWinButton(BTN_RESTRI_EDIT_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
-	windowButtons[BTN_RESTRI_EDIT_OK] = CWinButton(BTN_RESTRI_EDIT_OK, WIN_FLTPLN, "Ok", CInputState::INACTIVE);
+	windowButtons[BTN_RESTRI_EDIT_CLOSE] = CWinButton(BTN_RESTRI_EDIT_CLOSE, WIN_FLTPLN, "Cancel", CInputState::INACTIVE);
+	windowButtons[BTN_RESTRI_EDIT_OK] = CWinButton(BTN_RESTRI_EDIT_OK, WIN_FLTPLN, "OK", CInputState::INACTIVE);
 
 	// Text defaults
 	textInputs[TXT_ACID] = CTextInput(TXT_ACID, WIN_FLTPLN, "ACID", "", 70, CInputState::INACTIVE);
@@ -111,17 +111,17 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_CPY_RTE] = CTextInput(TXT_CPY_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_CPY_RTE] = CTextInput(TXT_CPY_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RESTRI_LCHG_LATLON] = CTextInput(TXT_RESTRI_LCHG_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
-	textInputs[TXT_RESTRI_LCHG_TIME] = CTextInput(TXT_RESTRI_LCHG_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::INACTIVE);
+	textInputs[TXT_RESTRI_LCHG_TIME] = CTextInput(TXT_RESTRI_LCHG_TIME, WIN_FLTPLN, "Time", "", 0, CInputState::DISABLED);
 	textInputs[TXT_RESTRI_MCHG_LATLON] = CTextInput(TXT_RESTRI_MCHG_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
-	textInputs[TXT_RESTRI_MCHG_TIME] = CTextInput(TXT_RESTRI_MCHG_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::INACTIVE);
+	textInputs[TXT_RESTRI_MCHG_TIME] = CTextInput(TXT_RESTRI_MCHG_TIME, WIN_FLTPLN, "Time", "", 0, CInputState::DISABLED);
 	textInputs[TXT_RESTRI_ATA_LATLON] = CTextInput(TXT_RESTRI_ATA_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
-	textInputs[TXT_RESTRI_ATA_TIME] = CTextInput(TXT_RESTRI_ATA_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_ATA_TIME] = CTextInput(TXT_RESTRI_ATA_TIME, WIN_FLTPLN, "Time", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RESTRI_ATB_LATLON] = CTextInput(TXT_RESTRI_ATB_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
-	textInputs[TXT_RESTRI_ATB_TIME] = CTextInput(TXT_RESTRI_ATB_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_ATB_TIME] = CTextInput(TXT_RESTRI_ATB_TIME, WIN_FLTPLN, "Time", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RESTRI_XAT_LATLON] = CTextInput(TXT_RESTRI_XAT_LATLON, WIN_FLTPLN, "Lat/Lon", "", 0, CInputState::ACTIVE);
-	textInputs[TXT_RESTRI_XAT_TIME] = CTextInput(TXT_RESTRI_XAT_TIME, WIN_FLTPLN, "", "Time", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_XAT_TIME] = CTextInput(TXT_RESTRI_XAT_TIME, WIN_FLTPLN, "Time", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RESTRI_INT_CALLSIGN] = CTextInput(TXT_RESTRI_INT_CALLSIGN, WIN_FLTPLN, "Callsign", "", 0, CInputState::ACTIVE);
-	textInputs[TXT_RESTRI_INT_INTERVAL] = CTextInput(TXT_RESTRI_INT_INTERVAL, WIN_FLTPLN, "", "Interval", 0, CInputState::ACTIVE);
+	textInputs[TXT_RESTRI_INT_INTERVAL] = CTextInput(TXT_RESTRI_INT_INTERVAL, WIN_FLTPLN, "Interval", "", 0, CInputState::ACTIVE);
 
 
 	/// Dropdown defaults
@@ -160,11 +160,11 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_COORD_LFRRT] = CCheckBox(CHK_COORD_LFRRT, WIN_FLTPLN, "Brest", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_PLANT] = CCheckBox(CHK_COORD_PLANT, WIN_FLTPLN, "Planning", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_ENRT] = CCheckBox(CHK_COORD_ENRT, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_LCHG] = CCheckBox(CHK_RESTRI_LCHG, WIN_FLTPLN, "Use time", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_MCHG] = CCheckBox(CHK_RESTRI_MCHG, WIN_FLTPLN, "Use time", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_RERUTE_SPD] = CCheckBox(CHK_RESTRI_RERUTE_SPD, WIN_FLTPLN, "Speed", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_RERUTE_LVL] = CCheckBox(CHK_RESTRI_RERUTE_LVL, WIN_FLTPLN, "Level", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_RERUTE_RTE] = CCheckBox(CHK_RESTRI_RERUTE_RTE, WIN_FLTPLN, "Route", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_LCHG] = CCheckBox(CHK_RESTRI_LCHG, WIN_FLTPLN, "Time?", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_MCHG] = CCheckBox(CHK_RESTRI_MCHG, WIN_FLTPLN, "Time?", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_UNABLE_SPD] = CCheckBox(CHK_RESTRI_UNABLE_SPD, WIN_FLTPLN, "Speed", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_UNABLE_LVL] = CCheckBox(CHK_RESTRI_UNABLE_LVL, WIN_FLTPLN, "Level", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_UNABLE_RTE] = CCheckBox(CHK_RESTRI_UNABLE_RTE, WIN_FLTPLN, "Route", false, CInputState::INACTIVE);
 
 	// Scroll bars
 	scrollBars[SCRL_DATA] = CWinScrollBar(SCRL_DATA, WIN_FLTPLN, 0, 0, true);
@@ -197,6 +197,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
+
 
 	// Get window size
 	int size = WINSZ_FLTPLN_HEIGHT_INIT;
@@ -1473,7 +1474,7 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	dc->SetTextAlign(TA_CENTER);
 
 	// Create restrictions sub window
-	CRect atcrWindow(topLeft.x, topLeft.y, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_ATCR);
+	CRect atcrWindow(topLeft.x, topLeft.y, topLeft.x + WINSZ_FLTPLN_WIDTH_MDL, topLeft.y + WINSZ_FLTPLN_HEIGHT_ATCR/2);
 	dc->FillRect(atcrWindow, &darkerBrush);
 	dc->Draw3dRect(atcrWindow, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(atcrWindow, -1, -1);
@@ -1491,23 +1492,101 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
+	int offsetX = atcrWindow.left + 5;
+	int offsetYTopRow = titleRect.bottom + 5;
+	int offsetYBottomRow = offsetYTopRow + 20;
+
+	dc->TextOutA(offsetX, offsetYBottomRow + 2, restrictionSelections[RestrictionSubModalType].c_str());
+
+	offsetX += dc->GetTextExtent(restrictionSelections[RestrictionSubModalType].c_str()).cx + 5;
 	
-	// TODO: Add per type of restrictions the different inputs
+	if (RestrictionSubModalType == SEL_ATCR_LCHG || RestrictionSubModalType == SEL_ATCR_MCHG) {
+		int elements[3] = { TXT_RESTRI_LCHG_LATLON, CHK_RESTRI_LCHG, TXT_RESTRI_LCHG_TIME };
 
-	/*// Draw buttons (3 buttons)
-	int offsetX = restrictions.left;
-	for (int idx = BTN_ATCR_ADD; idx <= BTN_ATCR_OK; idx++) {
+		if (RestrictionSubModalType == SEL_ATCR_MCHG) {
+			elements[0] = TXT_RESTRI_MCHG_LATLON;
+			elements[1] = CHK_RESTRI_MCHG;
+			elements[2] = TXT_RESTRI_MCHG_TIME;
+		}
+
+		for (int k = 0; k < 3; k++) {
+			if (k == 0 || k == 2) {
+				int InputWidth = k == 0 ? 70 : 40;
+				CCommonRenders::RenderTextInput(dc, screen, { offsetX, offsetYBottomRow }, InputWidth, 20, &textInputs[elements[k]]);
+
+				dc->TextOutA(offsetX, offsetYTopRow, textInputs[elements[k]].Label.c_str());
+				offsetX += InputWidth + 5 + 20;
+			}
+
+			if (k == 1) {
+				CRect r = CCommonRenders::RenderCheckBox(dc, g, screen, { offsetX + 10, offsetYBottomRow }, 20, &checkBoxes[elements[k]]);
+
+				dc->TextOutA(offsetX, offsetYTopRow, checkBoxes[elements[k]].Label.c_str());
+				offsetX += r.Width() + 10 + 20;
+			}
+
+		}
+	}
+	if (RestrictionSubModalType == SEL_ATCR_UNABLE) {
+		for (int k = CHK_RESTRI_UNABLE_SPD; k <= CHK_RESTRI_UNABLE_RTE; k++) {
+			CRect r = CCommonRenders::RenderCheckBox(dc, g, screen, { offsetX + 10, offsetYBottomRow }, 20, &checkBoxes[k]);
+			
+			dc->TextOutA(offsetX, offsetYTopRow, checkBoxes[k].Label.c_str());
+			offsetX += r.Width() + 10 + 20;
+		}
+	}
+	if (RestrictionSubModalType == SEL_ATCR_INT) {
+		int InputWidth = 70;
+		CCommonRenders::RenderTextInput(dc, screen, { offsetX, offsetYBottomRow }, InputWidth, 20, &textInputs[TXT_RESTRI_INT_CALLSIGN]);
+
+		dc->TextOutA(offsetX, offsetYTopRow, textInputs[TXT_RESTRI_INT_CALLSIGN].Label.c_str());
+		offsetX += InputWidth + 10;
+
+		dc->TextOutA(offsetX, offsetYBottomRow+3, "+");
+
+		offsetX += 15;
+
+		InputWidth = 40;
+		CCommonRenders::RenderTextInput(dc, screen, { offsetX, offsetYBottomRow }, InputWidth, 20, &textInputs[TXT_RESTRI_INT_INTERVAL]);
+
+		dc->TextOutA(offsetX, offsetYTopRow, textInputs[TXT_RESTRI_INT_INTERVAL].Label.c_str());
+	}
+	if (RestrictionSubModalType == SEL_ATCR_ATA || RestrictionSubModalType == SEL_ATCR_ATB || RestrictionSubModalType == SEL_ATCR_XAT) {
+		int firstElement = TXT_RESTRI_ATA_LATLON;
+		int lastElement = TXT_RESTRI_ATA_TIME;
+
+		if (RestrictionSubModalType == SEL_ATCR_ATB) {
+			firstElement = TXT_RESTRI_ATB_LATLON;
+			lastElement = TXT_RESTRI_ATB_TIME;
+		}
+
+		if (RestrictionSubModalType == SEL_ATCR_XAT) {
+			firstElement = TXT_RESTRI_XAT_LATLON;
+			lastElement = TXT_RESTRI_XAT_TIME;
+		}
+
+		for (int k = firstElement; k <= lastElement; k++) {
+			int InputWidth = k == firstElement ? 70 : 40;
+			CCommonRenders::RenderTextInput(dc, screen, {offsetX, offsetYBottomRow }, InputWidth, 20, &textInputs[k]);
+
+			dc->TextOutA(offsetX, offsetYTopRow, textInputs[k].Label.c_str());
+			offsetX += InputWidth + 5 + 20;
+		}
+	}
+
+	// Draw buttons
+	offsetX = atcrWindow.left + 5;
+	for (int idx = BTN_RESTRI_EDIT_OK; idx >= BTN_RESTRI_EDIT_CLOSE; idx--) {
 		// Draw the button
-		CCommonRenders::RenderButton(dc, screen, { offsetX, restrictions.bottom + 5 }, 75, 30, &windowButtons.at(idx));
+		CCommonRenders::RenderButton(dc, screen, { offsetX, atcrWindow.bottom - 35 }, 75, 30, &windowButtons.at(idx));
+		offsetX += 80;
+	}
 
-		if (idx == BTN_ATCR_ADD) {
-			offsetX = content.right - 155;
-		}
-		else {
-			offsetX += 80;
-		}
-	}*/
-
+	// Buttons Panel
+	CRect ButtonsPanel(atcrWindow.left, atcrWindow.bottom - 45, atcrWindow.right, atcrWindow.bottom);
+	dc->Draw3dRect(ButtonsPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
+	InflateRect(ButtonsPanel, -1, -1);
+	dc->Draw3dRect(ButtonsPanel, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 
 	// Create borders
 	dc->DrawEdge(atcrWindow, EDGE_SUNKEN, BF_RECT);
@@ -2013,7 +2092,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				SetButtonState(BTN_XCHANGE_REJECT, CInputState::DISABLED);
 			}
 			else if (primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
-				IsData = false;
+				IsData = true;
 				primedPlan->Track = "";
 				primedPlan->RouteRaw.clear();
 				primedPlan->Route.clear();
@@ -2042,7 +2121,21 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_RESTRI_EDIT_CLOSE) {
 			RestrictionSubModalType = -1;
-			// Todo: cleanup all the data in all fields
+			// TODO: Maybe clean up the values here on cancel
+		}
+
+		if (id == BTN_ATCR_ADD) {
+			this->ButtonDoubleClick(selectedRestriction);
+		}
+
+		if (id == BTN_RESTRI_EDIT_OK) {
+			// 
+			// Handle new restrictions here, use RestrictionSubModalType to determine what types of restricitions
+			//
+
+
+			// One done handling, close the modal
+			RestrictionSubModalType = -1;
 		}
 	}
 	
@@ -2075,7 +2168,7 @@ void CFlightPlanWindow::ButtonPress(int id) {
 	// Check if checkbox
 	if (id >= 300) {
 		if (checkBoxes.find(id) != checkBoxes.end()) {
-			checkBoxes.at(id).IsChecked = checkBoxes.at(id).IsChecked ? false : true;
+			checkBoxes.at(id).IsChecked = !checkBoxes.at(id).IsChecked;
 
 			if (id == CHK_CLRC_CPDLC) {
 				SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
@@ -2112,6 +2205,24 @@ void CFlightPlanWindow::ButtonPress(int id) {
 				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+			} else if (id == CHK_RESTRI_LCHG) {
+				if (checkBoxes.at(CHK_RESTRI_LCHG).IsChecked) {
+					textInputs[TXT_RESTRI_LCHG_LATLON].State = CInputState::DISABLED;
+					textInputs[TXT_RESTRI_LCHG_TIME].State = CInputState::ACTIVE;
+				}
+				else {
+					textInputs[TXT_RESTRI_LCHG_LATLON].State = CInputState::ACTIVE;
+					textInputs[TXT_RESTRI_LCHG_TIME].State = CInputState::DISABLED;
+				}
+			} else if (id == CHK_RESTRI_MCHG) {
+				if (checkBoxes.at(CHK_RESTRI_MCHG).IsChecked) {
+					textInputs[TXT_RESTRI_MCHG_LATLON].State = CInputState::DISABLED;
+					textInputs[TXT_RESTRI_MCHG_TIME].State = CInputState::ACTIVE;
+				}
+				else {
+					textInputs[TXT_RESTRI_MCHG_LATLON].State = CInputState::ACTIVE;
+					textInputs[TXT_RESTRI_MCHG_TIME].State = CInputState::DISABLED;
+				}
 			}
 		}
 	}
@@ -2138,8 +2249,20 @@ void CFlightPlanWindow::ButtonUnpress(int id) {
 
 void CFlightPlanWindow::ButtonDoubleClick(int id)
 {
-	if (id >= SEL_ATCR_LCHG && id <= SEL_ATCR_INT)
+	if (id >= SEL_ATCR_LCHG && id <= SEL_ATCR_INT) {
+		if (id == SEL_ATCR_EPC || id == SEL_ATCR_RTD)
+			return;
+
+		if (id == SEL_ATCR_RERUTE) {
+			//TODO: Handle Reroute message
+
+			return;
+		}
+
+
 		RestrictionSubModalType = id;
+	}
+		
 }
 
 void CFlightPlanWindow::SetButtonState(int id, CInputState state) {

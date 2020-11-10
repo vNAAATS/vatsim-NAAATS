@@ -200,9 +200,9 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int CHK_COORD_ENRT = 371;
 		static const int CHK_RESTRI_LCHG = 372;
 		static const int CHK_RESTRI_MCHG = 373;
-		static const int CHK_RESTRI_RERUTE_SPD = 374;
-		static const int CHK_RESTRI_RERUTE_LVL = 375;
-		static const int CHK_RESTRI_RERUTE_RTE = 376;
+		static const int CHK_RESTRI_UNABLE_SPD = 374;
+		static const int CHK_RESTRI_UNABLE_LVL = 375;
+		static const int CHK_RESTRI_UNABLE_RTE = 376;
 
 		// Selection definitions
 		static const int SEL_ATCR_LCHG = 400;

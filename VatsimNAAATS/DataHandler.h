@@ -45,8 +45,8 @@ class CDataHandler
 	//get ALL flight_data where logged_onto is equal to the controller's callsign
 	static CMessage* ApiGetAllFlightData(string controller);
 
-	//make messages
-	static int ApiPostMessage(string apiKey, string sent_by, string sent_to, string contents_raw, string type, bool is_actioned = FALSE, bool to_domestic = FALSE);
+	//create flight_data
+	static int ApiCreateFlightData(string callsign, string req_logged_onto, string destination);
 
 	private:
 		// NAT Track URL
