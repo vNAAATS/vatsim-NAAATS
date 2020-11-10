@@ -295,11 +295,21 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		RenderMessageWindow(dc, g, screen, { windowRect.left, windowRect.top });
 	}
 
+	if (!IsCopyMade && primedPlan->CurrentMessage == nullptr && !IsClearanceOpen && !IsConflictWindow && !IsManualEntryOpen) {
+		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::INACTIVE;
+	}
+	else {
+		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::DISABLED;
+	}
+
+	windowButtons[BTN_COPY].State = CInputState::DISABLED;
+
 	// Data panel
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "")
+		bool isTrackedByMe = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe();
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && isTrackedByMe)
 			windowButtons[BTN_COPY].State = CInputState::INACTIVE;
 		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE)
 			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
@@ -1330,7 +1340,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	}
 	
 	// If selected controller enable the button
-	if (selectedAuthority != "" && windowButtons[BTN_XCHANGE_TRANSFER].State == CInputState::DISABLED)
+	if (selectedAuthority != "" && windowButtons[BTN_XCHANGE_TRANSFER].State == CInputState::DISABLED && screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
 		SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::INACTIVE);
 
 	// Create coordination window
@@ -1680,6 +1690,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			textInputs[TXT_TCK].Content = primedPlan->Track;
 		}
 		textInputs[TXT_RTE].Content = route;
+		textInputs[TXT_RTE].State == CInputState::DISABLED;
 
 		if (fp->State == "CPY") {
 			primedPlan->State = "CPY";
@@ -1742,6 +1753,30 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 	textInputs[TXT_COMMS].Content = primedPlan->Communications;
 	textInputs[TXT_OWNERSHIP].Content = primedPlan->Sector;
 	textInputs[TXT_SELCAL].Content = primedPlan->SELCAL;
+
+	// If tracked by other controller
+	string currentController = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+	if (!screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
+		SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_NOTIFY, CInputState::DISABLED);
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRACK, CInputState::DISABLED);
+		windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+	}
+	else {
+		SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::INACTIVE);
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_NOTIFY, CInputState::INACTIVE);
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRACK, CInputState::INACTIVE);
+		windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
+	}
+
+	if (currentController == "") {
+		SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::INACTIVE);
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_NOTIFY, CInputState::DISABLED);
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRACK, CInputState::INACTIVE);
+		windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
+		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+	}
 }
 
 void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string content) {
@@ -1902,6 +1937,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_DELETE, CInputState::INACTIVE);
 			SetButtonState(BTN_COPY, CInputState::DISABLED);
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
+			SetButtonState(BTN_XCHANGE_TRACK, CInputState::DISABLED);
+
 			// Set copy
 			textInputs[TXT_STATE_CPY].Content = "UA";
 			primedPlan->State = "CPY";
@@ -2020,7 +2057,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				textInputs[TXT_DEST].State = CInputState::DISABLED;
 				textInputs[TXT_TCK].State = CInputState::DISABLED;
 				textInputs[TXT_RTE].State = CInputState::DISABLED;
-				textInputs[TXT_STATE].State = "PC";
+				textInputs[TXT_STATE].Content = "PC";
 				// Send clearance to natTrak here
 			}
 		}
@@ -2050,6 +2087,19 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				SetButtonState(BTN_DELETE, CInputState::DISABLED);
 				SetButtonState(BTN_COPY, CInputState::INACTIVE);
 				// Update flight data here on natTrak
+			}
+		}
+		if (id == BTN_XCHANGE_TRACK) {
+			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
+				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
+				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
+				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+			}
+			else {
+				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
+				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
+				textInputs[TXT_XCHANGE_CURRENT].Content = "UNTRACKED";
 			}
 		}
 		if (id == BTN_UNCLEAR) {
