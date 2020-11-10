@@ -199,9 +199,9 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	}
 }
 
-bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector<vector<CSepStatus>>* statuses) {
+bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector<vector<CSepStatus>>* statuses, CAircraftFlightPlan* copy) {
 	// Get the aircraft flight plan
-	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+	CAircraftFlightPlan* fp = copy != nullptr ? copy : CDataHandler::GetFlightData(callsign);
 
 	// Clear statuses first up
 	statuses->clear();

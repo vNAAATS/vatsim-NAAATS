@@ -20,13 +20,13 @@ class CRoutesHelper
 		static vector<string> ActiveRoutes;
 
 		// Get a route
-		static bool GetRoute(CRadarScreen* screen, vector<CRoutePosition>* routeVector, string callsign);
+		static bool GetRoute(CRadarScreen* screen, vector<CRoutePosition>* routeVector, string callsign, CAircraftFlightPlan* copy = nullptr);
 
 		// Initialise route
 		static void InitialiseRoute(void* args);
 
 		// Parse a raw route
-		static int ParseRoute(string callsign, string rawInput, bool isTrack = false);
+		static int ParseRoute(string callsign, string rawInput, bool isTrack = false, CAircraftFlightPlan* copy = nullptr);
 
 		// Is on a NAT track
 		static string OnNatTrack(CRadarScreen* screen, string callsign);

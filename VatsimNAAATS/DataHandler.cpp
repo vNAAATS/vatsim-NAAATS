@@ -225,7 +225,21 @@ int CDataHandler::DeleteFlightData(string callsign) {
 	}
 }
 
-int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string track) {
+int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string track, CAircraftFlightPlan* copiedPlan) {
+	if (copiedPlan != nullptr) {
+		// Set route if flight exists
+		copiedPlan->Route.clear();
+		copiedPlan->Route = *route;
+		copiedPlan->Route.shrink_to_fit();
+
+		// Set track if not nothing
+		if (track != "")
+			copiedPlan->Track = track;
+		else
+			copiedPlan->Track = "RR";
+
+		return 0;
+	}
 	if (flights.find(callsign) != flights.end()) {
 		// Set route if flight exists
 		flights.find(callsign)->second.Route.clear();

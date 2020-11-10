@@ -8,9 +8,9 @@ string CRoutesHelper::CurrentTMI = "";
 
 vector<string> CRoutesHelper::ActiveRoutes;
 
-bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* routeVector, string callsign) {
+bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* routeVector, string callsign, CAircraftFlightPlan* copy) {
 	// Get the flight plan
-	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+	CAircraftFlightPlan* fp = copy != nullptr ? copy : CDataHandler::GetFlightData(callsign);
 
 	// Check validity
 	if (!fp->IsValid || fp->Route.size() == 0) {
@@ -93,7 +93,7 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 	CUtils::CAsyncData* data = (CUtils::CAsyncData*) args;
 
 	// Flight plan
-	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(data->Callsign);
+	CAircraftFlightPlan* fp = data->FP != nullptr ? data->FP : CDataHandler::GetFlightData(data->Callsign);
 
 	// Final route vector
 	vector<CWaypoint> parsedRoute;
@@ -314,13 +314,13 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 	}	
 
 	// Return the vector
-	CDataHandler::SetRoute(data->Callsign, &parsedRoute, fp->Track);
+	CDataHandler::SetRoute(data->Callsign, &parsedRoute, fp->Track, data->FP != nullptr ? data->FP : nullptr);
 
 	// Cleanup
 	delete args;
 }
 
-int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack) {
+int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack, CAircraftFlightPlan* copy) {
 	// Return vector
 	vector<string> route;
 
@@ -440,11 +440,21 @@ int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack) {
 	}
 
 	// We got here, so set the route and return success code
-	CDataHandler::GetFlightData(callsign)->Track = track;
-	CDataHandler::GetFlightData(callsign)->RouteRaw.clear();
-	for (int i = 0; i < route.size(); i++) {
-		CDataHandler::GetFlightData(callsign)->RouteRaw.push_back(route[i]);
+	if (copy != nullptr) {
+		copy->Track = track;
+		copy->RouteRaw.clear();
+		for (int i = 0; i < route.size(); i++) {
+			copy->RouteRaw.push_back(route[i]);
+		}
 	}
+	else {
+		CDataHandler::GetFlightData(callsign)->Track = track;
+		CDataHandler::GetFlightData(callsign)->RouteRaw.clear();
+		for (int i = 0; i < route.size(); i++) {
+			CDataHandler::GetFlightData(callsign)->RouteRaw.push_back(route[i]);
+		}
+	}
+	
 	return 0;
 }
 

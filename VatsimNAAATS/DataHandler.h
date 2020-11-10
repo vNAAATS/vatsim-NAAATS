@@ -28,7 +28,7 @@ class CDataHandler
 	static int DeleteFlightData(string callsign);
 
 	// Set route
-	static int SetRoute(string callsign, vector<CWaypoint>* route, string track);
+	static int SetRoute(string callsign, vector<CWaypoint>* route, string track, CAircraftFlightPlan* copiedPlan = nullptr);
 
 	//callback method for curl
 	static size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp);
