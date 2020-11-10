@@ -298,7 +298,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared)
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "")
 			windowButtons[BTN_COPY].State = CInputState::INACTIVE;
 		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE)
 			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
@@ -401,8 +401,8 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->Draw3dRect(rteBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Route box to text input
-	CTextInput* route = &textInputs.find(TXT_RTE)->second;
-	CTextInput* track = &textInputs.find(TXT_TCK)->second;
+	CTextInput* route = &textInputs.find(isCopy ? TXT_CPY_RTE : TXT_RTE)->second;
+	CTextInput* track = &textInputs.find(isCopy ? TXT_TCK_CPY : TXT_TCK)->second;
 	// Add object if not disabled
 	if (route->State == CInputState::ACTIVE)
 		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
@@ -1483,7 +1483,7 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	CRect titleRect(atcrWindow.left, atcrWindow.top, atcrWindow.left + WINSZ_FLTPLN_WIDTH_MDL, atcrWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC/ " + restrictionSelections[RestrictionSubModalType] + " - " + copiedPlan->Callsign).c_str()));
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC/ " + restrictionSelections[RestrictionSubModalType] + " - " + primedPlan->Callsign).c_str()));
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
 
 	// Select font
@@ -1603,7 +1603,26 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 		textInputs[TXT_RTE].Content = route;
 
 		if (fp->State == "CPY") {
+			primedPlan->State = "CPY";
 
+			// Set copied plan
+			copiedPlan = *primedPlan;
+			copiedPlan.State = "UA";
+			
+			// Values
+			SetTextValue(screen, CFlightPlanWindow::TXT_SPD_CPY, copiedPlan.Mach);
+			SetTextValue(screen, CFlightPlanWindow::TXT_LEVEL_CPY, copiedPlan.FlightLevel);
+			SetTextValue(screen, CFlightPlanWindow::TXT_DEST_CPY, copiedPlan.Dest);
+			SetTextValue(screen, CFlightPlanWindow::TXT_STATE_CPY, copiedPlan.State);
+			if (copiedPlan.Track != "RR") {
+				SetTextValue(screen, CFlightPlanWindow::TXT_TCK_CPY, copiedPlan.Track);
+			}
+			else {
+				SetTextValue(screen, CFlightPlanWindow::TXT_CPY_RTE, route);
+			}
+
+			SetButtonState(CFlightPlanWindow::BTN_DELETE, CInputState::INACTIVE);
+			SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
 		}
 	}
 	else {
@@ -1810,18 +1829,28 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 
 			// Set copied plan
 			copiedPlan = *primedPlan;
+			copiedPlan.State = "UA";
 
 			// Flag
 			stateSetManually = true;
 		}
 		if (id == BTN_DELETE) { // Delete copy
-			IsCopyMade = false; // Delete copy (TODO: put more in here to actually delete copies)
+			IsCopyMade = false; // Delete copy
 			IsConflictWindow = false;
+			IsClearanceOpen = false;
+			primedPlan->State = "";
 			// Set the states
 			SetButtonState(BTN_DELETE, CInputState::DISABLED);
 			SetButtonState(BTN_COPY, CInputState::INACTIVE);
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 
+			// Set input contents to zero
+			textInputs[TXT_SPD_CPY].Content = "";
+			textInputs[TXT_LEVEL_CPY].Content = "";
+			textInputs[TXT_DEST_CPY].Content = "";
+			textInputs[TXT_TCK_CPY].Content = "";
+			textInputs[TXT_CPY_RTE].Content = "";
+			copiedPlan.IsValid = false;
 			stateSetManually = true;
 		}
 		if (id == BTN_PROBE) {
@@ -1852,6 +1881,13 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 			SetButtonState(BTN_UNCLEAR, CInputState::INACTIVE);
 			SetButtonState(BTN_DELETE, CInputState::DISABLED);
+			SetButtonState(BTN_ATCR, CInputState::DISABLED);
+			dropDowns[DRP_ATCR].State = CInputState::DISABLED;
+			textInputs[TXT_SPD].State = CInputState::DISABLED;
+			textInputs[TXT_LEVEL].State = CInputState::DISABLED;
+			textInputs[TXT_DEST].State = CInputState::DISABLED;
+			textInputs[TXT_TCK].State = CInputState::DISABLED;
+			textInputs[TXT_RTE].State = CInputState::DISABLED;
 
 			// Switch the clearance type
 			CMessageType type;
@@ -1882,6 +1918,13 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_CLRC_REJECT) {
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
+			SetButtonState(BTN_ATCR, CInputState::INACTIVE);
+			dropDowns[DRP_ATCR].State = CInputState::INACTIVE;
+			textInputs[TXT_SPD].State = CInputState::INACTIVE;
+			textInputs[TXT_LEVEL].State = CInputState::INACTIVE;
+			textInputs[TXT_DEST].State = CInputState::INACTIVE;
+			textInputs[TXT_TCK].State = CInputState::INACTIVE;
+			textInputs[TXT_RTE].State = CInputState::INACTIVE;
 			IsClearanceOpen = false;
 		}
 		if (id == BTN_CLRC_SEND) {
@@ -1898,10 +1941,26 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				textInputs[TXT_DEST].State = CInputState::DISABLED;
 				textInputs[TXT_TCK].State = CInputState::DISABLED;
 				textInputs[TXT_RTE].State = CInputState::DISABLED;
+				textInputs[TXT_STATE].State = "PC";
 				// Send clearance to natTrak here
 			}
 		}
-		if (id == BTN_READBK) {
+		if (id == BTN_CLRC_VOICE) {
+			checkBoxes.at(CHK_CLRC_ORCA).State = CInputState::DISABLED;
+			checkBoxes.at(CHK_CLRC_CPDLC).State = CInputState::DISABLED;
+			checkBoxes.at(CHK_CLRC_VOX).State = CInputState::DISABLED;
+			checkBoxes.at(CHK_CLRC_TXT).State = CInputState::DISABLED;
+			SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
+			SetButtonState(BTN_CLRC_READBK, CInputState::INACTIVE);
+			SetButtonState(BTN_ATCR, CInputState::DISABLED);
+			dropDowns[DRP_ATCR].State = CInputState::DISABLED;
+			textInputs[TXT_SPD].State = CInputState::DISABLED;
+			textInputs[TXT_LEVEL].State = CInputState::DISABLED;
+			textInputs[TXT_DEST].State = CInputState::DISABLED;
+			textInputs[TXT_TCK].State = CInputState::DISABLED;
+			textInputs[TXT_RTE].State = CInputState::DISABLED;
+		}
+		if (id == BTN_READBK || id == BTN_CLRC_READBK) {
 			if (windowButtons[BTN_READBK].State == CInputState::ACTIVE) {
 				IsClearanceOpen = false;
 				IsCopyMade = false;
@@ -2003,12 +2062,14 @@ void CFlightPlanWindow::ButtonDown(int id) {
 void CFlightPlanWindow::ButtonPress(int id) {
 	// Check if dropdown
 	if (id >= 800) {
-		// Set value
-		dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
-		// Close drop down
-		dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
-		ActiveDropDownHover = 0;
-		dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+		if (dropDowns[id].State != CInputState::DISABLED) {
+			// Set value
+			dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
+			// Close drop down
+			dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+			ActiveDropDownHover = 0;
+			dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+		}
 	}
 
 	// Check if checkbox
@@ -2036,18 +2097,18 @@ void CFlightPlanWindow::ButtonPress(int id) {
 
 			} else if (id == CHK_CLRC_TXT) {
 				SetButtonState(BTN_CLRC_VOICE, CInputState::INACTIVE);
-				SetButtonState(BTN_CLRC_READBK, CInputState::INACTIVE);
+				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
 				SetButtonState(BTN_CLRC_SEND, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_REJECT, CInputState::DISABLED);
+				SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
 				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
 
 			} else if (id == CHK_CLRC_VOX) {
 				SetButtonState(BTN_CLRC_VOICE, CInputState::INACTIVE);
-				SetButtonState(BTN_CLRC_READBK, CInputState::INACTIVE);
+				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
 				SetButtonState(BTN_CLRC_SEND, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_REJECT, CInputState::DISABLED);
+				SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
 				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;

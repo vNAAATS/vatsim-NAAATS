@@ -175,6 +175,9 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 			}
 		}
 	}
+	else if (type == CMessageType::REVISION_ISSUE) {
+
+	}
 	// CALLSIGN:WILCO
 	else if (type == CMessageType::WILCO) {
 		return "WILCO LAST MSG";
