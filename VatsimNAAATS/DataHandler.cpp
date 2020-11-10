@@ -428,7 +428,7 @@ vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, stri
 
 	vector<CMessage> messages;
 	for (auto obj : j) {
-		if (obj["sent_to"].get<std::string>() == controller && obj["is_actioned"] == 0) {
+		if (obj["sent_to"].get<std::string>() == controller && static_cast<int>(obj["is_actioned"]) == 0) {
 			string type_string = obj["type"];
 
 			CMessageType type;
@@ -562,9 +562,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
 
 	vector<CMessage> messages;
 	for (auto obj : j) {
-		if (static_cast<int>(obj["is_actioned"]) == 1) {
-			OutputDebugString("in if! ");
-			
+		if (static_cast<int>(obj["is_actioned"]) == 1) {			
 			string type_string = obj["type"];
 
 			CMessageType type;
@@ -644,4 +642,53 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
 	}
 
 	return messages;
+}
+
+int CDataHandler::ApiCreateFlightData(string callsign, string req_logged_onto, string destination)
+{
+	string result = "";
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+	
+	if(curl)
+	{
+		stringstream url,
+					 post_data;
+		url << ApiSettings::apiUrl << "/flight_data/create.php";
+		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&req_logged_onto" << req_logged_onto << "&destination" << destination;
+		
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, "Content-Type: application/x-www-form-urlencoded");
+
+		result_code = curl_easy_perform(curl);
+
+		if (result_code != CURLE_OK) {
+			curl_easy_cleanup(curl);
+			return 1;
+		}
+
+		curl_easy_cleanup(curl);
+
+		if (result == "-1")
+		{
+			OutputDebugString("1");
+			return 1;
+		} else if(result == "0")
+		{
+			OutputDebugString("2");
+			return 0;
+		} else
+		{
+			OutputDebugString("3");
+			return 1;
+		}
+	}
 }
