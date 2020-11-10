@@ -1616,7 +1616,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 	// Make *all* window items again to reset
 	MakeWindowItems();
 	// Reset open windows
-	IsData = true;
+	IsData = false;
 	IsCopyMade = false;
 	IsConflictWindow = false;
 	IsClearanceOpen = false;
@@ -1709,7 +1709,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			}
 		}
 		else {
-			IsData = true;
+			IsData = false;
 			SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
 		}
 	}

@@ -57,7 +57,7 @@ class CFlightPlanWindow : public CBaseWindow
 		void Instantiate(CRadarScreen* screen, string callsign, CMessage* msg = nullptr);
 
 		// Panel states
-		bool IsData = true;
+		bool IsData = false;
 		bool IsCopyMade = false;
 		bool IsConflictWindow = false;
 		bool IsClearanceOpen = false;
