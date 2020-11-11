@@ -523,7 +523,9 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	//CDataHandler::ApiGetFlightData("AAL578");
 	//CDataHandler::ApiGetMessagesForController("AAL578", "CZQX_FSS");
 	//CDataHandler::ApiGetMessages("AAL578");
-	CDataHandler::ApiUpdateFlightData("AAL578", "420", "89", "Z", "UR MOM", true, "KJAX");
+
+	//CDataHandler::ApiUpdateFlightData("AAL578", "420", "89", "Z", "UR MOM", true, "KJAX");
+
 
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
@@ -842,7 +844,9 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// If a coordination
 		if (ObjectType == WIN_FLTPLN_TSFR) {
-			fltPlnWindow->selectedAuthority = sObjectId;
+			if (GetPlugIn()->FlightPlanSelect(fltPlnWindow->primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
+				fltPlnWindow->selectedAuthority = sObjectId;
+			}
 		}
 	}
 

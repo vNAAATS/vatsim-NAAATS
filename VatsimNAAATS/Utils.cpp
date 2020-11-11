@@ -103,7 +103,7 @@ bool CUtils::StringSplit(string str, char splitBy, vector<string>* ptrTokens) {
 }
 
 // Phraseology parser
-string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
+string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string callsign) {
 	// Split the string
 	vector<string> splitString;
 	StringSplit(rawInput, ':', &splitString);
@@ -174,6 +174,47 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 				returnString += "[" + splitString[i + 1] + "] ";
 			}
 		}
+		return returnString;
+	}
+	else if (type == CMessageType::REVISION_ISSUE) {
+		// Flight data
+		CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(callsign);
+		string returnString;
+		// Split the current message
+		vector<string> splitString;
+		StringSplit(rawInput, ':', &splitString);
+		int machChange = -1;
+		int levelChange = -1;
+		int rerute = -1;
+		for (int i = 0; i < splitString.size(); i++) {
+			if (splitString[i] == "MCHG") {
+				machChange = i + 1;
+			}
+			if (splitString[i] == "LCHG") {
+				levelChange = i + 1;
+			}
+			if (splitString[i] == "RERUTE") {
+				rerute = i + 1;
+			}
+		}
+
+		if (machChange != -1) {
+			returnString += "MAINTAIN MACH 0" + splitString[machChange] + ".";
+		}
+		if (levelChange != -1) {
+			if (!returnString.empty())
+				returnString += " ";
+
+			returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ".";
+		}
+		if (rerute != -1) {
+			if (!returnString.empty())
+				returnString += " ";
+			// TODO: Finish
+			returnString += "ROUTE HAS BEEN CHANGED ";
+		}
+
+		return returnString;
 	}
 	// CALLSIGN:WILCO
 	else if (type == CMessageType::WILCO) {
@@ -193,9 +234,9 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type) {
 }
 
 // Raw format parser
-string CUtils::ParseToRaw(string callsign, CMessageType type) {
+string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPlan* copy) {
 	// Flight data
-	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+	CAircraftFlightPlan* fp = copy != nullptr ? copy : CDataHandler::GetFlightData(callsign);
 
 	if (type == CMessageType::CLEARANCE_ISSUE) {
 		// Split the current message
@@ -215,6 +256,29 @@ string CUtils::ParseToRaw(string callsign, CMessageType type) {
 		}
 		// TODO restrictions
 		return fp->Callsign + ":CLEARANCE_ISSUE:" + fp->Dest + ":" + routeString + ":" + splitString[4] + ":" + splitString[5] + ":" + fp->Track + ":" + fp->FlightLevel + ":" + fp->Mach + ":" + "ATC/:NULL";
+	}
+	else if (type == CMessageType::REVISION_ISSUE) {
+		// Flight data
+		CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(callsign);
+		string returnString;
+		// Split the current message
+		vector<string> splitString;
+		StringSplit(fp->CurrentMessage->MessageRaw, ':', &splitString);
+		bool machChange = false;
+		bool levelChange = false;
+		bool rerute = false;
+		
+		returnString += fp->Callsign + ":REVISION_ISSUE";
+		// Switch
+		if (fp->Mach != primedPlan->Mach) {
+			returnString += ":MCHG:" + fp->Mach;
+		}
+		if (fp->FlightLevel != primedPlan->FlightLevel) {
+			returnString += ":LCHG:" + fp->FlightLevel;
+		}
+		// TODO deal with reroute here and also restrictions
+
+		return returnString;
 	}
 }
 // Load plugin data

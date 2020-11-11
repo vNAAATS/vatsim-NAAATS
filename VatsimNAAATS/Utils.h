@@ -47,10 +47,10 @@ class CUtils { // TODO: refactor into namespace
 		static bool StringSplit(string str, char splitBy, vector<string>* ptrTokens);
 
 		// Phraseology parser
-		static string ParseToPhraseology(string rawInput, CMessageType type);
+		static string ParseToPhraseology(string rawInput, CMessageType type, string callsign);
 
 		// Raw format parser
-		static string ParseToRaw(string callsign, CMessageType type);
+		static string ParseToRaw(string callsign, CMessageType type, CAircraftFlightPlan* copy = nullptr);
 
 		// Convert coordinates to various type
 		static string ConvertCoordinateFormat(string coordinateString, int format);
@@ -112,9 +112,10 @@ class CUtils { // TODO: refactor into namespace
 		// Get intersection of two vectors
 		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
 
-		// We need this struct for threading
+		// We need this struct for flight plan threading
 		struct CAsyncData {
 			CRadarScreen* Screen;
 			string Callsign;
+			CAircraftFlightPlan* FP = nullptr;
 		};
 };
