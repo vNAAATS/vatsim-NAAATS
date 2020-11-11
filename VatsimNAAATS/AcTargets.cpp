@@ -18,6 +18,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Flight plan
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
 
+	// Check if there is an active handoff to client 
+	bool isHandoffToMe = string(fp.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
+
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -27,6 +30,8 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	SolidBrush yellowBrush(WarningYellow);
 	SolidBrush redBrush(CriticalRed);
 	SolidBrush whiteBrush(TextWhite);
+	Pen bluePen(&blueBrush, 1);
+	Pen whitePen(&whiteBrush, 1);
 	GraphicsContainer gContainer;
 
 	// Begin drawing
@@ -48,8 +53,15 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		textColour = WarningYellow.ToCOLORREF();
 	}
 	else {
-		// No conflict, tag orange
-		textColour = TargetOrange.ToCOLORREF();
+		// Check jurisdiction
+		if (!fp.GetTrackingControllerIsMe()) {
+			// Callsign blue, no critical conflict
+			textColour = TargetBlue.ToCOLORREF();
+		}
+		else {
+			// No conflict or only warning, tag orange
+			textColour = TargetOrange.ToCOLORREF();
+		}
 	}
 
 	// Draw the altitude
@@ -70,9 +82,6 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		// Set middle
 		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 
-		// Pen
-		Pen pen(&blueBrush, 1);
-
 		// Make diamond
 		Point points[4] = {
 			Point(-6, 0),
@@ -81,7 +90,10 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 			Point(0, -6)
 		};
 
-		g->DrawPolygon(&pen, points, 4);
+		if (isHandoffToMe)
+			g->DrawPolygon(&whitePen, points, 4);
+		else
+			g->DrawPolygon(&bluePen, points, 4);
 		g->EndContainer(gContainer);
 
 		DeleteObject(&points);
@@ -133,7 +145,10 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 		else {
 			// No conflict, draw orange
-			g->FillPolygon(&orangeBrush, points, 19);
+			if (isHandoffToMe)
+				g->FillPolygon(&whiteBrush, points, 19);
+			else 
+				g->FillPolygon(&orangeBrush, points, 19);
 			g->EndContainer(gContainer);
 		}
 
@@ -234,6 +249,8 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&blueBrush);
 	DeleteObject(&gContainer);
 	DeleteObject(&acPoint);
+	DeleteObject(&bluePen);
+	DeleteObject(&whitePen);
 }
 
 POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {
@@ -243,6 +260,9 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// Get the aircraft's position and flight plan
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 	CFlightPlan acFP = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
+
+	// Check if there is an active handoff to client controller
+	bool isHandoffToMe = string(acFP.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
 
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -310,7 +330,6 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 			// No conflict or only warning, tag orange
 			textColour = TargetOrange.ToCOLORREF();
 		}
-		
 	}
 
 	// Pick font for callsign
@@ -337,6 +356,10 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (!acFP.GetTrackingControllerIsMe()) {
 		textColour = TargetBlue.ToCOLORREF();
 	}
+	// Handoff
+	if (isHandoffToMe) {
+		textColour = TextWhite.ToCOLORREF();
+	}
 	FontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(textColour);
 	text = to_string(target->GetPosition().GetFlightLevel() / 100);
@@ -353,8 +376,16 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	}
 	dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 	offsetX = 0;
-	offsetY += 25;
-
+	if (isHandoffToMe) {
+		offsetY += 15;
+		text = "H/O";
+		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+		offsetY += 15;
+	}
+	else {
+		offsetY += 30;
+	}
+		
 	if (tagPosition->first == true) {
 		// Aircraft type
 		text = acFP.GetFlightPlanData().GetAircraftFPType();
@@ -368,8 +399,9 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	/// Tag line
 	CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
-	CPen orangePen(PS_SOLID, 1, textColour);
-	dc->SelectObject(orangePen);
+	// Pen
+	CPen pen(PS_SOLID, 1, textColour);
+	dc->SelectObject(pen);
 	int tagMiddle = tagRect.left + ((tagRect.right - tagRect.left) / 2);
 
 	// Dog leg
@@ -405,7 +437,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	dc->RestoreDC(sDC);
 
 	// Clean up
-	DeleteObject(orangePen);
+	DeleteObject(pen);
 	DeleteObject(&textColour);
 
 	return { tagRect.left, tagRect.top };

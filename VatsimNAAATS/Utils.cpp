@@ -238,6 +238,18 @@ string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPla
 	// Flight data
 	CAircraftFlightPlan* fp = copy != nullptr ? copy : CDataHandler::GetFlightData(callsign);
 
+	if (type == CMessageType::LOG_ON_CONFIRM) {
+		return fp->Callsign + ":LOG_ON_CONFIRM";
+	}
+	if (type == CMessageType::LOG_ON_REJECT) {
+		return fp->Callsign + ":LOG_ON_REJECT";
+	}
+	if (type == CMessageType::TRANSFER_ACCEPT) {
+		return fp->CurrentMessage->From + ":TRANSFER_ACCEPT:" + fp->Callsign;
+	}
+	if (type == CMessageType::TRANSFER_REJECT) {
+		return fp->CurrentMessage->From + ":TRANSFER_REJECT:" + fp->Callsign;
+	}
 	if (type == CMessageType::CLEARANCE_ISSUE) {
 		// Split the current message
 		vector<string> splitString;
@@ -246,27 +258,73 @@ string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPla
 		// Get the route
 		string routeString;
 		if (fp->Track == "RR") {
-			for (int i = 0; i < fp->RouteRaw.size(); i++) {
+			for (int i = 0; i < fp->RouteRaw.size(); i++)
 				routeString += fp->RouteRaw[i] + " ";
-			}
 			routeString = routeString.substr(0, routeString.size() - 2);
 		}
 		else {
 			routeString = "NULL";
 		}
-		// TODO restrictions
-		return fp->Callsign + ":CLEARANCE_ISSUE:" + fp->Dest + ":" + routeString + ":" + splitString[4] + ":" + splitString[5] + ":" + fp->Track + ":" + fp->FlightLevel + ":" + fp->Mach + ":" + "ATC/:NULL";
+		string returnString = fp->Callsign + ":CLEARANCE_ISSUE:" + fp->Dest + ":" + routeString + ":" + splitString[4] + ":" + splitString[5] + ":" + fp->Track + ":" + fp->FlightLevel + ":" + fp->Mach + ":" + "ATC/";
+		if (fp->Restrictions.empty()) {
+			returnString += "NULL";
+		}
+		else {
+			for (int i = 0; i < fp->Restrictions.size(); i++) {
+				if (fp->Restrictions[i].Type == CRestrictionType::LCHG) {
+					returnString += ":LCHG:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::MCHG) {
+					returnString += ":MCHG:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::EPC) {
+					returnString += ":EPC:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::RERUTE) {
+					returnString += ":RERUTE:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::RTD) {
+					returnString += ":RTD:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::UNABLE) {
+					returnString += ":UNABLE:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::ATA) {
+					returnString += ":ATA:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::ATB) {
+					returnString += ":ATB:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::XAT) {
+					returnString += ":XAT:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::INT) {
+					returnString += ":INT:" + fp->Restrictions[i].Content;
+				}
+			}
+		}
+
+		return returnString;
 	}
-	else if (type == CMessageType::REVISION_ISSUE) {
+	if (type == CMessageType::CLEARANCE_REJECT) {
+		return fp->Callsign + ":CLEARANCE_REJECT";
+	}
+	if (type == CMessageType::REVISION_ISSUE) {
 		// Flight data
 		CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(callsign);
 		string returnString;
 		// Split the current message
 		vector<string> splitString;
 		StringSplit(fp->CurrentMessage->MessageRaw, ':', &splitString);
-		bool machChange = false;
-		bool levelChange = false;
-		bool rerute = false;
+		string routeString;
+		for (int i = 0; i < primedPlan->RouteRaw.size(); i++)
+			routeString += fp->RouteRaw[i] + " ";
+		routeString = routeString.substr(0, routeString.size() - 2);
+
+		string copyRouteString;
+		for (int i = 0; i < fp->RouteRaw.size(); i++)
+			copyRouteString += fp->RouteRaw[i] + " ";
+		copyRouteString = copyRouteString.substr(0, copyRouteString.size() - 2);
 		
 		returnString += fp->Callsign + ":REVISION_ISSUE";
 		// Switch
@@ -276,9 +334,52 @@ string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPla
 		if (fp->FlightLevel != primedPlan->FlightLevel) {
 			returnString += ":LCHG:" + fp->FlightLevel;
 		}
-		// TODO deal with reroute here and also restrictions
-
+		if (copyRouteString != routeString) {
+			returnString += ":RERUTE:" + copyRouteString;
+		}
+		
+		returnString += ":ATC/";
+		if (fp->Restrictions.empty()) {
+			returnString += "NULL";
+		}
+		else {
+			for (int i = 0; i < fp->Restrictions.size(); i++) {
+				if (fp->Restrictions[i].Type == CRestrictionType::LCHG) {
+					returnString += ":LCHG:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::MCHG) {
+					returnString += ":MCHG:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::EPC) {
+					returnString += ":EPC:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::RERUTE) {
+					returnString += ":RERUTE:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::RTD) {
+					returnString += ":RTD:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::UNABLE) {
+					returnString += ":UNABLE:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::ATA) {
+					returnString += ":ATA:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::ATB) {
+					returnString += ":ATB:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::XAT) {
+					returnString += ":XAT:" + fp->Restrictions[i].Content;
+				}
+				else if (fp->Restrictions[i].Type == CRestrictionType::INT) {
+					returnString += ":INT:" + fp->Restrictions[i].Content;
+				}
+			}
+		}
 		return returnString;
+	}
+	if (type == CMessageType::REVISION_REJECT) {
+		return fp->Callsign + ":REVISION_REJECT";
 	}
 }
 // Load plugin data

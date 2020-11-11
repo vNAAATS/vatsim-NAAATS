@@ -305,14 +305,22 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	windowButtons[BTN_COPY].State = CInputState::DISABLED;
 
 	// Data panel
+	bool controllerIsMe = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe();
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		bool isTrackedByMe = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe();
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && isTrackedByMe)
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && controllerIsMe)
 			windowButtons[BTN_COPY].State = CInputState::INACTIVE;
-		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE)
+		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE && !controllerIsMe)
 			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
+		if (!primedPlan->IsCleared && !controllerIsMe) {
+			IsData = false;
+		}
+	}
+
+	if (!controllerIsMe) {
+		IsData = false;
+		windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 	}
 
 	// Copy panel
@@ -1426,11 +1434,36 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	textInputs[TXT_XCHANGE_NEXT].Content = selectedAuthority != "" ? selectedAuthority : "NONE";
 
 	// Set buttons
-	if (primedPlan->CurrentMessage != nullptr && primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
+	if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
 		if (windowButtons[BTN_XCHANGE_ACCEPT].State == CInputState::DISABLED && windowButtons[BTN_XCHANGE_REJECT].State == CInputState::DISABLED) {
 			windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::INACTIVE;
 			windowButtons[BTN_XCHANGE_REJECT].State = CInputState::INACTIVE;
 		}
+	}
+
+	string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
+	string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) 
+		|| string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) != "") {
+		windowButtons[BTN_XCHANGE_TRANSFER].State = CInputState::DISABLED;
+		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::DISABLED;
+		if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
+			windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
+		else
+			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
+	}
+	else {
+		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::INACTIVE;
+	}
+
+	if (controller == controllerMe) {
+		windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::INACTIVE;
+		windowButtons[BTN_XCHANGE_REJECT].State = CInputState::INACTIVE;
+	}
+
+	if (controller == controllerMe) {
+		windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::INACTIVE;
+		windowButtons[BTN_XCHANGE_REJECT].State = CInputState::INACTIVE;
 	}
 
 	// Draw buttons (6 buttons)
@@ -1789,6 +1822,10 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 	}
 }
 
+void CFlightPlanWindow::ParseRestriction(string content, CRestrictionType type) {
+
+}
+
 void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string content) {
 	// Mach numbers
 	if (id == TXT_SPD || id == TXT_SPD_CPY || id == TXT_MAN_SPD) {
@@ -2143,13 +2180,24 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
-				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+				textInputs[TXT_XCHANGE_CURRENT].Content = "UNTRACKED";
+				if (!primedPlan->IsCleared) {
+					IsData = false;
+				}
 			}
 			else {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
+				if (!primedPlan->IsCleared)
+					windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
-				textInputs[TXT_XCHANGE_CURRENT].Content = "UNTRACKED";
+				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 			}
+		}
+		if (id == BTN_XCHANGE_TRANSFER) {
+			screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
+			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+			SetButtonState(BTN_XCHANGE_TRACK, CInputState::DISABLED);
+			selectedAuthority = "";
 		}
 		if (id == BTN_UNCLEAR) {
 			if (windowButtons[BTN_UNCLEAR].State == CInputState::ACTIVE) {
@@ -2170,26 +2218,45 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			IsTransferOpen = !IsTransferOpen ? true : false;
 		}
 		if (id == BTN_XCHANGE_ACCEPT) {
-			// Accept here
-			IsMessageOpen = false;
-			// Mark message as done here
-			primedPlan->DLStatus = "ONLINE";
-			textInputs[TXT_DATALINK].Content = "ONLINE";
-			windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
-			windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
-			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
-			CMessageWindow::ActiveMessages.erase(primedPlan->CurrentMessage->Id);
-			primedPlan->CurrentMessage = nullptr;
+			string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
+			string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+			if (controller == controllerMe) {
+				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).AcceptHandoff();
+				windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
+				windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
+				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
+			}
+			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
+				// Accept here (either transfer or log on)
+				IsMessageOpen = false;
+				// Mark message as done here
+				primedPlan->DLStatus = "ONLINE";
+				textInputs[TXT_DATALINK].Content = "ONLINE";
+				windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
+				windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
+				CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
+				CMessageWindow::ActiveMessages.erase(primedPlan->CurrentMessage->Id);
+				primedPlan->CurrentMessage = nullptr;
+			}			
 		}
 		if (id == BTN_XCHANGE_REJECT) {
-			// Reject here on natTrak
-			IsMessageOpen = false;
-			// Mark message as done here
-			windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
-			windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
-			CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
-			CMessageWindow::ActiveMessages.erase(primedPlan->CurrentMessage->Id);
-			primedPlan->CurrentMessage = nullptr;
+			string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
+			string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+			if (controller == controllerMe) {
+				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).RefuseHandoff();
+				windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
+				windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
+			}
+			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
+				// Reject here on natTrak (either transfer or log on)
+				IsMessageOpen = false;
+				// Mark message as done here
+				windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
+				windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
+				CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
+				CMessageWindow::ActiveMessages.erase(primedPlan->CurrentMessage->Id);
+				primedPlan->CurrentMessage = nullptr;
+			}			
 		}
 		if (id == BTN_COORD_SENDOK) {
 			IsCoordOpen = false;
@@ -2203,7 +2270,39 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		if (id == BTN_HIST || id == BTN_HIST_CLOSE) {
 			IsHistoryOpen = !IsHistoryOpen ? true : false;
 		}
+		if (id == BTN_MAN_SUBMIT) {
+			IsManualEntryOpen = false;
+			IsData = true;
+			SetButtonState(BTN_MANENTRY, CInputState::DISABLED);
 
+			// Assign
+			textInputs[TXT_DEST].Content = textInputs[TXT_MAN_DEST].Content;
+			textInputs[TXT_LEVEL].Content = textInputs[TXT_MAN_FL].Content;
+			textInputs[TXT_RTE].Content = textInputs[TXT_MAN_RTE].Content;
+			textInputs[TXT_SPD].Content = textInputs[TXT_MAN_SPD].Content;
+			textInputs[TXT_TCK].Content = textInputs[TXT_MAN_TCK].Content;
+			textInputs[TXT_STATE].Content = "UA";
+			primedPlan->State = "UA";
+
+			// Clear
+			textInputs[TXT_MAN_DEST].Content = "";
+			textInputs[TXT_MAN_EP].Content = "";
+			textInputs[TXT_MAN_EPTIME].Content = "";
+			textInputs[TXT_MAN_FL].Content = "";
+			textInputs[TXT_MAN_RTE].Content = "";
+			textInputs[TXT_MAN_SPD].Content = "";
+			textInputs[TXT_MAN_TCK].Content = "";
+		}
+		if (id == BTN_MAN_CANCEL) {
+			textInputs[TXT_MAN_DEST].Content = "";
+			textInputs[TXT_MAN_EP].Content = "";
+			textInputs[TXT_MAN_EPTIME].Content = "";
+			textInputs[TXT_MAN_FL].Content = "";
+			textInputs[TXT_MAN_RTE].Content = "";
+			textInputs[TXT_MAN_SPD].Content = "";
+			textInputs[TXT_MAN_TCK].Content = "";
+			IsManualEntryOpen = false;
+		}
 		// MESSAGE WINDOW
 		if (id == BTN_MSG_REQUEUE) {
 			// If the message is a logon message or transfer message
