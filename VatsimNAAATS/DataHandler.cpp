@@ -644,7 +644,7 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
 	return messages;
 }
 
-int CDataHandler::ApiCreateFlightData(string callsign, string req_logged_onto, string destination)
+int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach, string track, string route, bool is_cleared, string destination)
 {
 	string result = "";
 	CURL* curl;
@@ -658,15 +658,18 @@ int CDataHandler::ApiCreateFlightData(string callsign, string req_logged_onto, s
 	{
 		stringstream url,
 					 post_data;
-		url << ApiSettings::apiUrl << "/flight_data/create.php";
-		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&req_logged_onto" << req_logged_onto << "&destination" << destination;
+		struct curl_slist* headers = nullptr;
+		
+		url << ApiSettings::apiUrl << "/flight_data/update.php";
+		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&mach=" << mach << "&track=" << track << "&route=" << route << "&is_cleared=" << is_cleared << "&destination" << destination;
+		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
 		
 		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
-		curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.str().c_str());
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, "Content-Type: application/x-www-form-urlencoded");
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 		result_code = curl_easy_perform(curl);
 
@@ -679,15 +682,15 @@ int CDataHandler::ApiCreateFlightData(string callsign, string req_logged_onto, s
 
 		if (result == "-1")
 		{
-			OutputDebugString("1");
+			OutputDebugString("oop 1");
 			return 1;
 		} else if(result == "0")
 		{
-			OutputDebugString("2");
+			OutputDebugString("oop 2");
 			return 0;
 		} else
 		{
-			OutputDebugString("3");
+			OutputDebugString("oop 3");
 			return 1;
 		}
 	}

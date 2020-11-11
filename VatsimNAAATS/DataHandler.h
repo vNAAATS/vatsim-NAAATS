@@ -46,7 +46,7 @@ class CDataHandler
 	static CMessage* ApiGetAllFlightData(string controller);
 
 	//create flight_data
-	static int ApiCreateFlightData(string callsign, string req_logged_onto, string destination);
+	static int ApiUpdateFlightData(string callsign, string level, string mach, string track, string route, bool is_cleared, string destination);
 
 	private:
 		// NAT Track URL

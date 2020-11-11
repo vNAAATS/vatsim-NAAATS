@@ -523,7 +523,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	//CDataHandler::ApiGetFlightData("AAL578");
 	//CDataHandler::ApiGetMessagesForController("AAL578", "CZQX_FSS");
 	//CDataHandler::ApiGetMessages("AAL578");
-	CDataHandler::ApiCreateFlightData("AAL672", "CZQX_FSS", "KLAX");
+	CDataHandler::ApiUpdateFlightData("AAL578", "420", "89", "Z", "UR MOM", true, "KJAX");
 
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
