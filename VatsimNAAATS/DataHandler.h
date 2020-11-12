@@ -34,23 +34,62 @@ class CDataHandler
 	static size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp);
 
 	//get flight_data for a/c
-	static CAircraftFlightPlan* ApiGetFlightData(string callsign);
+	static void ApiGetFlightData(void* args);
 
 	//get messages for controller for an a/c (that aren't actioned)
-	static vector<CMessage> ApiGetMessagesForController(string callsign, string controller);
+	static void ApiGetMessagesForController(void* args);
 
 	//get messages of an a/c (that ARE actioned)
-	static vector<CMessage> ApiGetMessages(string callsign);
+	static void ApiGetMessages(void* args);
 		
 	//create flight_data
-	static int ApiUpdateFlightData(string callsign, string level, string mach, string track, string route, bool is_cleared, string destination);
+	static void ApiUpdateFlightData(void* args);
 
 	//create messages
-	static int ApiCreateMessage(string sent_by, string sent_to, string contents_raw, CMessageType type, bool is_actioned, bool to_domestic);
+	static void ApiCreateMessage(void* args);
 
 	//set is_actioned on message
-	static int ApiMessageActioned(int id, bool is_actioned);
+	static void ApiMessageActioned(void* args);
 	
+	// Message data async
+	struct CGetFlightDataAsync {
+		string Callsign;
+		CAircraftFlightPlan* Result;
+	};
+	struct CGetMessagesActioned {
+		string Callsign;
+		vector<CMessage>* Result;
+	};
+	struct CGetActiveMessagesAsync {
+		string Callsign;
+		string Controller;
+		unordered_map<int, CMessage>* Result;
+	};
+	struct CCreateMessageAsync {
+		string SentBy;
+		string SentTo;
+		string ContentsRaw;
+		CMessageType Type;
+		bool IsActioned;
+		bool ToDomestic;
+		int* Result;
+	};
+	struct CDataUpdateAsync {
+		string Callsign;
+		string Level;
+		string Mach;
+		string Track;
+		string Route;
+		bool IsCleared;
+		string Destination;
+		int* Result;
+	};
+	struct CMessageActionedAsync {
+		int Id;
+		bool IsActioned;
+		int* Result;
+	};
+
 	private:
 		// NAT Track URL
 		static const string TrackURL;

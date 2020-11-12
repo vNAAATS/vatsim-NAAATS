@@ -520,12 +520,12 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 // Ben: In this method we need to run the regular API checks for each callsign updating the data if required.
 // Data updates must be done here asynchronously, see my example in CDataHandler for threading
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
-	//CDataHandler::ApiGetFlightData("AAL578");
-	//CDataHandler::ApiGetMessagesForController("AAL578", "CZQX_FSS");
-	//CDataHandler::ApiGetMessages("AAL578");
-	//CDataHandler::ApiUpdateFlightData("AAL578", "420", "89", "Z", "UR MOM", true, "KJAX");
-	//CDataHandler::ApiCreateMessage("CZQX_FSS", "AAL246", "UR MOM", CMessageType::LOG_ON, true, false);
-	//CDataHandler::ApiMessageActioned(124, true);
+	// Get the messages
+	CDataHandler::CGetActiveMessagesAsync* data = new CDataHandler::CGetActiveMessagesAsync();
+	data->Callsign = RadarTarget.GetCallsign();
+	data->Controller = GetPlugIn()->ControllerMyself().GetCallsign();
+	data->Result = &CMessageWindow::ActiveMessages;
+	_beginthread(CDataHandler::ApiGetMessagesForController, 0, (void*)data); // Async
 	
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {

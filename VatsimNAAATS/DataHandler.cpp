@@ -265,8 +265,16 @@ size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb,
 	return size * nmemb;
 }
 
-CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
+void CDataHandler::ApiGetFlightData(void* args)
 {
+	// Convert args
+	CGetFlightDataAsync* data = (CGetFlightDataAsync*)args;
+	string callsign = data->Callsign;
+	CAircraftFlightPlan* res = data->Result;
+
+	// Cleanup
+	delete args;
+
 	string result = "";
 	CURL* curl;
 	CURLcode result_code;
@@ -291,12 +299,14 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 		{
 			CAircraftFlightPlan fp;
 			fp.IsValid = false;
-			return &fp;
+			res = &fp;
+			return;
 		} else if (result == "-1")
 		{
 			CAircraftFlightPlan fp;
 			fp.IsValid = false;
-			return &fp;
+			res = &fp;
+			return;
 		} else
 		{
 			json jsonArray;
@@ -305,12 +315,18 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 				jsonArray = json::parse(result);
 			} catch(nlohmann::detail::parse_error& ex)
 			{
-				return {};
+				CAircraftFlightPlan fp;
+				fp.IsValid = false;
+				res = &fp;
+				return;
 			}
 			
 			if(jsonArray.size() > 1) //if >1 row was returned (shouldn't be any dupes!)
 			{
-				return {};
+				CAircraftFlightPlan fp;
+				fp.IsValid = false;
+				res = &fp;
+				return;
 			}
 
 			auto row = jsonArray[0];
@@ -389,13 +405,22 @@ CAircraftFlightPlan* CDataHandler::ApiGetFlightData(string callsign)
 
 			CRoutesHelper::ParseRoute((string)row.at("callsign"), (string)row.at("route"), is_track);
 			
-			return flight_plan;
+			res = flight_plan;
 		}
 	}
 }
 
-vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, string controller)
+void CDataHandler::ApiGetMessagesForController(void* args)
 {
+	// Convert args
+	CGetActiveMessagesAsync* data = (CGetActiveMessagesAsync*) args;
+	string callsign = data->Callsign;
+	string controller = data->Controller;
+	unordered_map<int, CMessage>* res = data->Result;
+
+	// Cleanup
+	delete args;
+
 	string result = "";
 	CURL* curl;
 	CURLcode result_code;
@@ -417,14 +442,14 @@ vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, stri
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return {};
+			return;
 		}
 
 		curl_easy_cleanup(curl);
 
-		if(result == "-1")
+		if (result == "-1")
 		{
-			return {};
+			return;
 		}
 	}
 	
@@ -436,15 +461,14 @@ vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, stri
 	}
 	catch (nlohmann::detail::parse_error& ex)
 	{
-		return {};
+		return;
 	}
 
 	if(j.is_null())
 	{
-		return {};
+		return;
 	}
 
-	vector<CMessage> messages;
 	for (auto obj : j) {
 		if (obj["sent_to"].get<std::string>() == controller && static_cast<int>(obj["is_actioned"]) == 0) {
 			string type_string = obj["type"];
@@ -515,21 +539,27 @@ vector<CMessage> CDataHandler::ApiGetMessagesForController(string callsign, stri
 			{
 				continue;
 			}
-			messages.push_back({obj["id"],
+			pair<int, CMessage> msg(obj["id"], { obj["id"],
 								obj["sent_to"].get<std::string>(),
 								obj["sent_by"].get<std::string>(),
 								obj["contents_raw"].get<std::string>(),
 								obj["created_at"].get<std::string>(),
-								type});
+								type });
+
+			if (res->find(obj["id"]) != res->end())
+				res->insert(msg);
 
 		}
 	}
-
-	return messages;
 }
 
-vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
+void CDataHandler::ApiGetMessages(void* args)
 {
+	// Convert args
+	CGetMessagesActioned* data = (CGetMessagesActioned*)args;
+	string callsign = data->Callsign;
+	vector<CMessage>* res = data->Result;
+
 	string result = "";
 	CURL* curl;
 	CURLcode result_code;
@@ -551,14 +581,14 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return {};
+			return;
 		}
 
 		curl_easy_cleanup(curl);
 
 		if (result == "-1")
 		{
-			return {};
+			return;
 		}
 	}
 
@@ -570,12 +600,12 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
 	}
 	catch (nlohmann::detail::parse_error& ex)
 	{
-		return {};
+		return;
 	}
 
 	if (j.is_null())
 	{
-		return {};
+		return;
 	}
 
 	vector<CMessage> messages;
@@ -659,11 +689,25 @@ vector<CMessage> CDataHandler::ApiGetMessages(string callsign)
 		}
 	}
 
-	return messages;
+	res = &messages;
 }
 
-int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach, string track, string route, bool is_cleared, string destination)
+void CDataHandler::ApiUpdateFlightData(void* args)
 {
+	// Convert args
+	CDataUpdateAsync* data = (CDataUpdateAsync*)args;
+	string callsign = data->Callsign;
+	string level = data->Level;
+	string mach = data->Mach;
+	string track = data->Track;
+	string route = data->Route;
+	bool is_cleared = data->IsCleared;
+	string destination = data->Destination;
+	int* res = data->Result;
+
+	// Cleanup
+	delete args;
+
 	string result = "";
 	CURL* curl;
 	CURLcode result_code;
@@ -700,26 +744,39 @@ int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return 1;
+			res = (int*) 1;
 		}
 
 		curl_easy_cleanup(curl);
 
 		if (result == "-1")
 		{
-			return 1;
+			res = (int*) 1;
 		} else if(result == "0")
 		{
-			return 0;
+			res = (int*) 0;
 		} else
 		{
-			return 1;
+			res = (int*) 1;
 		}
 	}
 }
 
-int CDataHandler::ApiCreateMessage(string sent_by, string sent_to, string contents_raw, CMessageType type, bool is_actioned, bool to_domestic)
+void CDataHandler::ApiCreateMessage(void* args)
 {
+	// Convert args
+	CCreateMessageAsync* data = (CCreateMessageAsync*)args;
+	string sent_by = data->SentBy;
+	string sent_to = data->SentTo;
+	string contents_raw = data->ContentsRaw;
+	CMessageType type = data->Type;
+	bool is_actioned = data->IsActioned;
+	bool to_domestic = data->ToDomestic;
+	int* res = data->Result;
+
+	// Cleanup
+	delete args;
+
 	string result = "";
 	CURL* curl;
 	CURLcode result_code;
@@ -799,7 +856,7 @@ int CDataHandler::ApiCreateMessage(string sent_by, string sent_to, string conten
 		}
 		else
 		{
-			return 1;
+			res = (int*) 1;
 		}
 
 		if(is_actioned == TRUE)
@@ -839,28 +896,37 @@ int CDataHandler::ApiCreateMessage(string sent_by, string sent_to, string conten
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return 1;
+			res = (int*) 1;
 		}
 
 		curl_easy_cleanup(curl);
 
 		if (result == "-1")
 		{
-			return 1;
+			res = (int*) 1;
 		}
 		else if (result == "0")
 		{
-			return 0;
+			res = (int*) 0;
 		}
 		else
 		{
-			return 1;
+			res = (int*) 1;
 		}
 	}
 }
 
-int CDataHandler::ApiMessageActioned(int id, bool is_actioned)
+void CDataHandler::ApiMessageActioned(void* args)
 {
+	// Convert args
+	CMessageActionedAsync* data = (CMessageActionedAsync*)args;
+	int id = data->Id;
+	bool is_actioned = data->IsActioned;
+	int* res = data->Result;
+
+	// Cleanup
+	delete args;
+
 	string result = "";
 	CURL* curl;
 	CURLcode result_code;
@@ -886,7 +952,7 @@ int CDataHandler::ApiMessageActioned(int id, bool is_actioned)
 		}
 		else
 		{
-			return 1;
+			res = (int*) 1;
 		}
 		
 		url << ApiSettings::apiUrl << "/messages/update.php";
@@ -909,22 +975,22 @@ int CDataHandler::ApiMessageActioned(int id, bool is_actioned)
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return 1;
+			res = (int*) 1;
 		}
 
 		curl_easy_cleanup(curl);
 
 		if (result == "-1")
 		{
-			return 1;
+			res = (int*) 1;
 		}
 		else if (result == "0")
 		{
-			return 0;
+			res = (int*) 0;
 		}
 		else
 		{
-			return 1;
+			res = (int*) 1;
 		}
 	}
 }

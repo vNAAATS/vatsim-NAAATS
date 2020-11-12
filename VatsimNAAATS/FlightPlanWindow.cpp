@@ -2322,6 +2322,18 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_READBK, CInputState::INACTIVE);
 			IsClearanceOpen = false;
 			if (primedPlan->CurrentMessage != nullptr && primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
+				// Create message
+				int result;
+				CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
+				data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::CLEARANCE_ISSUE);
+				data->IsActioned = false;
+				data->SentBy = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+				data->SentTo = primedPlan->Callsign;
+				data->ToDomestic = false;
+				data->Type = CMessageType::CLEARANCE_ISSUE;
+				data->Result = &result;
+				_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+
 				primedPlan->IsCleared = true;
 				primedPlan->State = "PC";
 				SetButtonState(BTN_ATCR, CInputState::DISABLED);
@@ -2332,9 +2344,20 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				textInputs[TXT_TCK].State = CInputState::DISABLED;
 				textInputs[TXT_RTE].State = CInputState::DISABLED;
 				textInputs[TXT_STATE].Content = "PC";
-				// Send clearance to natTrak here
 			}
 			if (IsCopyMade) {
+				// Create message
+				int result;
+				CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
+				data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::REVISION_ISSUE, &copiedPlan);
+				data->IsActioned = false;
+				data->SentBy = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+				data->SentTo = primedPlan->Callsign;
+				data->ToDomestic = false;
+				data->Type = CMessageType::REVISION_ISSUE;
+				data->Result = &result;
+				_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+
 				copiedPlan.IsValid = false;
 				IsCopyMade = false;
 				copiedPlan.Restrictions.clear();
@@ -2429,7 +2452,32 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 			}
 			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
-				// Accept here (either transfer or log on)
+				if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
+					// Create message
+					int result;
+					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
+					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::LOG_ON_CONFIRM);
+					data->IsActioned = false;
+					data->SentBy = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+					data->SentTo = primedPlan->Callsign;
+					data->ToDomestic = false;
+					data->Type = CMessageType::LOG_ON_CONFIRM;
+					data->Result = &result;
+					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+				}
+				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
+					// Create message
+					int result;
+					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
+					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::TRANSFER_ACCEPT);
+					data->IsActioned = false;
+					data->SentBy = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+					data->SentTo = primedPlan->CurrentMessage->From;
+					data->ToDomestic = false;
+					data->Type = CMessageType::TRANSFER_ACCEPT;
+					data->Result = &result;
+					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+				}
 				IsMessageOpen = false;
 				// Mark message as done here
 				primedPlan->DLStatus = "ONLINE";
@@ -2450,7 +2498,32 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				windowButtons[BTN_XCHANGE_REJECT].State = CInputState::DISABLED;
 			}
 			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
-				// Reject here on natTrak (either transfer or log on)
+				if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
+					// Create message
+					int result;
+					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
+					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::LOG_ON_REJECT);
+					data->IsActioned = false;
+					data->SentBy = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+					data->SentTo = primedPlan->Callsign;
+					data->ToDomestic = false;
+					data->Type = CMessageType::LOG_ON;
+					data->Result = &result;
+					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+				}
+				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
+					// Create message
+					int result;
+					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
+					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::TRANSFER_REJECT);
+					data->IsActioned = false;
+					data->SentBy = screen->GetPlugIn()->ControllerMyself().GetCallsign();
+					data->SentTo = primedPlan->CurrentMessage->From;
+					data->ToDomestic = false;
+					data->Type = CMessageType::TRANSFER_REJECT;
+					data->Result = &result;
+					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+				}
 				IsMessageOpen = false;
 				// Mark message as done here
 				windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::DISABLED;
