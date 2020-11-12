@@ -541,8 +541,8 @@ CDataHandler::CGetActiveMessagesAsync CDataHandler::ApiGetMessagesForController(
 								obj["created_at"].get<std::string>(),
 								type });
 
-			if (data.Result->find(obj["id"]) != data.Result->end())
-				data.Result->insert(msg);
+			if (data.Result.find(obj["id"]) != data.Result.end())
+				data.Result.insert(msg);
 
 		}
 	}

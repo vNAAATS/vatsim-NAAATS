@@ -512,8 +512,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				CDataHandler::CGetActiveMessagesAsync data = iter->get();
 
 				// Add the messages to the list of active messages
-				for (auto it2 = data.Result->begin(); it2 != data.Result->end(); it2++) {
-					CMessageWindow::ActiveMessages.insert(make_pair(it2->first, it2->second));
+				for (auto k : data.Result) {
+					CMessageWindow::ActiveMessages.insert(make_pair(k.first, k.second));
 				}
 
 				// Delete the pending message
