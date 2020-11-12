@@ -1246,6 +1246,9 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
+	// Plan
+	CAircraftFlightPlan* plan = IsCopyMade ? &copiedPlan : primedPlan;
+
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
@@ -1267,7 +1270,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	CRect titleRect(atcrWindow.left, atcrWindow.top, atcrWindow.left + WINSZ_FLTPLN_WIDTH_MDL, atcrWindow.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - ").c_str())); // TODO: show callsign properly
+	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - " + primedPlan->Callsign).c_str())); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
 
 	// Select font
@@ -1292,8 +1295,11 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 		// Text out
 		dc->TextOutA(restrictions.left + 2, offsetY, restrictionSelections[i].c_str());
 		
+		map<int, CFlightRestriction> restrictions;
+
 		// Screen object
-		screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
+		if (i != SEL_ATCR_RTD && i != SEL_ATCR_EPC)
+			screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
 
 		// Offset
 		offsetY += dc->GetTextExtent(restrictionSelections[i].c_str()).cy + 2;
@@ -1305,6 +1311,31 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 	InflateRect(content, -1, -1);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Select font
+	FontSelector::SelectNormalFont(14, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_LEFT);
+
+	// Fill content panel
+	offsetY = content.top + 2;
+	if (!plan->Restrictions.empty()) {
+		for (int i = 600; i <= 600 + plan->Restrictions.size() - 1; i++) {
+			size_t extent = dc->GetTextExtent("ABCD").cy;
+			// Register click
+			CRect textObj(content.left, offsetY, content.right - 1, offsetY + extent);
+			if (i == selectedActiveRestriction)
+				dc->FillSolidRect(textObj, ButtonPressed.ToCOLORREF());
+
+			// Text out
+			dc->TextOutA(content.left + 2, offsetY, plan->Restrictions[i - 600].Human.c_str());
+
+			screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
+
+			// Offset
+			offsetY += extent + 2;
+		}
+	}
 
 	// Draw headers
 	dc->TextOutA(restrictions.left + 3, restrictions.top - dc->GetTextExtent("Restrictions").cy - 2, "Restrictions");
@@ -1823,7 +1854,140 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 }
 
 void CFlightPlanWindow::ParseRestriction(string content, CRestrictionType type) {
+	CFlightRestriction restriction;
+	// Parse restriction
+	if (type == CRestrictionType::LCHG) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
 
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "LCHG AT ";
+		if (splitString.empty())
+			restriction.Human += content;
+		else
+			restriction.Human += splitString[0] + " " + splitString[1] + "Z";
+	}
+	else if (type == CRestrictionType::MCHG) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
+
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "MCHG AT ";
+		if (splitString.empty())
+			restriction.Human += content;
+		else
+			restriction.Human += splitString[0] + " " + splitString[1] + "Z";
+	}
+	else if (type == CRestrictionType::RERUTE) {
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "RERUTE VIA CURRENT ENTERED RTE";
+	}
+	else if (type == CRestrictionType::UNABLE) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "UNABLE ";
+		if (splitString.empty()) {
+			if (content == "MCHG") {
+				restriction.Human += "SPD REQ";
+			}
+			else if (content == "LCHG") {
+				restriction.Human += "LVL REQ";
+			}
+			else {
+				restriction.Human += "RERUTE REQ";
+			}
+		}
+		else {
+			int counter = 0;
+			for (int i = 0; i < splitString.size(); i++) {
+				if (splitString[i] == "MCHG") {
+					restriction.Human += "SPD REQ";
+					counter++;
+				}
+				else if (splitString[i] == "LCHG") {
+					if (counter > 1)
+						restriction.Human += ", LVL REQ";
+					else
+						restriction.Human += "LVL REQ";
+					counter++;
+				}
+				else if (splitString[i] == "RERUTE") {
+					if (counter > 1)
+						restriction.Human += ", RERUTE REQ";
+					else
+						restriction.Human += "RERUTE REQ";
+				}
+			}
+		}
+	}
+	else if (type == CRestrictionType::ATA) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
+
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "AT " + splitString[0] + " AFTR " + splitString[1] + "Z";
+	}
+	else if (type == CRestrictionType::ATB) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "AT " + splitString[0] + " BEFR " + splitString[1] + "Z";
+	}
+	else if (type == CRestrictionType::XAT) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "CROSS " + splitString[0] + " AT " + splitString[1] + "Z";
+	}
+	else if (type == CRestrictionType::INT) {
+		// Split
+		vector<string> splitString;
+		if (content.find(':') != string::npos)
+			CUtils::StringSplit(content, ':', &splitString);
+		// Assign
+		restriction.Content = content;
+		restriction.Type = type;
+		restriction.Human += "INT " + splitString[0] + " + " + splitString[1];
+	}
+	else if (type == CRestrictionType::EPC) { // Don't implement yet
+
+	}
+	else if (type == CRestrictionType::RTD) { // Don't implement yet
+
+	}
+
+	// Now add the restriction
+	if (IsCopyMade)
+		copiedPlan.Restrictions.push_back(restriction);
+	else
+		primedPlan->Restrictions.push_back(restriction);
 }
 
 void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string content) {
@@ -2114,6 +2278,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_CLRC_REJECT) {
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
+			if (IsCopyMade)
+				SetButtonState(BTN_DELETE, CInputState::INACTIVE);
 			SetButtonState(BTN_ATCR, CInputState::INACTIVE);
 			dropDowns[DRP_ATCR].State = CInputState::INACTIVE;
 			textInputs[TXT_SPD].State = CInputState::INACTIVE;
@@ -2143,7 +2309,11 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			if (IsCopyMade) {
 				copiedPlan.IsValid = false;
 				IsCopyMade = false;
+				copiedPlan.Restrictions.clear();
 			}
+			else {
+				primedPlan->Restrictions.clear();
+			}			
 		}
 		if (id == BTN_CLRC_VOICE) {
 			checkBoxes.at(CHK_CLRC_ORCA).State = CInputState::DISABLED;
@@ -2261,7 +2431,14 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		if (id == BTN_COORD_SENDOK) {
 			IsCoordOpen = false;
 		}
-		if (id == BTN_ATCR || id == BTN_ATCR_CANCEL) {
+		if (id == BTN_ATCR || id == BTN_ATCR_CPY || id == BTN_ATCR_OK) {
+			IsATCRestrictionsOpen = !IsATCRestrictionsOpen ? true : false;
+		}
+		if (id == BTN_ATCR_CANCEL) {
+			if (IsCopyMade)
+				copiedPlan.Restrictions.clear();
+			else
+				primedPlan->Restrictions.clear();
 			IsATCRestrictionsOpen = !IsATCRestrictionsOpen ? true : false;
 		}
 		if (id == BTN_CONF_COORD || id == BTN_COORD_CLOSE) {
@@ -2349,10 +2526,77 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 
 		if (id == BTN_RESTRI_EDIT_OK) {
-			// 
-			// Handle new restrictions here, use RestrictionSubModalType to determine what types of restricitions
-			//
+			if (RestrictionSubModalType == SEL_ATCR_LCHG) {
+				string content;
+				if (textInputs[TXT_RESTRI_LCHG_TIME].Content != "" && checkBoxes[CHK_RESTRI_LCHG].IsChecked) {
+					content += textInputs[TXT_RESTRI_LCHG_LATLON].Content + ":" + textInputs[TXT_RESTRI_LCHG_TIME].Content;
+				}
+				else {
+					content += textInputs[TXT_RESTRI_LCHG_LATLON].Content;
+				}
+				ParseRestriction(content, CRestrictionType::LCHG);
+			}
+			else if (RestrictionSubModalType == SEL_ATCR_MCHG) {
+				string content;
+				if (textInputs[TXT_RESTRI_MCHG_TIME].Content != "") {
+					content += textInputs[TXT_RESTRI_MCHG_LATLON].Content + ":" + textInputs[TXT_RESTRI_MCHG_TIME].Content;
+				}
+				else {
+					content += textInputs[TXT_RESTRI_MCHG_LATLON].Content;
+				}
+				ParseRestriction(content, CRestrictionType::MCHG);
+			}
+			else if (RestrictionSubModalType == SEL_ATCR_UNABLE) {
+				string content;
+				int counter = 0;
+				if (checkBoxes[CHK_RESTRI_UNABLE_LVL].IsChecked) {
+					counter++;
+					content += "LCHG";
+				}
+				if (checkBoxes[CHK_RESTRI_UNABLE_SPD].IsChecked) {
+					counter++;
+					if (counter > 1)
+						content += ":MCHG";
+					else
+						content += "MCHG";
 
+				}
+				if (checkBoxes[CHK_RESTRI_UNABLE_RTE].IsChecked) {
+					counter++;
+					if (counter > 1)
+						content += ":RERUTE";
+					else
+						content += "RERUTE";
+				}
+
+				ParseRestriction(content, CRestrictionType::UNABLE);
+			}
+			else if (RestrictionSubModalType == SEL_ATCR_ATA) {
+				string content;
+				if (textInputs[TXT_RESTRI_ATA_TIME].Content != "") {
+					content += textInputs[TXT_RESTRI_ATA_LATLON].Content + ":" + textInputs[TXT_RESTRI_ATA_TIME].Content;
+				}
+				ParseRestriction(content, CRestrictionType::ATA);
+			}
+			else if (RestrictionSubModalType == SEL_ATCR_ATB) {
+				string content;
+				if (textInputs[TXT_RESTRI_ATB_TIME].Content != "") {
+					content += textInputs[TXT_RESTRI_ATB_LATLON].Content + ":" + textInputs[TXT_RESTRI_ATB_TIME].Content;
+				}
+				ParseRestriction(content, CRestrictionType::ATB);
+			}
+			else if (RestrictionSubModalType == SEL_ATCR_XAT) {
+				string content;
+				if (textInputs[TXT_RESTRI_XAT_TIME].Content != "") {
+					content += textInputs[TXT_RESTRI_XAT_LATLON].Content + ":" + textInputs[TXT_RESTRI_XAT_TIME].Content;
+				}
+				ParseRestriction(content, CRestrictionType::XAT);
+			}
+			else if (RestrictionSubModalType == SEL_ATCR_INT) {
+				string content;
+				content += textInputs[TXT_RESTRI_INT_CALLSIGN].Content + ":" + textInputs[TXT_RESTRI_INT_INTERVAL].Content;
+				ParseRestriction(content, CRestrictionType::INT);
+			}
 
 			// One done handling, close the modal
 			RestrictionSubModalType = -1;
@@ -2453,6 +2697,9 @@ void CFlightPlanWindow::ButtonPress(int id) {
 			selectedRestriction = id;
 		}
 	}
+	if (id >= 500) {
+		selectedActiveRestriction = id;
+	}
 
 	// If dropdown then set the state
 	if (IsDropDown(id)) {
@@ -2475,12 +2722,58 @@ void CFlightPlanWindow::ButtonDoubleClick(int id)
 
 		if (id == SEL_ATCR_RERUTE) {
 			//TODO: Handle Reroute message
-
+			ParseRestriction("RERUTE", CRestrictionType::RERUTE);
 			return;
 		}
 
+		// Plan
+		CAircraftFlightPlan* plan = IsCopyMade ? &copiedPlan : primedPlan;
+
+		// So that we can't double restrictions
+		for (int i = 0; i < plan->Restrictions.size(); i++) {
+			if (plan->Restrictions[i].Type == CRestrictionType::LCHG) {
+				if (id == SEL_ATCR_LCHG)
+					return;
+			} else if (plan->Restrictions[i].Type == CRestrictionType::MCHG) {
+				if (id == SEL_ATCR_MCHG)
+					return;
+			}
+			else if (plan->Restrictions[i].Type == CRestrictionType::UNABLE) {
+				if (id == SEL_ATCR_UNABLE)
+					return;
+			}
+			else if (plan->Restrictions[i].Type == CRestrictionType::RERUTE) {
+				if (id == SEL_ATCR_RERUTE)
+					return;
+			}
+			else if (plan->Restrictions[i].Type == CRestrictionType::ATA) {
+				if (id == SEL_ATCR_ATA)
+					return;
+			}
+			else if (plan->Restrictions[i].Type == CRestrictionType::ATB) {
+				if (id == SEL_ATCR_ATB)
+					return;
+			}
+			else if (plan->Restrictions[i].Type == CRestrictionType::XAT) {
+				if (id == SEL_ATCR_XAT)
+					return;
+			}
+			else if (plan->Restrictions[i].Type == CRestrictionType::INT) {
+				if (id == SEL_ATCR_INT)
+					return;
+			}
+		}
 
 		RestrictionSubModalType = id;
+	}
+
+	if (id >= 600) {
+		int remove = id - 600;
+		if (IsCopyMade)
+			copiedPlan.Restrictions.erase(copiedPlan.Restrictions.begin() + remove);
+		else
+			primedPlan->Restrictions.erase(primedPlan->Restrictions.begin() + remove);
+		selectedActiveRestriction = -1;
 	}
 		
 }

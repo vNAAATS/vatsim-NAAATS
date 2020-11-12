@@ -199,19 +199,19 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 		}
 
 		if (machChange != -1) {
-			returnString += "MAINTAIN MACH 0" + splitString[machChange] + ".";
+			returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". ";
 		}
 		if (levelChange != -1) {
 			if (!returnString.empty())
 				returnString += " ";
 
-			returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ".";
+			returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
 		}
 		if (rerute != -1) {
 			if (!returnString.empty())
 				returnString += " ";
 			// TODO: Finish
-			returnString += "ROUTE HAS BEEN CHANGED ";
+			returnString += "ROUTE HAS BEEN CHANGED.";
 		}
 
 		return returnString;

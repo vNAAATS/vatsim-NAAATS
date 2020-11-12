@@ -44,6 +44,9 @@ public:
 		// Normal weight
 		lFont.lfWeight = FW_SEMIBOLD;
 		// Size 14
+		lFont.lfHeight = 14;
+		normalFont14.CreateFontIndirect(&lFont);
+		// Size 15
 		lFont.lfHeight = 15;
 		normalFont15.CreateFontIndirect(&lFont);
 		// Size 16
@@ -92,7 +95,10 @@ public:
 
 	static void SelectNormalFont(int size, CDC* dc) {
 		// Select font based on font size
-		if (size == 15) {
+		if (size == 14) {
+			dc->SelectObject(normalFont14);
+		}
+		else if (size == 15) {
 			dc->SelectObject(normalFont15);
 		}
 		else if (size == 16) {
@@ -133,6 +139,7 @@ public:
 	}
 
 	private:
+		static CFont normalFont14;
 		static CFont normalFont15;
 		static CFont normalFont16;
 		static CFont normalFont30;
