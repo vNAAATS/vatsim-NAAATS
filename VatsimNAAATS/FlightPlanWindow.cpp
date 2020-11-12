@@ -2348,7 +2348,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				data->SentTo = primedPlan->Callsign;
 				data->ToDomestic = false;
 				data->Type = CMessageType::CLEARANCE_ISSUE;
-				data->Result = &result;
+				data->Result = 0;
 				_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 
 				primedPlan->IsCleared = true;
@@ -2372,7 +2372,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				data->SentTo = primedPlan->Callsign;
 				data->ToDomestic = false;
 				data->Type = CMessageType::REVISION_ISSUE;
-				data->Result = &result;
+				data->Result = 0;
 				_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 
 				copiedPlan.IsValid = false;
@@ -2471,7 +2471,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
 				if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
 					// Create message
-					int result;
 					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
 					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::LOG_ON_CONFIRM);
 					data->IsActioned = false;
@@ -2479,12 +2478,11 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->Callsign;
 					data->ToDomestic = false;
 					data->Type = CMessageType::LOG_ON_CONFIRM;
-					data->Result = &result;
+					data->Result = 0;
 					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
 					// Create message
-					int result;
 					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
 					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::TRANSFER_ACCEPT);
 					data->IsActioned = false;
@@ -2492,7 +2490,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->CurrentMessage->From;
 					data->ToDomestic = false;
 					data->Type = CMessageType::TRANSFER_ACCEPT;
-					data->Result = &result;
+					data->Result = 0;
 					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				IsMessageOpen = false;
@@ -2517,7 +2515,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
 				if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
 					// Create message
-					int result;
+
 					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
 					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::LOG_ON_REJECT);
 					data->IsActioned = false;
@@ -2525,7 +2523,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->Callsign;
 					data->ToDomestic = false;
 					data->Type = CMessageType::LOG_ON;
-					data->Result = &result;
+					data->Result = 0;
 					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
@@ -2538,7 +2536,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->CurrentMessage->From;
 					data->ToDomestic = false;
 					data->Type = CMessageType::TRANSFER_REJECT;
-					data->Result = &result;
+					data->Result = 0;
 					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				IsMessageOpen = false;

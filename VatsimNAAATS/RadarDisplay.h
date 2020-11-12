@@ -2,6 +2,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <future>
+#include <thread>
 #include "InboundList.h"
 #include "Structures.h"
 #include "OtherList.h"
@@ -69,5 +71,6 @@ class CRadarDisplay : public CRadarScreen
 		CFlightPlanWindow* fltPlnWindow = nullptr;
 		CMessageWindow* msgWindow = nullptr;
 		CNotePad* npWindow = nullptr;
+		vector<future<CDataHandler::CGetActiveMessagesAsync>> PendingApiMessagesForController;
 };
 

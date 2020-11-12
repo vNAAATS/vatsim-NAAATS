@@ -499,6 +499,30 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			npWindow->RenderWindow(&dc, &g, this);
 		}
 
+
+		//
+		// Poll all pending messages
+		//
+
+		auto iter = PendingApiMessagesForController.begin();
+		while (iter != PendingApiMessagesForController.end())
+		{
+			if (iter->valid() && iter->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+			{
+				CDataHandler::CGetActiveMessagesAsync data = iter->get();
+
+				// Add the messages to the list of active messages
+				for (auto it2 = data.Result->begin(); it2 != data.Result->end(); it2++) {
+					CMessageWindow::ActiveMessages.insert(make_pair(it2->first, it2->second));
+				}
+
+				// Delete the pending message
+				iter = PendingApiMessagesForController.erase(iter);
+			}
+			else
+				++iter;
+		}
+
 		// Finally, reset the clocks if time has been exceeded
 		if (fiveSecT >= 5) {
 			fiveSecondTimer = clock();
@@ -521,11 +545,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 // Data updates must be done here asynchronously, see my example in CDataHandler for threading
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	// Get the messages
-	CDataHandler::CGetActiveMessagesAsync* data = new CDataHandler::CGetActiveMessagesAsync();
-	data->Callsign = RadarTarget.GetCallsign();
-	data->Controller = GetPlugIn()->ControllerMyself().GetCallsign();
-	data->Result = &CMessageWindow::ActiveMessages;
-	_beginthread(CDataHandler::ApiGetMessagesForController, 0, (void*)data); // Async
+	CDataHandler::CGetActiveMessagesAsync data;
+	data.Callsign = RadarTarget.GetCallsign();
+	data.Controller = GetPlugIn()->ControllerMyself().GetCallsign();
+
+	PendingApiMessagesForController.push_back(async(CDataHandler::ApiGetMessagesForController, data));
 	
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
