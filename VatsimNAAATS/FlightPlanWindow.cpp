@@ -834,7 +834,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 					wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
 				}
 			}
-			contentoffsetY += dc->GetTextExtent("ABCD").cy + 2;
+			contentoffsetY += dc->GetTextExtent("ABCD").cy + 5;
 		}
 	}
 	else {
