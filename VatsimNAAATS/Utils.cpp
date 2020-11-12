@@ -198,20 +198,92 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 			}
 		}
 
+		bool isLevelRestriction = false;
+		bool isMachRestriction = false;
+		bool isRouteRestriction = false;
+
+		vector<string> restrictions = { "LCHG, MCHG, ATA", "ATB", "XAT", "UNABLE", "INT" };
+
+		// Restrictions
+		auto restrictionsIndex = std::find(splitString.begin(), splitString.end(), "ATC/");
+		for (auto idx = restrictionsIndex; idx != splitString.end(); idx++) {
+			if (*idx == "LCHG") {
+				isLevelRestriction = true;
+				int isTime = false;
+				returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + "CROSS " + *(idx + 1) + " AT F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
+			}
+			else if (*idx == "MCHG") {
+				isMachRestriction = true;
+				returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". CROSS " + *(idx + 1) + " AT " + splitString[machChange] + ". ";
+			}
+			else if (*idx == "EPC") {
+				
+			}
+			else if (*idx == "RERUTE") {
+				isRouteRestriction = true;
+				returnString += "ROUTE HAS BEEN CHANGED. ";
+			}
+			else if (*idx == "RTD") {
+
+			}
+			else if (*idx == "UNABLE") {
+				vector<string> unables;
+				if (std::find(restrictions.begin(), restrictions.end(), *(idx + 1)) != restrictions.end()) {
+					unables.push_back(*(idx + 1));
+				}
+				if (std::find(restrictions.begin(), restrictions.end(), *(idx + 2)) != restrictions.end()) {
+					unables.push_back(*(idx + 2));
+				}
+				if (std::find(restrictions.begin(), restrictions.end(), *(idx + 3)) != restrictions.end()) {
+					unables.push_back(*(idx + 3));
+				}
+				int counter = 0;
+				for (int i = 0; i < unables.size(); i++) {
+					if (unables[i] == "LCHG") {
+						if (counter > 1)
+							returnString += ", LEVEL CHANGE";
+						else
+							returnString += "UNABLE LEVEL CHANGE ";
+					}
+					else if (unables[i] == "MCHG") {
+						if (counter > 1)
+							returnString += ", SPD CHANGE";
+						else
+							returnString += "UNABLE SPD CHANGE ";
+					}
+					else {
+						if (counter > 1)
+							returnString += ", RERUTE";
+						else
+							returnString += "UNABLE RERUTE ";
+					}
+				}
+				returnString += " ";
+			}
+			else if (*idx == "ATA") {
+				returnString += "CROSS " + *(idx + 1) + " AFTER " + *(idx + 2) + ". ";
+			}
+			else if (*idx == "ATB") {
+				returnString += "CROSS " + *(idx + 1) + " BEFORE " + *(idx + 2) + ". ";
+			}
+			else if (*idx == "XAT") {
+				returnString += "CROSS " + *(idx + 1) + " AT " + *(idx + 2) + ". ";
+			}
+		}
+
 		if (machChange != -1) {
 			returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". ";
 		}
-		if (levelChange != -1) {
+		if (levelChange != -1 && !isLevelRestriction) {
 			if (!returnString.empty())
 				returnString += " ";
 
 			returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
 		}
-		if (rerute != -1) {
+		if (rerute != -1 && !isRouteRestriction) {
 			if (!returnString.empty())
 				returnString += " ";
-			// TODO: Finish
-			returnString += "ROUTE HAS BEEN CHANGED.";
+			returnString += "ROUTE HAS BEEN CHANGED. ";
 		}
 
 		return returnString;
@@ -281,10 +353,10 @@ string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPla
 					returnString += ":EPC:" + fp->Restrictions[i].Content;
 				}
 				else if (fp->Restrictions[i].Type == CRestrictionType::RERUTE) {
-					returnString += ":RERUTE:" + fp->Restrictions[i].Content;
+					returnString += ":RERUTE";
 				}
 				else if (fp->Restrictions[i].Type == CRestrictionType::RTD) {
-					returnString += ":RTD:" + fp->Restrictions[i].Content;
+					returnString += ":RTD";
 				}
 				else if (fp->Restrictions[i].Type == CRestrictionType::UNABLE) {
 					returnString += ":UNABLE:" + fp->Restrictions[i].Content;

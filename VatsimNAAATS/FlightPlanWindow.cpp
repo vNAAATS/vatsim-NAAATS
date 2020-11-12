@@ -160,8 +160,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	checkBoxes[CHK_COORD_LFRRT] = CCheckBox(CHK_COORD_LFRRT, WIN_FLTPLN, "Brest", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_PLANT] = CCheckBox(CHK_COORD_PLANT, WIN_FLTPLN, "Planning", false, CInputState::INACTIVE);
 	checkBoxes[CHK_COORD_ENRT] = CCheckBox(CHK_COORD_ENRT, WIN_FLTPLN, "Enroute", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_LCHG] = CCheckBox(CHK_RESTRI_LCHG, WIN_FLTPLN, "Time?", false, CInputState::INACTIVE);
-	checkBoxes[CHK_RESTRI_MCHG] = CCheckBox(CHK_RESTRI_MCHG, WIN_FLTPLN, "Time?", false, CInputState::INACTIVE);
+	checkBoxes[CHK_RESTRI_LCHG] = CCheckBox(CHK_RESTRI_LCHG, WIN_FLTPLN, "Time?", false, CInputState::DISABLED);
+	checkBoxes[CHK_RESTRI_MCHG] = CCheckBox(CHK_RESTRI_MCHG, WIN_FLTPLN, "Time?", false, CInputState::DISABLED);
 	checkBoxes[CHK_RESTRI_UNABLE_SPD] = CCheckBox(CHK_RESTRI_UNABLE_SPD, WIN_FLTPLN, "Speed", false, CInputState::INACTIVE);
 	checkBoxes[CHK_RESTRI_UNABLE_LVL] = CCheckBox(CHK_RESTRI_UNABLE_LVL, WIN_FLTPLN, "Level", false, CInputState::INACTIVE);
 	checkBoxes[CHK_RESTRI_UNABLE_RTE] = CCheckBox(CHK_RESTRI_UNABLE_RTE, WIN_FLTPLN, "Route", false, CInputState::INACTIVE);
@@ -2194,7 +2194,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			// Flag
 			stateSetManually = true;
 		}
-		if (id == BTN_DELETE) { // Delete copy
+		if (id == BTN_DELETE) {
 			IsCopyMade = false; // Delete copy
 			IsConflictWindow = false;
 			IsClearanceOpen = false;
@@ -2251,7 +2251,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 
 			// Switch the clearance type
 			CMessageType type;
-			if (primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
+			if (primedPlan->CurrentMessage != nullptr && primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
 				type = CMessageType::CLEARANCE_ISSUE;
 				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = true;
 				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
@@ -2262,7 +2262,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
 				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
 			}
-			else if (primedPlan->CurrentMessage->Type == CMessageType::REVISION_REQ){
+			else if (IsCopyMade || (primedPlan->CurrentMessage != nullptr && primedPlan->CurrentMessage->Type == CMessageType::REVISION_REQ)) {
 				type = CMessageType::REVISION_ISSUE;
 				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
 				checkBoxes.at(CHK_CLRC_CPDLC).State = CInputState::INACTIVE;
@@ -2632,60 +2632,67 @@ void CFlightPlanWindow::ButtonPress(int id) {
 	// Check if checkbox
 	if (id >= 300) {
 		if (checkBoxes.find(id) != checkBoxes.end()) {
-			checkBoxes.at(id).IsChecked = !checkBoxes.at(id).IsChecked;
+			if (checkBoxes.at(id).State != CInputState::DISABLED) {
+				checkBoxes.at(id).IsChecked = !checkBoxes.at(id).IsChecked;
 
-			if (id == CHK_CLRC_CPDLC) {
-				SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_SEND, CInputState::INACTIVE);
-				SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
-				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+				if (id == CHK_CLRC_CPDLC) {
+					SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_SEND, CInputState::INACTIVE);
+					SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
+					checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
 
-			} else if (id == CHK_CLRC_ORCA) {
-				SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_SEND, CInputState::INACTIVE);
-				SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
-				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
-
-			} else if (id == CHK_CLRC_TXT) {
-				SetButtonState(BTN_CLRC_VOICE, CInputState::INACTIVE);
-				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_SEND, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
-				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
-
-			} else if (id == CHK_CLRC_VOX) {
-				SetButtonState(BTN_CLRC_VOICE, CInputState::INACTIVE);
-				SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_SEND, CInputState::DISABLED);
-				SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
-				checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
-				checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
-			} else if (id == CHK_RESTRI_LCHG) {
-				if (checkBoxes.at(CHK_RESTRI_LCHG).IsChecked) {
-					textInputs[TXT_RESTRI_LCHG_LATLON].State = CInputState::DISABLED;
-					textInputs[TXT_RESTRI_LCHG_TIME].State = CInputState::ACTIVE;
 				}
-				else {
-					textInputs[TXT_RESTRI_LCHG_LATLON].State = CInputState::ACTIVE;
-					textInputs[TXT_RESTRI_LCHG_TIME].State = CInputState::DISABLED;
+				else if (id == CHK_CLRC_ORCA) {
+					SetButtonState(BTN_CLRC_VOICE, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_SEND, CInputState::INACTIVE);
+					SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
+					checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+
 				}
-			} else if (id == CHK_RESTRI_MCHG) {
-				if (checkBoxes.at(CHK_RESTRI_MCHG).IsChecked) {
-					textInputs[TXT_RESTRI_MCHG_LATLON].State = CInputState::DISABLED;
-					textInputs[TXT_RESTRI_MCHG_TIME].State = CInputState::ACTIVE;
+				else if (id == CHK_CLRC_TXT) {
+					SetButtonState(BTN_CLRC_VOICE, CInputState::INACTIVE);
+					SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_SEND, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
+					checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_VOX).IsChecked = false;
+
 				}
-				else {
-					textInputs[TXT_RESTRI_MCHG_LATLON].State = CInputState::ACTIVE;
-					textInputs[TXT_RESTRI_MCHG_TIME].State = CInputState::DISABLED;
+				else if (id == CHK_CLRC_VOX) {
+					SetButtonState(BTN_CLRC_VOICE, CInputState::INACTIVE);
+					SetButtonState(BTN_CLRC_READBK, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_SEND, CInputState::DISABLED);
+					SetButtonState(BTN_CLRC_REJECT, CInputState::INACTIVE);
+					checkBoxes.at(CHK_CLRC_ORCA).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_TXT).IsChecked = false;
+					checkBoxes.at(CHK_CLRC_CPDLC).IsChecked = false;
+				}
+				else if (id == CHK_RESTRI_LCHG) {
+					if (checkBoxes.at(CHK_RESTRI_LCHG).IsChecked) {
+						textInputs[TXT_RESTRI_LCHG_LATLON].State = CInputState::DISABLED;
+						textInputs[TXT_RESTRI_LCHG_TIME].State = CInputState::ACTIVE;
+					}
+					else {
+						textInputs[TXT_RESTRI_LCHG_LATLON].State = CInputState::ACTIVE;
+						textInputs[TXT_RESTRI_LCHG_TIME].State = CInputState::DISABLED;
+					}
+				}
+				else if (id == CHK_RESTRI_MCHG) {
+					if (checkBoxes.at(CHK_RESTRI_MCHG).IsChecked) {
+						textInputs[TXT_RESTRI_MCHG_LATLON].State = CInputState::DISABLED;
+						textInputs[TXT_RESTRI_MCHG_TIME].State = CInputState::ACTIVE;
+					}
+					else {
+						textInputs[TXT_RESTRI_MCHG_LATLON].State = CInputState::ACTIVE;
+						textInputs[TXT_RESTRI_MCHG_TIME].State = CInputState::DISABLED;
+					}
 				}
 			}
 		}
