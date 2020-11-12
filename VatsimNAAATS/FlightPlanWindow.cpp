@@ -1847,7 +1847,10 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			}
 		}
 		else {
-			IsData = false;
+			if (!primedPlan->RouteRaw.empty())
+				IsData = true;
+			else
+				IsData = false;
 			SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
 		}
 	}
@@ -2573,6 +2576,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			IsManualEntryOpen = false;
 			IsData = true;
 			SetButtonState(BTN_MANENTRY, CInputState::DISABLED);
+			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
 
 			// Assign
 			textInputs[TXT_DEST].Content = textInputs[TXT_MAN_DEST].Content;

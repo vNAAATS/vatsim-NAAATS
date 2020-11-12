@@ -33,8 +33,9 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
 		// If failed
 		if (FAILED(hr)) {
+			int code = (int)hr;
 			// Show user message
-			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data.", true, true, true, true, true);
+			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data. Code: " + code, true, true, true, true, true);
 			return 1;
 		}
 		// Put data into buffer

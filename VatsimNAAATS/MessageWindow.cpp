@@ -22,6 +22,28 @@ CMessageWindow::CMessageWindow(POINT topLeft) : CBaseWindow(topLeft) {
 void CMessageWindow::MakeWindowItems() {
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_MSG, "Close", CInputState::INACTIVE);
 	scrollBars[SCRL_MSGWNDW] = CWinScrollBar(SCRL_MSGWNDW, WIN_SCROLLBAR, 0, 0, false);
+	CMessage msg;
+
+	msg.Id = 0;
+	msg.From = "DLH414";
+	msg.To = "CZQX_FSS";
+	msg.MessageRaw = "DLH414:CLEARANCE_REQUEST:KMCO:NULL:NEEKO:1000:A:410:81:FREETEXT";
+	msg.Type = CMessageType::CLEARANCE_REQ;
+	ActiveMessages[msg.Id] = msg;
+
+	msg.Id = 1;
+	msg.From = "DLH414";
+	msg.To = "CZQX_FSS";
+	msg.MessageRaw = "DLH414:LOG_ON:CZQX_FSS";
+	msg.Type = CMessageType::LOG_ON;
+	ActiveMessages[msg.Id] = msg;
+
+	msg.Id = 2;
+	msg.From = "DLH414";
+	msg.To = "CZQX_FSS";
+	msg.MessageRaw = "DLH414:REVISION_REQ:MCHG:85";
+	msg.Type = CMessageType::REVISION_REQ;
+	ActiveMessages[msg.Id] = msg;
 }
 
 void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
