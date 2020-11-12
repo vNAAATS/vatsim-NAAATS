@@ -255,8 +255,9 @@ struct CMessage {
 
 struct CFlightRestriction {
 	CFlightRestriction() {}; // Default constructor
-	int Type;
+	CRestrictionType Type;
 	string Content;
+	string Human;
 };
 
 struct CAircraftFlightPlan {

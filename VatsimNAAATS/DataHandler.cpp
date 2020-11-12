@@ -675,7 +675,12 @@ int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach
 		struct curl_slist* headers = nullptr;
 		
 		url << ApiSettings::apiUrl << "/flight_data/update.php";
+<<<<<<< HEAD
 		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&assigned_mach=" << mach << "&track=" << track << "&route=" << route << "&is_cleared=" << is_cleared << "&destination=" << destination;
+=======
+		const char* escaped_route = curl_easy_escape(curl, route.c_str(), route.length());
+		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&mach=" << mach << "&track=" << track << "&route=" << escaped_route << "&is_cleared=" << is_cleared << "&destination=" << destination;
+>>>>>>> 52acb2fb2d60727fa86e4b4332e3db525b092db1
 		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
 
 		string cpost_s = post_data.str();
@@ -685,7 +690,14 @@ int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach
 		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+<<<<<<< HEAD
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+=======
+		curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		string cpost_s = post_data.str();
+		const char* cpost_data = cpost_s.c_str();
+		long cpost_data_len = cpost_s.length();
+>>>>>>> 52acb2fb2d60727fa86e4b4332e3db525b092db1
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cpost_data);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, cpost_data_len);
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);

@@ -294,3 +294,16 @@ enum class CMessageType {
     ROGER,
     UNABLE
 };
+
+enum class CRestrictionType {
+    LCHG,
+    MCHG,
+    EPC,
+    RERUTE,
+    UNABLE,
+    RTD,
+    ATA,
+    ATB,
+    XAT,
+    INT
+};

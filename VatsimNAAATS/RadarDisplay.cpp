@@ -844,7 +844,8 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// If a coordination
 		if (ObjectType == WIN_FLTPLN_TSFR) {
-			if (GetPlugIn()->FlightPlanSelect(fltPlnWindow->primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
+			if (GetPlugIn()->FlightPlanSelect(fltPlnWindow->primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() &&
+				string(GetPlugIn()->FlightPlanSelect(fltPlnWindow->primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) == "") {
 				fltPlnWindow->selectedAuthority = sObjectId;
 			}
 		}

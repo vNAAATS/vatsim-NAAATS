@@ -3,6 +3,7 @@
 #include "Styles.h"
 
 // Initialise font values here because otherwise we get lots of linker errors
+CFont FontSelector::normalFont14;
 CFont FontSelector::normalFont15;
 CFont FontSelector::normalFont16;
 CFont FontSelector::normalFont30;
