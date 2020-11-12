@@ -675,14 +675,19 @@ int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach
 		struct curl_slist* headers = nullptr;
 		
 		url << ApiSettings::apiUrl << "/flight_data/update.php";
-		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&mach=" << mach << "&track=" << track << "&route=" << route << "&is_cleared=" << is_cleared << "&destination" << destination;
+		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&assigned_mach=" << mach << "&track=" << track << "&route=" << route << "&is_cleared=" << is_cleared << "&destination=" << destination;
 		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+
+		string cpost_s = post_data.str();
+		const char* cpost_data = cpost_s.c_str();
+		long cpost_data_len = cpost_s.length();
 		
 		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cpost_data);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, cpost_data_len);
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 		result_code = curl_easy_perform(curl);
@@ -696,15 +701,223 @@ int CDataHandler::ApiUpdateFlightData(string callsign, string level, string mach
 
 		if (result == "-1")
 		{
-			OutputDebugString("oop 1");
 			return 1;
 		} else if(result == "0")
 		{
-			OutputDebugString("oop 2");
 			return 0;
 		} else
 		{
-			OutputDebugString("oop 3");
+			return 1;
+		}
+	}
+}
+
+int CDataHandler::ApiCreateMessage(string sent_by, string sent_to, string contents_raw, CMessageType type, bool is_actioned, bool to_domestic)
+{
+	string result = "";
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+
+	if (curl)
+	{
+		stringstream url,
+			post_data;
+		struct curl_slist* headers = nullptr;
+		string s_type;
+		string s_is_actioned;
+		string s_to_domestic;
+
+		if (type == CMessageType::LOG_ON)
+		{
+			s_type = "LOG_ON";
+		}
+		else if (type == CMessageType::LOG_ON_CONFIRM)
+		{
+			s_type = "LOG_ON_CONFIRM";
+		}
+		else if (type == CMessageType::LOG_ON_REJECT)
+		{
+			s_type = "LOG_ON_REJECT";
+		}
+		else if (type == CMessageType::TRANSFER)
+		{
+			s_type = "TRANSFER";
+		}
+		else if (type == CMessageType::TRANSFER_ACCEPT)
+		{
+			s_type = "TRANSFER_ACCEPT";
+		}
+		else if (type == CMessageType::TRANSFER_REJECT)
+		{
+			s_type = "TRANSFER_REJECT";
+		}
+		else if (type == CMessageType::CLEARANCE_REQ)
+		{
+			s_type = "CLEARANCE_REQ";
+		}
+		else if (type == CMessageType::CLEARANCE_ISSUE)
+		{
+			s_type = "CLEARANCE_ISSUE";
+		}
+		else if (type == CMessageType::CLEARANCE_REJECT)
+		{
+			s_type = "CLEARANCE_REJECT";
+		}
+		else if (type == CMessageType::REVISION_REQ)
+		{
+			s_type = "REVISION_REQ";
+		}
+		else if (type == CMessageType::REVISION_ISSUE)
+		{
+			s_type = "REVISION_ISSUE";
+		}
+		else if (type == CMessageType::REVISION_REJECT)
+		{
+			s_type = "REVISION_REJECT";
+		}
+		else if (type == CMessageType::WILCO)
+		{
+			s_type = "WILCO";
+		}
+		else if (type == CMessageType::ROGER)
+		{
+			s_type = "ROGER";
+		}
+		else if (type == CMessageType::UNABLE)
+		{
+			s_type = "UNABLE";
+		}
+		else
+		{
+			return 1;
+		}
+
+		if(is_actioned == TRUE)
+		{
+			s_is_actioned = "TRUE";
+		}
+		else
+		{
+			s_is_actioned = "FALSE";
+		}
+
+		if (to_domestic == TRUE)
+		{
+			s_to_domestic = "TRUE";
+		}
+		else
+		{
+			s_to_domestic = "FALSE";
+		}
+		
+		url << ApiSettings::apiUrl << "/messages/create.php";
+		post_data << "apiKey=" << ApiSettings::apiKey << "&sent_by=" << sent_by << "&sent_to=" << sent_to << "&contents_raw=" << contents_raw << "&type=" << s_type << "&is_actioned=" << s_is_actioned << "&to_domestic=" << s_to_domestic;
+		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+
+		string cpost_s = post_data.str();
+		const char* cpost_data = cpost_s.c_str();
+		long cpost_data_len = cpost_s.length();
+
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cpost_data);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, cpost_data_len);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+		result_code = curl_easy_perform(curl);
+
+		if (result_code != CURLE_OK) {
+			curl_easy_cleanup(curl);
+			return 1;
+		}
+
+		curl_easy_cleanup(curl);
+
+		if (result == "-1")
+		{
+			return 1;
+		}
+		else if (result == "0")
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+}
+
+int CDataHandler::ApiMessageActioned(int id, bool is_actioned)
+{
+	string result = "";
+	CURL* curl;
+	CURLcode result_code;
+
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	curl = curl_easy_init();
+
+	if (curl)
+	{
+		stringstream url,
+			post_data;
+		struct curl_slist* headers = nullptr;
+		string action;
+		
+		if(is_actioned == true)
+		{
+			action = "set_is_actioned_true";
+		}
+		else if(is_actioned == false)
+		{
+			action = "set_is_actioned_false";
+		}
+		else
+		{
+			return 1;
+		}
+		
+		url << ApiSettings::apiUrl << "/messages/update.php";
+		post_data << "apiKey=" << ApiSettings::apiKey << "&id=" << id << "&action=" << action;
+		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+
+		string cpost_s = post_data.str();
+		const char* cpost_data = cpost_s.c_str();
+		long cpost_data_len = cpost_s.length();
+
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cpost_data);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, cpost_data_len);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+		result_code = curl_easy_perform(curl);
+
+		if (result_code != CURLE_OK) {
+			curl_easy_cleanup(curl);
+			return 1;
+		}
+
+		curl_easy_cleanup(curl);
+
+		if (result == "-1")
+		{
+			return 1;
+		}
+		else if (result == "0")
+		{
+			return 0;
+		}
+		else
+		{
 			return 1;
 		}
 	}

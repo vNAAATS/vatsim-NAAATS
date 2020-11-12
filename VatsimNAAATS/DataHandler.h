@@ -41,13 +41,16 @@ class CDataHandler
 
 	//get messages of an a/c (that ARE actioned)
 	static vector<CMessage> ApiGetMessages(string callsign);
-	
-	//get ALL flight_data where logged_onto is equal to the controller's callsign
-	static CMessage* ApiGetAllFlightData(string controller);
-
+		
 	//create flight_data
 	static int ApiUpdateFlightData(string callsign, string level, string mach, string track, string route, bool is_cleared, string destination);
 
+	//create messages
+	static int ApiCreateMessage(string sent_by, string sent_to, string contents_raw, CMessageType type, bool is_actioned, bool to_domestic);
+
+	//set is_actioned on message
+	static int ApiMessageActioned(int id, bool is_actioned);
+	
 	private:
 		// NAT Track URL
 		static const string TrackURL;
