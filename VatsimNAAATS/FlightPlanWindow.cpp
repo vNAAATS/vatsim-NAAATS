@@ -309,8 +309,16 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && controllerIsMe)
-			windowButtons[BTN_COPY].State = CInputState::INACTIVE;
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && controllerIsMe) {
+			if (primedPlan->CurrentMessage != nullptr) {
+				if (primedPlan->CurrentMessage->Type != CMessageType::CLEARANCE_REQ) {
+					windowButtons[BTN_COPY].State = CInputState::INACTIVE;
+				}
+			}
+			else {
+				windowButtons[BTN_COPY].State = CInputState::INACTIVE;
+			}
+		}
 		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE && !controllerIsMe)
 			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 		if (!primedPlan->IsCleared && !controllerIsMe) {
@@ -1271,11 +1279,12 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - " + primedPlan->Callsign).c_str())); // TODO: show callsign properly
+	screen->AddScreenObject(WIN_FLTPLN, "RESTRICTIONS", atcrWindow, false, ""); // So it can't be moved
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
+	
 
 	// Select font
 	FontSelector::SelectNormalFont(15, dc);
-	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
 	// Create the restrictions panel
@@ -1291,15 +1300,24 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 		CRect textObj(restrictions.left, offsetY, restrictions.right - 1, offsetY + dc->GetTextExtent(restrictionSelections[i].c_str()).cy);
 		if (i == selectedRestriction)
 			dc->FillSolidRect(textObj, ButtonPressed.ToCOLORREF());
-
-		// Text out
-		dc->TextOutA(restrictions.left + 2, offsetY, restrictionSelections[i].c_str());
 		
-		map<int, CFlightRestriction> restrictions;
+		// Colour
+		dc->SetTextColor(Disabled.ToCOLORREF());
 
 		// Screen object
-		if (i != SEL_ATCR_RTD && i != SEL_ATCR_EPC)
-			screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
+		if (i != SEL_ATCR_RTD && i != SEL_ATCR_EPC) {
+			if (IsCopyMade && (i != SEL_ATCR_RERUTE && i != SEL_ATCR_INT)) {
+				screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
+				dc->SetTextColor(TextWhite.ToCOLORREF());
+			}	
+			else if (!primedPlan->IsCleared && (i != SEL_ATCR_LCHG && i != SEL_ATCR_MCHG && i != SEL_ATCR_UNABLE && i != SEL_ATCR_ATA && i != SEL_ATCR_ATB && i != SEL_ATCR_XAT)) {
+				screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
+				dc->SetTextColor(TextWhite.ToCOLORREF());
+			}
+		}
+			
+		// Text out
+		dc->TextOutA(restrictions.left + 2, offsetY, restrictionSelections[i].c_str());
 
 		// Offset
 		offsetY += dc->GetTextExtent(restrictionSelections[i].c_str()).cy + 2;
@@ -2178,7 +2196,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			for (int i = 0; i < copiedPlan.RouteRaw.size(); i++) {
 				route += copiedPlan.RouteRaw[i] + " ";
 			}
-			route = route.substr(0, route.size() - 2); // Get rid of extra space
 
 			textInputs[TXT_SPD_CPY].Content = string("M") + CUtils::PadWithZeros(3, stoi(copiedPlan.Mach));
 			textInputs[TXT_LEVEL_CPY].Content = copiedPlan.FlightLevel;
@@ -2278,22 +2295,33 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_CLRC_REJECT) {
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
-			if (IsCopyMade)
+			if (IsCopyMade) {
 				SetButtonState(BTN_DELETE, CInputState::INACTIVE);
-			SetButtonState(BTN_ATCR, CInputState::INACTIVE);
-			dropDowns[DRP_ATCR].State = CInputState::INACTIVE;
-			textInputs[TXT_SPD].State = CInputState::INACTIVE;
-			textInputs[TXT_LEVEL].State = CInputState::INACTIVE;
-			textInputs[TXT_DEST].State = CInputState::INACTIVE;
-			textInputs[TXT_TCK].State = CInputState::INACTIVE;
-			textInputs[TXT_RTE].State = CInputState::INACTIVE;
+				SetButtonState(BTN_ATCR_CPY, CInputState::INACTIVE);
+				dropDowns[DRP_ATCR_CPY].State = CInputState::INACTIVE;
+				textInputs[TXT_SPD_CPY].State = CInputState::INACTIVE;
+				textInputs[TXT_LEVEL_CPY].State = CInputState::INACTIVE;
+				textInputs[TXT_DEST_CPY].State = CInputState::INACTIVE;
+				textInputs[TXT_TCK_CPY].State = CInputState::INACTIVE;
+				textInputs[TXT_CPY_RTE].State = CInputState::INACTIVE;
+			}
+			else {
+				SetButtonState(BTN_ATCR, CInputState::INACTIVE);
+				dropDowns[DRP_ATCR].State = CInputState::INACTIVE;
+				textInputs[TXT_SPD].State = CInputState::INACTIVE;
+				textInputs[TXT_LEVEL].State = CInputState::INACTIVE;
+				textInputs[TXT_DEST].State = CInputState::INACTIVE;
+				textInputs[TXT_TCK].State = CInputState::INACTIVE;
+				textInputs[TXT_RTE].State = CInputState::INACTIVE;
+			}
+			
 			IsClearanceOpen = false;
 		}
 		if (id == BTN_CLRC_SEND) {
 			SetButtonState(BTN_UNCLEAR, CInputState::DISABLED);
 			SetButtonState(BTN_READBK, CInputState::INACTIVE);
 			IsClearanceOpen = false;
-			if (primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
+			if (primedPlan->CurrentMessage != nullptr && primedPlan->CurrentMessage->Type == CMessageType::CLEARANCE_REQ) {
 				primedPlan->IsCleared = true;
 				primedPlan->State = "PC";
 				SetButtonState(BTN_ATCR, CInputState::DISABLED);
@@ -2310,6 +2338,10 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				copiedPlan.IsValid = false;
 				IsCopyMade = false;
 				copiedPlan.Restrictions.clear();
+				primedPlan->FlightLevel = copiedPlan.FlightLevel;
+				primedPlan->Mach = copiedPlan.Mach;
+				primedPlan->Track = copiedPlan.Track;
+				primedPlan->RouteRaw = copiedPlan.RouteRaw;
 			}
 			else {
 				primedPlan->Restrictions.clear();
@@ -2700,6 +2732,10 @@ void CFlightPlanWindow::ButtonPress(int id) {
 
 	// Check if selection
 	if (id >= 400) {
+		if (IsCopyMade && (id == SEL_ATCR_RERUTE || id == SEL_ATCR_INT))
+			return;
+		if (!primedPlan->IsCleared && (id == SEL_ATCR_LCHG || id == SEL_ATCR_MCHG || id == SEL_ATCR_UNABLE || id == SEL_ATCR_ATA || id == SEL_ATCR_ATB || id == SEL_ATCR_XAT))
+			return;
 		if (restrictionSelections.find(id) != restrictionSelections.end()) {
 			selectedRestriction = id;
 		}

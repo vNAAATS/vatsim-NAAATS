@@ -141,7 +141,6 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 		//returnString += ". FREE: " + splitString[9];
 		return returnString;
 	}
-	// TODO get proper position & deal with restrictions
 	// CALLSIGN:CLEARANCE_ISSUE:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:ATC/:LCHG:MCHG:RERUTE
 	else if (type == CMessageType::CLEARANCE_ISSUE) {
 		string returnString = "CZQX CLRNCE: CLA TO " + splitString[2] + " VIA ";
@@ -154,9 +153,16 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 		// Estimate
 		returnString += " FM " + splitString[4] + "/" + splitString[5];
 		// Flight level and mach
-		returnString += " MNTN F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
+		returnString += " MNTN F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8])) + " ";
 		// Freetext
 		//returnString += ". FREE: " + splitString[9];
+
+		// Restrictions
+		auto restrictionsIndex = std::find(splitString.begin(), splitString.end(), "ATC/");
+		for (auto idx = restrictionsIndex; idx != splitString.end(); idx++) {
+			if (*idx == "RERUTE")
+				returnString += "ROUTE HAS BEEN CHANGED.";
+		}
 		return returnString;
 	}
 	// CALLSIGN:REVISION_REQ:MCHG:CONTENT:LCHG:CONTENT:RERUTE:CONTENT
@@ -187,6 +193,8 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 		int levelChange = -1;
 		int rerute = -1;
 		for (int i = 0; i < splitString.size(); i++) {
+			if (splitString[i] == "ATC/")
+				break;
 			if (splitString[i] == "MCHG") {
 				machChange = i + 1;
 			}
@@ -210,7 +218,7 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 			if (*idx == "LCHG") {
 				isLevelRestriction = true;
 				int isTime = false;
-				returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + "CROSS " + *(idx + 1) + " AT F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
+				returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " CROSS " + *(idx + 1) + " AT F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
 			}
 			else if (*idx == "MCHG") {
 				isMachRestriction = true;
@@ -218,10 +226,6 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 			}
 			else if (*idx == "EPC") {
 				
-			}
-			else if (*idx == "RERUTE") {
-				isRouteRestriction = true;
-				returnString += "ROUTE HAS BEEN CHANGED. ";
 			}
 			else if (*idx == "RTD") {
 
@@ -283,7 +287,7 @@ string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string cal
 		if (rerute != -1 && !isRouteRestriction) {
 			if (!returnString.empty())
 				returnString += " ";
-			returnString += "ROUTE HAS BEEN CHANGED. ";
+			returnString += "ROUTE HAS BEEN CHANGED CLEARED " + splitString[rerute] + ". ";
 		}
 
 		return returnString;
@@ -385,18 +389,13 @@ string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPla
 		// Flight data
 		CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(callsign);
 		string returnString;
-		// Split the current message
-		vector<string> splitString;
-		StringSplit(fp->CurrentMessage->MessageRaw, ':', &splitString);
 		string routeString;
 		for (int i = 0; i < primedPlan->RouteRaw.size(); i++)
-			routeString += fp->RouteRaw[i] + " ";
-		routeString = routeString.substr(0, routeString.size() - 2);
+			routeString += primedPlan->RouteRaw[i] + " ";
 
 		string copyRouteString;
 		for (int i = 0; i < fp->RouteRaw.size(); i++)
 			copyRouteString += fp->RouteRaw[i] + " ";
-		copyRouteString = copyRouteString.substr(0, copyRouteString.size() - 2);
 		
 		returnString += fp->Callsign + ":REVISION_ISSUE";
 		// Switch
