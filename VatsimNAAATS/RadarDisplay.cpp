@@ -238,7 +238,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
 		// Draw overlays if enabled
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
-			COverlays::ShowCurrentOverlay(&dc, &g, this);
+			COverlays::ShowCurrentOverlay(&dc, &g, this, menuBar);
 		}
 
 		// Get first aircraft

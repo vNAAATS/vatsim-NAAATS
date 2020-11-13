@@ -4,6 +4,7 @@
 #include "Structures.h"
 #include "RoutesHelper.h"
 #include "DataHandler.h"
+#include "MenuBar.h"
 #include <string>
 #include <gdiplus.h>
 
@@ -19,7 +20,7 @@ class CCommonRenders // Commonly rendered objects, here for ease of access
 		static CRect RenderCheckBox(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, int height, CCheckBox* obj);
 		static void RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, int width, int height, CDropDown* obj);
 		static void RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft, CWinScrollBar* scrollView);
-		static void RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type);
+		static void RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type, CMenuBar* menubar);
 		static void RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen);
 };
 

@@ -327,7 +327,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	dc->RestoreDC(sDC);
 }
 
-void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type) {
+void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type, CMenuBar* menubar) {
 	// Save context
 	int iDC = dc->SaveDC();
 
@@ -350,6 +350,22 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 		}
 		else if (*type == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
 			continue;
+		}
+		
+
+		// Show selected overlays
+		if (*type == COverlayType::TCKS_SEL) {
+			vector<string> tracks;
+			menubar->GetSelectedTracks(tracks);
+			bool show = false;
+			for (int i = 0; i < tracks.size(); i++) {
+				if (kv.first == tracks[i]) {
+					show = true;
+				}
+			}
+			if (!show) {
+				continue;
+			}
 		}
 
 		// Move to start and draw 
