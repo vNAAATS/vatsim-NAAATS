@@ -253,7 +253,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Loop all aircraft
 		while (ac.IsValid()) {
-			// Very first thing we do is check their altitude, if they are outside the filter, skip them
+			// Check if they are a selected aircraft
+			if (ac.GetCallsign() == CAcTargets::SearchedAircraft) {
+				if (((double)(clock() - CAcTargets::fiveSecondTimer) / ((double)CLOCKS_PER_SEC)) >= 5) {
+					CAcTargets::SearchedAircraft = "";
+					CAcTargets::fiveSecondTimer = clock();
+				}
+				else {
+					CAcTargets::RenderSelectionHalo(&g, this, &ac);
+				}
+			}
+			// Check their altitude, if they are outside the filter, skip them
 			if (altFiltEnabled) {
 				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
 					// Select the next target
@@ -844,6 +854,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		}
 
+		if (ObjectType == MENBAR) {
+			if (string(sObjectId) == to_string(menuBar->TXT_SEARCH))
+				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), "");
+		}
+
 		// If a flight plan window text entry
 		if (ObjectType == WIN_FLTPLN) {
 			if (fltPlnWindow->IsTextInput(atoi(sObjectId)) && (fltPlnWindow->GetInputState(atoi(sObjectId)) != CInputState::DISABLED || fltPlnWindow->GetInputState(atoi(sObjectId)) != CInputState::INACTIVE)) {
@@ -999,6 +1014,21 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 		}
 		if (isNumber && (atoi(sItemString) < 999 && atoi(sItemString) > 0)) {
 			CUtils::AltFiltHigh = atoi(sItemString); // Return if in range
+		}
+	}
+	if (FunctionId == CMenuBar::TXT_SEARCH) {
+		string itemString = string(sItemString);
+		string value;
+		for (int i = 0; i < itemString.size(); i++) {
+			char c = itemString[i];
+			if (isalpha(c))
+				c = toupper(c);
+			value += c;
+		}
+		if (GetPlugIn()->RadarTargetSelect(value.c_str()).IsValid()) {
+			CAcTargets::SearchedAircraft = value;
+			CAcTargets::fiveSecondTimer = clock();
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(value.c_str()));
 		}
 	}
 

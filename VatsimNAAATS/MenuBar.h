@@ -24,6 +24,7 @@ class CMenuBar
 		CInputState GetButtonState(int id);
 		void OnOverDropDownItem(int id);
 		void SetDropDownValue(int id, int value);
+		void SetTextInput(int id, string value);
 		void ButtonDown(int id, int button);
 		void ButtonUp(int id, int button);
 		void ButtonPress(int id, int button, CRadarScreen* screen);
@@ -62,6 +63,7 @@ class CMenuBar
 
 		static const int TXT_ALTFILT = 30;
 		static const int ID_POS = 31;
+		static const int TXT_SEARCH = 32;
 
 		const int PANEL_SIZES[8] = { RECT1_WIDTH, RECT2_WIDTH, RECT3_WIDTH, RECT4_WIDTH, RECT5_WIDTH, RECT6_WIDTH, RECT7_WIDTH, RECT8_WIDTH };
 

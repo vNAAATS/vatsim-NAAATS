@@ -34,8 +34,11 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_SEP] = CWinButton(BTN_SEP, MENBAR, "Sep", CInputState::INACTIVE, 43);
 	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::INACTIVE, 86);
 
+	// Text inputs
+	textInputs[TXT_SEARCH] = CTextInput(TXT_SEARCH, MENBAR, "Search A/C: ", "", 100, CInputState::ACTIVE);
+
 	/// Dropdown defaults
-	map<string, bool> map;
+	unordered_map<string, bool> map;
 	map.insert(make_pair("CZQX", false));
 	map.insert(make_pair("EGGX", false));
 	map.insert(make_pair("BDBX", false));
@@ -235,6 +238,12 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(altFilt.left + (altFilt.Width() / 2), altFilt.top + 7, (lowAlt + "-" + highAlt).c_str());
 
+	// Render the selection input
+	dc->SetTextAlign(TA_LEFT);
+	offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + RECT6_WIDTH + 13;
+	dc->TextOutA(offsetX, 30, textInputs[TXT_SEARCH].Label.c_str());
+	CCommonRenders::RenderTextInput(dc, screen, { offsetX, dc->GetTextExtent("ABCD").cy + 35 }, textInputs[TXT_SEARCH].Width, 20, & textInputs[TXT_SEARCH]);
+
 	// Clean up
 	DeleteObject(&brush);
 
@@ -292,6 +301,12 @@ void CMenuBar::SetButtonState(int id, CInputState state) {
 		if (buttons.find(id) != buttons.end()) {
 			buttons[id].State = state;
 		}
+	}
+}
+
+void CMenuBar::SetTextInput(int id, string value) {
+	if (textInputs.find(id) != textInputs.end()) {
+		textInputs[id].Content = value;
 	}
 }
 

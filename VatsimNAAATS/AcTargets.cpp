@@ -7,6 +7,8 @@
 using namespace Colours;
 
 clock_t CAcTargets::twoSecondTimer = clock();
+clock_t CAcTargets::fiveSecondTimer = clock();
+string CAcTargets::SearchedAircraft = "";
 
 void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
 	// 2 second timer
@@ -441,4 +443,22 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	DeleteObject(&textColour);
 
 	return { tagRect.left, tagRect.top };
+}
+
+void CAcTargets::RenderSelectionHalo(Graphics* g, CRadarScreen* screen, CRadarTarget* target) {
+	// Brush
+	SolidBrush white(TextWhite);
+
+	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
+
+	// Anti aliasing
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+
+	// Draw halo
+	Rect temp(acPoint.x - 50, acPoint.y - 50, 50 * 2, 50 * 2);
+	Pen pen(&white, 1);
+	g->DrawEllipse(&pen, temp);
+
+	// Cleanup
+	DeleteObject(&pen);
 }
