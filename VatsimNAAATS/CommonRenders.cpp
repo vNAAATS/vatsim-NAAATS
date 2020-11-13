@@ -132,6 +132,9 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	// Create dropdown area
 	CRect dropDown(topLeft.x, topLeft.y, topLeft.x + width - 15, topLeft.y + height);
 
+	// Pen
+	Pen white(TextWhite, 2);
+
 	// Fill
 	dc->FillSolidRect(dropDown, ScreenBlue.ToCOLORREF());
 
@@ -145,11 +148,20 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	InflateRect(dropDown, -1, -1);
 	dc->Draw3dRect(dropDown, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
-	// Write selected text
-	dc->TextOutA(dropDown.left + 2, dropDown.top + 1, obj->Value.c_str());
-
 	// Create dropdown button
 	CRect button(topLeft.x + width - 15, topLeft.y, topLeft.x + width, topLeft.y + height);
+
+	// Value for main box
+	string displayValue;
+
+	// Check whether items are checked
+	for (auto kv : obj->Items) {
+		if (kv.second.IsCheckItem && kv.second.State == CInputState::ACTIVE) {
+			displayValue += (displayValue.empty() && displayValue.size()) <= 3 ? kv.second.Label : (", " + kv.second.Label);
+			displayValue += displayValue.size() > 3 ? "..." : "";
+		}
+		
+	}
 
 	// Check if pressed
 	if (obj->State == CInputState::ACTIVE) {
@@ -162,10 +174,16 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 		// Draw text
 		int offsetY = 2;
 		int idx = 0;
+		
 		for (auto kv : obj->Items) {
 			CRect object(area.left, area.top + offsetY, area.right, area.top + offsetY + 20);
 			if (kv.second.IsHovered)
 				dc->FillSolidRect(object, ButtonPressed.ToCOLORREF());
+			if (kv.second.IsCheckItem && kv.second.State == CInputState::ACTIVE) {
+				CRect rect(area.right - 20, area.top, area.right, area.bottom);
+				g->DrawLine(&white, rect.left + 4, rect.top + 4, rect.right - 4, rect.bottom - 4);
+				g->DrawLine(&white, rect.left + 4, rect.bottom - 4, rect.right - 4, rect.top + 4);
+			}
 			dc->TextOutA(area.left + 2, area.top + offsetY + 2, kv.second.Label.c_str());
 			screen->AddScreenObject(kv.second.Type, to_string(kv.second.Id).c_str(), object, false, "");
 			offsetY += 20;
@@ -176,6 +194,13 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 		// Button
 		dc->FillSolidRect(button, ScreenBlue.ToCOLORREF());
 	}
+
+	// Write selected text
+	obj->Value = !displayValue.empty() ? displayValue : obj->Value;
+	if (obj->Id == 101 && obj->Type == MENBAR && displayValue.empty())
+		obj->Value = "None";
+
+	dc->TextOutA(dropDown.left + 2, dropDown.top + 1, obj->Value.c_str());
 
 	// Button triangle
 	SolidBrush brush(Grey);
@@ -201,6 +226,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	// Clean up
 	DeleteObject(&brush);
 	DeleteObject(&darkerPen);
+	DeleteObject(&white);
 
 	// Add object
 	screen->AddScreenObject(obj->Type, to_string(obj->Id).c_str(), button, false, "");

@@ -193,6 +193,14 @@ struct CDropDown {
 		State = state;
 		Width = width;
 	}
+	void MakeItems(unordered_map<string, bool>* items) {
+		Items.clear();
+		int counter = 800;
+		for (auto kv : *items) {
+			Items.insert(make_pair(counter, CDropDownItem(counter, Type, kv.first, false, kv.second, CInputState::INACTIVE)));
+			counter++;
+		}
+	}
 	int Id;
 	int Type;
 	string Value;

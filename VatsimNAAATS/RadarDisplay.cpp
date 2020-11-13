@@ -85,6 +85,9 @@ void CRadarDisplay::PopulateProgramData() {
 	// Download the tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
 
+	// Set tracks in menu bar
+	menuBar->MakeDropDownItems(menuBar->DRP_TCKCTRL);
+
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 }
@@ -488,7 +491,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Draw track info window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_TCKINFO)) {
-			trackWindow->RenderWindow(&dc, &g, this);
+			trackWindow->RenderWindow(&dc, &g, this, menuBar);
 		}
 
 		// Draw message window if button pressed

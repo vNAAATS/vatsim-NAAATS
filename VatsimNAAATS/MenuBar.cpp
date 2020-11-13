@@ -44,7 +44,6 @@ CMenuBar::CMenuBar() {
 	map.insert(make_pair("BDBX", false));
 	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map, CInputState::INACTIVE, 83);
 	map.clear();
-	// TODO: Get tracks
 	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_TCKCTRL, MENBAR, "None", &map, CInputState::INACTIVE, 88);
 	map.clear();
 	map.insert(make_pair("ALL_TCKS", false));
@@ -277,6 +276,16 @@ map<int, CWinButton> CMenuBar::GetToggleButtons() {
 	return map;
 }
 
+void CMenuBar::MakeDropDownItems(int id) {
+	if (id == DRP_TCKCTRL) {
+		unordered_map<string, bool> map;
+		for (auto kv : CRoutesHelper::CurrentTracks) {
+			map.insert(make_pair(kv.first, true));
+		}
+		dropDowns[DRP_TCKCTRL].MakeItems(&map);
+	}
+}
+
 void CMenuBar::SetButtonState(int id, CInputState state) {
 	// Set the state to the requested one (with failsafe check)
 	if (id >= 100) { // dropdown
@@ -349,12 +358,18 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 	if (button == EuroScopePlugIn::BUTTON_LEFT) {
 		// Check if dropdown
 		if (id >= 800) {
-			// Set value
-			dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
-			// Close drop down
-			dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
-			ActiveDropDownHover = 0;
-			dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+			if (!dropDowns[ActiveDropDown].Items[id].IsCheckItem) {
+				// Set value
+				dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
+				// Close drop down
+				dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+				ActiveDropDownHover = 0;
+				dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+			} else {
+				dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+				ActiveDropDownHover = 0;
+				dropDowns[ActiveDropDown].Items[id].State = dropDowns[ActiveDropDown].Items[id].State == CInputState::INACTIVE ? CInputState::ACTIVE : CInputState::INACTIVE;
+			}
 
 			// Save values
 			if (ActiveDropDown == DRP_AREASEL) {
@@ -373,7 +388,7 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 						COverlays::CurrentType = COverlayType::TCKS_EAST;
 						break;
 					case 803: // TCKS_SEL
-						//COverlays::CurrentType = COverlayType::TCKS_SEL;
+						COverlays::CurrentType = COverlayType::TCKS_SEL;
 						break;
 					case 804: // TCKS_WEST
 						COverlays::CurrentType = COverlayType::TCKS_WEST;
@@ -385,7 +400,8 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			}
 
 			// Reset drop down
-			ActiveDropDown = 0;
+			if (!dropDowns[ActiveDropDown].Items[id].IsCheckItem)
+				ActiveDropDown = 0;
 		}
 		else {
 			// Press the button
