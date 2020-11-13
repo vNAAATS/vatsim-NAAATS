@@ -1388,6 +1388,10 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 
 void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
 {
+
+	if (primedPlan->Callsign.size() == 0)
+		return;
+
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
@@ -1483,12 +1487,15 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	textInputs[TXT_XCHANGE_NEXT].Content = selectedAuthority != "" ? selectedAuthority : "NONE";
 
 	// Set buttons
-	if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
-		if (windowButtons[BTN_XCHANGE_ACCEPT].State == CInputState::DISABLED && windowButtons[BTN_XCHANGE_REJECT].State == CInputState::DISABLED) {
-			windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::INACTIVE;
-			windowButtons[BTN_XCHANGE_REJECT].State = CInputState::INACTIVE;
+	if (primedPlan->CurrentMessage != nullptr) {
+		if ((primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
+			if (windowButtons[BTN_XCHANGE_ACCEPT].State == CInputState::DISABLED && windowButtons[BTN_XCHANGE_REJECT].State == CInputState::DISABLED) {
+				windowButtons[BTN_XCHANGE_ACCEPT].State = CInputState::INACTIVE;
+				windowButtons[BTN_XCHANGE_REJECT].State = CInputState::INACTIVE;
+			}
 		}
 	}
+
 
 	string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
 	string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
@@ -2332,7 +2339,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				data->ToDomestic = false;
 				data->Type = CMessageType::CLEARANCE_ISSUE;
 				data->Result = &result;
-				_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+				//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 
 				primedPlan->IsCleared = true;
 				primedPlan->State = "PC";
@@ -2356,7 +2363,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				data->ToDomestic = false;
 				data->Type = CMessageType::REVISION_ISSUE;
 				data->Result = &result;
-				_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+				//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 
 				copiedPlan.IsValid = false;
 				IsCopyMade = false;
@@ -2463,7 +2470,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->ToDomestic = false;
 					data->Type = CMessageType::LOG_ON_CONFIRM;
 					data->Result = &result;
-					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
 					// Create message
@@ -2476,7 +2483,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->ToDomestic = false;
 					data->Type = CMessageType::TRANSFER_ACCEPT;
 					data->Result = &result;
-					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				IsMessageOpen = false;
 				// Mark message as done here
@@ -2509,7 +2516,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->ToDomestic = false;
 					data->Type = CMessageType::LOG_ON;
 					data->Result = &result;
-					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
 					// Create message
@@ -2522,7 +2529,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->ToDomestic = false;
 					data->Type = CMessageType::TRANSFER_REJECT;
 					data->Result = &result;
-					_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
+					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				IsMessageOpen = false;
 				// Mark message as done here

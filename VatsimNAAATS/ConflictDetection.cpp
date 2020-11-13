@@ -491,7 +491,8 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 
 	// Detect the status
 	for (auto i = onScreenAircraft->begin(); i != onScreenAircraft->end(); i++) {
-		if (i->first == targetAc.Callsign) continue;
+		if (i->first == targetAc.Callsign)
+			continue;
 		CRadarTarget ac = screen->GetPlugIn()->RadarTargetSelect(i->first.c_str());
 
 		// Status for this aircraft
@@ -500,6 +501,9 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 
 		// Get the separation status
 		CSepStatus status = DetectStatus(screen, &targetAc, &acTest);
+
+		if (status.DistanceAsTime < 0)
+			continue;
 
 		// Work out whether they already exist in the map
 		bool alreadyExist = false;

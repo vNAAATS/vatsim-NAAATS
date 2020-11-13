@@ -525,7 +525,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	data->Callsign = RadarTarget.GetCallsign();
 	data->Controller = GetPlugIn()->ControllerMyself().GetCallsign();
 	data->Result = &CMessageWindow::ActiveMessages;
-	_beginthread(CDataHandler::ApiGetMessagesForController, 0, (void*)data); // Async
+	//_beginthread(CDataHandler::ApiGetMessagesForController, 0, (void*)data); // Async
 	
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
