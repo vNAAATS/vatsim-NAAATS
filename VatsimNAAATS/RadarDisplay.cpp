@@ -713,7 +713,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			// Probing tools
-			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
+			/*if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 				// Make sure flight plans are valid
@@ -727,7 +727,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 			if (fp.GetCallsign() == aircraftSel2 && menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
 				CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
-			}
+			}*/
 		}
 
 		// Flight plan button

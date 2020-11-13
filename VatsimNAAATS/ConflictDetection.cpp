@@ -374,10 +374,10 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 
 	// Draw conflicts
 	int i = 0;
-	CConflictStatus previousStatus = CConflictDetection::PIVSeparationStatuses.begin()->ConflictStatus;
+	CConflictStatus previousStatus = CConflictDetection::PIVSeparationStatuses.front().ConflictStatus;
 	CRadarTarget tA = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
 	CRadarTarget tB = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
-	for (i; i < CConflictDetection::PIVSeparationStatuses.size(); i++) {
+	for (i;  i < CConflictDetection::PIVSeparationStatuses.size(); i++) {
 		// Points
 		POINT piv1 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations1.at(i).Position);
 		POINT piv2 = screen->ConvertCoordFromPositionToPixel(CConflictDetection::PIVLocations2.at(i).Position);
