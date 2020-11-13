@@ -33,8 +33,9 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
 		// If failed
 		if (FAILED(hr)) {
+			int code = (int)hr;
 			// Show user message
-			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data.", true, true, true, true, true);
+			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data. Code: " + code, true, true, true, true, true);
 			return 1;
 		}
 		// Put data into buffer
@@ -410,16 +411,11 @@ void CDataHandler::ApiGetFlightData(void* args)
 	}
 }
 
-void CDataHandler::ApiGetMessagesForController(void* args)
+CDataHandler::CGetActiveMessagesAsync CDataHandler::ApiGetMessagesForController(CDataHandler::CGetActiveMessagesAsync data)
 {
 	// Convert args
-	CGetActiveMessagesAsync* data = (CGetActiveMessagesAsync*) args;
-	string callsign = data->Callsign;
-	string controller = data->Controller;
-	unordered_map<int, CMessage>* res = data->Result;
-
-	// Cleanup
-	delete args;
+	string callsign = data.Callsign;
+	string controller = data.Controller;
 
 	string result = "";
 	CURL* curl;
@@ -442,15 +438,17 @@ void CDataHandler::ApiGetMessagesForController(void* args)
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return;
+			return data;
 		}
 
 		curl_easy_cleanup(curl);
 
+
 		if (result == "-1")
 		{
-			return;
+			return data;
 		}
+	} else {
 	}
 	
 	json j;
@@ -461,12 +459,12 @@ void CDataHandler::ApiGetMessagesForController(void* args)
 	}
 	catch (nlohmann::detail::parse_error& ex)
 	{
-		return;
+		return data;
 	}
 
 	if(j.is_null())
 	{
-		return;
+		return data;
 	}
 
 	for (auto obj : j) {
@@ -546,11 +544,15 @@ void CDataHandler::ApiGetMessagesForController(void* args)
 								obj["created_at"].get<std::string>(),
 								type });
 
-			if (res->find(obj["id"]) != res->end())
-				res->insert(msg);
+			if (data.CurrentResults.find(obj["id"]) == data.CurrentResults.end()) {
+				data.Result.insert(msg);
+			}
+				
 
 		}
 	}
+
+	return data;
 }
 
 void CDataHandler::ApiGetMessages(void* args)
@@ -723,16 +725,14 @@ void CDataHandler::ApiUpdateFlightData(void* args)
 		struct curl_slist* headers = nullptr;
 		
 		url << ApiSettings::apiUrl << "/flight_data/update.php";
-		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&assigned_mach=" << mach << "&track=" << track << "&route=" << route << "&is_cleared=" << is_cleared << "&destination=" << destination;
 		const char* escaped_route = curl_easy_escape(curl, route.c_str(), route.length());
-		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&mach=" << mach << "&track=" << track << "&route=" << escaped_route << "&is_cleared=" << is_cleared << "&destination=" << destination;
+		post_data << "apiKey=" << ApiSettings::apiKey << "&callsign=" << callsign << "&assigned_level=" << level << "&assigned_mach=" << mach << "&track=" << track << "&route=" << escaped_route << "&is_cleared=" << is_cleared << "&destination=" << destination;
 		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
 		
 		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CDataHandler::WriteApiCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-		curl_easy_setopt(curl, CURLOPT_POST, 1L);
 		string cpost_s = post_data.str();
 		const char* cpost_data = cpost_s.c_str();
 		long cpost_data_len = cpost_s.length();

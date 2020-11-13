@@ -32,6 +32,7 @@ class CMessageWindow : public CBaseWindow
 		static unordered_map<int, CMessage> ActiveMessages;
 		static unordered_map<int, CMessage*> OngoingMessages;
 		int SelectedMessage = -1;
+		int MessageCount = 0;
 
 		static const int SCRL_MSGWNDW = 520;
 };

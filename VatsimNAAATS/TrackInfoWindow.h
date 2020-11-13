@@ -5,6 +5,7 @@
 #include <map>
 #include <gdiplus.h>
 #include "BaseWindow.h"
+#include "MenuBar.h"
 
 using namespace std;
 using namespace Gdiplus;
@@ -15,7 +16,8 @@ class CTrackInfoWindow : public CBaseWindow
 	public:
 		// Inherited methods
 		CTrackInfoWindow(POINT topLeft);
-		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen);
+		virtual void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {};
+		void RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen, CMenuBar* menuBar);
 		virtual void MakeWindowItems();
 		virtual void ButtonDown(int id);
 		virtual void ButtonUp(int id, CRadarScreen* screen = nullptr);

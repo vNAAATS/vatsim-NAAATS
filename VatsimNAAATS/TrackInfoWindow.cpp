@@ -22,7 +22,7 @@ void CTrackInfoWindow::MakeWindowItems() {
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_TCKINFO, "Close", CInputState::INACTIVE);
 }
 
-void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
+void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen, CMenuBar* menuBar) {
 	// Save device context
 	int iDC = dc->SaveDC();
 
@@ -71,6 +71,8 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) 
 	// Refresh NAT data if clicked
 	if (NATDataRefresh) {
 		int status = CDataHandler::PopulateLatestTrackData(screen->GetPlugIn());
+		// Set tracks in menu bar
+		menuBar->MakeDropDownItems(CMenuBar::DRP_TCKCTRL);
 		// Show data 
 		if (status == 0) {
 			MsgDataRefresh = "Refresh successful.";

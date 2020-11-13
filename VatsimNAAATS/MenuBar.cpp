@@ -12,7 +12,7 @@ using namespace Colours;
 CMenuBar::CMenuBar() {
 	// Button defaults
 	buttons[BTN_SETUP] = CWinButton(BTN_SETUP, MENBAR, "Setup", CInputState::DISABLED, 46);
-	buttons[BTN_NOTEPAD] = CWinButton(BTN_NOTEPAD, MENBAR, "NotePad", CInputState::INACTIVE, 78);
+	buttons[BTN_NOTEPAD] = CWinButton(BTN_NOTEPAD, MENBAR, "NotePad", CInputState::DISABLED, 78);
 	buttons[BTN_ADSC] = CWinButton(BTN_ADSC, MENBAR, "Contracts", CInputState::DISABLED, 73);
 	buttons[BTN_TCKINFO] = CWinButton(BTN_TCKINFO, MENBAR, "Track Info", CInputState::INACTIVE, 78);
 	buttons[BTN_MISC] = CWinButton(BTN_MISC, MENBAR, "Misc", CInputState::DISABLED, 41);
@@ -27,21 +27,23 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_ALTFILT] = CWinButton(BTN_ALTFILT, MENBAR, "Alt Filter", CInputState::INACTIVE, 86);
 	buttons[BTN_HALO] = CWinButton(BTN_HALO, MENBAR, "Halo 5", CInputState::INACTIVE, 68, 0);
 	buttons[BTN_RBL] = CWinButton(BTN_RBL, MENBAR, "RBL", CInputState::INACTIVE, 48);
-	buttons[BTN_RINGS] = CWinButton(BTN_RINGS, MENBAR, "Rings 1", CInputState::INACTIVE, 73, 0);
+	buttons[BTN_RINGS] = CWinButton(BTN_RINGS, MENBAR, "Rings 1", CInputState::DISABLED, 73, 0);
 	buttons[BTN_PTL] = CWinButton(BTN_PTL, MENBAR, "PTL 5", CInputState::INACTIVE, 68, 0);
 	buttons[BTN_PIV] = CWinButton(BTN_PIV, MENBAR, "PIV", CInputState::INACTIVE, 48);
-	buttons[BTN_GRID] = CWinButton(BTN_GRID, MENBAR, "Grid", CInputState::INACTIVE, 73);
+	buttons[BTN_GRID] = CWinButton(BTN_GRID, MENBAR, "Grid", CInputState::DISABLED, 73);
 	buttons[BTN_SEP] = CWinButton(BTN_SEP, MENBAR, "Sep", CInputState::INACTIVE, 43);
 	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::INACTIVE, 86);
 
+	// Text inputs
+	textInputs[TXT_SEARCH] = CTextInput(TXT_SEARCH, MENBAR, "Search A/C: ", "", 100, CInputState::ACTIVE);
+
 	/// Dropdown defaults
-	map<string, bool> map;
+	unordered_map<string, bool> map;
 	map.insert(make_pair("CZQX", false));
 	map.insert(make_pair("EGGX", false));
 	map.insert(make_pair("BDBX", false));
 	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map, CInputState::INACTIVE, 83);
 	map.clear();
-	// TODO: Get tracks
 	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_TCKCTRL, MENBAR, "None", &map, CInputState::INACTIVE, 88);
 	map.clear();
 	map.insert(make_pair("ALL_TCKS", false));
@@ -235,6 +237,12 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(altFilt.left + (altFilt.Width() / 2), altFilt.top + 7, (lowAlt + "-" + highAlt).c_str());
 
+	// Render the selection input
+	dc->SetTextAlign(TA_LEFT);
+	offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + RECT6_WIDTH + 13;
+	dc->TextOutA(offsetX, 30, textInputs[TXT_SEARCH].Label.c_str());
+	CCommonRenders::RenderTextInput(dc, screen, { offsetX, dc->GetTextExtent("ABCD").cy + 35 }, textInputs[TXT_SEARCH].Width, 20, & textInputs[TXT_SEARCH]);
+
 	// Clean up
 	DeleteObject(&brush);
 
@@ -268,6 +276,16 @@ map<int, CWinButton> CMenuBar::GetToggleButtons() {
 	return map;
 }
 
+void CMenuBar::MakeDropDownItems(int id) {
+	if (id == DRP_TCKCTRL) {
+		unordered_map<string, bool> map;
+		for (auto kv : CRoutesHelper::CurrentTracks) {
+			map.insert(make_pair(kv.first, true));
+		}
+		dropDowns[DRP_TCKCTRL].MakeItems(&map);
+	}
+}
+
 void CMenuBar::SetButtonState(int id, CInputState state) {
 	// Set the state to the requested one (with failsafe check)
 	if (id >= 100) { // dropdown
@@ -292,6 +310,12 @@ void CMenuBar::SetButtonState(int id, CInputState state) {
 		if (buttons.find(id) != buttons.end()) {
 			buttons[id].State = state;
 		}
+	}
+}
+
+void CMenuBar::SetTextInput(int id, string value) {
+	if (textInputs.find(id) != textInputs.end()) {
+		textInputs[id].Content = value;
 	}
 }
 
@@ -334,12 +358,18 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 	if (button == EuroScopePlugIn::BUTTON_LEFT) {
 		// Check if dropdown
 		if (id >= 800) {
-			// Set value
-			dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
-			// Close drop down
-			dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
-			ActiveDropDownHover = 0;
-			dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+			if (!dropDowns[ActiveDropDown].Items[id].IsCheckItem) {
+				// Set value
+				dropDowns[ActiveDropDown].Value = dropDowns[ActiveDropDown].Items[id].Label;
+				// Close drop down
+				dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+				ActiveDropDownHover = 0;
+				dropDowns[ActiveDropDown].State = CInputState::INACTIVE;
+			} else {
+				dropDowns[ActiveDropDown].Items[ActiveDropDownHover].IsHovered = false;
+				ActiveDropDownHover = 0;
+				dropDowns[ActiveDropDown].Items[id].State = dropDowns[ActiveDropDown].Items[id].State == CInputState::INACTIVE ? CInputState::ACTIVE : CInputState::INACTIVE;
+			}
 
 			// Save values
 			if (ActiveDropDown == DRP_AREASEL) {
@@ -358,7 +388,7 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 						COverlays::CurrentType = COverlayType::TCKS_EAST;
 						break;
 					case 803: // TCKS_SEL
-						//COverlays::CurrentType = COverlayType::TCKS_SEL;
+						COverlays::CurrentType = COverlayType::TCKS_SEL;
 						break;
 					case 804: // TCKS_WEST
 						COverlays::CurrentType = COverlayType::TCKS_WEST;
@@ -370,7 +400,8 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			}
 
 			// Reset drop down
-			ActiveDropDown = 0;
+			if (!dropDowns[ActiveDropDown].Items[id].IsCheckItem)
+				ActiveDropDown = 0;
 		}
 		else {
 			// Press the button

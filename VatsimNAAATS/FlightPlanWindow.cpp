@@ -125,7 +125,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 
 
 	/// Dropdown defaults
-	map<string, bool> map;
+	unordered_map<string, bool> map;
 	dropDowns[DRP_ATCR] = CDropDown(DRP_ATCR, WIN_FLTPLN, "", &map, CInputState::INACTIVE, 83);
 	map.clear();
 	dropDowns[DRP_ATCR_CPY] = CDropDown(DRP_ATCR_CPY, WIN_FLTPLN, "", &map, CInputState::INACTIVE, 83);
@@ -192,7 +192,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
-	
+
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
@@ -284,7 +284,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		bool editable = false;
 		if (kv.second.State == CInputState::ACTIVE) editable = true;
 		CCommonRenders::RenderTextInput(dc, screen, { infoBarRect.left + offsetX, infoBarRect.top + offsetY }, kv.second.Width, textHeight + 5, &textInputs.at(kv.first));
-		
+
 		// Offset
 		offsetX += kv.second.Width + 5;
 		offsetY = 6;
@@ -393,7 +393,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Cleanup
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
-	
+
 
 	// Restore device context
 	dc->RestoreDC(iDC);
@@ -458,7 +458,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		else {
 			CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
 		}
-		
+
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
 			if (!(contentoffsetX < scrollBars[SCRL_DATA].WindowPos))
@@ -571,7 +571,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	}
 	// TODO: Scroll bar here
 
-	// Render drop down and restrictions button 
+	// Render drop down and restrictions button
 	int restrictBtnType = isCopy ? BTN_ATCR_CPY : BTN_ATCR;
 	int restrictDrpType = isCopy ? DRP_ATCR_CPY : DRP_ATCR;
 	CRect button = CCommonRenders::RenderButton(dc, screen, { rteBox.left, rteBox.bottom + 18 }, 45, 20, &windowButtons.at(restrictBtnType), 1);
@@ -608,7 +608,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), string("Conflict Window - " + primedPlan->Callsign).c_str()); // TODO: show callsign properly
-	
+
 	// Create content panel
 	CRect content(conflictPanel.left + 2, titleRect.bottom + 2, conflictPanel.left + ((WINSZ_FLTPLN_WIDTH / 3) * 2.4), titleRect.bottom + WINSZ_FLTPLN_HEIGHT_XTRA - 43);
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
@@ -637,7 +637,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 
 		}
 	}
-	
+
 
 	// Draw scroll bars
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.left - 1, content.bottom + 3 }, &scrollBars[SCRL_CONF_X]);
@@ -820,23 +820,43 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 
 	// If the text is wrapped
 	int wrapOffsetY = 5;
+	int contentoffsetY = 5;
 	if (!wrappedText.empty()) {
 		// Iterate to display
 		wrapOffsetY = 5;
 		for (int i = 0; i < wrappedText.size(); i++) {
-			// Write the message
-			dc->TextOutA(contentA.left + 5, contentA.top + wrapOffsetY, wrappedText[i].c_str());
-			wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
+			if (!(contentoffsetY < scrollBars[SCRL_CLRC].WindowPos))
+			{
+				if (!(contentoffsetY > scrollBars[SCRL_CLRC].WindowPos + scrollBars[SCRL_CLRC].FrameSize - 10))
+				{
+					// Write the message
+					dc->TextOutA(contentA.left + 5, contentA.top + wrapOffsetY, wrappedText[i].c_str());
+					wrapOffsetY += dc->GetTextExtent("ABCD").cy + 5;
+				}
+			}
+			contentoffsetY += dc->GetTextExtent("ABCD").cy + 5;
 		}
 	}
 	else {
+		wrapOffsetY = contentoffsetY = 0;
 		// Write without iterating
 		dc->TextOutA(contentA.left + 5, contentA.top + 5, currentClearanceText.c_str());
 	}
 
+	if (contentoffsetY < contentA.Height())
+		contentoffsetY = contentA.Height();
+
 	// Scroll bar values
-	if (scrollBars[SCRL_CLRC].FrameSize == 0)
-		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentA.Height(), contentA.Height(), false);
+	if (scrollBars[SCRL_CLRC].FrameSize == 0 || (scrollBars[SCRL_CLRC].ContentSize != contentoffsetY && scrollBars[SCRL_CLRC].PositionDelta == 0 && scrollBars[SCRL_CLRC].ContentRatio != 1))
+	{
+		int framebox = contentA.Height();
+		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentoffsetY, framebox, false);
+		if (contentoffsetY != framebox)
+		{
+			scrollBars[SCRL_CLRC].GripSize -= 20; // temporary fix for grip bug
+			scrollBars[SCRL_CLRC].TotalScrollableArea = framebox - scrollBars[SCRL_CLRC].GripSize;
+		}
+	}
 	if (scrollBars[SCRL_CLRC_XTRA].FrameSize == 0)
 		scrollBars[SCRL_CLRC_XTRA] = CWinScrollBar(SCRL_CLRC_XTRA, WIN_FLTPLN, contentB.Height(), contentB.Height(), false);
 
@@ -930,7 +950,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CTextInput* track = &textInputs.find(TXT_MAN_TCK)->second;
 	if (route->State == CInputState::ACTIVE)
 		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
-	
+
 	// Text align
 	FontSelector::SelectATCFont(16, dc);
 	dc->SetTextAlign(TA_LEFT);
@@ -971,7 +991,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 			}
 		}
 	}
-	
+
 
 	// Scroll bar values
 	if (scrollBars[SCRL_MANENTRY].FrameSize == 0)
@@ -1000,7 +1020,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 		int textWidth = dc->GetTextExtent(textInputs.at(idx).Label.c_str()).cx;
 		dc->TextOutA(idBox.right + offsetX, titleRect.bottom + offsetY + 2, textInputs.at(idx).Label.c_str());
 		CCommonRenders::RenderTextInput(dc, screen, { idBox.right + offsetX + textWidth + 5, titleRect.bottom + offsetY }, textInputs.at(idx).Width, textHeight + 5, &textInputs.at(idx));
-		
+
 		if (idx < TXT_MAN_DEST) {
 			offsetX += textInputs.at(idx).Width + textWidth + 10;
 		}
@@ -1028,12 +1048,12 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	DeleteObject(lighterBrush);
 }
 
-void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft) 
+void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* screen, POINT topLeft)
 {
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
-	
+
 	// Select title font
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
@@ -1281,7 +1301,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->TextOutA(titleRect.left + (WINSZ_FLTPLN_WIDTH_MDL / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), (string("ATC Restrictions Editor - " + primedPlan->Callsign).c_str())); // TODO: show callsign properly
 	screen->AddScreenObject(WIN_FLTPLN, "RESTRICTIONS", atcrWindow, false, ""); // So it can't be moved
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
-	
+
 
 	// Select font
 	FontSelector::SelectNormalFont(15, dc);
@@ -1300,7 +1320,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 		CRect textObj(restrictions.left, offsetY, restrictions.right - 1, offsetY + dc->GetTextExtent(restrictionSelections[i].c_str()).cy);
 		if (i == selectedRestriction)
 			dc->FillSolidRect(textObj, ButtonPressed.ToCOLORREF());
-		
+
 		// Colour
 		dc->SetTextColor(Disabled.ToCOLORREF());
 
@@ -1309,13 +1329,13 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 			if (IsCopyMade && (i != SEL_ATCR_RERUTE && i != SEL_ATCR_INT)) {
 				screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
 				dc->SetTextColor(TextWhite.ToCOLORREF());
-			}	
+			}
 			else if (!primedPlan->IsCleared && (i != SEL_ATCR_LCHG && i != SEL_ATCR_MCHG && i != SEL_ATCR_UNABLE && i != SEL_ATCR_ATA && i != SEL_ATCR_ATB && i != SEL_ATCR_XAT)) {
 				screen->AddScreenObject(WIN_FLTPLN, to_string(i).c_str(), textObj, false, "");
 				dc->SetTextColor(TextWhite.ToCOLORREF());
 			}
 		}
-			
+
 		// Text out
 		dc->TextOutA(restrictions.left + 2, offsetY, restrictionSelections[i].c_str());
 
@@ -1405,7 +1425,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	if (subWindowPositions[SUBWIN_XCHANGE].x == 0 && subWindowPositions[SUBWIN_XCHANGE].y == 0) {
 		subWindowPositions[SUBWIN_XCHANGE] = { topLeft.x, topLeft.y };
 	}
-	
+
 	// If selected controller enable the button
 	if (selectedAuthority != "" && windowButtons[BTN_XCHANGE_TRANSFER].State == CInputState::DISABLED && screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
 		SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::INACTIVE);
@@ -1499,7 +1519,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 
 	string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
 	string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
-	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) 
+	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
 		|| string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) != "") {
 		windowButtons[BTN_XCHANGE_TRANSFER].State = CInputState::DISABLED;
 		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::DISABLED;
@@ -1604,7 +1624,7 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	dc->TextOutA(offsetX, offsetYBottomRow + 2, restrictionSelections[RestrictionSubModalType].c_str());
 
 	offsetX += dc->GetTextExtent(restrictionSelections[RestrictionSubModalType].c_str()).cx + 5;
-	
+
 	if (RestrictionSubModalType == SEL_ATCR_LCHG || RestrictionSubModalType == SEL_ATCR_MCHG) {
 		int elements[3] = { TXT_RESTRI_LCHG_LATLON, CHK_RESTRI_LCHG, TXT_RESTRI_LCHG_TIME };
 
@@ -1635,7 +1655,7 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	if (RestrictionSubModalType == SEL_ATCR_UNABLE) {
 		for (int k = CHK_RESTRI_UNABLE_SPD; k <= CHK_RESTRI_UNABLE_RTE; k++) {
 			CRect r = CCommonRenders::RenderCheckBox(dc, g, screen, { offsetX + 10, offsetYBottomRow }, 20, &checkBoxes[k]);
-			
+
 			dc->TextOutA(offsetX, offsetYTopRow, checkBoxes[k].Label.c_str());
 			offsetX += r.Width() + 10 + 20;
 		}
@@ -1735,8 +1755,13 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 
 	// Get the data
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
-	if (!fp->IsValid) return;
-	primedPlan = fp;
+	if (!fp->IsValid) {
+		primedPlan = new CAircraftFlightPlan();
+		return;
+	}
+	else {
+		primedPlan = fp;
+	}
 
 	// Add message
 	if (msg != nullptr) {
@@ -1793,7 +1818,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			// Set copied plan
 			copiedPlan = *primedPlan;
 			copiedPlan.State = "UA";
-			
+
 			// Values
 			SetTextValue(screen, CFlightPlanWindow::TXT_SPD_CPY, copiedPlan.Mach);
 			SetTextValue(screen, CFlightPlanWindow::TXT_LEVEL_CPY, copiedPlan.FlightLevel);
@@ -1837,7 +1862,10 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			}
 		}
 		else {
-			IsData = false;
+			if (!primedPlan->RouteRaw.empty())
+				IsData = true;
+			else
+				IsData = false;
 			SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
 		}
 	}
@@ -2036,7 +2064,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		// We reached here so set the mach
 		content = string("M") + CUtils::PadWithZeros(3, stoi(content));
 	}
-		
+
 	// Mach numbers
 	if (id == TXT_LEVEL || id == TXT_LEVEL_CPY || id == TXT_MAN_FL) {
 		// Validation (range & length)
@@ -2121,7 +2149,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		else {
 			status = CRoutesHelper::ParseRoute(primedPlan->Callsign, content);
 		}
-		
+
 		if (status == 1) { // Validation failed
 			// Errored
 			textInputs.find(id)->second.Error = true;
@@ -2242,7 +2270,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_MSG_REQUEUE, CInputState::DISABLED);
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
 			//CConflictDetection::ProbeTool(screen, primedPlan->Callsign, &currentProbeStatuses, IsCopyMade ? &copiedPlan : nullptr);
-			
+
 			if (currentProbeStatuses.empty()) {
 				SetButtonState(BTN_CONF_ACCCL, CInputState::INACTIVE);
 				SetButtonState(BTN_CONF_MANCL, CInputState::DISABLED);
@@ -2321,7 +2349,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				textInputs[TXT_TCK].State = CInputState::INACTIVE;
 				textInputs[TXT_RTE].State = CInputState::INACTIVE;
 			}
-			
+
 			IsClearanceOpen = false;
 		}
 		if (id == BTN_CLRC_SEND) {
@@ -2375,7 +2403,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			}
 			else {
 				primedPlan->Restrictions.clear();
-			}			
+			}
 		}
 		if (id == BTN_CLRC_VOICE) {
 			checkBoxes.at(CHK_CLRC_ORCA).State = CInputState::DISABLED;
@@ -2461,7 +2489,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
 				if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
 					// Create message
-					int result;
 					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
 					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::LOG_ON_CONFIRM);
 					data->IsActioned = false;
@@ -2474,7 +2501,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
 					// Create message
-					int result;
 					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
 					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::TRANSFER_ACCEPT);
 					data->IsActioned = false;
@@ -2494,7 +2520,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
 				CMessageWindow::ActiveMessages.erase(primedPlan->CurrentMessage->Id);
 				primedPlan->CurrentMessage = nullptr;
-			}			
+			}
 		}
 		if (id == BTN_XCHANGE_REJECT) {
 			string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
@@ -2507,7 +2533,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			if (primedPlan->CurrentMessage != nullptr && (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON || primedPlan->CurrentMessage->Type == CMessageType::TRANSFER)) {
 				if (primedPlan->CurrentMessage->Type == CMessageType::LOG_ON) {
 					// Create message
-					int result;
+
 					CDataHandler::CCreateMessageAsync* data = new CDataHandler::CCreateMessageAsync();
 					data->ContentsRaw = CUtils::ParseToRaw(primedPlan->Callsign, CMessageType::LOG_ON_REJECT);
 					data->IsActioned = false;
@@ -2538,7 +2564,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				CMessageWindow::OngoingMessages.erase(primedPlan->CurrentMessage->Id);
 				CMessageWindow::ActiveMessages.erase(primedPlan->CurrentMessage->Id);
 				primedPlan->CurrentMessage = nullptr;
-			}			
+			}
 		}
 		if (id == BTN_COORD_SENDOK) {
 			IsCoordOpen = false;
@@ -2563,6 +2589,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			IsManualEntryOpen = false;
 			IsData = true;
 			SetButtonState(BTN_MANENTRY, CInputState::DISABLED);
+			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
 
 			// Assign
 			textInputs[TXT_DEST].Content = textInputs[TXT_MAN_DEST].Content;
@@ -2714,7 +2741,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			RestrictionSubModalType = -1;
 		}
 	}
-	
+
 	// Finally unpress the button if not disabled (and id is actually a button and not set manually)
 	if (IsButton(id) && !stateSetManually && windowButtons.find(id)->second.State != CInputState::DISABLED) {
 		SetButtonState(id, CInputState::INACTIVE);
@@ -2898,7 +2925,7 @@ void CFlightPlanWindow::ButtonDoubleClick(int id)
 			primedPlan->Restrictions.erase(primedPlan->Restrictions.begin() + remove);
 		selectedActiveRestriction = -1;
 	}
-		
+
 }
 
 void CFlightPlanWindow::SetButtonState(int id, CInputState state) {

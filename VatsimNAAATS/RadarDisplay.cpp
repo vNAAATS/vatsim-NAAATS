@@ -85,6 +85,9 @@ void CRadarDisplay::PopulateProgramData() {
 	// Download the tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
 
+	// Set tracks in menu bar
+	menuBar->MakeDropDownItems(menuBar->DRP_TCKCTRL);
+
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 }
@@ -95,7 +98,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	//test for getting flight_data
 	//CDataHandler::ApiGetFlightData("AAL578");
 	//CDataHandler::ApiGetMessages("AAL578", "CZQX_FSS");
-  
+
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
@@ -253,7 +256,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Loop all aircraft
 		while (ac.IsValid()) {
-			// Very first thing we do is check their altitude, if they are outside the filter, skip them
+			// Check if they are a selected aircraft
+			if (ac.GetCallsign() == CAcTargets::SearchedAircraft) {
+				if (((double)(clock() - CAcTargets::fiveSecondTimer) / ((double)CLOCKS_PER_SEC)) >= 5) {
+					CAcTargets::SearchedAircraft = "";
+					CAcTargets::fiveSecondTimer = clock();
+				}
+				else {
+					CAcTargets::RenderSelectionHalo(&g, this, &ac);
+				}
+			}
+			// Check their altitude, if they are outside the filter, skip them
 			if (altFiltEnabled) {
 				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
 					// Select the next target
@@ -478,7 +491,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Draw track info window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_TCKINFO)) {
-			trackWindow->RenderWindow(&dc, &g, this);
+			trackWindow->RenderWindow(&dc, &g, this, menuBar);
 		}
 
 		// Draw message window if button pressed
@@ -497,6 +510,31 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Draw flight plan window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_NOTEPAD)) {
 			npWindow->RenderWindow(&dc, &g, this);
+		}
+
+
+		//
+		// Poll all pending messages
+		//
+
+		auto iter = PendingApiMessagesForController.begin();
+		while (iter != PendingApiMessagesForController.end())
+		{
+			if (iter->valid() && iter->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+			{
+
+				CDataHandler::CGetActiveMessagesAsync data = iter->get();
+
+				// Add the messages to the list of active messages
+				for (auto k : data.Result) {
+					CMessageWindow::ActiveMessages.insert(make_pair(k.first, k.second));
+				}
+
+				// Delete the pending message
+				iter = PendingApiMessagesForController.erase(iter);
+			}
+			else
+				++iter;
 		}
 
 		// Finally, reset the clocks if time has been exceeded
@@ -526,7 +564,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	data->Controller = GetPlugIn()->ControllerMyself().GetCallsign();
 	data->Result = &CMessageWindow::ActiveMessages;
 	//_beginthread(CDataHandler::ApiGetMessagesForController, 0, (void*)data); // Async
-	
+
 	// Check if they are relevant on the screen
 	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
 		// They are relevant so get the flight plan
@@ -818,6 +856,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			}
 		}
 
+		if (ObjectType == MENBAR) {
+			if (string(sObjectId) == to_string(menuBar->TXT_SEARCH))
+				GetPlugIn()->OpenPopupEdit(Area, atoi(sObjectId), "");
+		}
+
 		// If a flight plan window text entry
 		if (ObjectType == WIN_FLTPLN) {
 			if (fltPlnWindow->IsTextInput(atoi(sObjectId)) && (fltPlnWindow->GetInputState(atoi(sObjectId)) != CInputState::DISABLED || fltPlnWindow->GetInputState(atoi(sObjectId)) != CInputState::INACTIVE)) {
@@ -973,6 +1016,21 @@ void CRadarDisplay::OnFunctionCall(int FunctionId, const char* sItemString, POIN
 		}
 		if (isNumber && (atoi(sItemString) < 999 && atoi(sItemString) > 0)) {
 			CUtils::AltFiltHigh = atoi(sItemString); // Return if in range
+		}
+	}
+	if (FunctionId == CMenuBar::TXT_SEARCH) {
+		string itemString = string(sItemString);
+		string value;
+		for (int i = 0; i < itemString.size(); i++) {
+			char c = itemString[i];
+			if (isalpha(c))
+				c = toupper(c);
+			value += c;
+		}
+		if (GetPlugIn()->RadarTargetSelect(value.c_str()).IsValid()) {
+			CAcTargets::SearchedAircraft = value;
+			CAcTargets::fiveSecondTimer = clock();
+			GetPlugIn()->SetASELAircraft(GetPlugIn()->FlightPlanSelect(value.c_str()));
 		}
 	}
 

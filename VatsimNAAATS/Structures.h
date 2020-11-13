@@ -4,6 +4,7 @@
 #include <vector>
 #include "Constants.h"
 #include <map>
+#include <unordered_map>
 
 // Describes a NAT track
 struct CTrack {
@@ -180,7 +181,7 @@ struct CDropDownItem {
 // Describes a dropdown
 struct CDropDown {
 	CDropDown() {}; // Default constructor
-	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems, CInputState state, int width = -1) {
+	CDropDown(int id, int type, string value, unordered_map<string, bool>* dropDownItems, CInputState state, int width = -1) {
 		Id = id;
 		Type = type;
 		Value = value;
@@ -192,10 +193,18 @@ struct CDropDown {
 		State = state;
 		Width = width;
 	}
+	void MakeItems(unordered_map<string, bool>* items) {
+		Items.clear();
+		int counter = 800;
+		for (auto kv : *items) {
+			Items.insert(make_pair(counter, CDropDownItem(counter, Type, kv.first, false, kv.second, CInputState::INACTIVE)));
+			counter++;
+		}
+	}
 	int Id;
 	int Type;
 	string Value;
-	map<int, CDropDownItem> Items;
+	unordered_map<int, CDropDownItem> Items;
 	CInputState State;
 	int Width;
 };
