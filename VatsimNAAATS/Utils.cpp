@@ -341,7 +341,7 @@ string CUtils::ParseToRaw(string callsign, CMessageType type, CAircraftFlightPla
 		if (fp->Track == "RR") {
 			for (int i = 0; i < fp->RouteRaw.size(); i++)
 				routeString += fp->RouteRaw[i] + " ";
-			routeString = routeString.substr(0, routeString.size() - 2);
+			routeString = routeString.substr(0, routeString.size() - 1);
 		}
 		else {
 			routeString = "NULL";

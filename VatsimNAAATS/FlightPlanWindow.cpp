@@ -827,7 +827,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 		for (int i = 0; i < wrappedText.size(); i++) {
 			if (!(contentoffsetY < scrollBars[SCRL_CLRC].WindowPos))
 			{
-				if (!(contentoffsetY > scrollBars[SCRL_CLRC].WindowPos + scrollBars[SCRL_CLRC].FrameSize - 25))
+				if (!(contentoffsetY > scrollBars[SCRL_CLRC].WindowPos + scrollBars[SCRL_CLRC].FrameSize - 10))
 				{
 					// Write the message
 					dc->TextOutA(contentA.left + 5, contentA.top + wrapOffsetY, wrappedText[i].c_str());
@@ -842,6 +842,9 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 		// Write without iterating
 		dc->TextOutA(contentA.left + 5, contentA.top + 5, currentClearanceText.c_str());
 	}
+
+	if (contentoffsetY < contentA.Height())
+		contentoffsetY = contentA.Height();
 	
 	// Scroll bar values
 	if (scrollBars[SCRL_CLRC].FrameSize == 0 || (scrollBars[SCRL_CLRC].ContentSize != contentoffsetY && scrollBars[SCRL_CLRC].PositionDelta == 0 && scrollBars[SCRL_CLRC].ContentRatio != 1))
@@ -850,7 +853,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 		scrollBars[SCRL_CLRC] = CWinScrollBar(SCRL_CLRC, WIN_FLTPLN, contentoffsetY, framebox, false);
 		if (contentoffsetY != framebox)
 		{
-			scrollBars[SCRL_CLRC].GripSize -= 30; // temporary fix for grip bug
+			scrollBars[SCRL_CLRC].GripSize -= 20; // temporary fix for grip bug
 			scrollBars[SCRL_CLRC].TotalScrollableArea = framebox - scrollBars[SCRL_CLRC].GripSize;
 		}
 	}
