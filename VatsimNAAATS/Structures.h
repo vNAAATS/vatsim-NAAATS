@@ -338,7 +338,7 @@ struct CAircraftFlightPlan {
 	vector<CWaypoint> Route;
 	vector<CFlightRestriction> Restrictions;
 	int ExitTime;
-	bool IsValid;
+	bool IsValid = false;
 	bool IsCleared;
 };
 

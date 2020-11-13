@@ -1845,7 +1845,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			for (int i = 0; i < fp->RouteRaw.size(); i++) {
 				route += fp->RouteRaw[i] + " ";
 			}
-			route = route.substr(0, route.size() - 2); // Get rid of extra space
+			route = route.substr(0, route.size() - 1); // Get rid of extra space
 			IsData = true;
 			SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
 			// Instantiate flight plan variables
@@ -1862,8 +1862,26 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 			}
 		}
 		else {
-			if (!primedPlan->RouteRaw.empty())
+			if (!primedPlan->RouteRaw.empty()) {
+				// Set route
+				string route;
+				for (int i = 0; i < fp->RouteRaw.size(); i++) {
+					route += fp->RouteRaw[i] + " ";
+				}
+				route = route.substr(0, route.size() - 1); // Get rid of extra space
 				IsData = true;
+				SetTextValue(screen, CFlightPlanWindow::TXT_SPD, primedPlan->Mach);
+				SetTextValue(screen, CFlightPlanWindow::TXT_LEVEL, primedPlan->FlightLevel);
+				SetTextValue(screen, CFlightPlanWindow::TXT_DEST, primedPlan->Dest);
+				SetTextValue(screen, CFlightPlanWindow::TXT_STATE, "UA");
+				SetButtonState(CFlightPlanWindow::BTN_PROBE, CInputState::INACTIVE);
+				if (primedPlan->Track != "RR") {
+					SetTextValue(screen, CFlightPlanWindow::TXT_TCK, primedPlan->Track);
+				}
+				else {
+					SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
+				}
+			}
 			else
 				IsData = false;
 			SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::DISABLED);
@@ -2055,7 +2073,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		// It's a number, check the length
 		if (stoi(content) > 200 || stoi(content) < 1) return;
 
-		if (id == TXT_SPD) {
+		if (id == TXT_SPD || id == TXT_MAN_SPD) {
 			primedPlan->Mach = content;
 		}
 		else if (id == TXT_SPD_CPY) {
@@ -2077,7 +2095,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		if (stoi(content) > 999 || stoi(content) < 1) return;
 
 		// Assign
-		if (id == TXT_LEVEL) {
+		if (id == TXT_LEVEL || id == TXT_MAN_FL) {
 			primedPlan->FlightLevel = content;
 		}
 		else if (id == TXT_LEVEL_CPY) {
@@ -2269,7 +2287,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			IsConflictWindow = true;
 			SetButtonState(BTN_MSG_REQUEUE, CInputState::DISABLED);
 			SetButtonState(BTN_PROBE, CInputState::DISABLED);
-			//CConflictDetection::ProbeTool(screen, primedPlan->Callsign, &currentProbeStatuses, IsCopyMade ? &copiedPlan : nullptr);
+			CConflictDetection::ProbeTool(screen, primedPlan->Callsign, &currentProbeStatuses, IsCopyMade ? &copiedPlan : nullptr);
 
 			if (currentProbeStatuses.empty()) {
 				SetButtonState(BTN_CONF_ACCCL, CInputState::INACTIVE);
@@ -2443,6 +2461,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				textInputs[TXT_XCHANGE_CURRENT].Content = "UNTRACKED";
 				if (!primedPlan->IsCleared) {
 					IsData = false;
+					SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
 				}
 			}
 			else {
@@ -2496,7 +2515,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->Callsign;
 					data->ToDomestic = false;
 					data->Type = CMessageType::LOG_ON_CONFIRM;
-					data->Result = &result;
+					//data->Result = &result;
 					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
@@ -2508,7 +2527,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->CurrentMessage->From;
 					data->ToDomestic = false;
 					data->Type = CMessageType::TRANSFER_ACCEPT;
-					data->Result = &result;
+					//data->Result = &result;
 					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				IsMessageOpen = false;
@@ -2541,7 +2560,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->SentTo = primedPlan->Callsign;
 					data->ToDomestic = false;
 					data->Type = CMessageType::LOG_ON;
-					data->Result = &result;
+					//data->Result = &result;
 					//_beginthread(CDataHandler::ApiCreateMessage, 0, (void*)data); // Async
 				}
 				else if (primedPlan->CurrentMessage->Type == CMessageType::TRANSFER) {
@@ -2599,6 +2618,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			textInputs[TXT_TCK].Content = textInputs[TXT_MAN_TCK].Content;
 			textInputs[TXT_STATE].Content = "UA";
 			primedPlan->State = "UA";
+			primedPlan->Dest = textInputs[TXT_DEST].Content;
+			primedPlan->Track = textInputs[TXT_TCK].Content;
 
 			// Clear
 			textInputs[TXT_MAN_DEST].Content = "";

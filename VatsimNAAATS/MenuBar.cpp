@@ -282,6 +282,7 @@ void CMenuBar::MakeDropDownItems(int id) {
 		for (auto kv : CRoutesHelper::CurrentTracks) {
 			map.insert(make_pair(kv.first, true));
 		}
+		dropDowns[DRP_TCKCTRL].Items.clear();
 		dropDowns[DRP_TCKCTRL].MakeItems(&map);
 	}
 }
@@ -516,5 +517,13 @@ void CMenuBar::ButtonUnpress(int id, int button, CRadarScreen* screen) {
 	// Grid
 	if (id == BTN_GRID) {
 		COverlays::ShowHideGridReference(screen, false);
+	}
+}
+
+void CMenuBar::GetSelectedTracks(vector<string>& tracksVector) {
+	for (auto idx : dropDowns[DRP_TCKCTRL].Items) {
+		if (idx.second.State == CInputState::ACTIVE) {
+			tracksVector.push_back(idx.second.Label);
+		}
 	}
 }

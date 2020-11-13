@@ -194,10 +194,15 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Draw leader
 		Pen pen(Colours::TargetOrange, 1);
-		g->DrawLine(&pen, acPoint.x, acPoint.y, ptlPoint.x, ptlPoint.y);
+		Pen pen2(Colours::TargetBlue, 1);
+		if (fp.GetTrackingControllerIsMe())
+			g->DrawLine(&pen, acPoint.x, acPoint.y, ptlPoint.x, ptlPoint.y);
+		else
+			g->DrawLine(&pen2, acPoint.x, acPoint.y, ptlPoint.x, ptlPoint.y);
 
 		// Cleanup
 		DeleteObject(&pen);
+		DeleteObject(&pen2);
 	}
 
 	// Draw halos
@@ -233,11 +238,18 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Draw halo
 		Rect temp(acPoint.x - radius, acPoint.y - radius, radius * 2, radius * 2);
-		Pen pen(&orangeBrush, 1);
-		g->DrawEllipse(&pen, temp);
+		// Draw leader
+		Pen pen(Colours::TargetOrange, 1);
+		Pen pen2(Colours::TargetBlue, 1);
+		if (fp.GetTrackingControllerIsMe())
+			g->DrawEllipse(&pen, temp);
+		else
+			g->DrawEllipse(&pen2, temp);
+		
 
 		// Cleanup
 		DeleteObject(&pen);
+		DeleteObject(&pen2);
 	}
 
 	// Restore context

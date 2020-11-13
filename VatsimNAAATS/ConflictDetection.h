@@ -49,9 +49,9 @@ class CConflictDetection
 
 	private: 
 		// Separation values
-		static const int SEPV_LOW = 950; // Subtract fifty otherwise it's way too sensitive
-		static const int SEPV_HIGH = 1950;
-		static const int SEPV_SUPERSONIC = 3950;
+		static const int SEPV_LOW = 900; // Subtract a hundred otherwise it's way too sensitive
+		static const int SEPV_HIGH = 1900;
+		static const int SEPV_SUPERSONIC = 3900;
 		static const int SEPLAT_NONREDUCED = 60;
 		static const int SEPLAT_REDUCED = 23;
 		static const int SEPLON_REDUCED = 5;

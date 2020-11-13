@@ -58,6 +58,7 @@ class CDataHandler
 
 	// Get flight data
 	static CAircraftFlightPlan* GetFlightData(string callsign);
+	static void GetFlightData(string callsign, CAircraftFlightPlan& fp);
 
 	// Update a flight data object
 	static int UpdateFlightData(CRadarScreen* screen, string callsign, bool updateRoute);

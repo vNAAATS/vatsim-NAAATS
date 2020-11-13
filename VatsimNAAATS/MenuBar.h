@@ -28,6 +28,7 @@ class CMenuBar
 		void ButtonUp(int id, int button);
 		void ButtonPress(int id, int button, CRadarScreen* screen);
 		void ButtonUnpress(int id, int button, CRadarScreen* screen);
+		void GetSelectedTracks(vector<string>& tracksVector);
 		int ActiveDropDown;
 		int ActiveDropDownHover;
 
@@ -66,12 +67,13 @@ class CMenuBar
 
 		const int PANEL_SIZES[8] = { RECT1_WIDTH, RECT2_WIDTH, RECT3_WIDTH, RECT4_WIDTH, RECT5_WIDTH, RECT6_WIDTH, RECT7_WIDTH, RECT8_WIDTH };
 
+		map<int, CDropDown> dropDowns;
+
 	private:
 		// Menu bar objects
 		map<int, CWinButton> buttons;
 		map<int, CTextInput> textInputs;
 		map<int, CCheckBox> checkBoxes;
-		map<int, CDropDown> dropDowns;
 		map<int, int> panels;
 };
 

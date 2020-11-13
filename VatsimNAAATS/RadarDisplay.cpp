@@ -286,6 +286,40 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			entryMinutes = fp.GetSectorEntryMinutes();
 			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
+			// Check track filtering
+			if (menuBar->GetButtonState(menuBar->BTN_TCKCTRL) == CInputState::ACTIVE) {
+				// Primed plan
+				string cs = (string)fp.GetCallsign();
+				CAircraftFlightPlan aircraftFlightPlan;
+				CDataHandler::GetFlightData(cs.c_str(), aircraftFlightPlan);
+				vector<string> tracks;
+				auto idx = find_if(CConflictDetection::CurrentSTCA.begin(), CConflictDetection::CurrentSTCA.end(), [&cs](const CSTCAStatus& obj) {return obj.CallsignA == cs || obj.CallsignB == cs; });
+				if (idx == CConflictDetection::CurrentSTCA.end())
+					menuBar->GetSelectedTracks(tracks);
+				bool skipAircraft = tracks.empty() ? false : true;
+				for (int i = 0; i < tracks.size(); i++) {
+					if (aircraftFlightPlan.IsValid) {
+						if (aircraftFlightPlan.Track == tracks[i]) {
+							skipAircraft = false;
+							break;
+						}						
+					}
+					else if (CRoutesHelper::OnNatTrack(this, string(fp.GetCallsign())) == tracks[i]) {
+						skipAircraft = false;
+						break;
+					}
+					else {
+						continue;
+					}
+				}
+
+				if (skipAircraft) {
+					// Select the next target
+					ac = GetPlugIn()->RadarTargetSelectNext(ac);
+					continue;
+				}
+			}
+			
 			// Parse inbound & other
 			if (CUtils::IsAircraftRelevant(this, &ac)) {
 				// If not there then add the status
@@ -562,7 +596,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	CDataHandler::CGetActiveMessagesAsync* data = new CDataHandler::CGetActiveMessagesAsync();
 	data->Callsign = RadarTarget.GetCallsign();
 	data->Controller = GetPlugIn()->ControllerMyself().GetCallsign();
-	data->Result = &CMessageWindow::ActiveMessages;
+	//data->Result = &CMessageWindow::ActiveMessages;
 	//_beginthread(CDataHandler::ApiGetMessagesForController, 0, (void*)data); // Async
 
 	// Check if they are relevant on the screen
@@ -751,7 +785,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			GetPlugIn()->SetASELAircraft(fp);
 
 			// Probing tools
-			/*if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
+			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_RBL)
 				|| menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
 				// Make sure flight plans are valid
@@ -765,7 +799,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 			if (fp.GetCallsign() == aircraftSel2 && menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
 				CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
-			}*/
+			}
 		}
 
 		// Flight plan button

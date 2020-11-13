@@ -212,6 +212,8 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 	// Statuses for query aircraft
 	vector<CAircraftStatus> acStatuses = GetStatusesAlongRoutePoints(screen, callsign, (stoi(fp->Mach) * 100) * 576, stoi(fp->FlightLevel) * 100);
 
+	vector<string> callsigns;
+
 	// Check statuses against on screen aircraft
 	for (auto i = aircraftOnScreen->begin(); i != aircraftOnScreen->end(); i++) {
 		// Of course, skip the instance of the same aircraft
@@ -247,6 +249,7 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 
 		// Push back the vector if a conflict
 		if (addToVector) {
+			callsigns.push_back(target.GetCallsign());
 			statuses->push_back(sepStatuses);
 		}
 	}

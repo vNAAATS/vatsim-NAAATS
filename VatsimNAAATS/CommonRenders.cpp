@@ -180,7 +180,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 			if (kv.second.IsHovered)
 				dc->FillSolidRect(object, ButtonPressed.ToCOLORREF());
 			if (kv.second.IsCheckItem && kv.second.State == CInputState::ACTIVE) {
-				CRect rect(area.right - 20, area.top, area.right, area.bottom);
+				CRect rect(object.right - 20, object.top, object.right, object.bottom);
 				g->DrawLine(&white, rect.left + 4, rect.top + 4, rect.right - 4, rect.bottom - 4);
 				g->DrawLine(&white, rect.left + 4, rect.bottom - 4, rect.right - 4, rect.top + 4);
 			}

@@ -119,6 +119,16 @@ CAircraftFlightPlan* CDataHandler::GetFlightData(string callsign) {
 	return &fp;
 }
 
+void CDataHandler::GetFlightData(string callsign, CAircraftFlightPlan& fp) {
+	if (flights.find(callsign) != flights.end()) {
+		// Ben: this is for you, I have done the 'not found' code at the bottom you need to do the code that gets the existing flight data
+		// not sure whether it's as simple as return flights.at(callsign) or something more complex, depends on the API integration
+
+		fp = flights.find(callsign)->second;
+	}
+	fp.IsValid = false;
+}
+
 int CDataHandler::UpdateFlightData(CRadarScreen* screen, string callsign, bool updateRoute) {
 	// Flight plan
 	auto fp = flights.find(callsign);
@@ -266,7 +276,7 @@ size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb,
 	return size * nmemb;
 }
 
-void CDataHandler::ApiGetFlightData(void* args)
+/*void CDataHandler::ApiGetFlightData(void* args)
 {
 	// Convert args
 	CGetFlightDataAsync* data = (CGetFlightDataAsync*)args;
@@ -993,4 +1003,4 @@ void CDataHandler::ApiMessageActioned(void* args)
 			res = (int*) 1;
 		}
 	}
-}
+}*/
