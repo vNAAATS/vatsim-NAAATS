@@ -100,8 +100,8 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 	else {
 		// Rotate the graphics object and set the middle to the aircraft position
-		g->RotateTransform(target->GetTrackHeading());
 		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
+		g->RotateTransform(target->GetTrackHeading());
 
 		// This is the icon
 		Point points[19] = {
