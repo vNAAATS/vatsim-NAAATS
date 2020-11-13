@@ -509,6 +509,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		{
 			if (iter->valid() && iter->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 			{
+
 				CDataHandler::CGetActiveMessagesAsync data = iter->get();
 
 				// Add the messages to the list of active messages
@@ -548,6 +549,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	CDataHandler::CGetActiveMessagesAsync data;
 	data.Callsign = RadarTarget.GetCallsign();
 	data.Controller = GetPlugIn()->ControllerMyself().GetCallsign();
+	data.CurrentResults = CMessageWindow::ActiveMessages;
 
 	PendingApiMessagesForController.push_back(async(CDataHandler::ApiGetMessagesForController, data));
 	

@@ -53,7 +53,7 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	dc->FillRect(buttonBarRect, &darkerBrush);
 	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 	InflateRect(buttonBarRect, -1, -1);
-	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());	
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 
 	// Add screen objects
 	screen->AddScreenObject(WINDOW, "WIN_MSG", windowRect, true, ""); // So that we can't click anything under the flight plan window
@@ -235,7 +235,6 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		OngoingMessages[msg->Id] = msg;
 	}
 	else if (msg->Type == CMessageType::TRANSFER_ACCEPT ||
-		msg->Type == CMessageType::TRANSFER_ACCEPT ||
 		msg->Type == CMessageType::WILCO ||
 		msg->Type == CMessageType::UNABLE ||
 		msg->Type == CMessageType::ROGER) {

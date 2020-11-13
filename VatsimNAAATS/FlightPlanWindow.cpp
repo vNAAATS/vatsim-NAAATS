@@ -1745,8 +1745,13 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 
 	// Get the data
 	CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
-	if (!fp->IsValid) return;
-	primedPlan = fp;
+	if (!fp->IsValid) {
+		primedPlan = new CAircraftFlightPlan();
+		return;
+	}
+	else {
+		primedPlan = fp;
+	}
 
 	// Add message
 	if (msg != nullptr) {

@@ -2,9 +2,19 @@
 #include <string>
 #include <EuroScopePlugIn.h>
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 using namespace EuroScopePlugIn;
+
+static void info(string message) {
+    std::ofstream file;
+    file.open("C:\\Users\\Pierre\\Documents\\EuroScope\\oca.log", std::ofstream::out | std::ofstream::app);
+    file << "INFO: " << message << endl;
+    file.close();
+}
 
 /// WAYPOINTS
 // Entry Waypoints

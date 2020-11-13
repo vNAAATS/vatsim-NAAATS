@@ -26,6 +26,7 @@ class CDataHandler
 		string Callsign;
 		string Controller;
 		unordered_map<int, CMessage> Result;
+		unordered_map<int, CMessage> CurrentResults;
 	};
 	struct CCreateMessageAsync {
 		string SentBy;

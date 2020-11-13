@@ -442,10 +442,12 @@ CDataHandler::CGetActiveMessagesAsync CDataHandler::ApiGetMessagesForController(
 
 		curl_easy_cleanup(curl);
 
+
 		if (result == "-1")
 		{
 			return data;
 		}
+	} else {
 	}
 	
 	json j;
@@ -541,8 +543,10 @@ CDataHandler::CGetActiveMessagesAsync CDataHandler::ApiGetMessagesForController(
 								obj["created_at"].get<std::string>(),
 								type });
 
-			if (data.Result.find(obj["id"]) != data.Result.end())
+			if (data.CurrentResults.find(obj["id"]) == data.CurrentResults.end()) {
 				data.Result.insert(msg);
+			}
+				
 
 		}
 	}
