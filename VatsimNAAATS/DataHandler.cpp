@@ -411,16 +411,11 @@ void CDataHandler::ApiGetFlightData(void* args)
 	}
 }
 
-void CDataHandler::ApiGetMessagesForController(void* args)
+CDataHandler::CGetActiveMessagesAsync CDataHandler::ApiGetMessagesForController(CDataHandler::CGetActiveMessagesAsync data)
 {
 	// Convert args
-	CGetActiveMessagesAsync* data = (CGetActiveMessagesAsync*) args;
-	string callsign = data->Callsign;
-	string controller = data->Controller;
-	unordered_map<int, CMessage>* res = data->Result;
-
-	// Cleanup
-	delete args;
+	string callsign = data.Callsign;
+	string controller = data.Controller;
 
 	string result = "";
 	CURL* curl;
@@ -443,15 +438,17 @@ void CDataHandler::ApiGetMessagesForController(void* args)
 
 		if (result_code != CURLE_OK) {
 			curl_easy_cleanup(curl);
-			return;
+			return data;
 		}
 
 		curl_easy_cleanup(curl);
 
+
 		if (result == "-1")
 		{
-			return;
+			return data;
 		}
+	} else {
 	}
 	
 	json j;
@@ -462,12 +459,12 @@ void CDataHandler::ApiGetMessagesForController(void* args)
 	}
 	catch (nlohmann::detail::parse_error& ex)
 	{
-		return;
+		return data;
 	}
 
 	if(j.is_null())
 	{
-		return;
+		return data;
 	}
 
 	for (auto obj : j) {
@@ -547,11 +544,15 @@ void CDataHandler::ApiGetMessagesForController(void* args)
 								obj["created_at"].get<std::string>(),
 								type });
 
-			if (res->find(obj["id"]) != res->end())
-				res->insert(msg);
+			if (data.CurrentResults.find(obj["id"]) == data.CurrentResults.end()) {
+				data.Result.insert(msg);
+			}
+				
 
 		}
 	}
+
+	return data;
 }
 
 void CDataHandler::ApiGetMessages(void* args)

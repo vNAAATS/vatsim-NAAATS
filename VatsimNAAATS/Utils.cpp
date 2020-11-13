@@ -104,207 +104,212 @@ bool CUtils::StringSplit(string str, char splitBy, vector<string>* ptrTokens) {
 
 // Phraseology parser
 string CUtils::ParseToPhraseology(string rawInput, CMessageType type, string callsign) {
-	// Split the string
-	vector<string> splitString;
-	StringSplit(rawInput, ':', &splitString);
-
-	// CALLSIGN:LOG_ON:CONTROLLER
-	if (type == CMessageType::LOG_ON) {
-		return "REQ DATALINK LOG-ON STATION " + splitString[2];
-	}
-	// STATION_CALLSIGN:TRANSFER:AIRCRAFT_CALLSIGN
-	else if (type == CMessageType::TRANSFER) {
-		return "STATION " + splitString[0] + " REQUEST TRANSFER " + splitString[2] + " TO YOU";
-	}
-	// STATION_CALLSIGN:TRANSFER_ACCEPT:AIRCRAFT_CALLSIGN
-	else if (type == CMessageType::TRANSFER_ACCEPT) {
-		return "STATION " + splitString[0] + " ACCEPTED TRANSFER " + splitString[2];
-	}
-	// STATION_CALLSIGN:TRANSFER_REJECT:AIRCRAFT_CALLSIGN
-	else if (type == CMessageType::TRANSFER_REJECT) {
-		return "STATION " + splitString[0] + " REJECTED TRANSFER " + splitString[2];
-	}
-	// CALLSIGN:CLEARANCE_REQUEST:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:<FREETEXT>
-	else if (type == CMessageType::CLEARANCE_REQ) {
-		string returnString = "OCA CLR REQ: CLA TO " + splitString[2] + " VIA ";
-		if (splitString[3] != "NULL") {
-			returnString += "RANDOM ROUTING " + splitString[3] + ".";
-		}
-		else {
-			returnString += "TRACK " + splitString[6] + ".";
-		}
-		// Flight level and mach
-		returnString += " F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
-		// Estimated time
-		returnString += " EST " + splitString[4] + " AT " + splitString[5];
-		// Freetext
-		//returnString += ". FREE: " + splitString[9];
-		return returnString;
-	}
-	// CALLSIGN:CLEARANCE_ISSUE:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:ATC/:LCHG:MCHG:RERUTE
-	else if (type == CMessageType::CLEARANCE_ISSUE) {
-		string returnString = "CZQX CLRNCE: CLA TO " + splitString[2] + " VIA ";
-		if (splitString[3] != "NULL") {
-			returnString += "RANDOM ROUTING " + splitString[3] + ".";
-		}
-		else {
-			returnString += splitString[4] + " NAT TRACK " + splitString[6] + ".";
-		}
-		// Estimate
-		returnString += " FM " + splitString[4] + "/" + splitString[5];
-		// Flight level and mach
-		returnString += " MNTN F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8])) + " ";
-		// Freetext
-		//returnString += ". FREE: " + splitString[9];
-
-		// Restrictions
-		auto restrictionsIndex = std::find(splitString.begin(), splitString.end(), "ATC/");
-		for (auto idx = restrictionsIndex; idx != splitString.end(); idx++) {
-			if (*idx == "RERUTE")
-				returnString += "ROUTE HAS BEEN CHANGED.";
-		}
-		return returnString;
-	}
-	// CALLSIGN:REVISION_REQ:MCHG:CONTENT:LCHG:CONTENT:RERUTE:CONTENT
-	else if (type == CMessageType::REVISION_REQ) {
-		string returnString = "REQUEST [";
-		int counter = 0; // How many revisions (so that comma can be placed)
-		for (int i = 0; i < splitString.size(); i++) {
-			if (splitString[i] == "MCHG") {
-				returnString += "M" + PadWithZeros(3, stoi(splitString[i + 1])) + "]";
-			}
-			if (splitString[i] == "LCHG") {
-				returnString += "[F" + splitString[i + 1] + "] ";
-			}
-			if (splitString[i] == "RERUTE") {
-				returnString += "[" + splitString[i + 1] + "] ";
-			}
-		}
-		return returnString;
-	}
-	else if (type == CMessageType::REVISION_ISSUE) {
-		// Flight data
-		CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(callsign);
-		string returnString;
-		// Split the current message
+	try {
+		// Split the string
 		vector<string> splitString;
 		StringSplit(rawInput, ':', &splitString);
-		int machChange = -1;
-		int levelChange = -1;
-		int rerute = -1;
-		for (int i = 0; i < splitString.size(); i++) {
-			if (splitString[i] == "ATC/")
-				break;
-			if (splitString[i] == "MCHG") {
-				machChange = i + 1;
-			}
-			if (splitString[i] == "LCHG") {
-				levelChange = i + 1;
-			}
-			if (splitString[i] == "RERUTE") {
-				rerute = i + 1;
-			}
+
+		// CALLSIGN:LOG_ON:CONTROLLER
+		if (type == CMessageType::LOG_ON) {
+			return "REQ DATALINK LOG-ON STATION " + splitString[2];
 		}
-
-		bool isLevelRestriction = false;
-		bool isMachRestriction = false;
-		bool isRouteRestriction = false;
-
-		vector<string> restrictions = { "LCHG, MCHG, ATA", "ATB", "XAT", "UNABLE", "INT" };
-
-		// Restrictions
-		auto restrictionsIndex = std::find(splitString.begin(), splitString.end(), "ATC/");
-		for (auto idx = restrictionsIndex; idx != splitString.end(); idx++) {
-			if (*idx == "LCHG") {
-				isLevelRestriction = true;
-				int isTime = false;
-				returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " CROSS " + *(idx + 1) + " AT F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
+		// STATION_CALLSIGN:TRANSFER:AIRCRAFT_CALLSIGN
+		else if (type == CMessageType::TRANSFER) {
+			return "STATION " + splitString[0] + " REQUEST TRANSFER " + splitString[2] + " TO YOU";
+		}
+		// STATION_CALLSIGN:TRANSFER_ACCEPT:AIRCRAFT_CALLSIGN
+		else if (type == CMessageType::TRANSFER_ACCEPT) {
+			return "STATION " + splitString[0] + " ACCEPTED TRANSFER " + splitString[2];
+		}
+		// STATION_CALLSIGN:TRANSFER_REJECT:AIRCRAFT_CALLSIGN
+		else if (type == CMessageType::TRANSFER_REJECT) {
+			return "STATION " + splitString[0] + " REJECTED TRANSFER " + splitString[2];
+		}
+		// CALLSIGN:CLEARANCE_REQUEST:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:<FREETEXT>
+		else if (type == CMessageType::CLEARANCE_REQ) {
+			string returnString = "OCA CLR REQ: CLA TO " + splitString[2] + " VIA ";
+			if (splitString[3] != "NULL") {
+				returnString += "RANDOM ROUTING " + splitString[3] + ".";
 			}
-			else if (*idx == "MCHG") {
-				isMachRestriction = true;
-				returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". CROSS " + *(idx + 1) + " AT " + splitString[machChange] + ". ";
+			else {
+				returnString += "TRACK " + splitString[6] + ".";
 			}
-			else if (*idx == "EPC") {
-				
+			// Flight level and mach
+			returnString += " F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8]));
+			// Estimated time
+			returnString += " EST " + splitString[4] + " AT " + splitString[5];
+			// Freetext
+			//returnString += ". FREE: " + splitString[9];
+			return returnString;
+		}
+		// CALLSIGN:CLEARANCE_ISSUE:ICAO CODE:ROUTE STRING OR NULL:WAYPOINT:EST AS ZULU:LETTER OR RR:LEVEL:MACH:ATC/:LCHG:MCHG:RERUTE
+		else if (type == CMessageType::CLEARANCE_ISSUE) {
+			string returnString = "CZQX CLRNCE: CLA TO " + splitString[2] + " VIA ";
+			if (splitString[3] != "NULL") {
+				returnString += "RANDOM ROUTING " + splitString[3] + ".";
 			}
-			else if (*idx == "RTD") {
+			else {
+				returnString += splitString[4] + " NAT TRACK " + splitString[6] + ".";
+			}
+			// Estimate
+			returnString += " FM " + splitString[4] + "/" + splitString[5];
+			// Flight level and mach
+			returnString += " MNTN F" + splitString[7] + " M" + PadWithZeros(3, stoi(splitString[8])) + " ";
+			// Freetext
+			//returnString += ". FREE: " + splitString[9];
 
+			// Restrictions
+			auto restrictionsIndex = std::find(splitString.begin(), splitString.end(), "ATC/");
+			for (auto idx = restrictionsIndex; idx != splitString.end(); idx++) {
+				if (*idx == "RERUTE")
+					returnString += "ROUTE HAS BEEN CHANGED.";
 			}
-			else if (*idx == "UNABLE") {
-				vector<string> unables;
-				if (std::find(restrictions.begin(), restrictions.end(), *(idx + 1)) != restrictions.end()) {
-					unables.push_back(*(idx + 1));
+			return returnString;
+		}
+		// CALLSIGN:REVISION_REQ:MCHG:CONTENT:LCHG:CONTENT:RERUTE:CONTENT
+		else if (type == CMessageType::REVISION_REQ) {
+			string returnString = "REQUEST [";
+			int counter = 0; // How many revisions (so that comma can be placed)
+			for (int i = 0; i < splitString.size(); i++) {
+				if (splitString[i] == "MCHG") {
+					returnString += "M" + PadWithZeros(3, stoi(splitString[i + 1])) + "]";
 				}
-				if (std::find(restrictions.begin(), restrictions.end(), *(idx + 2)) != restrictions.end()) {
-					unables.push_back(*(idx + 2));
+				if (splitString[i] == "LCHG") {
+					returnString += "[F" + splitString[i + 1] + "] ";
 				}
-				if (std::find(restrictions.begin(), restrictions.end(), *(idx + 3)) != restrictions.end()) {
-					unables.push_back(*(idx + 3));
+				if (splitString[i] == "RERUTE") {
+					returnString += "[" + splitString[i + 1] + "] ";
 				}
-				int counter = 0;
-				for (int i = 0; i < unables.size(); i++) {
-					if (unables[i] == "LCHG") {
-						if (counter > 1)
-							returnString += ", LEVEL CHANGE";
-						else
-							returnString += "UNABLE LEVEL CHANGE ";
+			}
+			return returnString;
+		}
+		else if (type == CMessageType::REVISION_ISSUE) {
+			// Flight data
+			CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(callsign);
+			string returnString;
+			// Split the current message
+			vector<string> splitString;
+			StringSplit(rawInput, ':', &splitString);
+			int machChange = -1;
+			int levelChange = -1;
+			int rerute = -1;
+			for (int i = 0; i < splitString.size(); i++) {
+				if (splitString[i] == "ATC/")
+					break;
+				if (splitString[i] == "MCHG") {
+					machChange = i + 1;
+				}
+				if (splitString[i] == "LCHG") {
+					levelChange = i + 1;
+				}
+				if (splitString[i] == "RERUTE") {
+					rerute = i + 1;
+				}
+			}
+
+			bool isLevelRestriction = false;
+			bool isMachRestriction = false;
+			bool isRouteRestriction = false;
+
+			vector<string> restrictions = { "LCHG, MCHG, ATA", "ATB", "XAT", "UNABLE", "INT" };
+
+			// Restrictions
+			auto restrictionsIndex = std::find(splitString.begin(), splitString.end(), "ATC/");
+			for (auto idx = restrictionsIndex; idx != splitString.end(); idx++) {
+				if (*idx == "LCHG") {
+					isLevelRestriction = true;
+					int isTime = false;
+					returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " CROSS " + *(idx + 1) + " AT F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
+				}
+				else if (*idx == "MCHG") {
+					isMachRestriction = true;
+					returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". CROSS " + *(idx + 1) + " AT " + splitString[machChange] + ". ";
+				}
+				else if (*idx == "EPC") {
+
+				}
+				else if (*idx == "RTD") {
+
+				}
+				else if (*idx == "UNABLE") {
+					vector<string> unables;
+					if (std::find(restrictions.begin(), restrictions.end(), *(idx + 1)) != restrictions.end()) {
+						unables.push_back(*(idx + 1));
 					}
-					else if (unables[i] == "MCHG") {
-						if (counter > 1)
-							returnString += ", SPD CHANGE";
-						else
-							returnString += "UNABLE SPD CHANGE ";
+					if (std::find(restrictions.begin(), restrictions.end(), *(idx + 2)) != restrictions.end()) {
+						unables.push_back(*(idx + 2));
 					}
-					else {
-						if (counter > 1)
-							returnString += ", RERUTE";
-						else
-							returnString += "UNABLE RERUTE ";
+					if (std::find(restrictions.begin(), restrictions.end(), *(idx + 3)) != restrictions.end()) {
+						unables.push_back(*(idx + 3));
 					}
+					int counter = 0;
+					for (int i = 0; i < unables.size(); i++) {
+						if (unables[i] == "LCHG") {
+							if (counter > 1)
+								returnString += ", LEVEL CHANGE";
+							else
+								returnString += "UNABLE LEVEL CHANGE ";
+						}
+						else if (unables[i] == "MCHG") {
+							if (counter > 1)
+								returnString += ", SPD CHANGE";
+							else
+								returnString += "UNABLE SPD CHANGE ";
+						}
+						else {
+							if (counter > 1)
+								returnString += ", RERUTE";
+							else
+								returnString += "UNABLE RERUTE ";
+						}
+					}
+					returnString += " ";
 				}
-				returnString += " ";
+				else if (*idx == "ATA") {
+					returnString += "CROSS " + *(idx + 1) + " AFTER " + *(idx + 2) + ". ";
+				}
+				else if (*idx == "ATB") {
+					returnString += "CROSS " + *(idx + 1) + " BEFORE " + *(idx + 2) + ". ";
+				}
+				else if (*idx == "XAT") {
+					returnString += "CROSS " + *(idx + 1) + " AT " + *(idx + 2) + ". ";
+				}
 			}
-			else if (*idx == "ATA") {
-				returnString += "CROSS " + *(idx + 1) + " AFTER " + *(idx + 2) + ". ";
-			}
-			else if (*idx == "ATB") {
-				returnString += "CROSS " + *(idx + 1) + " BEFORE " + *(idx + 2) + ". ";
-			}
-			else if (*idx == "XAT") {
-				returnString += "CROSS " + *(idx + 1) + " AT " + *(idx + 2) + ". ";
-			}
-		}
 
-		if (machChange != -1) {
-			returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". ";
-		}
-		if (levelChange != -1 && !isLevelRestriction) {
-			if (!returnString.empty())
-				returnString += " ";
+			if (machChange != -1) {
+				returnString += "MAINTAIN MACH 0" + splitString[machChange] + ". ";
+			}
+			if (levelChange != -1 && !isLevelRestriction) {
+				if (!returnString.empty())
+					returnString += " ";
 
-			returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
-		}
-		if (rerute != -1 && !isRouteRestriction) {
-			if (!returnString.empty())
-				returnString += " ";
-			returnString += "ROUTE HAS BEEN CHANGED CLEARED " + splitString[rerute] + ". ";
-		}
+				returnString += "CLIMB TO AND MAINTAIN F" + splitString[levelChange] + " REPORT LEAVING F" + primedPlan->FlightLevel + " REPORT LEVEL F" + splitString[levelChange] + ". ";
+			}
+			if (rerute != -1 && !isRouteRestriction) {
+				if (!returnString.empty())
+					returnString += " ";
+				returnString += "ROUTE HAS BEEN CHANGED CLEARED " + splitString[rerute] + ". ";
+			}
 
-		return returnString;
+			return returnString;
+		}
+		// CALLSIGN:WILCO
+		else if (type == CMessageType::WILCO) {
+			return "WILCO LAST MSG";
+		}
+		// CALLSIGN:UNABLE
+		else if (type == CMessageType::UNABLE) {
+			return "UNABLE LAST REQUEST";
+		}
+		// CALLSIGN:ROGER
+		else if (type == CMessageType::ROGER) {
+			return "ROGER LAST MSG";
+		}
+		else { // Default
+			return rawInput;
+		}
 	}
-	// CALLSIGN:WILCO
-	else if (type == CMessageType::WILCO) {
-		return "WILCO LAST MSG";
-	}
-	// CALLSIGN:UNABLE
-	else if (type == CMessageType::UNABLE) {
-		return "UNABLE LAST REQUEST";
-	}
-	// CALLSIGN:ROGER
-	else if (type == CMessageType::ROGER) {
-		return "ROGER LAST MSG";
-	}
-	else { // Default
+	catch(std::exception e) {
 		return rawInput;
 	}
 }

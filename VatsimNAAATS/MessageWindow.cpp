@@ -68,14 +68,14 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	CRect titleRect(windowRect.left, windowRect.top, windowRect.left + WINSZ_MSG_WIDTH, windowRect.top + WINSZ_TITLEBAR_HEIGHT);
 	dc->FillRect(titleRect, &lighterBrush);
 	dc->DrawEdge(titleRect, EDGE_RAISED, BF_BOTTOM);
-	dc->TextOutA(titleRect.left + (WINSZ_MSG_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), ("Messages (" + to_string(ActiveMessages.size()) + ")").c_str());
+	dc->TextOutA(titleRect.left + (WINSZ_MSG_WIDTH / 2), titleRect.top + (WINSZ_TITLEBAR_HEIGHT / 7), ("Messages (" + to_string(MessageCount) + ")").c_str());
 
 	// Create button bar
 	CRect buttonBarRect(windowRect.left, windowRect.bottom - 50, windowRect.left + WINSZ_MSG_WIDTH, windowRect.bottom);
 	dc->FillRect(buttonBarRect, &darkerBrush);
 	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 	InflateRect(buttonBarRect, -1, -1);
-	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());	
+	dc->Draw3dRect(buttonBarRect, BevelLight.ToCOLORREF(), ScreenBlue.ToCOLORREF());
 
 	// Add screen objects
 	screen->AddScreenObject(WINDOW, "WIN_MSG", windowRect, true, ""); // So that we can't click anything under the flight plan window
@@ -125,12 +125,18 @@ void CMessageWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	for (int i = 0; i < ActiveMessages.size(); i++) {
 		totalcontent += 50;
 	}
+
+	MessageCount = 0;
 	for (int i = 0; i < ActiveMessages.size(); i++) {
 		// Skip displaying if the message is active
 		if (OngoingMessages.find(ActiveMessages[i].Id) != OngoingMessages.end()) {
 			continue;
 		}
 		if (!ActiveMessages[i].MessageRaw.length()) continue;
+
+		// Message count for display in window
+		MessageCount++;
+
 		int deltaoffsetY = offsetY;
 		if (!(contentOffsetY < scrollBars[SCRL_MSGWNDW].WindowPos))
 		{
@@ -257,10 +263,10 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		OngoingMessages[msg->Id] = msg;
 	}
 	else if (msg->Type == CMessageType::TRANSFER_ACCEPT ||
-		msg->Type == CMessageType::TRANSFER_ACCEPT ||
 		msg->Type == CMessageType::WILCO ||
 		msg->Type == CMessageType::UNABLE ||
 		msg->Type == CMessageType::ROGER) {
+		OngoingMessages.erase(id);
 		ActiveMessages.erase(id);
 	}
 	else if (msg->Type == CMessageType::CLEARANCE_REQ) {
