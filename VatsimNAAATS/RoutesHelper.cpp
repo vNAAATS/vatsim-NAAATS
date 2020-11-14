@@ -329,7 +329,7 @@ int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack, CA
 
 	// Deal with track
 	if (isTrack) {
-		if (rawInput.size() < 2) {
+		if (rawInput.size() < 3) {
 			if (CRoutesHelper::CurrentTracks.find(rawInput) != CRoutesHelper::CurrentTracks.end()) {
 				route = CRoutesHelper::CurrentTracks.at(rawInput).Route;
 				track = CRoutesHelper::CurrentTracks.at(rawInput).Identifier;

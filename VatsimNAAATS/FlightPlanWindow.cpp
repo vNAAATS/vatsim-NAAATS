@@ -2146,7 +2146,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		}
 
 		// It's a string, check the length
-		if (content.size() > 2 || content.size() < 1) return;
+		if (content.size() > 3 || content.size() < 1) return;
 
 		int status;
 		if (id == TXT_TCK_CPY) {

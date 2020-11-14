@@ -39,7 +39,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 			return 1;
 		}
 		// Put data into buffer
-		char tempBuffer[2048];
+		char tempBuffer[16384];
 		DWORD bytesRead = 0;
 		hr = pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
 		// Put data into string
