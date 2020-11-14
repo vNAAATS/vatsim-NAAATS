@@ -629,7 +629,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->SetTextAlign(TA_LEFT);
 
 	// Iterate through conflicts (NEED BOTH VERTICAL AND HORIZONTAL SCROLL)
-	if (!currentProbeStatuses.empty()) {
+	if (currentProbeStatuses.empty()) {
 		dc->TextOutA(content.left + 5, content.top + 5, "No predicted conflicts.");
 	}
 	else {
