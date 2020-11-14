@@ -125,7 +125,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 
 
 	/// Dropdown defaults
-	unordered_map<string, bool> map;
+	map<string, bool> map;
 	dropDowns[DRP_ATCR] = CDropDown(DRP_ATCR, WIN_FLTPLN, "", &map, CInputState::INACTIVE, 83);
 	map.clear();
 	dropDowns[DRP_ATCR_CPY] = CDropDown(DRP_ATCR_CPY, WIN_FLTPLN, "", &map, CInputState::INACTIVE, 83);

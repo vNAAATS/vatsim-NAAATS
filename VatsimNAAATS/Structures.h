@@ -181,7 +181,7 @@ struct CDropDownItem {
 // Describes a dropdown
 struct CDropDown {
 	CDropDown() {}; // Default constructor
-	CDropDown(int id, int type, string value, unordered_map<string, bool>* dropDownItems, CInputState state, int width = -1) {
+	CDropDown(int id, int type, string value, map<string, bool>* dropDownItems, CInputState state, int width = -1) {
 		Id = id;
 		Type = type;
 		Value = value;
@@ -193,7 +193,7 @@ struct CDropDown {
 		State = state;
 		Width = width;
 	}
-	void MakeItems(unordered_map<string, bool>* items) {
+	void MakeItems(map<string, bool>* items) {
 		Items.clear();
 		int counter = 800;
 		for (auto kv : *items) {
@@ -204,7 +204,7 @@ struct CDropDown {
 	int Id;
 	int Type;
 	string Value;
-	unordered_map<int, CDropDownItem> Items;
+	map<int, CDropDownItem> Items;
 	CInputState State;
 	int Width;
 };
