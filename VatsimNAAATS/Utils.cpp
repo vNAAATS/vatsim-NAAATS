@@ -709,7 +709,8 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		}
 	}
 	
-	if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+	string callsign = (string)screen->GetPlugIn()->ControllerMyself().GetCallsign();
+	if (!screen->GetPlugIn()->ControllerMyself().IsController() || callsign.find("SUP") != string::npos) {
 		CPosition position = target->GetPosition().GetPosition();
 
 		if (position.m_Longitude > -70 && position.m_Longitude < -5)
@@ -717,8 +718,6 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		if (position.m_Latitude < 80 && position.m_Longitude < -35)
 			valid = true;
 	}
-
-
 
 	return valid;
 }
