@@ -38,7 +38,7 @@ CMenuBar::CMenuBar() {
 	textInputs[TXT_SEARCH] = CTextInput(TXT_SEARCH, MENBAR, "Search A/C: ", "", 100, CInputState::ACTIVE);
 
 	/// Dropdown defaults
-	unordered_map<string, bool> map;
+	map<string, bool> map;
 	map.insert(make_pair("CZQX", false));
 	map.insert(make_pair("EGGX", false));
 	map.insert(make_pair("BDBX", false));
@@ -278,7 +278,7 @@ map<int, CWinButton> CMenuBar::GetToggleButtons() {
 
 void CMenuBar::MakeDropDownItems(int id) {
 	if (id == DRP_TCKCTRL) {
-		unordered_map<string, bool> map;
+		map<string, bool> map;
 		for (auto kv : CRoutesHelper::CurrentTracks) {
 			map.insert(make_pair(kv.first, true));
 		}
