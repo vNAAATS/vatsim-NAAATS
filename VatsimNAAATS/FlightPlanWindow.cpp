@@ -47,8 +47,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_MSG] = CWinButton(BTN_MSG, WIN_FLTPLN, "Message", CInputState::DISABLED);
 	windowButtons[BTN_HIST] = CWinButton(BTN_HIST, WIN_FLTPLN, "History", CInputState::INACTIVE);
 	windowButtons[BTN_SAVE] = CWinButton(BTN_SAVE, WIN_FLTPLN, "Save", CInputState::DISABLED);
-	windowButtons[BTN_ATCR] = CWinButton(BTN_ATCR, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
-	windowButtons[BTN_ATCR_CPY] = CWinButton(BTN_ATCR_CPY, WIN_FLTPLN, "ATC/", CInputState::INACTIVE);
+	windowButtons[BTN_ATCR] = CWinButton(BTN_ATCR, WIN_FLTPLN, "ATC/", CInputState::DISABLED);
+	windowButtons[BTN_ATCR_CPY] = CWinButton(BTN_ATCR_CPY, WIN_FLTPLN, "ATC/", CInputState::DISABLED);
 	windowButtons[BTN_MSG_REMOVE] = CWinButton(BTN_MSG_REMOVE, WIN_FLTPLN, "Remove", CInputState::DISABLED);
 	windowButtons[BTN_MSG_DONE] = CWinButton(BTN_MSG_DONE, WIN_FLTPLN, "Done", CInputState::DISABLED);
 	windowButtons[BTN_MSG_CLOSE] = CWinButton(BTN_MSG_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
@@ -59,7 +59,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	windowButtons[BTN_CONF_COORD] = CWinButton(BTN_CONF_COORD, WIN_FLTPLN, "CO-ORD", CInputState::DISABLED);
 	windowButtons[BTN_CONF_CLOSE] = CWinButton(BTN_CONF_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
 	windowButtons[BTN_MAN_CANCEL] = CWinButton(BTN_MAN_CANCEL, WIN_FLTPLN, "Cancel", CInputState::INACTIVE);
-	windowButtons[BTN_MAN_SUBMIT] = CWinButton(BTN_MAN_SUBMIT, WIN_FLTPLN, "Submit", CInputState::INACTIVE);
+	windowButtons[BTN_MAN_SUBMIT] = CWinButton(BTN_MAN_SUBMIT, WIN_FLTPLN, "Submit", CInputState::DISABLED);
 	windowButtons[BTN_CLRC_READBK] = CWinButton(BTN_CLRC_READBK, WIN_FLTPLN, "ReadBK", CInputState::INACTIVE);
 	windowButtons[BTN_CLRC_VOICE] = CWinButton(BTN_CLRC_VOICE, WIN_FLTPLN, "Man TX", CInputState::INACTIVE);
 	windowButtons[BTN_CLRC_SEND] = CWinButton(BTN_CLRC_SEND, WIN_FLTPLN, "Send", CInputState::INACTIVE);
@@ -639,7 +639,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 		dc->TextOutA(offsetX, offsetY, primedPlan->Callsign.c_str());
 		offsetX += 60;
 		dc->TextOutA(offsetX, offsetY, primedPlan->FlightLevel.c_str());
-		offsetX += 30;
+		offsetX += 40;
 		dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, stoi(primedPlan->Mach))).c_str());
 		offsetX += 30;
 		// Draw main route
@@ -660,7 +660,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 			dc->TextOutA(offsetX, offsetY, kv.first.c_str());
 			offsetX += 60;
 			dc->TextOutA(offsetX, offsetY, to_string((int)(round(target.GetPosition().GetFlightLevel()) / 100.0)).c_str());
-			offsetX += 32;
+			offsetX += 40;
 			dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, mach)).c_str());
 			offsetX += 30;
 			// Draw statuses
@@ -987,6 +987,14 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	// Text align
 	FontSelector::SelectATCFont(16, dc);
 	dc->SetTextAlign(TA_LEFT);
+
+	if (textInputs[TXT_MAN_FL].Content == "" || textInputs[TXT_MAN_SPD].Content == "") {
+		if (windowButtons[BTN_MAN_SUBMIT].State == CInputState::INACTIVE)
+			windowButtons[BTN_MAN_SUBMIT].State = CInputState::DISABLED;
+	}
+	else {
+		windowButtons[BTN_MAN_SUBMIT].State = CInputState::INACTIVE;
+	}
 
 	// Parse the route text
 	int offsetX = 5;
@@ -2097,6 +2105,7 @@ void CFlightPlanWindow::ParseRestriction(string content, CRestrictionType type) 
 void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string content) {
 	// Mach numbers
 	if (id == TXT_SPD || id == TXT_SPD_CPY || id == TXT_MAN_SPD) {
+		if (content == "") return;
 		// Validation (range & length)
 		// Check if it is a string
 		bool isNumber = true;
@@ -2118,6 +2127,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 
 	// Mach numbers
 	if (id == TXT_LEVEL || id == TXT_LEVEL_CPY || id == TXT_MAN_FL) {
+		if (content == "") return;
 		// Validation (range & length)
 		// Check if it is a string
 		bool isNumber = true;
@@ -2137,6 +2147,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 	}
 	// Tracks
 	if (id == TXT_TCK || id == TXT_TCK_CPY || id == TXT_MAN_TCK) {
+		if (content == "") return;
 		// Validation (range & length)
 		// Check if it is a string
 		bool isNumber = false;
@@ -2192,6 +2203,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 	}
 	// Routes
 	if (id == TXT_RTE  || id == TXT_MAN_RTE || id == TXT_CPY_RTE) {
+		if (content == "") return;
 		// Parse the route
 		int status;
 		if (id == TXT_CPY_RTE) {
@@ -2327,11 +2339,11 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			CConflictDetection::ProbeTool(screen, primedPlan->Callsign, &currentProbeStatuses, IsCopyMade ? &copiedPlan : nullptr);
 
 			if (currentProbeStatuses.empty()) {
-				SetButtonState(BTN_CONF_ACCCL, CInputState::INACTIVE);
+				SetButtonState(BTN_CONF_ACCCL, CInputState::DISABLED);
 				SetButtonState(BTN_CONF_MANCL, CInputState::DISABLED);
 			}
 			else {
-				SetButtonState(BTN_CONF_MANCL, CInputState::INACTIVE);
+				SetButtonState(BTN_CONF_MANCL, CInputState::DISABLED);
 				SetButtonState(BTN_CONF_ACCCL, CInputState::DISABLED);
 			}
 		}

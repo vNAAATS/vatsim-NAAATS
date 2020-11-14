@@ -666,7 +666,7 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		bool direction = GetAircraftDirection(target->GetTrackHeading());
 		int areaSel = AreaSelection;
 		// If greater than sixty minutes out or already in the airspace
-		if (entryMinutes <= 0 || entryMinutes > 60) {
+		if (entryMinutes < 0 || entryMinutes > 60) {
 			valid = false;
 		}
 		
@@ -689,7 +689,7 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		if (entryMinutes < 0 || entryMinutes > 20) {
 			valid = false;
 		}
-	}
+	}	
 
 	/// However we should keep them on the screen if they aren't long out of the airspace
 	CAircraftFlightPlan* acFp = CDataHandler::GetFlightData(target->GetCallsign());
@@ -709,6 +709,17 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		}
 	}
 	
+	if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+		CPosition position = target->GetPosition().GetPosition();
+
+		if (position.m_Longitude > -70 && position.m_Longitude < -5)
+			valid = true;
+		if (position.m_Latitude < 80 && position.m_Longitude < -35)
+			valid = true;
+	}
+
+
+
 	return valid;
 }
 

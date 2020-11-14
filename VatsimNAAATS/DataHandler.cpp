@@ -15,7 +15,7 @@
 using json = nlohmann::json;
 
 const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
-const string CDataHandler::EventTrackUrl = "https://tracks.ganderoceanic.com/event";
+const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.com/resources/data/eventTracks.json";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
@@ -125,6 +125,8 @@ void CDataHandler::GetFlightData(string callsign, CAircraftFlightPlan& fp) {
 		// not sure whether it's as simple as return flights.at(callsign) or something more complex, depends on the API integration
 
 		fp = flights.find(callsign)->second;
+		fp.IsValid = true;
+		return;
 	}
 	fp.IsValid = false;
 }

@@ -116,8 +116,8 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v0.3.2b";
-const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678, Ben Levy github.com/benmaxlevy";
+const string PLUGIN_VERSION = "v1.0.0";
+const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678 w/ Ben Levy & Pierre Ferran";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 
 // Sector file & geo constants

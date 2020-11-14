@@ -23,6 +23,9 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Check if there is an active handoff to client 
 	bool isHandoffToMe = string(fp.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
 
+	// Aircraft position
+	CPosition position = target->GetPosition().GetPosition();
+
 	// Save context for later
 	int sDC = dc->SaveDC();
 
@@ -59,6 +62,14 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		if (!fp.GetTrackingControllerIsMe()) {
 			// Callsign blue, no critical conflict
 			textColour = TargetBlue.ToCOLORREF();
+
+			// Orange if observer
+			if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+				if (position.m_Longitude > -70 && position.m_Longitude < -5)
+					textColour = TargetOrange.ToCOLORREF();
+				if (position.m_Latitude < 80 && position.m_Longitude < -35)
+					textColour = TargetOrange.ToCOLORREF();
+			}
 		}
 		else {
 			// No conflict or only warning, tag orange
@@ -80,7 +91,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	g->SetSmoothingMode(SmoothingModeAntiAlias);
 
 	// Check jurisdiction
-	if (!fp.GetTrackingControllerIsMe()) {
+	if (!fp.GetTrackingControllerIsMe() && screen->GetPlugIn()->ControllerMyself().IsController()) {
 		// Set middle
 		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 
@@ -281,6 +292,9 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// Save context for later
 	int sDC = dc->SaveDC();
 
+	// Aircraft position
+	CPosition position = target->GetPosition().GetPosition();
+
 	// Tag rectangle
 	CRect tagRect;
 	int tagOffsetX = tagPosition->second.x;
@@ -339,6 +353,14 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		if (!acFP.GetTrackingControllerIsMe()) {
 			// Callsign blue, no critical conflict
 			textColour = TargetBlue.ToCOLORREF();
+
+			// Orange if observer
+			if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+				if (position.m_Longitude > -70 && position.m_Longitude < -5)
+					textColour = TargetOrange.ToCOLORREF();
+				if (position.m_Latitude < 80 && position.m_Longitude < -35)
+					textColour = TargetOrange.ToCOLORREF();
+			}
 		}
 		else {
 			// No conflict or only warning, tag orange
@@ -373,6 +395,13 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// Handoff
 	if (isHandoffToMe) {
 		textColour = TextWhite.ToCOLORREF();
+	}
+	// Orange if observer
+	if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+		if (position.m_Longitude > -70 && position.m_Longitude < -5)
+			textColour = TargetOrange.ToCOLORREF();
+		if (position.m_Latitude < 80 && position.m_Longitude < -35)
+			textColour = TargetOrange.ToCOLORREF();
 	}
 	FontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(textColour);

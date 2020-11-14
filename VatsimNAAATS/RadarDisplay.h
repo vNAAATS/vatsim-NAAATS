@@ -65,7 +65,7 @@ class CRadarDisplay : public CRadarScreen
 		CMenuBar* menuBar;
 		CInboundList* inboundList;
 		COtherList* otherList;
-		CRCLList* rclList;
+		//CRCLList* rclList;
 		CConflictList* conflictList;
 		CTrackInfoWindow* trackWindow = nullptr;
 		CFlightPlanWindow* fltPlnWindow = nullptr;

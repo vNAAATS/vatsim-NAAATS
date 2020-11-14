@@ -23,7 +23,7 @@ CRadarDisplay::CRadarDisplay()
 	//COverlays::ShowHideGridReference(this, false);
 	inboundList = new CInboundList({ CUtils::InboundX, CUtils::InboundY });
 	otherList = new COtherList({ CUtils::OthersX, CUtils::OthersY });
-	rclList = new CRCLList({ CUtils::RCLX, CUtils::RCLY }); // TODO: settings save
+	//rclList = new CRCLList({ CUtils::RCLX, CUtils::RCLY }); // TODO: settings save
 	conflictList = new CConflictList({ CUtils::ConflictX, CUtils::ConflictY }); // TODO: settings save
 	trackWindow = new CTrackInfoWindow({ CUtils::TrackWindowX, CUtils::TrackWindowY });
 	fltPlnWindow = new CFlightPlanWindow({ 1000, 300 }); // TODO: settings save
@@ -139,7 +139,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	}
 
 	// Set the flight plan button state
-	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid) {
+	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid || !GetPlugIn()->ControllerMyself().IsController()) {
 		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) != CInputState::DISABLED)
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::DISABLED);
 	}
@@ -299,7 +299,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				bool skipAircraft = tracks.empty() ? false : true;
 				for (int i = 0; i < tracks.size(); i++) {
 					if (aircraftFlightPlan.IsValid) {
-						if (aircraftFlightPlan.Track == tracks[i]) {
+						bool showAc = aircraftFlightPlan.Track == tracks[i];
+						if (showAc) {
 							skipAircraft = false;
 							break;
 						}						
@@ -320,8 +321,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 			}
 			
-			// Parse inbound & other
+			// Parse inbound & other				
 			if (CUtils::IsAircraftRelevant(this, &ac)) {
+				
 				// If not there then add the status
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
 					pair<bool, POINT> pt = make_pair(false, POINT{ 0, 0 });
@@ -496,7 +498,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Draw lists
 		inboundList->RenderList(&g, &dc, this);
 		otherList->RenderList(&g, &dc, this);
-		rclList->RenderList(&g, &dc, this);
+		//rclList->RenderList(&g, &dc, this);
 		conflictList->RenderList(&g, &dc, this);
 
 		// SEP draw
@@ -679,7 +681,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 
 	// Move RCLs list
 	if (ObjectType == LIST_RCLS) {
-		rclList->MoveList(Area);
+		//rclList->MoveList(Area);
 
 		CUtils::RCLX = Area.left;
 		CUtils::RCLY = Area.top;
