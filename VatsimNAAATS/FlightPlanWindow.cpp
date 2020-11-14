@@ -629,12 +629,46 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	dc->SetTextAlign(TA_LEFT);
 
 	// Iterate through conflicts (NEED BOTH VERTICAL AND HORIZONTAL SCROLL)
-	if (currentProbeStatuses.empty()) {
+	if (!currentProbeStatuses.empty()) {
 		dc->TextOutA(content.left + 5, content.top + 5, "No predicted conflicts.");
 	}
 	else {
-		for (int i = 0; i < currentProbeStatuses.size(); i++) {
+		int offsetX = content.left + 5;
+		int offsetY = content.top + 5;
+		// Draw main aircraft data
+		dc->TextOutA(offsetX, offsetY, primedPlan->Callsign.c_str());
+		offsetX += 60;
+		dc->TextOutA(offsetX, offsetY, primedPlan->FlightLevel.c_str());
+		offsetX += 30;
+		dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, stoi(primedPlan->Mach))).c_str());
+		offsetX += 30;
+		// Draw main route
+		for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {			
+			dc->TextOutA(offsetX, offsetY, primedPlan->RouteRaw[i].c_str());
+			offsetX += 50;
+		}
+		
+		offsetY += dc->GetTextExtent("ABCD").cy + 2;
 
+		offsetX = content.left + 5;
+
+		// Draw every other aircraft
+		for (auto kv : currentProbeStatuses) {
+			CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(kv.first.c_str());
+			int mach = target.GetCorrelatedFlightPlan().GetFlightPlanData().PerformanceGetMach(target.GetPosition().GetPressureAltitude(), target.GetVerticalSpeed());
+			// Draw aircraft data
+			dc->TextOutA(offsetX, offsetY, kv.first.c_str());
+			offsetX += 60;
+			dc->TextOutA(offsetX, offsetY, to_string((int)(round(target.GetPosition().GetFlightLevel()) / 100.0)).c_str());
+			offsetX += 32;
+			dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, mach)).c_str());
+			offsetX += 30;
+			// Draw statuses
+			for (int i = 0; i < kv.second.size(); i++) {
+				char conflict = kv.second[i].ConflictStatus == CConflictStatus::WARNING ? 'W' : 'C';
+				dc->TextOutA(offsetX, offsetY, (conflict + to_string(kv.second[i].DistanceAsTime)).c_str());
+				offsetX += 50;
+			}
 		}
 	}
 
@@ -655,7 +689,6 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	// Clean up
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
-
 }
 
 void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* screen, POINT bottomLeft)
@@ -2109,7 +2142,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		bool isNumber = false;
 		for (int i = 0; i < content.size(); i++) { // Check if string
 			if (!isalpha(content[i])) return;
-			else toupper(content[i]);
+			else content[i] = toupper(content[i]);
 		}
 
 		// It's a string, check the length
@@ -2203,6 +2236,10 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 
 	// Set the text
 	if (textInputs.find(id) != textInputs.end()) {
+		for (int i = 0; i < content.size(); i++) { // Check if string
+			if (isalpha(content[i])) 
+				content[i] = toupper(content[i]);
+		}
 		textInputs.find(id)->second.Content = content;
 	}
 }
@@ -2463,6 +2500,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					IsData = false;
 					SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
 				}
+				SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
 			}
 			else {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
@@ -2498,6 +2536,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_XCHANGE_ACCEPT) {
 			string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
+			SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
 			string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
 			if (controller == controllerMe) {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).AcceptHandoff();

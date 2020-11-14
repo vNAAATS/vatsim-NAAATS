@@ -17,7 +17,7 @@ class CFlightPlanWindow : public CBaseWindow
 		CAircraftFlightPlan copiedPlan;
 		map<int, POINT> subWindowPositions;
 		map<int, string> restrictionSelections;
-		vector<vector<CSepStatus>> currentProbeStatuses;
+		map<string, vector<CSepStatus>> currentProbeStatuses;
 		int selectedRestriction = -1;
 		int selectedActiveRestriction = -1;
 		string currentClearanceText;

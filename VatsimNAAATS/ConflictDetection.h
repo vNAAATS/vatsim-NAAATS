@@ -45,7 +45,7 @@ class CConflictDetection
 		static void CheckSTCA(CRadarScreen* screen, CRadarTarget* target, map<string, int>* onScreenAircraft);
 
 		// Probe tool
-		static bool ProbeTool(CRadarScreen* screen, string callsign, vector<vector<CSepStatus>>* statuses, CAircraftFlightPlan* copy = nullptr);
+		static bool ProbeTool(CRadarScreen* screen, string callsign, map<string, vector<CSepStatus>>* statuses, CAircraftFlightPlan* copy = nullptr);
 
 	private: 
 		// Separation values

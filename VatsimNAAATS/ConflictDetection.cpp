@@ -199,7 +199,7 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	}
 }
 
-bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector<vector<CSepStatus>>* statuses, CAircraftFlightPlan* copy) {
+bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, map<string, vector<CSepStatus>>* statuses, CAircraftFlightPlan* copy) {
 	// Get the aircraft flight plan
 	CAircraftFlightPlan* fp = copy != nullptr ? copy : CDataHandler::GetFlightData(callsign);
 
@@ -210,7 +210,7 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
 	// Statuses for query aircraft
-	vector<CAircraftStatus> acStatuses = GetStatusesAlongRoutePoints(screen, callsign, (stoi(fp->Mach) * 100) * 576, stoi(fp->FlightLevel) * 100);
+	vector<CAircraftStatus> acStatuses = GetStatusesAlongRoutePoints(screen, callsign, (int)(round((stod(fp->Mach) / 100.0)) * 576.0), stoi(fp->FlightLevel) * 100);
 
 	vector<string> callsigns;
 
@@ -250,7 +250,7 @@ bool CConflictDetection::ProbeTool(CRadarScreen* screen, string callsign, vector
 		// Push back the vector if a conflict
 		if (addToVector) {
 			callsigns.push_back(target.GetCallsign());
-			statuses->push_back(sepStatuses);
+			statuses->insert({ (string)target.GetCallsign(), sepStatuses });
 		}
 	}
 
@@ -719,7 +719,7 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 	// If last position distance closer than the current position distance they are heading away from each other and no conflict
 	if (targetALast.DistanceTo(targetBLast) < targetA.GetPosition().GetPosition().DistanceTo(targetB.GetPosition().GetPosition()) 
-		&& targetALast.DistanceTo(targetBLast) > 5 && status.TrackStatus != CTrackStatus::SAME) { // Greater than 5 miles away to remove the conflict
+		&& targetALast.DistanceTo(targetBLast) > 5 && status.TrackStatus != CTrackStatus::OPPOSITE) { // Greater than 5 miles away to remove the conflict
 		// No conflict
 		conflictStatus = CConflictStatus::OK;
 	}

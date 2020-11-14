@@ -40,7 +40,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	gContainer = g->BeginContainer();
 
 	// Set text colour
-	COLORREF textColour;
+	COLORREF textColour = TargetBlue.ToCOLORREF(); // Default colour
 	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
 		// Critical conflict status, so flash callsign white and red
 		if (twoSecT >= 1.1) {
@@ -318,7 +318,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	}
 	
 	// Pick text colour
-	COLORREF textColour;
+	COLORREF textColour = TargetBlue.ToCOLORREF(); // Default colour
 	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
 		// Critical conflict status, so flash callsign white and red
 		if (twoSecT >= 1.1) {
