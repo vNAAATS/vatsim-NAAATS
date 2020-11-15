@@ -23,7 +23,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	string responseString;
 	try {
 		// Convert URL to LPCSTR type
-		LPCSTR lpcURL = EventTrackUrl.c_str();
+		LPCSTR lpcURL = TrackURL.c_str();
 
 		// Delete cache data
 		DeleteUrlCacheEntry(lpcURL);
