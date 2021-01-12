@@ -17,6 +17,7 @@ void CBaseWindow::MoveWindow(CRect area) {
 	topLeft = { area.left, area.top };
 }
 
+// TODO: Rewrite scrolling mechanic... again
 void CBaseWindow::Scroll(int id, POINT newPtr, POINT oldPtr) {
 	// Get mouse delta
 	double posDelta = 0.0;

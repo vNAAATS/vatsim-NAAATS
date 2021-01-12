@@ -17,6 +17,12 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 
+	// Callsign
+	string cs = target->GetCallsign();
+
+	// Radar flags
+	int radarFlag = target->GetPosition().GetRadarFlags();
+
 	// Flight plan
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
 
@@ -77,7 +83,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		}
 	}
 
-	// Draw the altitude
+	// Draw the tracking controller
 	FontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(textColour);
 	dc->SetTextAlign(TA_CENTER);

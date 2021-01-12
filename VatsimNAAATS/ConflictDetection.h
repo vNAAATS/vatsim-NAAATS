@@ -49,6 +49,7 @@ class CConflictDetection
 
 	private: 
 		// Separation values
+		// TODO: enhance and change this for the new separation requirements
 		static const int SEPV_LOW = 900; // Subtract a hundred otherwise it's way too sensitive
 		static const int SEPV_HIGH = 1900;
 		static const int SEPV_SUPERSONIC = 3900;

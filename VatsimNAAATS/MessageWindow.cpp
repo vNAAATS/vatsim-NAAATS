@@ -5,6 +5,8 @@
 #include "RoutesHelper.h"
 #include "DataHandler.h"
 
+/* THIS FILE CURRENTLY NOT USED */
+
 using namespace Colours;
 
 const int CMessageWindow::BTN_CLOSE = 2;

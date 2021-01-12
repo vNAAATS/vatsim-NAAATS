@@ -13,46 +13,6 @@ class CDataHandler
 {
 	public:
 
-	// Message data async
-	struct CGetFlightDataAsync {
-		string Callsign;
-		CAircraftFlightPlan* Result;
-	};
-	struct CGetMessagesActioned {
-		string Callsign;
-		vector<CMessage>* Result;
-	};
-	struct CGetActiveMessagesAsync {
-		string Callsign;
-		string Controller;
-		unordered_map<int, CMessage> Result;
-		unordered_map<int, CMessage> CurrentResults;
-	};
-	struct CCreateMessageAsync {
-		string SentBy;
-		string SentTo;
-		string ContentsRaw;
-		CMessageType Type;
-		bool IsActioned;
-		bool ToDomestic;
-		int* Result;
-	};
-	struct CDataUpdateAsync {
-		string Callsign;
-		string Level;
-		string Mach;
-		string Track;
-		string Route;
-		bool IsCleared;
-		string Destination;
-		int* Result;
-	};
-	struct CMessageActionedAsync {
-		int Id;
-		bool IsActioned;
-		int* Result;
-	};
-
 	// Download nat track data
 	static int PopulateLatestTrackData(CPlugIn* plugin);
 
@@ -71,30 +31,7 @@ class CDataHandler
 
 	// Set route
 	static int SetRoute(string callsign, vector<CWaypoint>* route, string track, CAircraftFlightPlan* copiedPlan = nullptr);
-
-	//callback method for curl
-	static size_t CDataHandler::WriteApiCallback(void* contents, size_t size, size_t nmemb, void* userp);
-
-	//get flight_data for a/c
-	static void ApiGetFlightData(void* args);
-
-	//get messages for controller for an a/c (that aren't actioned)
-	static CGetActiveMessagesAsync ApiGetMessagesForController(CGetActiveMessagesAsync data);
-
-	//get messages of an a/c (that ARE actioned)
-	static void ApiGetMessages(void* args);
-		
-	//create flight_data
-	static void ApiUpdateFlightData(void* args);
-
-	//create messages
-	static void ApiCreateMessage(void* args);
-
-	//set is_actioned on message
-	static void ApiMessageActioned(void* args);
 	
-	
-
 	private:
 		// NAT Track URL
 		static const string TrackURL;

@@ -71,6 +71,5 @@ class CRadarDisplay : public CRadarScreen
 		CFlightPlanWindow* fltPlnWindow = nullptr;
 		CMessageWindow* msgWindow = nullptr;
 		CNotePad* npWindow = nullptr;
-		vector<future<CDataHandler::CGetActiveMessagesAsync>> PendingApiMessagesForController;
 };
 

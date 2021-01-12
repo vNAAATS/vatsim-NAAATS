@@ -14,6 +14,7 @@ CInboundList::CInboundList(POINT topLeft) : CBaseList(topLeft) {
 
 }
 
+// TODO: Sort items by time, earliest first
 void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 {
 	// Save context for later
