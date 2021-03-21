@@ -350,7 +350,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	}
 	else if (status->ConflictStatus == CConflictStatus::WARNING) {
 		// Check jurisdiction
-		if (!acFP.GetTrackingControllerIsMe()) {
+		if (acFP.GetTrackingControllerIsMe()) {
 			textColour = WarningYellow.ToCOLORREF();
 		}
 	}
@@ -397,6 +397,9 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	// Check jurisdiction
 	if (!acFP.GetTrackingControllerIsMe()) {
 		textColour = TargetBlue.ToCOLORREF();
+	}
+	else {
+		textColour = TargetOrange.ToCOLORREF();
 	}
 	// Handoff
 	if (isHandoffToMe) {

@@ -188,6 +188,10 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Save device context
 	int iDC = dc->SaveDC();
 
+	// If not open, set the state to open
+	IsOpen = true;
+	IsClosed = false;
+
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
@@ -196,7 +200,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	FontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
-
 
 	// Get window size
 	int size = WINSZ_FLTPLN_HEIGHT_INIT;
@@ -326,8 +329,11 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	}
 
 	if (!controllerIsMe) {
-		IsData = false;
 		windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
+	}
+	else {
+		if (!IsData)
+			windowButtons[BTN_MANENTRY].State = CInputState::INACTIVE;
 	}
 
 	// Copy panel
@@ -2284,6 +2290,9 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
 			SetButtonState(BTN_XCHANGE_TRACK, CInputState::DISABLED);
 
+			// Temporary until messages implemented
+			SetButtonState(BTN_READBK, CInputState::INACTIVE);
+
 			// Set copy
 			textInputs[TXT_STATE_CPY].Content = "UA";
 			primedPlan->State = "CPY";
@@ -2436,7 +2445,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				textInputs[TXT_STATE].Content = "PC";
 			}
 			if (IsCopyMade) {
-
 				copiedPlan.IsValid = false;
 				IsCopyMade = false;
 				copiedPlan.Restrictions.clear();
@@ -2466,16 +2474,55 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		}
 		if (id == BTN_READBK || id == BTN_CLRC_READBK) {
 			if (windowButtons[BTN_READBK].State == CInputState::ACTIVE) {
+				/// Temporary until messages implemented
+				SetButtonState(BTN_PROBE, CInputState::DISABLED);
+				IsConflictWindow = false;
+				if (IsCopyMade) { // Temporary
+					// Copy the values to the primed plan & set the txt boxes
+					primedPlan->Mach = copiedPlan.Mach;
+					primedPlan->FlightLevel = copiedPlan.FlightLevel;
+					primedPlan->Dest = copiedPlan.Dest;
+					primedPlan->Track = copiedPlan.Track;
+					primedPlan->RouteRaw = copiedPlan.RouteRaw;
+
+					// Set route
+					string route;
+					for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {
+						route += primedPlan ->RouteRaw[i] + " ";
+					}
+
+					// Set input contents
+					textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, stoi(primedPlan->Mach));
+					textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
+					textInputs[TXT_DEST].Content = primedPlan->Dest;
+					if (primedPlan->Track == "RR")
+						SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
+					else
+						SetTextValue(screen, CFlightPlanWindow::TXT_TCK, primedPlan->Track);
+
+					textInputs[TXT_RTE].State == CInputState::DISABLED;
+				}
+
 				IsClearanceOpen = false;
 				IsCopyMade = false;
 				primedPlan->State = "";
 				textInputs[TXT_STATE].Content = "";
 				copiedPlan.IsValid = false;
-				IsCopyMade = false;
 				SetButtonState(BTN_MSG_DONE, CInputState::INACTIVE);
 				SetButtonState(BTN_READBK, CInputState::DISABLED);
 				SetButtonState(BTN_DELETE, CInputState::DISABLED);
-				SetButtonState(BTN_COPY, CInputState::INACTIVE);
+				dropDowns[DRP_ATCR].State = CInputState::DISABLED;
+				SetButtonState(BTN_COPY, CInputState::INACTIVE);				
+
+				// Until messages are implemented, we clear them here in the system and disable all text inputs
+				if (!primedPlan->IsCleared) {
+					primedPlan->IsCleared = true;
+					textInputs[TXT_SPD].State = CInputState::DISABLED;
+					textInputs[TXT_LEVEL].State = CInputState::DISABLED;
+					textInputs[TXT_DEST].State = CInputState::DISABLED;
+					textInputs[TXT_TCK].State = CInputState::DISABLED;
+					textInputs[TXT_RTE].State = CInputState::DISABLED;
+				}
 			}
 		}
 		if (id == BTN_XCHANGE_TRACK) {
@@ -2582,19 +2629,21 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			IsHistoryOpen = !IsHistoryOpen ? true : false;
 		}
 		if (id == BTN_MAN_SUBMIT) {
+			// Set states
 			IsManualEntryOpen = false;
 			IsData = true;
 			SetButtonState(BTN_MANENTRY, CInputState::DISABLED);
+			SetButtonState(BTN_READBK, CInputState::INACTIVE);
 			SetButtonState(BTN_PROBE, CInputState::INACTIVE);
-
+			
 			// Assign
 			textInputs[TXT_DEST].Content = textInputs[TXT_MAN_DEST].Content;
 			textInputs[TXT_LEVEL].Content = textInputs[TXT_MAN_FL].Content;
 			textInputs[TXT_RTE].Content = textInputs[TXT_MAN_RTE].Content;
 			textInputs[TXT_SPD].Content = textInputs[TXT_MAN_SPD].Content;
-			textInputs[TXT_TCK].Content = textInputs[TXT_MAN_TCK].Content;
-			textInputs[TXT_STATE].Content = "UA";
-			primedPlan->State = "UA";
+			textInputs[TXT_TCK].Content = textInputs[TXT_MAN_TCK].Content;			
+			primedPlan->State = "";
+			textInputs[TXT_STATE].Content = primedPlan->State;
 			primedPlan->Dest = textInputs[TXT_DEST].Content;
 			primedPlan->Track = textInputs[TXT_TCK].Content;
 

@@ -13,7 +13,6 @@
 #include <ctype.h>
 #include <iostream>
 
-
 using namespace Gdiplus;
 using namespace std;
 using namespace EuroScopePlugIn;

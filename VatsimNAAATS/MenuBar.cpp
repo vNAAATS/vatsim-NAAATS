@@ -16,7 +16,7 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_ADSC] = CWinButton(BTN_ADSC, MENBAR, "Contracts", CInputState::DISABLED, 73);
 	buttons[BTN_TCKINFO] = CWinButton(BTN_TCKINFO, MENBAR, "Track Info", CInputState::INACTIVE, 78);
 	buttons[BTN_MISC] = CWinButton(BTN_MISC, MENBAR, "Misc", CInputState::DISABLED, 41);
-	buttons[BTN_MESSAGE] = CWinButton(BTN_MESSAGE, MENBAR, "Message", CInputState::INACTIVE, 73);
+	buttons[BTN_MESSAGE] = CWinButton(BTN_MESSAGE, MENBAR, "Message", CInputState::DISABLED, 73);
 	buttons[BTN_TAGS] = CWinButton(BTN_TAGS, MENBAR, "Tags", CInputState::ACTIVE, 46);
 	buttons[BTN_FLIGHTPLAN] = CWinButton(BTN_FLIGHTPLAN, MENBAR, "Flight Plan", CInputState::DISABLED, 78);
 	buttons[BTN_DETAILED] = CWinButton(BTN_DETAILED, MENBAR, "Detailed", CInputState::INACTIVE, 73);
@@ -160,7 +160,8 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 		}
 
 		// Button rendering
-		CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, kv.second.Width, 30, &kv.second);
+		if (kv.first != BTN_AREASEL)
+			CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, kv.second.Width, 30, &kv.second);
 
 		// Text alignment
 		dc->SetTextAlign(TA_LEFT);
@@ -177,6 +178,11 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 		else if (kv.first == BTN_TYPESEL) {
 			text = "Pos Type";
 			dc->TextOutA(offsetX - kv.second.Width - 2, offsetY + 7, text.c_str());
+		}
+		else if (kv.first == BTN_AREASEL) {
+			dc->SetTextAlign(TA_CENTER);
+			text = "Area Sel";
+			dc->TextOutA(offsetX + (kv.second.Width / 2), offsetY + 7, text.c_str());
 		}
 
 		// If offsetting between buttons
