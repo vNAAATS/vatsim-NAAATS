@@ -37,6 +37,7 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_EXT] = CWinButton(BTN_EXT, MENBAR, "Ext", CInputState::INACTIVE, 40);
 	buttons[BTN_AUTOTAG] = CWinButton(BTN_AUTOTAG, MENBAR, "Auto Tag", CInputState::DISABLED, 75);
 	buttons[BTN_ALL] = CWinButton(BTN_ALL, MENBAR, "ALL", CInputState::INACTIVE, 40);
+	buttons[BTN_RTEDEL] = CWinButton(BTN_RTEDEL, MENBAR, "Rte Del", CInputState::INACTIVE, 75);
 
 	// Text inputs
 	textInputs[TXT_SEARCH] = CTextInput(TXT_SEARCH, MENBAR, "Search A/C: ", "", 100, CInputState::ACTIVE);
@@ -166,6 +167,10 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 			case BTN_ALL:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + RECT6_WIDTH + RECT7_WIDTH + 35;
 				offsetY += MENBAR_BTN_HEIGHT + 1;
+				break;
+			case BTN_RTEDEL:
+				offsetX += 82;
+				offsetIsItemSize = true;
 				break;
 			default:
 				offsetIsItemSize = true;
