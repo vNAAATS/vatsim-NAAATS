@@ -9,13 +9,6 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
-static void info(string message) {
-    std::ofstream file;
-    file.open("C:\\Users\\Pierre\\Documents\\EuroScope\\oca.log", std::ofstream::out | std::ofstream::app);
-    file << "INFO: " << message << endl;
-    file.close();
-}
-
 /// WAYPOINTS
 // Entry Waypoints
 const vector<string> pointsGander = { "AVPUT",
@@ -116,9 +109,10 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v1.0.0";
-const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678 w/ Ben Levy & Pierre Ferran";
+const string PLUGIN_VERSION = "v1.1.0a";
+const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678 w/ Pierre Ferran";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
+const bool IS_ALPHA = true;
 
 // Sector file & geo constants
 const int SECTELEMENT_COORD_IDX = 7;
@@ -147,8 +141,8 @@ const int RECT3_WIDTH = 160;
 const int RECT4_WIDTH = 100;
 const int RECT5_WIDTH = 250;
 const int RECT6_WIDTH = 100;
-const int RECT7_WIDTH = 270;
-const int RECT8_WIDTH = 90;
+const int RECT7_WIDTH = 180;
+const int RECT8_WIDTH = 190;
 
 // Window sizes
 const int WINSZ_TITLEBAR_HEIGHT = 20;

@@ -32,7 +32,11 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_PIV] = CWinButton(BTN_PIV, MENBAR, "PIV", CInputState::INACTIVE, 48);
 	buttons[BTN_GRID] = CWinButton(BTN_GRID, MENBAR, "Grid", CInputState::DISABLED, 73);
 	buttons[BTN_SEP] = CWinButton(BTN_SEP, MENBAR, "Sep", CInputState::INACTIVE, 43);
-	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::INACTIVE, 86);
+	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::DISABLED, 86);
+	buttons[BTN_PSR_FILT] = CWinButton(BTN_PSR_FILT, MENBAR, "PSR_SYMBOL", CInputState::DISABLED, 40);
+	buttons[BTN_EXT] = CWinButton(BTN_EXT, MENBAR, "Ext", CInputState::INACTIVE, 40);
+	buttons[BTN_AUTOTAG] = CWinButton(BTN_AUTOTAG, MENBAR, "Auto Tag", CInputState::DISABLED, 75);
+	buttons[BTN_ALL] = CWinButton(BTN_ALL, MENBAR, "ALL", CInputState::INACTIVE, 40);
 
 	// Text inputs
 	textInputs[TXT_SEARCH] = CTextInput(TXT_SEARCH, MENBAR, "Search A/C: ", "", 100, CInputState::ACTIVE);
@@ -153,6 +157,15 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 				break;
 			case BTN_QCKLOOK:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + 11;
+				break;
+			case BTN_PSR_FILT:
+				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + RECT6_WIDTH + RECT7_WIDTH + 35;
+				offsetY = 30;
+				offsetIsItemSize = true;
+				break;
+			case BTN_ALL:
+				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + RECT6_WIDTH + RECT7_WIDTH + 35;
+				offsetY += MENBAR_BTN_HEIGHT + 1;
 				break;
 			default:
 				offsetIsItemSize = true;

@@ -55,6 +55,10 @@ class CMenuBar
 		static const int BTN_GRID = 19;
 		static const int BTN_SEP = 20;
 		static const int BTN_QCKLOOK = 21;
+		static const int BTN_PSR_FILT = 22;
+		static const int BTN_EXT = 23;
+		static const int BTN_AUTOTAG = 24;
+		static const int BTN_ALL = 25;
 	
 		static const int DRP_AREASEL = 100;
 		static const int DRP_TCKCTRL = 101;

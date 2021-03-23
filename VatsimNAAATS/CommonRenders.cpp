@@ -28,7 +28,14 @@ CRect CCommonRenders::RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft,
 	}
 
 	// Draw text
-	FontSelector::SelectNormalFont(16, dc);
+	if (obj->Label == "PSR_SYMBOL") {
+		FontSelector::SelectNormalFont(30, dc);
+		obj->Label = "*";
+	}
+	else {
+		FontSelector::SelectNormalFont(16, dc);
+	}
+		
 	if (obj->State == CInputState::DISABLED) { // Disabled text colour
 		dc->SetTextColor(Disabled.ToCOLORREF());
 	}

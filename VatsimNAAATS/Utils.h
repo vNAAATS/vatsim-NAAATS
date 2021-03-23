@@ -65,7 +65,7 @@ class CUtils { // TODO: refactor into namespace
 		static bool IsExitPoint(string pointName, bool direction);
 
 		// Check if the aircraft is to be displayed on the screen
-		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target);
+		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false);
 		
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);

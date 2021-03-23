@@ -531,6 +531,9 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 
 	// Show a user message saying that the plugin was loaded successfully
 	screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
+
+	if (IS_ALPHA)
+		screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("This is an ALPHA version. Please report any issues to a.ogden@vatcan.ca.").c_str(), false, false, false, false, false);
 }
 
 // Returns the requested format, or returns the same string if the format was unchanged
@@ -647,7 +650,7 @@ bool CUtils::IsExitPoint(string pointName, bool side) {
 	}
 }
 
-bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
+bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled) {
 	// Flag
 	bool valid = true;
 
@@ -658,15 +661,19 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 	int entryMinutes = fp.GetSectorEntryMinutes();
 
 	/// We check the selection values
-	// Track control
-
 	// Position type
-	if (PosType == 800) {
-		// Direction & area selection
-		bool direction = GetAircraftDirection(target->GetTrackHeading());
-		int areaSel = AreaSelection;
+	// Direction & area selection
+	bool direction = GetAircraftDirection(target->GetTrackHeading());
+	int areaSel = AreaSelection;
+	if (filtersDisabled) { // ALL btn is pressed
+		// If not ever going to enter, or greater than 90 min out
+		if (entryMinutes < 0 || entryMinutes > 90) {
+			valid = false;
+		}
+	}
+	else if (PosType == 800) {
 		// If greater than sixty minutes out or already in the airspace
-		if (entryMinutes < 0 || entryMinutes > 60) {
+		if (entryMinutes == 0 || entryMinutes < 0 || entryMinutes > 60) {
 			valid = false;
 		}
 		
@@ -683,10 +690,26 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target) {
 		if (entryMinutes < 0 || entryMinutes > 60) {
 			valid = false;
 		}
+
+		// If wrong direction don't show
+		if (direction && areaSel == 802) {
+			valid = false;
+		}
+		if (!direction && areaSel == 801) {
+			valid = false;
+		}
 	}
 	else {
 		// If not ever going to enter, or greater than 20 min out
 		if (entryMinutes < 0 || entryMinutes > 20) {
+			valid = false;
+		}
+
+		// If wrong direction don't show
+		if (direction && areaSel == 802) {
+			valid = false;
+		}
+		if (!direction && areaSel == 801) {
 			valid = false;
 		}
 	}	

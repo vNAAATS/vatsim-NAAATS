@@ -156,7 +156,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					aircraftSel1 = "";
 					// Reset RBL (if active)
 					if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
-						menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::INACTIVE);
+						menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
 					}
 					// Reset SEP (if active)
 					if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
@@ -262,7 +262,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 			}
 			// Check their altitude, if they are outside the filter, skip them
-			if (altFiltEnabled) {
+			if (altFiltEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
 				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
 					// Select the next target
 					ac = GetPlugIn()->RadarTargetSelectNext(ac);
@@ -282,7 +282,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
 			// Check track filtering
-			if (menuBar->GetButtonState(menuBar->BTN_TCKCTRL) == CInputState::ACTIVE) {
+			if (menuBar->GetButtonState(menuBar->BTN_TCKCTRL) == CInputState::ACTIVE && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
 				// Primed plan
 				string cs = (string)fp.GetCallsign();
 				CAircraftFlightPlan aircraftFlightPlan;
@@ -316,8 +316,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 			}
 			
-			// Parse inbound & other				
-			if (CUtils::IsAircraftRelevant(this, &ac)) {
+			// Parse inbound & other
+			bool filtersDisabled = menuBar->IsButtonPressed(CMenuBar::BTN_ALL);
+			if (CUtils::IsAircraftRelevant(this, &ac, filtersDisabled)) {
 				
 				// If not there then add the status
 				if (tagStatuses.find(fp.GetCallsign()) == tagStatuses.end()) {
@@ -412,7 +413,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				bool detailedEnabled = false;
 
 				// Now we check if all the tags are selected as detailed
-				if (menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK)) {
+				if (menuBar->IsButtonPressed(CMenuBar::BTN_EXT)) {
 					detailedEnabled = true; // Set detailed on
 
 					// Unpress detailed if not already
@@ -427,9 +428,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 						detailedEnabled = true; // Set detailed on
 					}
 
-					// Unpress quick look if not already
-					if (menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) && aselDetailed) {
-						menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::INACTIVE);
+					// Unpress extended if not already
+					if (menuBar->IsButtonPressed(CMenuBar::BTN_EXT) && aselDetailed) {
+						menuBar->SetButtonState(CMenuBar::BTN_EXT, CInputState::INACTIVE);
 					}
 				}
 
@@ -560,11 +561,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	dc.DeleteDC();
 }
 
-// Ben: In this method we need to run the regular API checks for each callsign updating the data if required.
 // Data updates must be done here asynchronously, see my example in CDataHandler for threading
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	// Check if they are relevant on the screen
-	if (CUtils::IsAircraftRelevant(this, &RadarTarget)) {
+	bool filtersDisabled = menuBar->IsButtonPressed(CMenuBar::BTN_ALL);
+	if (CUtils::IsAircraftRelevant(this, &RadarTarget, filtersDisabled)) {
 		// They are relevant so get the flight plan
 		CAircraftFlightPlan* fp = CDataHandler::GetFlightData(RadarTarget.GetCallsign());
 
@@ -776,7 +777,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		// Qck Look button
-		if (atoi(sObjectId) == CMenuBar::BTN_QCKLOOK) {
+		if (atoi(sObjectId) == CMenuBar::BTN_EXT) {
 			aselDetailed = false;
 		}
 
@@ -1056,7 +1057,7 @@ void CRadarDisplay::OnAsrContentToBeSaved(void)
 	CUtils::TagsEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_TAGS) ? true : false;
 	CUtils::GridEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_GRID) ? true : false;
 	CUtils::OverlayEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS) ? true : false;
-	CUtils::QckLookEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) ? true : false;
+	CUtils::QckLookEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) ? true : false; // TODO: Change this to Ext
 
 	CUtils::SavePluginData(this);
 }
