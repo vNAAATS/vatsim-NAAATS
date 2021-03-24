@@ -371,12 +371,14 @@ void CMenuBar::SetDropDownValue(int id, int value) {
 	dropDowns[id].Value = dropDowns[id].Items[value].Label;
 }
 
-void CMenuBar::ButtonDown(int id, int button) {
-
+void CMenuBar::ButtonDown(int id) {
+	if (id == BTN_RTEDEL)
+		SetButtonState(id, CInputState::ACTIVE);
 }
 
-void CMenuBar::ButtonUp(int id, int button) {
-
+void CMenuBar::ButtonUp(int id) {
+	if (id == BTN_RTEDEL)
+		SetButtonState(id, CInputState::INACTIVE);
 }
 
 void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
@@ -430,7 +432,7 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 		}
 		else {
 			// Press the button
-			if (GetButtonState(id) != CInputState::DISABLED)
+			if (GetButtonState(id) != CInputState::DISABLED && id != BTN_RTEDEL)
 				SetButtonState(id, CInputState::ACTIVE);
 
 			// Grid

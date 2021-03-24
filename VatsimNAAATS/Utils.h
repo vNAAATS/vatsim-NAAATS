@@ -66,6 +66,9 @@ class CUtils { // TODO: refactor into namespace
 
 		// Check if the aircraft is to be displayed on the screen
 		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false);
+
+		// Check if aircraft is AGCS equipped
+		static bool IsAircraftEquipped(string rawInfo, char equipCode);
 		
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);

@@ -122,6 +122,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_RESTRI_XAT_TIME] = CTextInput(TXT_RESTRI_XAT_TIME, WIN_FLTPLN, "Time", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RESTRI_INT_CALLSIGN] = CTextInput(TXT_RESTRI_INT_CALLSIGN, WIN_FLTPLN, "Callsign", "", 0, CInputState::ACTIVE);
 	textInputs[TXT_RESTRI_INT_INTERVAL] = CTextInput(TXT_RESTRI_INT_INTERVAL, WIN_FLTPLN, "Interval", "", 0, CInputState::ACTIVE);
+	textInputs[TXT_EQUIPPED] = CTextInput(TXT_EQUIPPED, WIN_FLTPLN, "", "", 400, CInputState::INACTIVE);
+	textInputs[TXT_CPY_EQUIPPED] = CTextInput(TXT_CPY_EQUIPPED, WIN_FLTPLN, "", "", 400, CInputState::INACTIVE);
 
 	/// Dropdown defaults
 	map<string, bool> map;
@@ -202,7 +204,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	dc->SetTextAlign(TA_CENTER);
 
 	// Get window size
-	int size = WINSZ_FLTPLN_HEIGHT_INIT;
+	int size = IsData ? WINSZ_FLTPLN_HEIGHT_INIT - 25 : WINSZ_FLTPLN_HEIGHT_INIT;
 	int message = 0;
 	if (IsData) {
 		size += WINSZ_FLTPLN_HEIGHT_DATA;
@@ -260,7 +262,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	}
 
 	// Create info bar
-	CRect infoBarRect(windowRect.left, buttonBarRect.bottom + 1, windowRect.left + WINSZ_FLTPLN_WIDTH, buttonBarRect.bottom + 50);
+	CRect infoBarRect(windowRect.left, buttonBarRect.bottom + 1, windowRect.left + WINSZ_FLTPLN_WIDTH, buttonBarRect.bottom + (IsData ? 50 : 75));
 	dc->FillRect(infoBarRect, &darkerBrush);
 	dc->Draw3dRect(infoBarRect, BevelLight.ToCOLORREF(), BevelDark.ToCOLORREF());
 	InflateRect(infoBarRect, -1, -1);
@@ -306,6 +308,15 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 
 	windowButtons[BTN_COPY].State = CInputState::DISABLED;
 
+	// Draw AGCS equipped directly below aircraft details if no data panel
+	if (!IsData) {
+		if (primedPlan->IsEquipped)
+			textInputs.at(TXT_EQUIPPED).Content = "AGCS EQUIPPED";
+		else
+			textInputs.at(TXT_EQUIPPED).Content = "NON COMPLIANT";
+		CCommonRenders::RenderTextInput(dc, screen, { infoBarRect.left + 5, infoBarRect.bottom - 25 }, WINSZ_FLTPLN_WIDTH - 13, 20, &textInputs.at(TXT_EQUIPPED));
+	}
+
 	// Data panel
 	bool controllerIsMe = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe();
 	CRect dataPanel;
@@ -321,7 +332,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 				windowButtons[BTN_COPY].State = CInputState::INACTIVE;
 			}
 		}
-		if (windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE && !controllerIsMe)
+		if ((windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE && !controllerIsMe))
 			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 		if (!primedPlan->IsCleared && !controllerIsMe) {
 			IsData = false;
@@ -334,6 +345,8 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	else {
 		if (!IsData)
 			windowButtons[BTN_MANENTRY].State = CInputState::INACTIVE;
+		else
+			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 	}
 
 	// Copy panel
@@ -581,6 +594,14 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	int restrictDrpType = isCopy ? DRP_ATCR_CPY : DRP_ATCR;
 	CRect button = CCommonRenders::RenderButton(dc, screen, { rteBox.left, rteBox.bottom + 18 }, 45, 20, &windowButtons.at(restrictBtnType), 1);
 	CCommonRenders::RenderDropDown(dc, g, screen, { button.right + 5, rteBox.bottom + 18 }, WINSZ_FLTPLN_WIDTH - button.Width() - 20, 20, &dropDowns.at(restrictDrpType));
+
+	// Render the AGCS Equipped text box
+	int boxType = isCopy ? TXT_CPY_EQUIPPED : TXT_EQUIPPED;
+	if (primedPlan->IsEquipped)
+		textInputs.at(boxType).Content = "AGCS EQUIPPED";
+	else
+		textInputs.at(boxType).Content = "NON COMPLIANT";
+	CCommonRenders::RenderTextInput(dc, screen, { dataBarRect.left + 5, rteBox.bottom + 43 }, WINSZ_FLTPLN_WIDTH - 13, 20, &textInputs.at(boxType));
 
 	// Cleanup
 	DeleteObject(darkerBrush);

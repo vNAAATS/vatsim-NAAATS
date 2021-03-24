@@ -136,10 +136,6 @@ int CDataHandler::UpdateFlightData(CRadarScreen* screen, string callsign, bool u
 		return 1;
 	}
 
-	// Ben: I have done the update route part for the initialisation if passed in, but you need to do the 
-	// update querying to update the flight data, maybe make an IsFlightDataUpdated() method returning the
-	// updated data from natTrak if it has been updated and returning an FP object with IsValid == false if not updated
-
 	// Re-initialise the route if requested
 	if (updateRoute) {
 		CUtils::CAsyncData data;
@@ -169,10 +165,11 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	fp.Depart = fpData.GetFlightPlanData().GetOrigin();
 	fp.Dest = fpData.GetFlightPlanData().GetDestination();
 	fp.Etd = CUtils::ParseZuluTime(false, atoi(fpData.GetFlightPlanData().GetEstimatedDepartureTime()));
-	fp.ExitTime = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str()).GetSectorExitMinutes();
+	fp.ExitTime = fpData.GetSectorExitMinutes();
 	fp.DLStatus = ""; // TEMPORARY
 	fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
 	fp.CurrentMessage = nullptr;
+	fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
 
 	// Get SELCAL code
 	string remarks = fpData.GetFlightPlanData().GetRemarks();

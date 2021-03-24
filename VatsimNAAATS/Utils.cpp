@@ -672,16 +672,17 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 	}
 	else if (PosType == 800) {
+
 		// If greater than sixty minutes out or already in the airspace
 		if (entryMinutes == 0 || entryMinutes < 0 || entryMinutes > 60) {
 			valid = false;
 		}
 		
 		// If wrong direction don't show
-		if (direction && areaSel == 802) {
+		if (direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (!direction && areaSel == 801) {
+		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 	}
@@ -692,10 +693,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// If wrong direction don't show
-		if (direction && areaSel == 802) {
+		if (direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (!direction && areaSel == 801) {
+		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 	}
@@ -706,10 +707,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// If wrong direction don't show
-		if (direction && areaSel == 802) {
+		if (direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (!direction && areaSel == 801) {
+		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 	}	
@@ -743,6 +744,40 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	}
 
 	return valid;
+}
+
+bool CUtils::IsAircraftEquipped(string rawInfo, char equipCode) {
+	// Check equipment code
+	if (equipCode != '?') {
+		// Check if it L
+		if (equipCode == 'L')
+			return true; // Aircraft is AGCS equipped
+		return false;
+	}
+	
+	// Check for ICAO code
+	vector<string> splitString;
+	StringSplit(rawInfo, '/', &splitString);
+	if (splitString.size() == 2) {
+		if (splitString.at(0).length() == 1) { // If just the HEAVY identifier at the beginning
+			return false;
+		}
+		else {
+			if (splitString.at(1).find("B1") != string::npos || splitString.at(1).find("B2") != string::npos) {
+				return true; // Specific ICAO identifier for ADS-B support found
+			}
+			return false;
+		}
+	}
+	else if (splitString.size() == 3) { // Heavy identifier and an ICAO equipment code found
+		if (splitString.at(2).find("B1") != string::npos || splitString.at(1).find("B2") != string::npos) {
+			return true; // Specific ICAO identifier for ADS-B support found
+		}
+		return false;
+	}
+	else { // Length is just 1
+		return false;
+	}
 }
 
 CPosition CUtils::PositionFromLatLon(double lat, double lon) {

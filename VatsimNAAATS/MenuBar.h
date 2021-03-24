@@ -24,8 +24,8 @@ class CMenuBar
 		void SetDropDownValue(int id, int value);
 		void MakeDropDownItems(int id);
 		void SetTextInput(int id, string value);
-		void ButtonDown(int id, int button);
-		void ButtonUp(int id, int button);
+		void ButtonDown(int id);
+		void ButtonUp(int id);
 		void ButtonPress(int id, int button, CRadarScreen* screen);
 		void ButtonUnpress(int id, int button, CRadarScreen* screen);
 		void GetSelectedTracks(vector<string>& tracksVector);

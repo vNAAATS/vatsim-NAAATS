@@ -169,6 +169,8 @@ class CFlightPlanWindow : public CBaseWindow
 		static const int TXT_RESTRI_XAT_TIME = 138;
 		static const int TXT_RESTRI_INT_CALLSIGN = 139;
 		static const int TXT_RESTRI_INT_INTERVAL = 140;
+		static const int TXT_EQUIPPED = 141;
+		static const int TXT_CPY_EQUIPPED = 142;
 
 		// Checkbox definitions
 		static const int CHK_CLRC_ORCA = 300;
