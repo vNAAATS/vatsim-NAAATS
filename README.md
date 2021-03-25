@@ -20,6 +20,7 @@ vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on t
 - Controller notepad for general information
 - Recognition of aircraft equipment code to determine compatibility with ADS-B procedures and indicator to display whether aircraft is compatible
 - Saving of data
+- ... and more!
 
 ![logo](https://resources.ganderoceanic.com/media/img/brand/bnr/small_bnr.png)
 
