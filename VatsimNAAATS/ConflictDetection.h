@@ -49,16 +49,17 @@ class CConflictDetection
 
 	private: 
 		// Separation values
-		// TODO: enhance and change this for the new separation requirements
-		static const int SEPV_LOW = 900; // Subtract a hundred otherwise it's way too sensitive
+		static const int SEPV_LOW = 1000; // Subtract 150 otherwise it's way too sensitive
 		static const int SEPV_HIGH = 1900;
 		static const int SEPV_SUPERSONIC = 3900;
-		static const int SEPLAT_NONREDUCED = 60;
-		static const int SEPLAT_REDUCED = 23;
-		static const int SEPLON_REDUCED = 5;
-		static const int SEPLON_REDUCEDWARN = 8;
-		static const int SEPLON_NONRED_SAMEANDX = 15;
-		static const int SEPLON_NONRED_MNT = 10;
+		static const int SEPLAT_NONREDUCED = 60; // NM
+		static const int SEPLAT_REDUCED = 19; // NM
+		static const int SEPLON_REDUCED = 15; // NM
+		static const int SEPLON_REDUCEDWARN = 30; // NM
+		static const int SEPLON_NONRED_SAME_WARN = 15; // Minutes
+		static const int SEPLON_NONRED_SAME = 10; // Minutes
+		static const int SEPLON_NONRED_X_WARN = 20; // Minutes
+		static const int SEPLON_NONRED_X = 15; // NM
 
 		// Detect a conflict status between two aircraft (current or future)
 		static CSepStatus DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB);

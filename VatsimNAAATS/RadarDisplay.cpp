@@ -101,6 +101,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// Graphics object
 	Graphics g(hDC);
 
+	// Make radar screen one massive object
+	//CRect radarBounds = this->GetRadarArea();
+	//this->AddScreenObject(RADAR_SCREEN, "", radarBounds, false, "Radar Screen Clicked");
+
 	// 5 second timer
 	double fiveSecT = (double)(clock() - fiveSecondTimer) / ((double)CLOCKS_PER_SEC);
 	// 10 second timer
@@ -445,7 +449,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 
 				// Get STCA so it can be drawn
-				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK, -1); // Create default
+				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK, -1, -1); // Create default
 				auto idx = CConflictDetection::CurrentSTCA.begin();
 				for (idx = CConflictDetection::CurrentSTCA.begin(); idx != CConflictDetection::CurrentSTCA.end(); idx++) {
 					if (ac.GetCallsign() == idx->CallsignA || ac.GetCallsign() == idx->CallsignB) {
@@ -716,13 +720,24 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 	else if (ObjectType == ACTV_MESSAGE) {
 		msgWindow->SelectedMessage = atoi(sObjectId);
 	}
-
+	// If it is a button on the tracking dialog
+	if (ObjectType == SCREEN_TAG_CS_BTN) {
+		CAcTargets::ButtonStates[sObjectId] = true;
+	}
+	// TODO: button state reset
 	// Refresh
 	RequestRefresh();
 }
 
 void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
+	// If radar screen
+	if (ObjectType == RADAR_SCREEN) {
+		if (CAcTargets::OpenTrackingDialog != "") { // If tracking dialog open
+			CAcTargets::OpenTrackingDialog = ""; // Close it
+		}
+	}
+
 	// If menu button
 	if (ObjectType == MENBAR) {
 		if (Button == BUTTON_RIGHT) { // Toggle buttons
@@ -1070,7 +1085,7 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 	}
 	// If it is an aircraft callsign
 	if (ObjectType == SCREEN_TAG_CS) {
-		CAcTargets::OpenTrackingDialog = sObjectId;
+		//CAcTargets::OpenTrackingDialog = sObjectId;
 	}
 }
 

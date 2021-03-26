@@ -659,15 +659,15 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 		int offsetY = content.top + 5;
 		// Draw main aircraft data
 		dc->TextOutA(offsetX, offsetY, primedPlan->Callsign.c_str());
-		offsetX += 60;
+		offsetX += 65;
 		dc->TextOutA(offsetX, offsetY, primedPlan->FlightLevel.c_str());
-		offsetX += 40;
-		dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, stoi(primedPlan->Mach))).c_str());
 		offsetX += 30;
+		dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, stoi(primedPlan->Mach))).c_str());
+		offsetX += 45;
 		// Draw main route
 		for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {			
 			dc->TextOutA(offsetX, offsetY, primedPlan->RouteRaw[i].c_str());
-			offsetX += 50;
+			offsetX += 45;
 		}
 		
 		offsetY += dc->GetTextExtent("ABCD").cy + 2;
@@ -680,16 +680,16 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 			int mach = target.GetCorrelatedFlightPlan().GetFlightPlanData().PerformanceGetMach(target.GetPosition().GetPressureAltitude(), target.GetVerticalSpeed());
 			// Draw aircraft data
 			dc->TextOutA(offsetX, offsetY, kv.first.c_str());
-			offsetX += 60;
+			offsetX += 65;
 			dc->TextOutA(offsetX, offsetY, to_string((int)(round(target.GetPosition().GetFlightLevel()) / 100.0)).c_str());
-			offsetX += 40;
-			dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, mach)).c_str());
 			offsetX += 30;
+			dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, mach)).c_str());
+			offsetX += 45;
 			// Draw statuses
 			for (int i = 0; i < kv.second.size(); i++) {
-				char conflict = kv.second[i].ConflictStatus == CConflictStatus::WARNING ? 'W' : 'C';
+				char conflict = kv.second[i].ConflictStatus == CConflictStatus::CRITICAL ? 'C' : 'W';
 				dc->TextOutA(offsetX, offsetY, (conflict + to_string(kv.second[i].DistanceAsTime)).c_str());
-				offsetX += 50;
+				offsetX += 45;
 			}
 		}
 	}

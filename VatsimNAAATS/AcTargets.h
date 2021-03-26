@@ -17,6 +17,9 @@ class CAcTargets
 		static clock_t twoSecondTimer;
 		static clock_t fiveSecondTimer;
 
+		// Initialisation for button states
+		static void Initialise();
+
 		// Render the airplane icon
 		static void DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status);
 
@@ -34,4 +37,5 @@ class CAcTargets
 
 		// Fields
 		static string OpenTrackingDialog;
+		static map<string, bool> ButtonStates;
 };

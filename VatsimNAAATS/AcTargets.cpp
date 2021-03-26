@@ -10,6 +10,16 @@ clock_t CAcTargets::twoSecondTimer = clock();
 clock_t CAcTargets::fiveSecondTimer = clock();
 string CAcTargets::SearchedAircraft = "";
 string CAcTargets::OpenTrackingDialog = "";
+map<string, bool> CAcTargets::ButtonStates;
+
+void CAcTargets::Initialise() {
+	// Initialise button states
+	ButtonStates["Co-ord"] = false;
+	ButtonStates["Track"] = false;
+	ButtonStates["Release"] = false;
+	ButtonStates["Accept"] = false;
+	ButtonStates["Refuse"] = false;
+}
 
 void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
 	// 2 second timer
@@ -506,7 +516,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	// Now create screen object for callsign
 	CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(acFP.GetCallsign()).cx, tagRect.top + dc->GetTextExtent(acFP.GetCallsign()).cy);
-	screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, "");
+	screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, "Callsign clicked");
 
 	// Restore context
 	dc->RestoreDC(sDC);
@@ -546,10 +556,9 @@ void CAcTargets::RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsi
 	}
 	else if (fp.GetHandoffTargetControllerCallsign() == screen->GetPlugIn()->ControllerMyself().GetCallsign()) {
 		dialogState = 3;
-		coordBox = CRect(tagPosition.x, tagPosition.y, tagPosition.x + 75, tagPosition.y + 40);
+		coordBox = CRect(tagPosition.x, tagPosition.y, tagPosition.x + 75, tagPosition.y + 58);
 	}
 	
-
 	// Fill rectangle
 	dc->FillSolidRect(coordBox, ScreenBlue.ToCOLORREF());
 	dc->Draw3dRect(coordBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
@@ -560,18 +569,68 @@ void CAcTargets::RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsi
 	FontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	
+	// Check the state & draw buttons
+	CRect textRect;
 	switch (dialogState) {
 		case 0:
+			textRect = CRect(coordBox.left, coordBox.top + 2, coordBox.right, coordBox.top + dc->GetTextExtent("Track").cy + 2);
+			if (ButtonStates.at("Track")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
 			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Track");
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Track", textRect, true, "");
+
+			textRect = CRect(coordBox.left, coordBox.top + 21, coordBox.right, coordBox.top + 21 + dc->GetTextExtent("Co-ord").cy + 2);
+			if (ButtonStates.at("Co-ord")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
 			dc->TextOutA(coordBox.left + 4, coordBox.top + 23, "Co-ord");
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Co-ord", textRect, true, "");
 			break;
 		case 1:
+			textRect = CRect(coordBox.left, coordBox.top + 2, coordBox.right, coordBox.top + dc->GetTextExtent("Release").cy + 2);
+			if (ButtonStates.at("Release")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
 			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Release");
-			dc->TextOutA(coordBox.left + 4, coordBox.top + 23, "Co-ord");			
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Release", textRect, true, "");			
+
+			textRect = CRect(coordBox.left, coordBox.top + 21, coordBox.right, coordBox.top + 21 + dc->GetTextExtent("Co-ord").cy + 2);
+			if (ButtonStates.at("Co-ord")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 23, "Co-ord");
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Co-ord", textRect, true, "");
 			break;
 		case 2:
-			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Co-ord");
+			textRect = CRect(coordBox.left, coordBox.top + 2, coordBox.right, coordBox.top + dc->GetTextExtent("Co-ord").cy + 2);
+			if (ButtonStates.at("Co-ord")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Co-ord");			
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Co-ord", textRect, true, "");
 			break;
+		case 3:
+			textRect = CRect(coordBox.left, coordBox.top + 2, coordBox.right, coordBox.top + dc->GetTextExtent("Accept").cy + 2);
+			if (ButtonStates.at("Accept")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Accept");
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Accept", textRect, true, "");
+
+			textRect = CRect(coordBox.left, coordBox.top + 21, coordBox.right, coordBox.top + 21 + dc->GetTextExtent("Refuse").cy + 2);
+			if (ButtonStates.at("Refuse")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 23, "Refuse");
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Refuse", textRect, true, "");
+
+			textRect = CRect(coordBox.left, coordBox.top + 39, coordBox.right, coordBox.top + 39 + dc->GetTextExtent("Co-ord").cy + 2);
+			if (ButtonStates.at("Co-ord")) {
+				dc->FillSolidRect(coordBox, ButtonPressed.ToCOLORREF());
+			}
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 41, "Co-ord");			
+			screen->AddScreenObject(SCREEN_TAG_CS_BTN, "Co-ord", textRect, true, "");
 	}
 
 	// Restore context

@@ -38,6 +38,12 @@ void CConflictList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 	int offsetY = 14;
 	int offsetX = 0;
 	for (auto item = CConflictDetection::CurrentSTCA.begin(); item != CConflictDetection::CurrentSTCA.end(); item++) {
+		// Get flight plans
+		CAircraftFlightPlan fp1;
+		CAircraftFlightPlan fp2;
+		CDataHandler::GetFlightData(item->CallsignA, fp1);
+		CDataHandler::GetFlightData(item->CallsignA, fp2);
+
 		// Pick text colour
 		COLORREF textColour;
 		if (item->ConflictStatus == CConflictStatus::CRITICAL) {
@@ -63,12 +69,23 @@ void CConflictList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 		offsetX += 90;
 
 		// Draw status
-		if (item->ConflictStatus == CConflictStatus::WARNING) { // Warning
-			line = "W" + to_string(item->DistanceAsTime);
+		if (fp1.IsEquipped && fp2.IsEquipped) {
+			if (item->ConflictStatus == CConflictStatus::WARNING) { // Warning
+				line = "W" + to_string(item->DistanceAsNM);
+			}
+			else { // Critical
+				line = "C" + to_string(item->DistanceAsNM);
+			}
 		}
-		else { // Critical
-			line = "C" + to_string(item->DistanceAsTime);
+		else {
+			if (item->ConflictStatus == CConflictStatus::WARNING) { // Warning
+				line = "W" + to_string(item->DistanceAsNM) + "*";
+			}
+			else { // Critical
+				line = "C" + to_string(item->DistanceAsNM) + "*";
+			}
 		}
+		
 		dc->TextOutA(rectangle.X + offsetX, rectangle.Y + offsetY, line.c_str());
 
 		// Offset the y index and reset the X offset

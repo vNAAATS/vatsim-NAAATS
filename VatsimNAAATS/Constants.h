@@ -173,8 +173,10 @@ const int STCA_TIME = 480; // 8 minutes
 
 /// OBJECT HANDLES
 // Screen
+const int RADAR_SCREEN = -1;
 const int SCREEN_TAG = 1;
 const int SCREEN_TAG_CS = 11;
+const int SCREEN_TAG_CS_BTN = 12;
 const int MENBAR = 2;
 const int WINDOW = 3;
 
