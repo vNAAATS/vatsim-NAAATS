@@ -665,13 +665,7 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	// Direction & area selection
 	bool direction = GetAircraftDirection(target->GetTrackHeading());
 	int areaSel = AreaSelection;
-	if (filtersDisabled) { // ALL btn is pressed
-		// If not ever going to enter, or greater than 90 min out
-		if (entryMinutes < 0 || entryMinutes > 90) {
-			valid = false;
-		}
-	}
-	else if (PosType == 800) {
+	if (PosType == 800) {
 
 		// If greater than sixty minutes out or already in the airspace
 		if (entryMinutes == 0 || entryMinutes < 0 || entryMinutes > 60) {
@@ -728,7 +722,7 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		if (diffSecs > 600) {
 			valid = false;
 		}
-		if (diffSecs >= 0 && diffSecs <= 600 && PosType == 802) {
+		if (diffSecs >= 0 && diffSecs <= 600) {
 			valid = true; // Override postype stuff
 		}
 	}
@@ -741,6 +735,22 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 			valid = true;
 		if (position.m_Latitude < 80 && position.m_Longitude < -35)
 			valid = true;
+	}
+
+	// Let's check if filtering disabled
+	if (filtersDisabled) { // ALL btn is pressed
+		// If not ever going to enter, or greater than 90 min out
+		if (entryMinutes < 0 || entryMinutes > 90) {
+			valid = false;
+		}
+		else {
+			valid = true;
+		}
+	}
+
+	// Lastly let's check if they are assumed
+	if (fp.GetTrackingControllerIsMe()) {
+		valid = true;
 	}
 
 	return valid;

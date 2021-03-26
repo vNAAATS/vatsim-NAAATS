@@ -292,6 +292,9 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 	CFlightPlan acFP = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
 
+	CAircraftFlightPlan fp;
+	CDataHandler::GetFlightData(acFP.GetCallsign(), fp);
+
 	// Check if there is an active handoff to client controller
 	bool isHandoffToMe = string(acFP.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
 
@@ -389,11 +392,6 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
 	offsetY += 15;
 
-	// Flight level
-	if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
-		// Critical conflict status, so turn tag red
-		textColour = CriticalRed.ToCOLORREF();
-	}
 	// Check jurisdiction
 	if (!acFP.GetTrackingControllerIsMe()) {
 		textColour = TargetBlue.ToCOLORREF();
@@ -401,10 +399,18 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	else {
 		textColour = TargetOrange.ToCOLORREF();
 	}
+
+	// Conflict
+	if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
+		// Critical conflict status, so turn tag red
+		textColour = CriticalRed.ToCOLORREF();
+	}
+	
 	// Handoff
 	if (isHandoffToMe) {
 		textColour = TextWhite.ToCOLORREF();
 	}
+
 	// Orange if observer
 	if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
 		if (position.m_Longitude > -70 && position.m_Longitude < -5)
@@ -428,14 +434,25 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	}
 	dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 	offsetX = 0;
+
+	// Handoff initiated
 	if (isHandoffToMe) {
 		offsetY += 15;
 		text = "H/O";
-		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+		dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx, tagRect.top + offsetY, text.c_str());
 		offsetY += 15;
 	}
 	else {
 		offsetY += 30;
+	}
+
+	// Are they equipped?
+	if (!fp.IsEquipped) {
+		// Offset
+		offsetY -= 15;
+		text = "*";
+		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+		offsetY += 15;
 	}
 		
 	if (tagPosition->first == true) {
@@ -451,6 +468,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	/// Tag line
 	CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
+
 	// Pen
 	CPen pen(PS_SOLID, 1, textColour);
 	dc->SelectObject(pen);

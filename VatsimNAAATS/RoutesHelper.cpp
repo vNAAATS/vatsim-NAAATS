@@ -476,7 +476,12 @@ string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {
 			// Get the ID and return
 			string trackId;
 			trackId.push_back(route.at(found + 4));
-			return trackId;
+
+			// Check if it exists
+			if (CurrentTracks.find(trackId) != CurrentTracks.end())
+				return trackId;
+			else
+				return "";
 		}
 		else if (route.at(found + 5) == 0x4c ||
 			route.at(found + 5) == 0x4d || route.at(found + 5) == 0x4e ||
@@ -485,7 +490,12 @@ string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {
 			// Get the ID and return
 			string trackId;
 			trackId.push_back(route.at(found + 4) + route.at(found+5));
-			return trackId;
+
+			// Check if it exists
+			if (CurrentTracks.find(trackId) != CurrentTracks.end())
+				return trackId;
+			else
+				return "";
 		}
 		else {
 			return "";
