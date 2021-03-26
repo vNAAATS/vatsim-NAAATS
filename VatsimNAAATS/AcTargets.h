@@ -23,9 +23,15 @@ class CAcTargets
 		// Render tags
 		static POINT DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status);
 
+		// Coordination tag item
+		static void RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsign, POINT tagPosition);
+
 		// Draw selection halo
 		static void RenderSelectionHalo(Graphics* g, CRadarScreen* screen, CRadarTarget* target);
 
 		// Aircraft search
 		static string SearchedAircraft;
+
+		// Fields
+		static string OpenTrackingDialog;
 };

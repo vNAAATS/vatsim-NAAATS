@@ -9,6 +9,7 @@ using namespace Colours;
 clock_t CAcTargets::twoSecondTimer = clock();
 clock_t CAcTargets::fiveSecondTimer = clock();
 string CAcTargets::SearchedAircraft = "";
+string CAcTargets::OpenTrackingDialog = "";
 
 void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
 	// 2 second timer
@@ -500,8 +501,12 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		dc->LineTo(acPoint);
 	}
 
-	// Create screen object
-	screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, acFP.GetPilotName());
+	// Create screen object for tag
+	screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
+
+	// Now create screen object for callsign
+	CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(acFP.GetCallsign()).cx, tagRect.top + dc->GetTextExtent(acFP.GetCallsign()).cy);
+	screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, "");
 
 	// Restore context
 	dc->RestoreDC(sDC);
@@ -511,6 +516,66 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	DeleteObject(&textColour);
 
 	return { tagRect.left, tagRect.top };
+}
+
+void CAcTargets::RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsign, POINT tagPosition) {
+	// Save context for later
+	int sDC = dc->SaveDC();
+
+	// Get flight plan
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str());
+
+	// Box to draw
+	CRect coordBox;
+
+	// State
+	int dialogState; // 0 = not tracked, 1 = tracked by me, 2 = tracked by someone else, 3 = handoff initiated
+
+	// Get tracking status
+	if (fp.GetTrackingControllerId() == "") { // If not being tracked
+		dialogState = 0;
+		coordBox = CRect(tagPosition.x, tagPosition.y, tagPosition.x + 75, tagPosition.y + 40);
+	}
+	else if (fp.GetTrackingControllerIsMe()) { // If being tracked by me
+		dialogState = 1;
+		coordBox = CRect(tagPosition.x, tagPosition.y, tagPosition.x + 75, tagPosition.y + 40);
+	}
+	else if (fp.GetTrackingControllerId() != "") { // If being tracked by someone else
+		dialogState = 2;
+		coordBox = CRect(tagPosition.x, tagPosition.y, tagPosition.x + 75, tagPosition.y + 23);
+	}
+	else if (fp.GetHandoffTargetControllerCallsign() == screen->GetPlugIn()->ControllerMyself().GetCallsign()) {
+		dialogState = 3;
+		coordBox = CRect(tagPosition.x, tagPosition.y, tagPosition.x + 75, tagPosition.y + 40);
+	}
+	
+
+	// Fill rectangle
+	dc->FillSolidRect(coordBox, ScreenBlue.ToCOLORREF());
+	dc->Draw3dRect(coordBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+	InflateRect(coordBox, -1, -1);
+	dc->Draw3dRect(coordBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
+
+	// Draw buttons
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	
+	switch (dialogState) {
+		case 0:
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Track");
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 23, "Co-ord");
+			break;
+		case 1:
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Release");
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 23, "Co-ord");			
+			break;
+		case 2:
+			dc->TextOutA(coordBox.left + 4, coordBox.top + 5, "Co-ord");
+			break;
+	}
+
+	// Restore context
+	dc->RestoreDC(sDC);
 }
 
 void CAcTargets::RenderSelectionHalo(Graphics* g, CRadarScreen* screen, CRadarTarget* target) {

@@ -460,7 +460,12 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
 					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
-					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+					POINT tagPosition = CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+
+					// If tracking dialog open
+					if (CAcTargets::OpenTrackingDialog != "" && CAcTargets::OpenTrackingDialog == ac.GetCallsign()) {
+						CAcTargets::RenderCoordTagItem(&dc, this, ac.GetCallsign(), tagPosition);
+					}
 
 				}
 				else {
@@ -743,7 +748,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	// Left button actions
 	if (Button == BUTTON_LEFT) {
 		// If screen object is a tag
-		if (ObjectType == SCREEN_TAG) {
+		if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
 			// Set the ASEL
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
@@ -1062,6 +1067,10 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 	// If it concerns the flight plan window
 	if (ObjectType == WIN_FLTPLN) {
 		fltPlnWindow->ButtonDoubleClick(atoi(sObjectId));
+	}
+	// If it is an aircraft callsign
+	if (ObjectType == SCREEN_TAG_CS) {
+		CAcTargets::OpenTrackingDialog = sObjectId;
 	}
 }
 

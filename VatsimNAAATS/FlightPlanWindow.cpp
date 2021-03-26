@@ -322,7 +322,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && controllerIsMe) {
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "") {
 			if (primedPlan->CurrentMessage != nullptr) {
 				if (primedPlan->CurrentMessage->Type != CMessageType::CLEARANCE_REQ) {
 					windowButtons[BTN_COPY].State = CInputState::INACTIVE;
@@ -332,21 +332,18 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 				windowButtons[BTN_COPY].State = CInputState::INACTIVE;
 			}
 		}
-		if ((windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE && !controllerIsMe))
-			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
-		if (!primedPlan->IsCleared && !controllerIsMe) {
-			IsData = false;
-		}
 	}
 
-	if (!controllerIsMe) {
+	if (!IsData)
+		windowButtons[BTN_MANENTRY].State = CInputState::INACTIVE;
+	else
 		windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
+
+	if (!primedPlan->IsCleared && IsData) {
+		windowButtons[BTN_READBK].State = CInputState::INACTIVE;
 	}
 	else {
-		if (!IsData)
-			windowButtons[BTN_MANENTRY].State = CInputState::INACTIVE;
-		else
-			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
+		windowButtons[BTN_READBK].State = CInputState::DISABLED;
 	}
 
 	// Copy panel
@@ -411,7 +408,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Cleanup
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
-
 
 	// Restore device context
 	dc->RestoreDC(iDC);
