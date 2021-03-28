@@ -1,7 +1,9 @@
 #pragma once
 #include "pch.h"
 #include "Constants.h"
+#include <iostream>
 #include <gdiplus.h>
+#include "Utils.h"
 
 using namespace Gdiplus;
 
@@ -71,8 +73,9 @@ public:
 		monoFont15.CreateFontIndirect(&lFont);
 
 		// Get for ATC font
-		AddFontResourceEx("vNAAATS.ttf", FR_PRIVATE, 0);
-		strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
+		int i = AddFontResourceEx(string(CUtils::DllPath + "vNAAATS.ttf").c_str(), FR_PRIVATE, NULL);
+		basic_string<_TCHAR> faceName(_T("vNAAATS"));
+		copy(faceName.begin(), faceName.end(), lFont.lfFaceName);
 		// Normal weight
 		lFont.lfWeight = FW_REGULAR;
 		// Size 14

@@ -2556,8 +2556,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			}
 			else {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
-				if (!primedPlan->IsCleared)
-					windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 			}

@@ -450,7 +450,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 	if (isHandoffToMe) {
 		offsetY += 15;
 		text = "H/O";
-		dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx, tagRect.top + offsetY, text.c_str());
+		dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx - 10, tagRect.top + offsetY, text.c_str());
 		offsetY += 15;
 	}
 	else {

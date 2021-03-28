@@ -169,7 +169,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	fp.DLStatus = ""; // TEMPORARY
 	fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
 	fp.CurrentMessage = nullptr;
-	fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
+	fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
 
 	// Get SELCAL code
 	string remarks = fpData.GetFlightPlanData().GetRemarks();

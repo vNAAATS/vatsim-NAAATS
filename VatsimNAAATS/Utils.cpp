@@ -25,6 +25,8 @@ bool CUtils::OverlayEnabled = false;
 int CUtils::AreaSelection = 802;
 int CUtils::SelectedOverlay = 800;
 int CUtils::PosType = 802;
+char CUtils::DllPathFile[_MAX_PATH];
+string CUtils::DllPath;
 
 // Save plugin data
 void CUtils::SavePluginData(CRadarScreen* screen) {
@@ -533,7 +535,7 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
 
 	if (IS_ALPHA)
-		screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("This is an ALPHA version. Please report any issues to a.ogden@vatcan.ca.").c_str(), false, false, false, false, false);
+		screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("This is a BETA version. Please report any issues to a.ogden@vatcan.ca or submit them here: https://ganderoceanic.com/vnaaats-feedback.").c_str(), false, false, false, false, false);
 }
 
 // Returns the requested format, or returns the same string if the format was unchanged
@@ -654,8 +656,9 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	// Flag
 	bool valid = true;
 
-	// Flight plan
+	// Flight plan & position
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
+	CPosition pos = target->GetPosition().GetPosition();
 
 	// Time and direction
 	int entryMinutes = fp.GetSectorEntryMinutes();
@@ -693,6 +696,14 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
+
+		// Check now to not display aircraft east/west of certain longitude based on area selection
+		if (areaSel == 802 && pos.m_Longitude < -32 && entryMinutes == 0) {
+			valid = false;
+		}
+		if (areaSel == 801 && pos.m_Longitude > -28 && entryMinutes == 0) {
+			valid = false;
+		}
 	}
 	else {
 		// If not ever going to enter, or greater than 20 min out
@@ -707,7 +718,26 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
+
+		// Check now to not display aircraft east/west of certain longitude based on area selection
+		if (areaSel == 802 && pos.m_Longitude > 32 && entryMinutes == 0) {
+			valid = false;
+		}
+		if (areaSel == 801 && pos.m_Longitude < 28 && entryMinutes == 0) {
+			valid = false;
+		}
 	}	
+
+	// Let's check if filtering disabled
+	if (filtersDisabled) { // ALL btn is pressed
+		// If not ever going to enter, or greater than 90 min out
+		if (entryMinutes < 0 || entryMinutes > 90) {
+			valid = false;
+		}
+		else {
+			valid = true;
+		}
+	}
 
 	/// However we should keep them on the screen if they aren't long out of the airspace
 	CAircraftFlightPlan* acFp = CDataHandler::GetFlightData(target->GetCallsign());
@@ -729,23 +759,11 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	
 	string callsign = (string)screen->GetPlugIn()->ControllerMyself().GetCallsign();
 	if (!screen->GetPlugIn()->ControllerMyself().IsController() || callsign.find("SUP") != string::npos) {
-		CPosition position = target->GetPosition().GetPosition();
 
-		if (position.m_Longitude > -70 && position.m_Longitude < -5)
+		if (pos.m_Longitude > -70 && pos.m_Longitude < -5)
 			valid = true;
-		if (position.m_Latitude < 80 && position.m_Longitude < -35)
+		if (pos.m_Latitude < 80 && pos.m_Longitude < -35)
 			valid = true;
-	}
-
-	// Let's check if filtering disabled
-	if (filtersDisabled) { // ALL btn is pressed
-		// If not ever going to enter, or greater than 90 min out
-		if (entryMinutes < 0 || entryMinutes > 90) {
-			valid = false;
-		}
-		else {
-			valid = true;
-		}
 	}
 
 	// Lastly let's check if they are assumed
@@ -756,36 +774,29 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	return valid;
 }
 
-bool CUtils::IsAircraftEquipped(string rawInfo, char equipCode) {
+bool CUtils::IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipCode) {
+	// Check for PBN string code
+	size_t pbnFound = rawRemarks.find("PBN/");
+
+	// Extract B1 & B2 if they exist
+	if (pbnFound != string::npos) {
+		pbnFound += 4;
+		for (char c = rawRemarks[pbnFound]; c != ' '; c = rawRemarks[pbnFound]) {
+			if (c == 'B' && (rawRemarks[pbnFound + 1] == '1' || rawRemarks[pbnFound + 1] == '2')) {
+				return true;
+			}
+			// Increment
+			pbnFound++;
+		}
+		// We didn't find one so return false
+		return false;
+	}
+
 	// Check equipment code
 	if (equipCode != '?') {
 		// Check if it L
 		if (equipCode == 'L')
 			return true; // Aircraft is AGCS equipped
-		return false;
-	}
-	
-	// Check for ICAO code
-	vector<string> splitString;
-	StringSplit(rawInfo, '/', &splitString);
-	if (splitString.size() == 2) {
-		if (splitString.at(0).length() == 1) { // If just the HEAVY identifier at the beginning
-			return false;
-		}
-		else {
-			if (splitString.at(1).find("B1") != string::npos || splitString.at(1).find("B2") != string::npos) {
-				return true; // Specific ICAO identifier for ADS-B support found
-			}
-			return false;
-		}
-	}
-	else if (splitString.size() == 3) { // Heavy identifier and an ICAO equipment code found
-		if (splitString.at(2).find("B1") != string::npos || splitString.at(1).find("B2") != string::npos) {
-			return true; // Specific ICAO identifier for ADS-B support found
-		}
-		return false;
-	}
-	else { // Length is just 1
 		return false;
 	}
 }

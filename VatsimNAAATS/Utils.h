@@ -68,7 +68,7 @@ class CUtils { // TODO: refactor into namespace
 		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false);
 
 		// Check if aircraft is AGCS equipped
-		static bool IsAircraftEquipped(string rawInfo, char equipCode);
+		static bool IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipCode);
 		
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);
@@ -121,4 +121,8 @@ class CUtils { // TODO: refactor into namespace
 			string Callsign;
 			CAircraftFlightPlan* FP = nullptr;
 		};
+
+		// DLL path
+		static char DllPathFile[_MAX_PATH];
+		static string DllPath;
 };

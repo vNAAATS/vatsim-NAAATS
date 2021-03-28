@@ -79,10 +79,10 @@ void CConflictList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 		}
 		else {
 			if (item->ConflictStatus == CConflictStatus::WARNING) { // Warning
-				line = "W" + to_string(item->DistanceAsNM) + "*";
+				line = "W" + to_string(item->DistanceAsTime) + "*";
 			}
 			else { // Critical
-				line = "C" + to_string(item->DistanceAsNM) + "*";
+				line = "C" + to_string(item->DistanceAsTime) + "*";
 			}
 		}
 		

@@ -87,6 +87,11 @@ void CRadarDisplay::PopulateProgramData() {
 	// Set tracks in menu bar
 	menuBar->MakeDropDownItems(menuBar->DRP_TCKCTRL);
 
+	// Get DLL path
+	GetModuleFileNameA(HINSTANCE(&__ImageBase), CUtils::DllPathFile, sizeof(CUtils::DllPathFile));
+	CUtils::DllPath = CUtils::DllPathFile;
+	CUtils::DllPath.resize(CUtils::DllPath.size() - strlen("VatsimNAAATS.dll"));
+
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 }
