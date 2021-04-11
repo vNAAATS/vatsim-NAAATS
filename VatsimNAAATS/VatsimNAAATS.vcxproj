@@ -100,7 +100,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>.\VatsimNAAATS.def</ModuleDefinitionFile>
-      <AdditionalDependencies>$(ProjectDir)\..\lib\EuroScopePlugInDll.lib;$(ProjectDir)\..\lib\libcurl_a.lib;Normaliz.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;advapi32.lib;gdiplus.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)\..\lib\EuroScopePlugInDll.lib;Normaliz.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;advapi32.lib;gdiplus.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -229,6 +229,7 @@
     <ClInclude Include="ConflictDetection.h" />
     <ClInclude Include="ConflictList.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Keys.h" />
     <ClInclude Include="RCLList.h" />
     <ClInclude Include="FlightPlanWindow.h" />
     <ClInclude Include="InboundList.h" />

@@ -92,6 +92,11 @@ void CRadarDisplay::PopulateProgramData() {
 	CUtils::DllPath = CUtils::DllPathFile;
 	CUtils::DllPath.resize(CUtils::DllPath.size() - strlen("VatsimNAAATS.dll"));
 
+	CUtils::CNetworkAsyncData data;
+	data.Screen = this;
+	data.Callsign = "DHL456";
+	_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)&data); // Async
+
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 }
@@ -575,7 +580,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	dc.DeleteDC();
 }
 
-// Data updates must be done here asynchronously, see my example in CDataHandler for threading
+// Data updates
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	// Check if they are relevant on the screen
 	bool filtersDisabled = menuBar->IsButtonPressed(CMenuBar::BTN_ALL);
@@ -598,10 +603,6 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	else { // Not relevant
 		// Check if they have a flight plan data object
 		if (CDataHandler::GetFlightData(RadarTarget.GetCallsign())->IsValid) {
-			// For now just disable the flight plan window/
-			//menuBar->SetButtonState(menuBar->BTN_FLIGHTPLAN, CInputState::DISABLED);
-			//fltPlnWindow->IsOpen = false;
-
 			// Delete the flight data object
 			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
 		}

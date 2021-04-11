@@ -181,6 +181,9 @@
     <ClInclude Include="RCLList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Keys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VatsimNAAATS.rc">

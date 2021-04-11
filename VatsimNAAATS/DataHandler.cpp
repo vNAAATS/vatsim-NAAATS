@@ -16,10 +16,9 @@ const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
 const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.com/resources/data/eventTracks.json";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
-const string GetSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataSingleGet?callsign=";
-const string PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataNewPost?data=";
-const string FlightDataUpdate = "https://vnaaats-net.ganderoceanic.com/api/FlightDataUpdate?";
-const string PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FFlightDataNewPost?data=";
+const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataSingleGet?callsign=";
+const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataNewPost?data=";
+const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.com/api/FlightDataUpdate?";
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
@@ -55,6 +54,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		return 1;
 	}
 	
+	// Parse the json
 	try {
 		// Clear old tracks
 		if (!CRoutesHelper::CurrentTracks.empty()) {
@@ -204,7 +204,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	}
 	fp.Communications = comType; // Set the type
 
-	// Set IsCleared (TEMPORARY)
+	// Set IsCleared
 	fp.IsCleared = false;
 
 	// Flight plan is valid
@@ -272,8 +272,12 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	// Convert args
 	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
+	// Get callsign & radar screen
+	string callsign = data->Callsign;
+	CRadarScreen* screen = data->Screen;
+
 	// Create URL
-	string reqUrl = GetSingleAircraft + data->Callsign;
+	string reqUrl = GetSingleAircraft + callsign;
 
 	// Try and get data and pass into string
 	string responseString;
@@ -305,6 +309,80 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+	}
+
+	// Parse the json
+	try {
+		// Now we parse the json
+		auto jsonArray = json::parse(responseString);
+		for (int i = 0; i < jsonArray.size(); i++) {
+			// Make a network object
+			CNetworkFlightPlan netFP;
+
+			// Fill properties
+			netFP.Callsign = jsonArray[i].at("callsign");
+			netFP.AssignedLevel = jsonArray[i].at("assignedLevel");
+			netFP.AssignedMach = jsonArray[i].at("assignedMach");
+			netFP.Track = jsonArray[i].at("track");
+			netFP.Route = jsonArray[i].at("route");
+			netFP.RouteEtas = jsonArray[i].at("routeEtas");
+			netFP.Departure = jsonArray[i].at("departure");
+			netFP.Arrival = jsonArray[i].at("arrival");
+			netFP.IsEquipped = jsonArray[i].at("isEquipped");
+			netFP.TrackedBy = jsonArray[i].at("trackedBy");
+			netFP.LastUpdated = jsonArray[i].at("lastUpdated");
+
+			// Get flight plan
+			CAircraftFlightPlan* fp = CDataHandler::GetFlightData(callsign);
+
+			// If it is valid
+			if (fp->IsValid) {
+				// Check if it is cleared
+				if (fp->IsCleared) {
+					// Simply update all the values
+					fp->FlightLevel = netFP.AssignedLevel;
+					fp->Mach = netFP.AssignedMach;
+					fp->Track = netFP.Track;
+					fp->Depart = netFP.Departure;
+					fp->Dest = netFP.Arrival;
+					fp->IsEquipped = netFP.IsEquipped;
+					
+					// Routes
+					vector<string> splitString;
+					CUtils::StringSplit(netFP.Route, ' ', &splitString);
+					bool isUpdated = false;
+
+					// Check first if they are the same length
+					if (splitString.size() != fp->RouteRaw.size()) {
+						// They are not so update the route
+						fp->RouteRaw = splitString;
+						isUpdated = true;
+					}
+					else {
+						// Now iterate and find out if there are discrepancies
+						for (int i = 0; i < splitString.size(); i++) {
+							if (splitString[i] != fp->RouteRaw[i]) {
+								// There is a discrepancy
+								fp->RouteRaw = splitString;
+								isUpdated = true;
+								break;
+							}
+						}
+					}
+
+					// If isUpdated is true, then we re-instantiate the route, hopefully without a crash
+					UpdateFlightData(screen, callsign, true);
+					
+				}
+				else { // Since we were able to pull data from the internet on the aircraft, we know someone else cleared the aircraft
+					// Set cleared
+					fp->IsCleared = true;
+				}
+			}
+		}
+	}
+	catch (exception & e) {
+		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse aircraft data for " + callsign +". Error: " + string(e.what())).c_str(), true, true, true, true, true);
 	}
 }
 

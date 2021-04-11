@@ -31,6 +31,9 @@ class CDataHandler
 
 	// Set route
 	static int SetRoute(string callsign, vector<CWaypoint>* route, string track, CAircraftFlightPlan* copiedPlan = nullptr);
+
+	// Download aircraft data (single)
+	static void DownloadNetworkAircraft(void* args);
 	
 	private:
 		// NAT Track URL
@@ -40,13 +43,10 @@ class CDataHandler
 
 		// vNAAATS API Links
 		static const string GetSingleAircraft;
-		static const string PostSingleAircraft;
 		static const string FlightDataUpdate;
 		static const string PostSingleAircraft;
 
 		/// vNAAATS network methods
-		// Download aircraft data (single)
-		static void DownloadNetworkAircraft(void* args);
 
 		// Download all aircraft data
 		static void GetAllNetworkAircraft();
