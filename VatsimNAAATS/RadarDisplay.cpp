@@ -143,7 +143,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	}
 
 	// Set the flight plan button state
-	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid || !GetPlugIn()->ControllerMyself().IsController()) {
+	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid || !CDataHandler::GetFlightData(asel)->IsFirstUpdate || !GetPlugIn()->ControllerMyself().IsController()) {
 		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) != CInputState::DISABLED)
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::DISABLED);
 	}
@@ -585,6 +585,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 
 		// If not valid then it doesn't exist and we need to make it
 		if (!fp->IsValid) {
+			// Create it
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
 		}
 		else {
@@ -593,10 +594,12 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 			if (exitMinutes != -1) {
 				fp->ExitTime = exitMinutes;
 			}
+
 			// Download the vNAAATS network data on the plane
 			CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
 			data->Screen = this;
 			data->Callsign = fp->Callsign;
+			if (!fp->IsFirstUpdate) fp->IsFirstUpdate = true;
 			_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
 		}
 	}

@@ -356,6 +356,7 @@ struct CAircraftFlightPlan {
 	int ExitTime;
 	bool IsEquipped;
 	bool IsValid = false;
+	bool IsFirstUpdate = false; // So that we can disable flight plan window until the plan has been fetched from server at least once
 	bool IsCleared;
 };
 

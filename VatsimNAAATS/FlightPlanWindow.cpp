@@ -1107,6 +1107,18 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 		offsetX += 70;
 	}
 
+	// Validation
+	if (textInputs.at(TXT_MAN_FL).Content == "" ||
+		textInputs.at(TXT_MAN_SPD).Content == "" ||
+		textInputs.at(TXT_MAN_TCK).Content == "" ||
+		textInputs.at(TXT_MAN_DEST).Content == "" ||
+		textInputs.at(TXT_MAN_RTE).Content == "" ||
+		textInputs.at(TXT_MAN_EP).Content == "" ||
+		textInputs.at(TXT_MAN_EPTIME).Content == "")
+		SetButtonState(BTN_MAN_SUBMIT, CInputState::DISABLED);
+	else 
+		SetButtonState(BTN_MAN_SUBMIT, CInputState::INACTIVE);
+
 	// Clean up
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
@@ -2490,7 +2502,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			textInputs[TXT_RTE].State = CInputState::DISABLED;
 		}
 		if (id == BTN_READBK || id == BTN_CLRC_READBK) {
-			if (windowButtons[BTN_READBK].State == CInputState::ACTIVE) {
+			if (windowButtons[BTN_READBK].State != CInputState::DISABLED) {
 				/// Temporary until messages implemented
 				SetButtonState(BTN_PROBE, CInputState::DISABLED);
 				IsConflictWindow = false;
@@ -2539,6 +2551,43 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					textInputs[TXT_DEST].State = CInputState::DISABLED;
 					textInputs[TXT_TCK].State = CInputState::DISABLED;
 					textInputs[TXT_RTE].State = CInputState::DISABLED;
+
+					// Create network object
+					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+					netFP->Callsign = primedPlan->Callsign;
+					netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+					netFP->AssignedMach = stoi(primedPlan->Mach);
+					netFP->Track = primedPlan->Track;
+					netFP->Departure = primedPlan->Depart;
+					netFP->Arrival = primedPlan->Dest;
+					netFP->IsEquipped = primedPlan->IsEquipped;
+					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->Route = ""; // Initialise
+					netFP->RouteEtas = ""; // Initialise
+
+					// Get routes and estimates
+					vector<CRoutePosition> rte;
+					CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
+					for (int i = 0; i < rte.size(); i++) {
+						if (i != rte.size() - 1) {
+							netFP->Route += rte[i].Fix + " ";
+							netFP->RouteEtas += rte[i].Estimate + " ";
+						}
+						else {
+							netFP->Route += rte[i].Fix;
+							netFP->RouteEtas += rte[i].Estimate;
+						}							
+					}
+
+					// Post data to the database
+					CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+					data->Screen = screen;
+					data->Callsign = primedPlan->Callsign;
+					data->FP = netFP;
+					_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
+				}
+				else {
+					// Update them (TODO)
 				}
 			}
 		}

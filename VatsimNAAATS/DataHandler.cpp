@@ -17,8 +17,8 @@ const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.com/resour
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
 const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataSingleGet?callsign=";
-const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataNewPost?data=";
-const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.com/api/FlightDataUpdate?";
+const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataNewPost?code=" + ApiKeys::FUNC_KEY;
+const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.com/api/FlightDataUpdate?code=" + ApiKeys::FUNC_KEY;
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
@@ -124,9 +124,6 @@ CAircraftFlightPlan* CDataHandler::GetFlightData(string callsign) {
 
 void CDataHandler::GetFlightData(string callsign, CAircraftFlightPlan& fp) {
 	if (flights.find(callsign) != flights.end()) {
-		// Ben: this is for you, I have done the 'not found' code at the bottom you need to do the code that gets the existing flight data
-		// not sure whether it's as simple as return flights.at(callsign) or something more complex, depends on the API integration
-
 		fp = flights.find(callsign)->second;
 		fp.IsValid = true;
 		return;
@@ -342,46 +339,40 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 			// If it is valid
 			if (fp->IsValid) {
 				// Check if it is cleared
-				if (fp->IsCleared) {
-					// Simply update all the values
-					fp->FlightLevel = netFP.AssignedLevel;
-					fp->Mach = netFP.AssignedMach;
-					fp->Track = netFP.Track;
-					fp->Depart = netFP.Departure;
-					fp->Dest = netFP.Arrival;
-					fp->IsEquipped = netFP.IsEquipped;
+				if (!fp->IsCleared) fp->IsCleared = true;
+				// Simply update all the values
+				fp->FlightLevel = to_string(netFP.AssignedLevel);
+				fp->Mach = to_string(netFP.AssignedMach);
+				fp->Track = netFP.Track;
+				fp->Depart = netFP.Departure;
+				fp->Dest = netFP.Arrival;
+				fp->IsEquipped = netFP.IsEquipped;
 					
-					// Routes
-					vector<string> splitString;
-					CUtils::StringSplit(netFP.Route, ' ', &splitString);
-					bool isUpdated = false;
+				// Routes
+				vector<string> splitString;
+				CUtils::StringSplit(netFP.Route, ' ', &splitString);
+				bool isUpdated = false;
 
-					// Check first if they are the same length
-					if (splitString.size() != fp->RouteRaw.size()) {
-						// They are not so update the route
-						fp->RouteRaw = splitString;
-						isUpdated = true;
-					}
-					else {
-						// Now iterate and find out if there are discrepancies
-						for (int i = 0; i < splitString.size(); i++) {
-							if (splitString[i] != fp->RouteRaw[i]) {
-								// There is a discrepancy
-								fp->RouteRaw = splitString;
-								isUpdated = true;
-								break;
-							}
+				// Check first if they are the same length
+				if (splitString.size() != fp->RouteRaw.size()) {
+					// They are not so update the route
+					fp->RouteRaw = splitString;
+					isUpdated = true;
+				}
+				else {
+					// Now iterate and find out if there are discrepancies
+					for (int i = 0; i < splitString.size(); i++) {
+						if (splitString[i] != fp->RouteRaw[i]) {
+							// There is a discrepancy
+							fp->RouteRaw = splitString;
+							isUpdated = true;
+							break;
 						}
 					}
+				}
 
-					// If isUpdated is true, then we re-instantiate the route, hopefully without a crash
-					UpdateFlightData(screen, callsign, true);
-					
-				}
-				else { // Since we were able to pull data from the internet on the aircraft, we know someone else cleared the aircraft
-					// Set cleared
-					fp->IsCleared = true;
-				}
+				// If isUpdated is true, then we re-instantiate the route, hopefully without a crash
+				if (isUpdated) UpdateFlightData(screen, callsign, true);
 			}
 		}
 	}
@@ -401,7 +392,56 @@ void CDataHandler::GetAllNetworkAircraft() {
 }
 
 void CDataHandler::PostNetworkAircraft(void* args) {
+	// Convert args
+	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
+	// Construct URL
+	string reqUrl = PostSingleAircraft;
+	reqUrl += "&callsign=" + data->FP->Callsign;
+	reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
+	reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
+	reqUrl += "&track=" + data->FP->Track;
+	reqUrl += "&route=" + data->FP->Route;
+	reqUrl += "&routeEtas=" + data->FP->RouteEtas;
+	reqUrl += "&departure=" + data->FP->Departure;
+	reqUrl += "&arrival=" + data->FP->Arrival;
+	reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
+	reqUrl += "&trackedBy=" + data->FP->TrackedBy;
+
+	try {
+		// Convert URL to LPCSTR type
+		LPCSTR lpcURL = reqUrl.c_str();
+
+		// Delete cache data
+		DeleteUrlCacheEntry(lpcURL);
+
+		// Download data
+		CComPtr<IStream> pStream;
+		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+
+		// If failed
+		if (FAILED(hr)) {
+			// We want to know about it
+			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign).c_str(), true, true, true, true, true);
+			// Cleanup
+			delete data->FP;
+			delete args;
+			return;
+		}
+		else {
+			// Success, clean up and move on
+			delete data->FP;
+			delete args;
+			return;
+		}
+	}
+	catch (exception & e) {
+		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Cleanup
+		delete data->FP;
+		delete args;
+		return;
+	}
 }
 
 void CDataHandler::UpdateNetworkAircraft(void* args) {
