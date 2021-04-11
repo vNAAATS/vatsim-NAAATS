@@ -145,10 +145,10 @@ int CDataHandler::UpdateFlightData(CRadarScreen* screen, string callsign, bool u
 
 	// Re-initialise the route if requested
 	if (updateRoute) {
-		CUtils::CAsyncData data;
-		data.Screen = screen;
-		data.Callsign = callsign;
-		_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*) &data); // Async
+		CUtils::CAsyncData* data = new CUtils::CAsyncData();
+		data->Screen = screen;
+		data->Callsign = callsign;
+		_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*) data); // Async
 	}
 
 	// Success
@@ -292,12 +292,13 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 		// Download data
 		CComPtr<IStream> pStream;
 		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
-		// If failed
+		// If failed (probably a 404 not found)
 		if (FAILED(hr)) {
-			int code = (int)hr;
-			// Show user message
-			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + to_string(code)).c_str(), true, true, true, true, true);
+			// Cleanup
+			delete args;
+			return;
 		}
+
 		// Put data into buffer
 		char tempBuffer[16384];
 		DWORD bytesRead = 0;
@@ -309,6 +310,9 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Cleanup
+		delete args;
+		return;
 	}
 
 	// Parse the json
@@ -383,7 +387,13 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse aircraft data for " + callsign +". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Cleanup
+		delete args;
+		return;
 	}
+
+	// Cleanup
+	delete args;
 }
 
 void CDataHandler::GetAllNetworkAircraft() {

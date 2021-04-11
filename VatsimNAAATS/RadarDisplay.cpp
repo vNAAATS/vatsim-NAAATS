@@ -92,11 +92,6 @@ void CRadarDisplay::PopulateProgramData() {
 	CUtils::DllPath = CUtils::DllPathFile;
 	CUtils::DllPath.resize(CUtils::DllPath.size() - strlen("VatsimNAAATS.dll"));
 
-	CUtils::CNetworkAsyncData data;
-	data.Screen = this;
-	data.Callsign = "DHL456";
-	_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)&data); // Async
-
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 }
@@ -598,6 +593,11 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 			if (exitMinutes != -1) {
 				fp->ExitTime = exitMinutes;
 			}
+			// Download the vNAAATS network data on the plane
+			CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+			data->Screen = this;
+			data->Callsign = fp->Callsign;
+			_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
 		}
 	}
 	else { // Not relevant
