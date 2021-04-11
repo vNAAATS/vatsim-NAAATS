@@ -271,6 +271,20 @@ struct CFlightRestriction {
 	string Human;
 };
 
+struct CNetworkFlightPlan {
+	string Callsign;
+	int AssignedLevel;
+	int AssignedMach;
+	string Track;
+	string Route;
+	string RouteEtas;
+	string Departure;
+	string Arrival;
+	bool IsEquipped;
+	string TrackedBy;
+	string LastUpdated;
+};
+
 struct CAircraftFlightPlan {
 	CAircraftFlightPlan() {}; // Default constructor
 	CAircraftFlightPlan(

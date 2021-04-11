@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "DataHandler.h"
 #include "RoutesHelper.h"
+#include "Keys.h"
 #include <iostream>
 #include <fstream>
 #include <json.hpp>
@@ -9,10 +10,16 @@
 
 // Include dependency
 using json = nlohmann::json;
+using namespace ApiKeys;
 
 const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
 const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.com/resources/data/eventTracks.json";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
+
+const string GetSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataSingleGet?callsign=";
+const string PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataNewPost?data=";
+const string FlightDataUpdate = "https://vnaaats-net.ganderoceanic.com/api/FlightDataUpdate?";
+const string PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FFlightDataNewPost?data=";
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
@@ -151,8 +158,6 @@ int CDataHandler::UpdateFlightData(CRadarScreen* screen, string callsign, bool u
 int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	// MISSING VALUES:
 	// DLStatus
-	// FLIGHT LEVEL
-	// MACH
 	// SECTOR
 	// STATE
 
@@ -261,4 +266,56 @@ int CDataHandler::SetRoute(string callsign, vector<CWaypoint>* route, string tra
 	else {
 		return 1; // Non-success code occurs when flight doesn't exist
 	}
+}
+
+void CDataHandler::DownloadNetworkAircraft(void* args) {
+	// Convert args
+	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
+
+	// Create URL
+	string reqUrl = GetSingleAircraft + data->Callsign;
+
+	// Try and get data and pass into string
+	string responseString;
+
+	try {
+		// Convert URL to LPCSTR type
+		LPCSTR lpcURL = reqUrl.c_str();
+
+		// Delete cache data
+		DeleteUrlCacheEntry(lpcURL);
+
+		// Download data
+		CComPtr<IStream> pStream;
+		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+		// If failed
+		if (FAILED(hr)) {
+			int code = (int)hr;
+			// Show user message
+			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + to_string(code)).c_str(), true, true, true, true, true);
+		}
+		// Put data into buffer
+		char tempBuffer[16384];
+		DWORD bytesRead = 0;
+		hr = pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
+		// Put data into string
+		for (int i = 0; i < bytesRead; i++) {
+			responseString += tempBuffer[i];
+		}
+	}
+	catch (exception & e) {
+		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+	}
+}
+
+void CDataHandler::GetAllNetworkAircraft() {
+
+}
+
+void CDataHandler::PostNetworkAircraft(void* args) {
+
+}
+
+void CDataHandler::UpdateNetworkAircraft(void* args) {
+
 }

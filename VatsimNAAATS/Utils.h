@@ -122,6 +122,14 @@ class CUtils { // TODO: refactor into namespace
 			CAircraftFlightPlan* FP = nullptr;
 		};
 
+		// This is for asyncing vNAAATS API data
+		struct CNetworkAsyncData {
+			CRadarScreen* Screen;
+			string Callsign;
+			CPlugIn* plugin = nullptr;
+			CNetworkFlightPlan* FP = nullptr;
+		};
+
 		// DLL path
 		static char DllPathFile[_MAX_PATH];
 		static string DllPath;
