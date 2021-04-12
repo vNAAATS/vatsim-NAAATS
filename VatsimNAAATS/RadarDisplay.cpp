@@ -587,7 +587,6 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 		if (!fp->IsValid) {
 			// Create it
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
-			this->GetPlugIn()->DisplayUserMessage("vNAAATS", RadarTarget.GetCallsign(), string("Radar Flags: " + to_string(RadarTarget.GetPosition().GetRadarFlags()) + (RadarTarget.GetPosition().IsFPTrackPosition() ? " true" : " false")).c_str(), true, true, true, true, true);
 		}
 		else {
 			// Update exit time

@@ -676,10 +676,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 		
 		// If wrong direction don't show
-		if (!direction && areaSel == 802 && entryMinutes != 0) {
+		if (direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (direction && areaSel == 801 && entryMinutes != 0) {
+		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 	}
@@ -690,10 +690,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// If wrong direction don't show
-		if (!direction && areaSel == 802 && entryMinutes != 0) {
+		if (direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (direction && areaSel == 801 && entryMinutes != 0) {
+		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 
@@ -712,10 +712,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// If wrong direction don't show
-		if (!direction && areaSel == 802 && entryMinutes != 0) {
+		if (direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (direction && areaSel == 801 && entryMinutes != 0) {
+		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 
@@ -798,6 +798,28 @@ bool CUtils::IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipC
 		if (equipCode == 'L')
 			return true; // Aircraft is AGCS equipped
 		return false;
+	}
+}
+
+// Get radar target mode
+CRadarTargetMode CUtils::GetTargetMode(int radarFlags) {
+	// Switch the flags
+	switch (radarFlags) {
+		case 0:
+			return CRadarTargetMode::ADS_B;
+			break;
+		case 1:
+			return CRadarTargetMode::PRIMARY;
+			break;
+		case 3:
+			return CRadarTargetMode::SECONDARY_C;
+			break;
+		case 7:
+		case 6:
+			return CRadarTargetMode::SECONDARY_S;
+			break;
+		default:
+			return CRadarTargetMode::ADS_B;
 	}
 }
 

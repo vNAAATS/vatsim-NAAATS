@@ -315,7 +315,7 @@ enum class CRestrictionType {
     INT
 };
 
-enum class CRadarTargetType {
+enum class CRadarTargetMode {
     PRIMARY, // Asterisk
     SECONDARY_S, // Diamond with line
     SECONDARY_C, // Star

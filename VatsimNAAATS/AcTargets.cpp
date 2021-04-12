@@ -32,7 +32,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	string cs = target->GetCallsign();
 
 	// Radar flags
-	int radarFlag = target->GetPosition().GetRadarFlags();
+	CRadarTargetMode targetMode = CUtils::GetTargetMode(target->GetPosition().GetRadarFlags());
 
 	// Flight plan
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
@@ -53,6 +53,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	SolidBrush redBrush(CriticalRed);
 	SolidBrush whiteBrush(TextWhite);
 	Pen bluePen(&blueBrush, 1);
+	Pen orangePen(&orangeBrush, 1);
 	Pen whitePen(&whiteBrush, 1);
 	GraphicsContainer gContainer;
 
@@ -107,33 +108,169 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Anti aliasing
 	g->SetSmoothingMode(SmoothingModeAntiAlias);
 
-	// Check jurisdiction
-	if (!fp.GetTrackingControllerIsMe() && screen->GetPlugIn()->ControllerMyself().IsController()) {
+	// We change the target based on state
+	if (targetMode != CRadarTargetMode::ADS_B && screen->GetPlugIn()->ControllerMyself().IsController()) {
 		// Set middle
 		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
+		// Change targets depending on mode
+		if (targetMode == CRadarTargetMode::PRIMARY) {	
+			// Make asterisk
+			Point points[12] = {
+				Point(-5, 0),
+				Point(5, 0),
+				Point(0, 0),
+				Point(0, 5),
+				Point(0, -5),
+				Point(0, 0),
+				Point(-5, -5),
+				Point(5, 5),
+				Point(0,0),
+				Point(-5, 5),
+				Point(5, -5),
+				Point(0, 0)
+			};
 
-		// Make diamond
-		Point points[4] = {
-			Point(-6, 0),
-			Point(0, 6),
-			Point(6, 0),
-			Point(0, -6)
-		};
+			if (isHandoffToMe)
+				g->DrawPolygon(&whitePen, points, 12);
+			else
+				g->DrawPolygon(&bluePen, points, 12);
+			g->EndContainer(gContainer);
 
-		if (isHandoffToMe)
-			g->DrawPolygon(&whitePen, points, 4);
-		else
-			g->DrawPolygon(&bluePen, points, 4);
-		g->EndContainer(gContainer);
+			DeleteObject(&points);
+		}
+		else if (targetMode == CRadarTargetMode::SECONDARY_C) {
+			// Make star
+			Point points1[4] = { // Star point 1
+				Point(-5, 0),
+				Point(-8, -4),
+				Point(-2, -4),
+				Point(-5, 0)
+			};
+			Point points2[4] = { // Star point 2
+				Point(-2, -4),
+				Point(0, -9),
+				Point(2, -4),
+				Point(-2, -4)
+			};
+			Point points3[4] = { // Star point 3
+				Point(2, -4),
+				Point(8, -4),
+				Point(4, 0),
+				Point(2, -4)
+			};
+			Point points4[4] = { // Star point 4
+				Point(4, 0),
+				Point(6, 7),
+				Point(0, 4),
+				Point(4, 0)
+			};
+			Point points5[4] = { // Star point 5
+				Point(0, 4),
+				Point(-6, 7),
+				Point(-4, 0),
+				Point(0, 4)
+			};
 
-		DeleteObject(&points);
+			// Make diamond
+			Point diamond[4] = {
+				Point(-4, 0),
+				Point(0, 4),
+				Point(4, 0),
+				Point(0, -4)
+			};
+
+			if (isHandoffToMe) {
+				// Star
+				g->DrawPolygon(&whitePen, points1, 4);
+				g->FillPolygon(&whiteBrush, points1, 4);
+				g->DrawPolygon(&whitePen, points2, 4);
+				g->FillPolygon(&whiteBrush, points2, 4);
+				g->DrawPolygon(&whitePen, points3, 4);
+				g->FillPolygon(&whiteBrush, points3, 4);
+				g->DrawPolygon(&whitePen, points4, 4);
+				g->FillPolygon(&whiteBrush, points4, 4);
+				g->DrawPolygon(&whitePen, points5, 4);
+				g->FillPolygon(&whiteBrush, points5, 4);
+
+				// Diamond
+				g->DrawPolygon(&whitePen, diamond, 4);
+			}
+			else {
+				
+				if (fp.GetTrackingControllerIsMe()) {
+					// Star
+					g->DrawPolygon(&orangePen, points1, 4);
+					g->FillPolygon(&orangeBrush, points1, 4);
+					g->DrawPolygon(&orangePen, points2, 4);
+					g->FillPolygon(&orangeBrush, points2, 4);
+					g->DrawPolygon(&orangePen, points3, 4);
+					g->FillPolygon(&orangeBrush, points3, 4);
+					g->DrawPolygon(&orangePen, points4, 4);
+					g->FillPolygon(&orangeBrush, points4, 4);
+					g->DrawPolygon(&orangePen, points5, 4);
+					g->FillPolygon(&orangeBrush, points5, 4);
+
+					// Diamond
+					g->DrawPolygon(&orangePen, diamond, 4);
+				}
+				else {
+					// Star
+					g->DrawPolygon(&bluePen, points1, 4);
+					g->FillPolygon(&blueBrush, points1, 4);
+					g->DrawPolygon(&bluePen, points2, 4);
+					g->FillPolygon(&blueBrush, points2, 4);
+					g->DrawPolygon(&bluePen, points3, 4);
+					g->FillPolygon(&blueBrush, points3, 4);
+					g->DrawPolygon(&bluePen, points4, 4);
+					g->FillPolygon(&blueBrush, points4, 4);
+					g->DrawPolygon(&bluePen, points5, 4);
+					g->FillPolygon(&blueBrush, points5, 4);
+
+					// Diamond
+					g->DrawPolygon(&bluePen, diamond, 4);
+				}
+			}
+	
+			g->EndContainer(gContainer);
+
+			DeleteObject(&points1);
+			DeleteObject(&points2);
+			DeleteObject(&points3);
+			DeleteObject(&points4);
+			DeleteObject(&points5);
+			DeleteObject(&diamond);
+		}
+		else {
+			// Make diamond with line
+			Point points[5] = {
+				Point(-5, 0),
+				Point(0, 5),
+				Point(5, 0),
+				Point(0, -5),
+				Point(0, 5)
+			};
+
+			if (isHandoffToMe) {
+				g->DrawPolygon(&whitePen, points, 5);
+			}
+			else {
+				if (fp.GetTrackingControllerIsMe())
+					g->DrawPolygon(&orangePen, points, 5);
+				else
+					g->DrawPolygon(&bluePen, points, 5);
+			}
+
+			g->EndContainer(gContainer);
+
+			DeleteObject(&points);
+		}
 	}
 	else {
 		// Rotate the graphics object and set the middle to the aircraft position
 		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
 		g->RotateTransform(target->GetPosition().GetReportedHeadingTrueNorth());
 
-		// This is the icon
+		// This is the aircraft icon
 		Point points[19] = {
 			Point(0,-8),
 			Point(-1,-7),
@@ -174,11 +311,17 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 			g->EndContainer(gContainer);
 		}
 		else {
-			// No conflict, draw orange
-			if (isHandoffToMe)
+			// No conflict, draw orange if tracked and blue if not
+			if (isHandoffToMe) {
 				g->FillPolygon(&whiteBrush, points, 19);
-			else 
-				g->FillPolygon(&orangeBrush, points, 19);
+			}				
+			else {
+				if (fp.GetTrackingControllerIsMe())
+					g->FillPolygon(&orangeBrush, points, 19);
+				else
+					g->FillPolygon(&blueBrush, points, 19);
+			}
+				
 			g->EndContainer(gContainer);
 		}
 
@@ -293,6 +436,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&acPoint);
 	DeleteObject(&bluePen);
 	DeleteObject(&whitePen);
+	DeleteObject(&orangePen);
 }
 
 POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {	

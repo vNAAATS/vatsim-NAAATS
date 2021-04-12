@@ -38,5 +38,4 @@ class CAcTargets
 		// Fields
 		static string OpenTrackingDialog;
 		static map<string, bool> ButtonStates;
-		static map<string, CRadarTargetType> TargetTypes;
 };

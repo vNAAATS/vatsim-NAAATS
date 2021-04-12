@@ -76,6 +76,9 @@ class CUtils { // TODO: refactor into namespace
 		// Calculate Mach
 		static int GetMach(int groundSpeed, int speedSound);
 
+		// Get radar target mode
+		static CRadarTargetMode GetTargetMode(int radarFlags);
+
 		// Pad zeroes
 		static string PadWithZeros(int width, int number);
 
