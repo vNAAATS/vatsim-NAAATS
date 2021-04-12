@@ -314,3 +314,10 @@ enum class CRestrictionType {
     XAT,
     INT
 };
+
+enum class CRadarTargetType {
+    PRIMARY, // Asterisk
+    SECONDARY_S, // Diamond with line
+    SECONDARY_C, // Star
+    ADS_B // Airplane icon
+};

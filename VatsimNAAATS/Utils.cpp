@@ -676,10 +676,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 		
 		// If wrong direction don't show
-		if (direction && areaSel == 802 && entryMinutes != 0) {
+		if (!direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (!direction && areaSel == 801 && entryMinutes != 0) {
+		if (direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 	}
@@ -690,10 +690,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// If wrong direction don't show
-		if (direction && areaSel == 802 && entryMinutes != 0) {
+		if (!direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (!direction && areaSel == 801 && entryMinutes != 0) {
+		if (direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 
@@ -712,18 +712,18 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// If wrong direction don't show
-		if (direction && areaSel == 802 && entryMinutes != 0) {
+		if (!direction && areaSel == 802 && entryMinutes != 0) {
 			valid = false;
 		}
-		if (!direction && areaSel == 801 && entryMinutes != 0) {
+		if (direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
 
 		// Check now to not display aircraft east/west of certain longitude based on area selection
-		if (areaSel == 802 && pos.m_Longitude > 32 && entryMinutes == 0) {
+		if (areaSel == 802 && pos.m_Longitude < -32 && entryMinutes == 0) {
 			valid = false;
 		}
-		if (areaSel == 801 && pos.m_Longitude < 28 && entryMinutes == 0) {
+		if (areaSel == 801 && pos.m_Longitude > -28 && entryMinutes == 0) {
 			valid = false;
 		}
 	}	
