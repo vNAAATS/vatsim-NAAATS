@@ -587,6 +587,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 		if (!fp->IsValid) {
 			// Create it
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
+			this->GetPlugIn()->DisplayUserMessage("vNAAATS", RadarTarget.GetCallsign(), string("Radar Flags: " + to_string(RadarTarget.GetPosition().GetRadarFlags()) + (RadarTarget.GetPosition().IsFPTrackPosition() ? " true" : " false")).c_str(), true, true, true, true, true);
 		}
 		else {
 			// Update exit time
@@ -923,7 +924,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	}
 
 	if (Button == BUTTON_RIGHT) {
-		if (ObjectType == SCREEN_TAG) {
+		if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
 			/// Set route drawing
 			// Make sure flight plan exists otherwise it will crash, and also that they aren't PIV aircraft
 			if (CDataHandler::GetFlightData(string(sObjectId))->IsValid && string(sObjectId) != aircraftSel1 && string(sObjectId) != aircraftSel2) {

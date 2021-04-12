@@ -131,7 +131,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	else {
 		// Rotate the graphics object and set the middle to the aircraft position
 		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
-		g->RotateTransform(target->GetTrackHeading());
+		g->RotateTransform(target->GetPosition().GetReportedHeadingTrueNorth());
 
 		// This is the icon
 		Point points[19] = {
@@ -437,7 +437,7 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 		offsetX += 50;
 
 		// Mach
-		int gs = target->GetGS();
+		int gs = target->GetPosition().GetReportedGS();
 		if (atoi(text.c_str()) > 460) {
 			text = "M" + to_string(CUtils::GetMach(gs, 573));
 		}

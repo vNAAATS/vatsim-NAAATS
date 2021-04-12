@@ -42,7 +42,7 @@ void CConflictList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 		CAircraftFlightPlan fp1;
 		CAircraftFlightPlan fp2;
 		CDataHandler::GetFlightData(item->CallsignA, fp1);
-		CDataHandler::GetFlightData(item->CallsignA, fp2);
+		CDataHandler::GetFlightData(item->CallsignB, fp2);
 
 		// Pick text colour
 		COLORREF textColour;
