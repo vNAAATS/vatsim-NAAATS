@@ -109,7 +109,7 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v1.1.0b";
+const string PLUGIN_VERSION = "v2.0.0b";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678 w/ Pierre Ferran";
 const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
 const bool IS_ALPHA = true;
@@ -204,10 +204,10 @@ const int LIST_CONFLICT = 303;
 const int DRP_AREA_EGGX = 801;
 const int DRP_AREA_CZQX = 802;
 const int DRP_AREA_BDBX = 803;
-const int DRP_OVL_ALL = 801;
-const int DRP_OVL_EAST = 802;
-const int DRP_OVL_WEST = 803;
-const int DRP_OVL_SEL = 804;
+const int DRP_OVL_ALL = 800;
+const int DRP_OVL_EAST = 801;
+const int DRP_OVL_WEST = 802;
+const int DRP_OVL_SEL = 803;
 const int DRP_TYPE_DEL = 801;
 const int DRP_TYPE_ENR = 802;
 const int DRP_TYPE_MULTI = 803;

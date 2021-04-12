@@ -87,7 +87,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_SELCAL] = CTextInput(TXT_SELCAL, WIN_FLTPLN, "SELCAL", "", 55, CInputState::INACTIVE);
 	textInputs[TXT_DATALINK] = CTextInput(TXT_DATALINK, WIN_FLTPLN, "Datalink", "", 60, CInputState::INACTIVE);
 	textInputs[TXT_COMMS] = CTextInput(TXT_COMMS, WIN_FLTPLN, "Com", "", 35, CInputState::INACTIVE);
-	textInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 25, CInputState::INACTIVE);
+	textInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 30, CInputState::INACTIVE);
 	textInputs[TXT_SPD] = CTextInput(TXT_SPD, WIN_FLTPLN, "Spd", "", 50, CInputState::ACTIVE);
 	textInputs[TXT_LEVEL] = CTextInput(TXT_LEVEL, WIN_FLTPLN, "FL", "", 90, CInputState::ACTIVE);
 	textInputs[TXT_DEST] = CTextInput(TXT_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
@@ -339,7 +339,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	else
 		windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 
-	if (!primedPlan->IsCleared && IsData) {
+	if ((!primedPlan->IsCleared && IsData) || IsCopyMade) {
 		windowButtons[BTN_READBK].State = CInputState::INACTIVE;
 	}
 	else {
@@ -2586,8 +2586,40 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					data->FP = netFP;
 					_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
 				}
-				else {
-					// Update them (TODO)
+				else { // Delete this duplicate code nonsense
+					// Create network object
+					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+					netFP->Callsign = primedPlan->Callsign;
+					netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+					netFP->AssignedMach = stoi(primedPlan->Mach);
+					netFP->Track = primedPlan->Track;
+					netFP->Departure = primedPlan->Depart;
+					netFP->Arrival = primedPlan->Dest;
+					netFP->IsEquipped = primedPlan->IsEquipped;
+					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->Route = ""; // Initialise
+					netFP->RouteEtas = ""; // Initialise
+
+					// Get routes and estimates
+					vector<CRoutePosition> rte;
+					CRoutesHelper::GetRoute(screen, &rte, copiedPlan.Callsign, &copiedPlan);
+					for (int i = 0; i < rte.size(); i++) {
+						if (i != rte.size() - 1) {
+							netFP->Route += rte[i].Fix + " ";
+							netFP->RouteEtas += rte[i].Estimate + " ";
+						}
+						else {
+							netFP->Route += rte[i].Fix;
+							netFP->RouteEtas += rte[i].Estimate;
+						}
+					}
+
+					// Post data to the database
+					CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+					data->Screen = screen;
+					data->Callsign = primedPlan->Callsign;
+					data->FP = netFP;
+					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
 				}
 			}
 		}

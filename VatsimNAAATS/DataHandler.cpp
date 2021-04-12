@@ -422,7 +422,7 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 		// If failed
 		if (FAILED(hr)) {
 			// We want to know about it
-			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign).c_str(), true, true, true, true, true);
+			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". The server returned an error.").c_str(), true, true, true, true, true);
 			// Cleanup
 			delete data->FP;
 			delete args;
@@ -445,5 +445,54 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 }
 
 void CDataHandler::UpdateNetworkAircraft(void* args) {
+	// Convert args
+	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
+	// Construct URL
+	string reqUrl = FlightDataUpdate;
+	reqUrl += "&callsign=" + data->FP->Callsign;
+	reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
+	reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
+	reqUrl += "&track=" + data->FP->Track;
+	reqUrl += "&route=" + data->FP->Route;
+	reqUrl += "&routeEtas=" + data->FP->RouteEtas;
+	reqUrl += "&departure=" + data->FP->Departure;
+	reqUrl += "&arrival=" + data->FP->Arrival;
+	reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
+	reqUrl += "&trackedBy=" + data->FP->TrackedBy;
+
+	try {
+		// Convert URL to LPCSTR type
+		LPCSTR lpcURL = reqUrl.c_str();
+
+		// Delete cache data
+		DeleteUrlCacheEntry(lpcURL);
+
+		// Download data
+		CComPtr<IStream> pStream;
+		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+
+		// If failed
+		if (FAILED(hr)) {
+			// We want to know about it
+			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". The server returned an error.").c_str(), true, true, true, true, true);
+			// Cleanup
+			delete data->FP;
+			delete args;
+			return;
+		}
+		else {
+			// Success, clean up and move on
+			delete data->FP;
+			delete args;
+			return;
+		}
+	}
+	catch (exception & e) {
+		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Cleanup
+		delete data->FP;
+		delete args;
+		return;
+	}
 }

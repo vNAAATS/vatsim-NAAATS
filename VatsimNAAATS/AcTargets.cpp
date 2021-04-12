@@ -192,33 +192,33 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		int val = toggleData->at(CMenuBar::BTN_PTL).Cycle;
 
 		// Leader minutes
-		int min = 0;
+		int dist = 0;
 
 		// Switch
 		switch (val) {
 		case 0:
-			min = 5;
+			dist = 5;
 			break;
 		case 1:
-			min = 10;
+			dist = 10;
 			break;
 		case 2:
-			min = 15;
+			dist = 15;
 			break;
 		case 3:
-			min = 20;
+			dist = 20;
 			break;
 		case 4:
-			min = 25;
+			dist = 25;
 			break;
 		case 5:
-			min = 30;
+			dist = 30;
 			break;
 		}
 
 		// Get aircraft point at that time
-		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
-		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
+		//int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
+		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetTrackHeading()));
 
 		// Draw leader
 		Pen pen(Colours::TargetOrange, 1);
@@ -239,27 +239,27 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		int val = toggleData->at(CMenuBar::BTN_HALO).Cycle;
 
 		// Leader minutes
-		int min = 0;
+		int dist = 0;
 
 		// Switch
 		switch (val) {
 		case 0:
-			min = 5;
+			dist = 5;
 			break;
 		case 1:
-			min = 10;
+			dist = 10;
 			break;
 		case 2:
-			min = 15;
+			dist = 15;
 			break;
 		case 3:
-			min = 20;
+			dist = 20;
 			break;
 		}
 
 		// Get aircraft point at that time
-		int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
-		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetTrackHeading()));
+		//int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
+		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetTrackHeading()));
 
 		// Get distance
 		int radius = CUtils::GetDistanceBetweenPoints(acPoint, haloPoint);
@@ -295,7 +295,7 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&whitePen);
 }
 
-POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {
+POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {	
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
 
@@ -317,215 +317,221 @@ POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, p
 
 	// Tag rectangle
 	CRect tagRect;
-	int tagOffsetX = tagPosition->second.x;
-	int tagOffsetY = tagPosition->second.y;
-	if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
-		if (tagPosition->first == true) {
-			// Detailed
+	try { // Temporary
+		int tagOffsetX = tagPosition->second.x;
+		int tagOffsetY = tagPosition->second.y;
+		if (tagOffsetX == 0 && tagOffsetY == 0) { // default point, we need to set it
+			if (tagPosition->first == true) {
+				// Detailed
 
-			if (direction) {
-				tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 66);
+				if (direction) {
+					tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 66);
+				}
+				else {
+					tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 10);
+				}
 			}
 			else {
-				tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 10);
+				// Not detailed
+				if (direction) {
+					tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 40);
+				}
+				else {
+					tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 5);
+				}
 			}
 		}
 		else {
-			// Not detailed
-			if (direction) {
-				tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 40);
+			if (tagPosition->first == true) {
+				// Detailed
+				tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 56);
 			}
 			else {
-				tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 5);
+				// Not Detailed
+				tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
 			}
 		}
-	}
-	else {
-		if (tagPosition->first == true) {
-			// Detailed
-			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 56);
+
+		// Pick text colour
+		COLORREF textColour = TargetBlue.ToCOLORREF(); // Default colour
+		if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+			// Critical conflict status, so flash callsign white and red
+			if (twoSecT >= 1.1) {
+				textColour = TextWhite.ToCOLORREF();
+			}
+			else {
+				textColour = CriticalRed.ToCOLORREF();
+			}
+		}
+		else if (status->ConflictStatus == CConflictStatus::WARNING) {
+			// Check jurisdiction
+			if (acFP.GetTrackingControllerIsMe()) {
+				textColour = WarningYellow.ToCOLORREF();
+			}
 		}
 		else {
-			// Not Detailed
-			tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
+			// Check jurisdiction
+			if (!acFP.GetTrackingControllerIsMe()) {
+				// Callsign blue, no critical conflict
+				textColour = TargetBlue.ToCOLORREF();
+
+				// Orange if observer
+				if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+					if (position.m_Longitude > -70 && position.m_Longitude < -5)
+						textColour = TargetOrange.ToCOLORREF();
+					if (position.m_Latitude < 80 && position.m_Longitude < -35)
+						textColour = TargetOrange.ToCOLORREF();
+				}
+			}
+			else {
+				// No conflict or only warning, tag orange
+				textColour = TargetOrange.ToCOLORREF();
+			}
 		}
-	}
-	
-	// Pick text colour
-	COLORREF textColour = TargetBlue.ToCOLORREF(); // Default colour
-	if (status->ConflictStatus == CConflictStatus::CRITICAL) {
-		// Critical conflict status, so flash callsign white and red
-		if (twoSecT >= 1.1) {
-			textColour = TextWhite.ToCOLORREF();
-		}
-		else {
-			textColour = CriticalRed.ToCOLORREF();
-		}
-	}
-	else if (status->ConflictStatus == CConflictStatus::WARNING) {
-		// Check jurisdiction
-		if (acFP.GetTrackingControllerIsMe()) {
-			textColour = WarningYellow.ToCOLORREF();
-		}
-	}
-	else {
+
+		// Pick font for callsign
+		FontSelector::SelectATCFont(16, dc);
+		dc->SetTextColor(textColour);
+		dc->SetTextAlign(TA_LEFT);
+		string text;
+
+		// Offsets
+		int offsetX = 0;
+		int offsetY = 0;
+
+		// Callsign
+		text = acFP.GetCallsign();
+		dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
+		offsetY += 15;
+
 		// Check jurisdiction
 		if (!acFP.GetTrackingControllerIsMe()) {
-			// Callsign blue, no critical conflict
 			textColour = TargetBlue.ToCOLORREF();
-
-			// Orange if observer
-			if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
-				if (position.m_Longitude > -70 && position.m_Longitude < -5)
-					textColour = TargetOrange.ToCOLORREF();
-				if (position.m_Latitude < 80 && position.m_Longitude < -35)
-					textColour = TargetOrange.ToCOLORREF();
-			}
 		}
 		else {
-			// No conflict or only warning, tag orange
 			textColour = TargetOrange.ToCOLORREF();
 		}
-	}
 
-	// Pick font for callsign
-	FontSelector::SelectATCFont(16, dc);
-	dc->SetTextColor(textColour);
-	dc->SetTextAlign(TA_LEFT);
-	string text;
+		// Conflict
+		if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
+			// Critical conflict status, so turn tag red
+			textColour = CriticalRed.ToCOLORREF();
+		}
 
-	// Offsets
-	int offsetX = 0;
-	int offsetY = 0;
+		// Handoff
+		if (isHandoffToMe) {
+			textColour = TextWhite.ToCOLORREF();
+		}
 
-	// Callsign
-	text = acFP.GetCallsign();
-	dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
-	offsetY += 15;
-
-	// Check jurisdiction
-	if (!acFP.GetTrackingControllerIsMe()) {
-		textColour = TargetBlue.ToCOLORREF();
-	}
-	else {
-		textColour = TargetOrange.ToCOLORREF();
-	}
-
-	// Conflict
-	if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
-		// Critical conflict status, so turn tag red
-		textColour = CriticalRed.ToCOLORREF();
-	}
-	
-	// Handoff
-	if (isHandoffToMe) {
-		textColour = TextWhite.ToCOLORREF();
-	}
-
-	// Orange if observer
-	if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
-		if (position.m_Longitude > -70 && position.m_Longitude < -5)
-			textColour = TargetOrange.ToCOLORREF();
-		if (position.m_Latitude < 80 && position.m_Longitude < -35)
-			textColour = TargetOrange.ToCOLORREF();
-	}
-	FontSelector::SelectMonoFont(12, dc);
-	dc->SetTextColor(textColour);
-	text = to_string(target->GetPosition().GetFlightLevel() / 100);
-	dc->TextOutA(tagRect.left, tagRect.top + offsetY, text.c_str());
-	offsetX += 50;
-
-	// Mach
-	int gs = target->GetGS();
-	if (atoi(text.c_str()) > 460) {
-		text = "M" + to_string(CUtils::GetMach(gs, 573));
-	}
-	else {
-		text = "M" + to_string(acFP.GetFlightPlanData().PerformanceGetMach(target->GetPosition().GetPressureAltitude(), target->GetVerticalSpeed()));
-	}
-	dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
-	offsetX = 0;
-
-	// Handoff initiated
-	if (isHandoffToMe) {
-		offsetY += 15;
-		text = "H/O";
-		dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx - 10, tagRect.top + offsetY, text.c_str());
-		offsetY += 15;
-	}
-	else {
-		offsetY += 30;
-	}
-
-	// Are they equipped?
-	if (!fp.IsEquipped) {
-		// Offset
-		offsetY -= 15;
-		text = "*";
-		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
-		offsetY += 15;
-	}
-		
-	if (tagPosition->first == true) {
-		// Aircraft type
-		text = acFP.GetFlightPlanData().GetAircraftFPType();
-		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+		// Orange if observer
+		if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+			if (position.m_Longitude > -70 && position.m_Longitude < -5)
+				textColour = TargetOrange.ToCOLORREF();
+			if (position.m_Latitude < 80 && position.m_Longitude < -35)
+				textColour = TargetOrange.ToCOLORREF();
+		}
+		FontSelector::SelectMonoFont(12, dc);
+		dc->SetTextColor(textColour);
+		text = to_string(target->GetPosition().GetFlightLevel() / 100);
+		dc->TextOutA(tagRect.left, tagRect.top + offsetY, text.c_str());
 		offsetX += 50;
 
-		// Destination
-		text = acFP.GetFlightPlanData().GetDestination();
-		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
-	}
-
-	/// Tag line
-	CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
-
-	// Pen
-	CPen pen(PS_SOLID, 1, textColour);
-	dc->SelectObject(pen);
-	int tagMiddle = tagRect.left + ((tagRect.right - tagRect.left) / 2);
-
-	// Dog leg
-	if ((tagRect.left + txtExtent.cx + 5) < acPoint.x) {
-		dc->MoveTo({ tagRect.left + txtExtent.cx + 2, tagRect.top + 8 });
-		if ((tagRect.right - (tagRect.right - acPoint.x)) > (tagRect.left + txtExtent.cx + 5)) {
-			if ((tagRect.right - (tagRect.right - acPoint.x)) < tagRect.right + 5) {
-				dc->LineTo({ tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 8 });
-			}
-			else {
-				dc->LineTo({ tagRect.right + 5, tagRect.top + 8 });
-			}
-			dc->LineTo({ acPoint.x, acPoint.y });
-		}
-	}
-	else { // Line to target
-		dc->MoveTo({ tagRect.left - 2, tagRect.top + 8 });
-
-
-		if (tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2) > tagRect.left - 10) {
-			dc->LineTo({ tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2), tagRect.top + 8 });
+		// Mach
+		int gs = target->GetGS();
+		if (atoi(text.c_str()) > 460) {
+			text = "M" + to_string(CUtils::GetMach(gs, 573));
 		}
 		else {
-			dc->LineTo({ tagRect.left - 10, tagRect.top + 8 });
+			text = "M" + to_string(acFP.GetFlightPlanData().PerformanceGetMach(target->GetPosition().GetPressureAltitude(), target->GetVerticalSpeed()));
 		}
-		dc->LineTo(acPoint);
+		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+		offsetX = 0;
+
+		// Handoff initiated
+		if (isHandoffToMe) {
+			offsetY += 15;
+			text = "H/O";
+			dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx - 10, tagRect.top + offsetY, text.c_str());
+			offsetY += 15;
+		}
+		else {
+			offsetY += 30;
+		}
+
+		// Are they equipped?
+		if (!fp.IsEquipped) {
+			// Offset
+			offsetY -= 15;
+			text = "*";
+			dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+			offsetY += 15;
+		}
+
+		if (tagPosition->first == true) {
+			// Aircraft type
+			text = acFP.GetFlightPlanData().GetAircraftFPType();
+			dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+			offsetX += 50;
+
+			// Destination
+			text = acFP.GetFlightPlanData().GetDestination();
+			dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+		}
+
+		/// Tag line
+		CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
+
+		// Pen
+		CPen pen(PS_SOLID, 1, textColour);
+		dc->SelectObject(pen);
+		int tagMiddle = tagRect.left + ((tagRect.right - tagRect.left) / 2);
+
+		// Dog leg
+		if ((tagRect.left + txtExtent.cx + 5) < acPoint.x) {
+			dc->MoveTo({ tagRect.left + txtExtent.cx + 2, tagRect.top + 8 });
+			if ((tagRect.right - (tagRect.right - acPoint.x)) > (tagRect.left + txtExtent.cx + 5)) {
+				if ((tagRect.right - (tagRect.right - acPoint.x)) < tagRect.right + 5) {
+					dc->LineTo({ tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 8 });
+				}
+				else {
+					dc->LineTo({ tagRect.right + 5, tagRect.top + 8 });
+				}
+				dc->LineTo({ acPoint.x, acPoint.y });
+			}
+		}
+		else { // Line to target
+			dc->MoveTo({ tagRect.left - 2, tagRect.top + 8 });
+
+
+			if (tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2) > tagRect.left - 10) {
+				dc->LineTo({ tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2), tagRect.top + 8 });
+			}
+			else {
+				dc->LineTo({ tagRect.left - 10, tagRect.top + 8 });
+			}
+			dc->LineTo(acPoint);
+		}
+
+		// Create screen object for tag
+		screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
+
+		// Now create screen object for callsign
+		CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(acFP.GetCallsign()).cx, tagRect.top + dc->GetTextExtent(acFP.GetCallsign()).cy);
+		screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, "Callsign clicked");
+
+		// Restore context
+		dc->RestoreDC(sDC);
+
+		// Clean up
+		DeleteObject(pen);
+		DeleteObject(&textColour);
+
+		return { tagRect.left, tagRect.top };
 	}
-
-	// Create screen object for tag
-	screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
-
-	// Now create screen object for callsign
-	CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(acFP.GetCallsign()).cx, tagRect.top + dc->GetTextExtent(acFP.GetCallsign()).cy);
-	screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, "Callsign clicked");
-
-	// Restore context
-	dc->RestoreDC(sDC);
-
-	// Clean up
-	DeleteObject(pen);
-	DeleteObject(&textColour);
-
-	return { tagRect.left, tagRect.top };
+	catch (exception & e) {
+		screen->GetPlugIn()->DisplayUserMessage("vNAAATS", "Error", string(string(e.what())).c_str(), true, true, true, true, true);
+		return { tagRect.left, tagRect.top };
+	}
 }
 
 void CAcTargets::RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsign, POINT tagPosition) {

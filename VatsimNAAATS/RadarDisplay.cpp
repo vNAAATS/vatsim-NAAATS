@@ -669,7 +669,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	}
 
 	// Move tag
-	if (ObjectType == SCREEN_TAG) {
+	if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
 		auto kv = tagStatuses.find(sObjectId);
 		POINT acPosPix = ConvertCoordFromPositionToPixel(GetPlugIn()->RadarTargetSelect(sObjectId).GetPosition().GetPosition());
 		kv->second.second = { Area.left - acPosPix.x, Area.top - acPosPix.y };

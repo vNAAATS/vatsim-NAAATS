@@ -409,7 +409,7 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 						COverlays::CurrentType = COverlayType::TCKS_ALL;
 						break;
 					case 801: // TCKS_ACTV
-						//COverlays::CurrentType = COverlayType::TCKS_ACTV;
+						COverlays::CurrentType = COverlayType::TCKS_ACTV;
 						break;
 					case 802: // TCKS_EAST
 						COverlays::CurrentType = COverlayType::TCKS_EAST;

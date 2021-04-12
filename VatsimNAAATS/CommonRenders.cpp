@@ -334,7 +334,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	dc->RestoreDC(sDC);
 }
 
-void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type, CMenuBar* menubar) {
+void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType type, CMenuBar* menubar) {
 	// Save context
 	int iDC = dc->SaveDC();
 
@@ -352,16 +352,16 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 	// Loop tracks
 	for (auto kv : CRoutesHelper::CurrentTracks) {
 		// Show eastbound/eastbound only if that type is selected
-		if (*type == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
+		if (type == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
 			continue;
 		}
-		else if (*type == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
+		else if (type == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
 			continue;
 		}
 		
 
 		// Show selected overlays
-		if (*type == COverlayType::TCKS_SEL) {
+		if (type == COverlayType::TCKS_SEL) {
 			vector<string> tracks;
 			menubar->GetSelectedTracks(tracks);
 			bool show = false;
