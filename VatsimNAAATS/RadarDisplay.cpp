@@ -96,13 +96,11 @@ void CRadarDisplay::PopulateProgramData() {
 	FontSelector::InitialiseFonts();
 
 	// Start cursor update loop
-	CCursorPos* position = new CCursorPos();
-	position->appCursorPosition = &appCursorPosition;
-	position->appCursorButton = appCursorButton;
-	_beginthread(CursorPositionUpdater, 0, (void*) position); // You cast data to void, this is called 'polymorphism' and it allows you to pass *any* data structure through a generic argument
+	appCursor->screen = this;
+	_beginthread(CursorStateUpdater, 0, (void*) appCursor); // You cast data to void, this is called 'polymorphism' and it allows you to pass *any* data structure through a generic argument
 }
 
-// On radar screen refresh (occurs about once a second)
+// On radar screen refresh (modified to occur 4 times a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	// Create device context
@@ -111,10 +109,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 	// Graphics object
 	Graphics g(hDC);
-
-	// Make radar screen one massive object
-	//CRect radarBounds = this->GetRadarArea();
-	//this->AddScreenObject(RADAR_SCREEN, "", radarBounds, false, "Radar Screen Clicked");
 
 	// 5 second timer
 	double fiveSecT = (double)(clock() - fiveSecondTimer) / ((double)CLOCKS_PER_SEC);
@@ -246,14 +240,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	RadarArea.bottom = GetChatArea().bottom;
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
-		// Write cursor position
+		/// Write current lat lon on screen
 		int sDC = dc.SaveDC();
+		// Select font
 		FontSelector::SelectMonoFont(12, &dc);
 		dc.SetTextColor(TextWhite.ToCOLORREF());
 		dc.SetTextAlign(TA_LEFT);
+		// Get radar area and lat lon
 		CRect radarBounds = this->GetRadarArea();
-		dc.TextOutA(radarBounds.left + 5, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 25, string("Cursor: " + to_string(appCursorPosition.x) + "," + to_string(appCursorPosition.y)).c_str());
-		dc.TextOutA(radarBounds.left + 5, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 10, string("Button: " + string(appCursorButton)).c_str());
+		CPosition cursorLatLon = this->ConvertCoordFromPixelToPosition(appCursor->position);
+		dc.TextOutA(radarBounds.right - 185, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 2, 
+			CUtils::GetLatLonString(&cursorLatLon).c_str());
 		dc.RestoreDC(sDC);
 
 		// Draw overlays if enabled
@@ -1121,7 +1118,8 @@ void CRadarDisplay::OnAsrContentToBeSaved(void)
 	CUtils::GridEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_GRID) ? true : false;
 	CUtils::OverlayEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS) ? true : false;
 	CUtils::QckLookEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) ? true : false; // TODO: Change this to Ext
-
+	
+	// Save
 	CUtils::SavePluginData(this);
 }
 
@@ -1137,29 +1135,56 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 	PopulateProgramData();
 }
 
-void CRadarDisplay::CursorPositionUpdater(void* args) {
+void CRadarDisplay::CursorStateUpdater(void* args) {
 	// Pointer to cursor
-	CCursorPos* data = (CCursorPos*)args;
+	CAppCursor* cursor = (CAppCursor*)args;
+
 	// Timer
 	clock_t hundredmsTimer = clock();
-	// Infinite loop, we want this to persist until the program is killed
+	clock_t quarterSecTimer = clock();
+	
+	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
+	HANDLE hnd = CUtils::GetESProcess();
+	DWORD activeCode;
+	GetExitCodeProcess(hnd, &activeCode);
 	while (1) {
-		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.05) { // Greater than 50ms
+		// Check if the app is still active
+		if (cursor->isESClosed || activeCode != STILL_ACTIVE)
+			break;// Break if not
+		// Ok so the app is still active let's get the cursor data
+		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.1) { // Greater than or equal to 50ms
 			// Get cursor position
-			GetCursorPos(data->appCursorPosition);
+			GetCursorPos(&cursor->position);
+
+			// Keep the coordinates down to one screen's worth
+			if (cursor->position.x > 3840) // Window is on 3rd screen
+				cursor->position.x -= 3840;
+			else if (cursor->position.x > 1920) // Window is on 2nd screen
+				cursor->position.x -= 1920;
 
 			// Get key presses
 			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
-			bool rightBtnPressed = (GetAsyncKeyState(VK_RIGHT) & (1 << 15)) != 0;
+			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
 
 			if (leftBtnPressed)
-				data->appCursorButton = "2";
+				cursor->button = 2;
 			else if (rightBtnPressed)
-				data->appCursorButton = "1";
+				cursor->button = 1;
 			else
-				data->appCursorButton = "0";
+				cursor->button = 0;
+
+			// Reset clock
+			hundredmsTimer = clock();
 		}
-	}
+		// Call refresh sequence more often
+		if (((double)(clock() - quarterSecTimer) / ((double)CLOCKS_PER_SEC)) >= 0.25) { // Greater than or equal to 200ms
+			// Refresh the radar screen
+			cursor->screen->RequestRefresh();
+
+			// Reset clock
+			quarterSecTimer = clock();
+		}
+ 	}
 
 	// Clean up and return
 	delete args;

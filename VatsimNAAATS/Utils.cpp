@@ -1103,3 +1103,64 @@ POINT CUtils::GetIntersectionFromPointBearing(POINT position1, POINT position2, 
 	return POINT({ newX, newY });
 }
 
+HANDLE CUtils::GetESProcess()
+{
+	CString strProcessName = "EuroScope.exe";
+
+	DWORD aProcesses[1024], cbNeeded, cProcesses;
+	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+		return NULL;
+
+	// Calculate how many process identifiers were returned.
+	cProcesses = cbNeeded / sizeof(DWORD);
+
+	// Print the name and process identifier for each process.
+	for (unsigned int i = 0; i < cProcesses; i++)
+	{
+		DWORD dwProcessID = aProcesses[i];
+		// Get a handle to the process
+		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcessID);
+
+		// Get the process name
+		TCHAR szEachProcessName[MAX_PATH];
+		if (NULL != hProcess)
+		{
+			HMODULE hMod;
+			DWORD cbNeeded;
+
+			// Iterate
+			if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded))
+			{
+				GetModuleBaseName(hProcess, hMod, szEachProcessName, sizeof(szEachProcessName) / sizeof(TCHAR));
+			}
+		}
+
+		// Return
+		if (strProcessName.CompareNoCase(szEachProcessName) == 0)
+			return hProcess;
+
+		CloseHandle(hProcess);
+	}
+
+	return NULL;
+}
+
+string CUtils::GetLatLonString(CPosition* pos) {
+	// Result string
+	string res;
+
+	// Parse latitude
+	if (pos->m_Latitude >= 0)
+		res += "N" + to_string(pos->m_Latitude);
+	else
+		res += "S" + to_string(abs(pos->m_Latitude));
+
+	// Parse longitude
+	if (pos->m_Longitude > 0)
+		res += " E" + to_string(pos->m_Longitude);
+	else
+		res += " W" + to_string(abs(pos->m_Longitude));
+
+	// Return result
+	return res;
+}

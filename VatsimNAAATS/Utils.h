@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include <psapi.h>
 #include "Structures.h"
 
 using namespace std;
@@ -117,6 +118,12 @@ class CUtils { // TODO: refactor into namespace
 
 		// Get intersection of two vectors
 		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
+
+		// Get parsed lat lon string (i.e. with N/S or E/W)
+		static string GetLatLonString(CPosition* pos);
+
+		// So we can stop running threads
+		static HANDLE GetESProcess();
 
 		// We need this struct for flight plan threading
 		struct CAsyncData {
