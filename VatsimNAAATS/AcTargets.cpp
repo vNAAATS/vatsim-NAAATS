@@ -21,7 +21,7 @@ void CAcTargets::Initialise() {
 	ButtonStates["Refuse"] = false;
 }
 
-void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
+void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status) {
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
 
@@ -35,7 +35,8 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	CRadarTargetMode targetMode = CUtils::GetTargetMode(target->GetPosition().GetRadarFlags());
 
 	// Flight plan
-	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
+	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(cs.c_str());
+	CAircraftFlightPlan* acFP = CDataHandler::GetFlightData(cs);
 
 	// Check if there is an active handoff to client 
 	bool isHandoffToMe = string(fp.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
@@ -55,6 +56,8 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	Pen bluePen(&blueBrush, 1.5);
 	Pen orangePen(&orangeBrush, 1.5);
 	Pen whitePen(&whiteBrush, 1.5);
+	Pen redPen(&redBrush, 1.5);
+	Pen yellowPen(&yellowBrush, 1.5);
 	GraphicsContainer gContainer;
 
 	// Begin drawing
@@ -108,34 +111,68 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Anti aliasing
 	g->SetSmoothingMode(SmoothingModeAntiAlias);
 
+	// TODO: Abstract this from this method
 	// We change the target based on state
-	if (targetMode != CRadarTargetMode::ADS_B && screen->GetPlugIn()->ControllerMyself().IsController()) {
-		// Set middle
-		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
-		// Change targets depending on mode
-		if (targetMode == CRadarTargetMode::PRIMARY || targetMode == CRadarTargetMode::SECONDARY_S) {	
-			// Make asterisk
-			Point points[12] = {
-				Point(-5, 0),
-				Point(5, 0),
-				Point(0, 0),
-				Point(0, 5),
-				Point(0, -5),
-				Point(0, 0),
-				Point(-5, -5),
-				Point(5, 5),
-				Point(0,0),
-				Point(-5, 5),
-				Point(5, -5),
-				Point(0, 0)
+	// Set middle
+	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
+	// Change targets depending on mode
+	if (targetMode == CRadarTargetMode::ADS_B) {	
+		if (acFP->IsCleared) {
+			// Rotate the graphics object and set the middle to the aircraft position
+			g->RotateTransform(target->GetPosition().GetReportedHeadingTrueNorth());
+
+			// This is the aircraft icon
+			Point points[19] = {
+				Point(0,-8),
+				Point(-1,-7),
+				Point(-1,-2),
+				Point(-8,3),
+				Point(-8,4),
+				Point(-1,2),
+				Point(-1,7),
+				Point(-4,9),
+				Point(-4,10),
+				Point(0,9),
+				Point(4,10),
+				Point(4,9),
+				Point(1,7),
+				Point(1,2),
+				Point(8,4),
+				Point(8,3),
+				Point(1,-2),
+				Point(1,-7),
+				Point(0,-8)
 			};
 
-			if (isHandoffToMe)
-				g->DrawPolygon(&whitePen, points, 12);
-			else
-				g->DrawPolygon(&bluePen, points, 12);
-			g->EndContainer(gContainer);
+			// Fill the polygon with the appropriate colour and finish
+			if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+				// Critical conflict status, so flash white and red every second
+				if (twoSecT >= 1.1) {
+					g->FillPolygon(&whiteBrush, points, 19);
+				}
+				else {
+					g->FillPolygon(&redBrush, points, 19);
+				}
+			}
+			else if (status->ConflictStatus == CConflictStatus::WARNING) {
+				// Warning status, turn target yellow
+				g->FillPolygon(&yellowBrush, points, 19);
+			}
+			else {
+				// No conflict, draw orange if tracked and blue if not
+				if (isHandoffToMe) {
+					g->FillPolygon(&whiteBrush, points, 19);
+				}
+				else {
+					if (fp.GetTrackingControllerIsMe())
+						g->FillPolygon(&orangeBrush, points, 19);
+					else
+						g->FillPolygon(&blueBrush, points, 19);
+				}
+			}
 
+			// Cleanup
+			g->EndContainer(gContainer);
 			DeleteObject(&points);
 		}
 		else {
@@ -147,90 +184,99 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 				Point(0, -6)
 			};
 
-			if (isHandoffToMe) {
-				g->DrawPolygon(&whitePen, diamond, 4);
-				g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
+			// Draw the polygon with the appropriate colour and finish
+			if (status->ConflictStatus == CConflictStatus::CRITICAL) {
+				// Critical conflict status, so flash white and red every second
+				if (twoSecT >= 1.1) {
+					g->DrawPolygon(&whitePen, diamond, 4);
+					g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
+				}
+				else {
+					g->DrawPolygon(&redPen, diamond, 4);
+					g->DrawLine(&redPen, Point(0, 6), Point(0, -6));
+				}
+			}
+			else if (status->ConflictStatus == CConflictStatus::WARNING) {
+				// Warning status, turn target yellow
+				g->DrawPolygon(&yellowPen, diamond, 4);
+				g->DrawLine(&yellowPen, Point(0, 6), Point(0, -6));
 			}
 			else {
-				if (fp.GetTrackingControllerIsMe()) {
-					g->DrawPolygon(&orangePen, diamond, 4);
-					g->DrawLine(&orangePen, Point(0, 6), Point(0, -6));
-				}					
-				else {
-					g->DrawPolygon(&bluePen, diamond, 4);
-					g->DrawLine(&bluePen, Point(0, 6), Point(0, -6));
+				// No conflict, draw orange if tracked and blue if not
+				if (isHandoffToMe) {
+					g->DrawPolygon(&whitePen, diamond, 4);
+					g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
 				}
-					
+				else {
+					if (fp.GetTrackingControllerIsMe()) {
+						g->DrawPolygon(&orangePen, diamond, 4);
+						g->DrawLine(&orangePen, Point(0, 6), Point(0, -6));
+					}
+					else {
+						g->DrawPolygon(&bluePen, diamond, 4);
+						g->DrawLine(&bluePen, Point(0, 6), Point(0, -6));
+					}
+				}
 			}
 
+			// Cleanup
 			g->EndContainer(gContainer);
-
 			DeleteObject(&diamond);
 		}
 	}
 	else {
-		// Rotate the graphics object and set the middle to the aircraft position
-		g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
-		g->RotateTransform(target->GetPosition().GetReportedHeadingTrueNorth());
-
-		// This is the aircraft icon
-		Point points[19] = {
-			Point(0,-8),
-			Point(-1,-7),
-			Point(-1,-2),
-			Point(-8,3),
-			Point(-8,4),
-			Point(-1,2),
-			Point(-1,7),
-			Point(-4,9),
-			Point(-4,10),
-			Point(0,9),
-			Point(4,10),
-			Point(4,9),
-			Point(1,7),
-			Point(1,2),
-			Point(8,4),
-			Point(8,3),
-			Point(1,-2),
-			Point(1,-7),
-			Point(0,-8)
+		// Make asterisk
+		Point points[12] = {
+			Point(-5, 0),
+			Point(5, 0),
+			Point(0, 0),
+			Point(0, 5),
+			Point(0, -5),
+			Point(0, 0),
+			Point(-5, -5),
+			Point(5, 5),
+			Point(0,0),
+			Point(-5, 5),
+			Point(5, -5),
+			Point(0, 0)
 		};
 
-		// Fill the polygon with the appropriate colour and finish
+		// Draw the polygon with the appropriate colour and finish
 		if (status->ConflictStatus == CConflictStatus::CRITICAL) {
 			// Critical conflict status, so flash white and red every second
 			if (twoSecT >= 1.1) {
-				g->FillPolygon(&whiteBrush, points, 19);
-				g->EndContainer(gContainer);
+				g->DrawPolygon(&whitePen, points, 12);
 			}
 			else {
-				g->FillPolygon(&redBrush, points, 19);
-				g->EndContainer(gContainer);
+				g->DrawPolygon(&redPen, points, 12);
 			}
 		}
 		else if (status->ConflictStatus == CConflictStatus::WARNING) {
 			// Warning status, turn target yellow
-			g->FillPolygon(&yellowBrush, points, 19);
-			g->EndContainer(gContainer);
+			g->DrawPolygon(&yellowPen, points, 12);
 		}
 		else {
 			// No conflict, draw orange if tracked and blue if not
 			if (isHandoffToMe) {
-				g->FillPolygon(&whiteBrush, points, 19);
-			}				
-			else {
-				if (fp.GetTrackingControllerIsMe())
-					g->FillPolygon(&orangeBrush, points, 19);
-				else
-					g->FillPolygon(&blueBrush, points, 19);
+				g->DrawPolygon(&whitePen, points, 12);
+				g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
 			}
-				
-			g->EndContainer(gContainer);
+			else {
+				if (fp.GetTrackingControllerIsMe()) {
+					g->DrawPolygon(&orangePen, points, 12);
+					g->DrawLine(&orangePen, Point(0, 6), Point(0, -6));
+				}
+				else {
+					g->DrawPolygon(&bluePen, points, 12);
+					g->DrawLine(&bluePen, Point(0, 6), Point(0, -6));
+				}
+			}
 		}
 
+		// Cleanup
+		g->EndContainer(gContainer);
 		DeleteObject(&points);
 	}
-	
 
 	// Check if leader lines are selected
 	if (ptl) {
@@ -340,9 +386,11 @@ void CAcTargets::DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&bluePen);
 	DeleteObject(&whitePen);
 	DeleteObject(&orangePen);
+	DeleteObject(&redPen);
+	DeleteObject(&yellowPen);
 }
 
-POINT CAcTargets::DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {	
+POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {	
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
 

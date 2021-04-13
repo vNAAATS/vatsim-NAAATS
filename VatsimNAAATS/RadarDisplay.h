@@ -59,8 +59,9 @@ class CRadarDisplay : public CRadarScreen
 			CRadarScreen* screen;
 			POINT position;
 			int button;
-			bool isDoubleClick; // use later
+			bool isDoubleClick = false; // use later
 			bool isESClosed = false;
+			bool isRulerOnScreen = false;
 		};
 		
 		CAppCursor* appCursor = new CAppCursor(); // Constantly being updated

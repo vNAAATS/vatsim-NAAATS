@@ -518,6 +518,16 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 			}
 		}
 
+		// Check validity of aircraft and delete if 1 aircraft becomes irrelevant
+		if (alreadyExist) {
+			// Check relevance
+			if (!CUtils::IsAircraftRelevant(screen, target)) {
+				// Not relevant so remove from map and return
+				CurrentSTCA.erase(idx);
+				return;
+			}
+		}
+
 		// Now we switch the status
 		switch (status.ConflictStatus) {
 			case CConflictStatus::CRITICAL:

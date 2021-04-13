@@ -97,7 +97,7 @@ void CRadarDisplay::PopulateProgramData() {
 
 	// Start cursor update loop
 	appCursor->screen = this;
-	_beginthread(CursorStateUpdater, 0, (void*) appCursor); // You cast data to void, this is called 'polymorphism' and it allows you to pass *any* data structure through a generic argument
+	_beginthread(CursorStateUpdater, 0, (void*) appCursor);
 }
 
 // On radar screen refresh (modified to occur 4 times a second)
@@ -481,8 +481,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
-					POINT tagPosition = CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+					CAcTargets::RenderTarget(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
+					POINT tagPosition = CAcTargets::RenderTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
 
 					// If tracking dialog open
 					if (CAcTargets::OpenTrackingDialog != "" && CAcTargets::OpenTrackingDialog == ac.GetCallsign()) {
@@ -492,7 +492,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 				else {
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
+					CAcTargets::RenderTarget(&g, &dc, this, &ac, false, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
 				}
 			}
 			else { // If not there, and the aircraft was on the screen, then delete

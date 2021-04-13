@@ -21,16 +21,22 @@ class CAcTargets
 		static void Initialise();
 
 		// Render the airplane icon
-		static void DrawAirplane(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status);
+		static void RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status);
 
 		// Render tags
-		static POINT DrawTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status);
+		static POINT RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status);
 
 		// Coordination tag item
 		static void RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsign, POINT tagPosition);
 
 		// Draw selection halo
 		static void RenderSelectionHalo(Graphics* g, CRadarScreen* screen, CRadarTarget* target);
+
+		/// DIFFERENT TARGETS
+		static void RenderADSBNoClrc(Graphics* g); // Diamond with a line through middle
+		static void RenderRadarCoverage(Graphics* g); // Asterisk
+		static void RenderClearanceWarning(Graphics* g); // Triangle
+		static void RenderADSBCleared(Graphics* g); // Aeroplane icon
 
 		// Aircraft search
 		static string SearchedAircraft;
