@@ -43,6 +43,7 @@ class CRadarDisplay : public CRadarScreen
 		void OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button);
 		void OnAsrContentToBeSaved(void);
 		void OnAsrContentLoaded(bool Loaded);
+		static void CursorPositionUpdater(void* args); // Asynchronous loop
 
 		inline void OnAsrContentToBeClosed(void)
 		{
@@ -52,7 +53,9 @@ class CRadarDisplay : public CRadarScreen
 		}
 
 	private:
-		POINT mousePointer;
+		POINT appCursorPosition; // Constantly being updated
+		const char* appCursorButton = ""; // Constantly being updated
+		POINT mousePointer; // Updated on screen object actions only
 		clock_t fiveSecondTimer;
 		clock_t tenSecondTimer;
 		bool aselDetailed;	
@@ -71,5 +74,12 @@ class CRadarDisplay : public CRadarScreen
 		CFlightPlanWindow* fltPlnWindow = nullptr;
 		CMessageWindow* msgWindow = nullptr;
 		CNotePad* npWindow = nullptr;
+
+		// Cursor position structure for async
+		struct CCursorPos {
+			CRadarScreen* screen;
+			POINT* appCursorPosition;
+			const char* appCursorButton;
+		};
 };
 

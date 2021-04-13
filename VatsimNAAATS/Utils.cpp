@@ -809,12 +809,13 @@ CRadarTargetMode CUtils::GetTargetMode(int radarFlags) {
 			return CRadarTargetMode::ADS_B;
 			break;
 		case 1:
+		case 7:
 			return CRadarTargetMode::PRIMARY;
 			break;
 		case 3:
+		case 2:
 			return CRadarTargetMode::SECONDARY_C;
 			break;
-		case 7:
 		case 6:
 			return CRadarTargetMode::SECONDARY_S;
 			break;

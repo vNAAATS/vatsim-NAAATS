@@ -94,6 +94,12 @@ void CRadarDisplay::PopulateProgramData() {
 
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
+
+	// Start cursor update loop
+	CCursorPos* position = new CCursorPos();
+	position->appCursorPosition = &appCursorPosition;
+	position->appCursorButton = appCursorButton;
+	_beginthread(CursorPositionUpdater, 0, (void*) position); // You cast data to void, this is called 'polymorphism' and it allows you to pass *any* data structure through a generic argument
 }
 
 // On radar screen refresh (occurs about once a second)
@@ -240,6 +246,16 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	RadarArea.bottom = GetChatArea().bottom;
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
+		// Write cursor position
+		int sDC = dc.SaveDC();
+		FontSelector::SelectMonoFont(12, &dc);
+		dc.SetTextColor(TextWhite.ToCOLORREF());
+		dc.SetTextAlign(TA_LEFT);
+		CRect radarBounds = this->GetRadarArea();
+		dc.TextOutA(radarBounds.left + 5, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 25, string("Cursor: " + to_string(appCursorPosition.x) + "," + to_string(appCursorPosition.y)).c_str());
+		dc.TextOutA(radarBounds.left + 5, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 10, string("Button: " + string(appCursorButton)).c_str());
+		dc.RestoreDC(sDC);
+
 		// Draw overlays if enabled
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
 			COverlays::ShowCurrentOverlay(&dc, &g, this, menuBar);
@@ -1119,4 +1135,33 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 
 	// Populate it
 	PopulateProgramData();
+}
+
+void CRadarDisplay::CursorPositionUpdater(void* args) {
+	// Pointer to cursor
+	CCursorPos* data = (CCursorPos*)args;
+	// Timer
+	clock_t hundredmsTimer = clock();
+	// Infinite loop, we want this to persist until the program is killed
+	while (1) {
+		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.05) { // Greater than 50ms
+			// Get cursor position
+			GetCursorPos(data->appCursorPosition);
+
+			// Get key presses
+			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
+			bool rightBtnPressed = (GetAsyncKeyState(VK_RIGHT) & (1 << 15)) != 0;
+
+			if (leftBtnPressed)
+				data->appCursorButton = "2";
+			else if (rightBtnPressed)
+				data->appCursorButton = "1";
+			else
+				data->appCursorButton = "0";
+		}
+	}
+
+	// Clean up and return
+	delete args;
+	return;
 }
