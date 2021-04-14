@@ -248,9 +248,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		dc.SetTextAlign(TA_LEFT);
 		// Get radar area and lat lon
 		CRect radarBounds = this->GetRadarArea();
-		CPosition cursorLatLon = this->ConvertCoordFromPixelToPosition(appCursor->position);
 		dc.TextOutA(radarBounds.right - 185, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 2, 
-			CUtils::GetLatLonString(&cursorLatLon).c_str());
+			CUtils::GetLatLonString(&appCursor->latLonPosition).c_str());
 		dc.RestoreDC(sDC);
 
 		// Draw overlays if enabled
@@ -283,6 +282,15 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					CAcTargets::RenderSelectionHalo(&g, this, &ac);
 				}
 			}
+			// If PSSR button not pressed
+			if (!menuBar->IsButtonPressed(CMenuBar::BTN_PSSR)) {
+				// Check their PSSR state to hide all non ADS-B aircraft
+				if (CUtils::GetTargetMode(ac.GetPosition().GetRadarFlags()) != CRadarTargetMode::ADS_B) {
+					// Skip
+					continue;
+				}
+			}
+
 			// Check their altitude, if they are outside the filter, skip them
 			if (altFiltEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
 				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
@@ -547,6 +555,15 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			}
 		}
 
+		// QDM draw
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_QDM)) {
+			// Check if first position is set
+			if (RulerPoint1.m_Latitude != 0.0 && RulerPoint1.m_Longitude) {
+				// Render
+				CCommonRenders::RenderQDM(&dc, &g, this, &RulerPoint1, &RulerPoint2, appCursor->position);
+			}
+		}
+
 		// Draw track info window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_TCKINFO)) {
 			trackWindow->RenderWindow(&dc, &g, this, menuBar);
@@ -767,9 +784,23 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 		else {
 			if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
+				// Increase refresh resolution for QDM
+				if (atoi(sObjectId) == CMenuBar::BTN_QDM) {
+					RefreshResolution = 0.05;
+				}
 				menuBar->ButtonPress(atoi(sObjectId), Button, this);
 			}
 			else {
+				// Disable all QDM if it is the QDM button
+				if (atoi(sObjectId) == CMenuBar::BTN_QDM) {
+					RulerPoint1.m_Latitude = 0.0;
+					RulerPoint1.m_Longitude = 0.0;
+					RulerPoint2.m_Latitude = 0.0;
+					RulerPoint2.m_Longitude = 0.0;
+
+					// Reset refresh resolution
+					RefreshResolution = 0.2;
+				}
 				menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
 			}
 		}
@@ -1142,7 +1173,7 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 	// Timer
 	clock_t hundredmsTimer = clock();
 	clock_t quarterSecTimer = clock();
-	
+
 	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
 	HANDLE hnd = CUtils::GetESProcess();
 	DWORD activeCode;
@@ -1151,10 +1182,14 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 		// Check if the app is still active
 		if (cursor->isESClosed || activeCode != STILL_ACTIVE)
 			break;// Break if not
+
 		// Ok so the app is still active let's get the cursor data
 		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.1) { // Greater than or equal to 50ms
-			// Get cursor position
-			GetCursorPos(&cursor->position);
+			// Get cursor position (only if previous cursor position is inside the radar area)
+			bool isCursorInsideRadarArea = false;
+			CRect radarArea = cursor->screen->GetRadarArea();
+			// Get the position
+			GetCursorPos(&cursor->position);				
 
 			// Keep the coordinates down to one screen's worth
 			if (cursor->position.x > 3840) // Window is on 3rd screen
@@ -1162,28 +1197,88 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 			else if (cursor->position.x > 1920) // Window is on 2nd screen
 				cursor->position.x -= 1920;
 
-			// Get key presses
+			// Check if cursor inside radar area
+			if (cursor->position.x > radarArea.left &&
+				cursor->position.x < radarArea.right &&
+				cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
+				cursor->position.y < radarArea.bottom) {
+				isCursorInsideRadarArea = true;
+			}
+
+			// Get lat lon
+			cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
+
+			// Get button presses
 			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
 			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
 
-			if (leftBtnPressed)
-				cursor->button = 2;
-			else if (rightBtnPressed)
-				cursor->button = 1;
-			else
+			// Check button presses
+			if ((!leftBtnPressed && !rightBtnPressed) || !isCursorInsideRadarArea) {
 				cursor->button = 0;
+			}
+
+			/// Events!
+			// On left click
+			if (leftBtnPressed && cursor->button == 0) {
+				// QDM button
+				if (cursor->screen->menuBar->IsButtonPressed(CMenuBar::BTN_QDM) && isCursorInsideRadarArea) {
+					bool pointSet = false;
+					// Activate QDM, first check if first ruler point already filled
+					if (cursor->screen->RulerPoint1.m_Latitude == 0.0 && cursor->screen->RulerPoint1.m_Longitude == 0.0) {
+						// It isn't filled so set it
+						cursor->screen->RulerPoint1.m_Latitude = cursor->latLonPosition.m_Latitude;
+						cursor->screen->RulerPoint1.m_Longitude = cursor->latLonPosition.m_Longitude;
+
+						// So that we don't accidently set the 2nd point at the same time
+						pointSet = true;
+					}
+					// Check the 2nd point
+					if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude == 0.0 && cursor->screen->RulerPoint2.m_Longitude == 0.0)) {
+						// It isn't filled so set it
+						cursor->screen->RulerPoint2.m_Latitude = cursor->latLonPosition.m_Latitude;
+						cursor->screen->RulerPoint2.m_Longitude = cursor->latLonPosition.m_Longitude;
+					}
+				}
+
+				// Set the button so the event doesn't fire again
+				cursor->button = 2;
+			}
+			// On right click
+			if (rightBtnPressed && cursor->button == 0) {
+
+				// Set the button so the event doesn't fire again
+				cursor->button = 1;
+			}
 
 			// Reset clock
 			hundredmsTimer = clock();
 		}
+
+		// Detect double click (probably don't need this and it doesn't work anyway)
+		/*if (cursor->singleClickTimer != 0) { // First check if the timer is active
+			if (((double)(clock() - cursor->singleClickTimer) / ((double)CLOCKS_PER_SEC)) <= 0.4) { // Check if timer still less than 0.4 seconds
+				// Now check the button state
+				if (cursor->button == 2 && !cursor->isDoubleClick) {
+					cursor->screen->GetPlugIn()->DisplayUserMessage("vNAAATS", "Info", string("Double click").c_str(), true, true, true, true, true);
+					cursor->isDoubleClick = true;
+				}				
+			}
+			else {
+				// Set timer to 0;
+				cursor->singleClickTimer = 0;
+				cursor->isDoubleClick = false;
+			}			
+		}*/
+		
 		// Call refresh sequence more often
-		if (((double)(clock() - quarterSecTimer) / ((double)CLOCKS_PER_SEC)) >= 0.25) { // Greater than or equal to 200ms
+		if (((double)(clock() - quarterSecTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) { // Greater than or equal to 200ms
 			// Refresh the radar screen
 			cursor->screen->RequestRefresh();
 
 			// Reset clock
 			quarterSecTimer = clock();
 		}
+		
  	}
 
 	// Clean up and return

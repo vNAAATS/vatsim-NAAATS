@@ -470,3 +470,33 @@ void CCommonRenders::RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	// Restore context
 	dc->RestoreDC(iDC);
 }
+
+void CCommonRenders::RenderQDM(CDC* dc, Graphics* g, CRadarScreen* screen, CPosition* position1, CPosition* position2, POINT cursorPosition) {
+	// Get raw screen coordinates
+	POINT rawPoint1(screen->ConvertCoordFromPositionToPixel(*position1));
+	POINT rawPoint2(screen->ConvertCoordFromPositionToPixel(*position2));
+
+	// Convert to Point objects
+	Point point1(rawPoint1.x, rawPoint1.y);
+	Point point2(rawPoint2.x, rawPoint2.y);
+
+	// Drawing tools
+	Pen pen(TextWhite, 2);
+	SolidBrush brush(TextWhite);
+
+	// Define the positions
+	Rect positionRect1(point1.X - 3, point1.Y - 3, 6, 6);
+	Rect positionRect2(point2.X - 3, point2.Y - 3, 6, 6);
+
+	// Fill number 1
+	g->FillEllipse(&brush, positionRect1);
+
+	// If number 2 defined fill it and draw line between, otherwise draw line to cursor position
+	if (position2->m_Latitude != 0.0 && position2->m_Longitude != 0.0) {
+		g->FillEllipse(&brush, positionRect2);
+		g->DrawLine(&pen, point1, point2);
+	}
+	else {
+		g->DrawLine(&pen, point1, Point(cursorPosition.x, cursorPosition.y));
+	}
+}

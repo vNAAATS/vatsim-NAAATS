@@ -30,6 +30,11 @@ class CRadarDisplay : public CRadarScreen
 		// Custom methods	
 		void PopulateProgramData();
 
+		// Public properties
+		CPosition RulerPoint1;
+		CPosition RulerPoint2;
+		double RefreshResolution = 0.2;
+
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
 		void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
@@ -56,14 +61,14 @@ class CRadarDisplay : public CRadarScreen
 	private:
 		// Cursor position structure for async
 		struct CAppCursor {
-			CRadarScreen* screen;
-			POINT position;
+			CRadarDisplay* screen;
+			POINT position; // Screen coordinates
+			CPosition latLonPosition; // Lat lon
 			int button;
-			bool isDoubleClick = false; // use later
-			bool isESClosed = false;
-			bool isRulerOnScreen = false;
+			clock_t singleClickTimer = 0; // activate on every single click to detect double click
+			bool isDoubleClick = false;
+			bool isESClosed = false;			
 		};
-		
 		CAppCursor* appCursor = new CAppCursor(); // Constantly being updated
 		POINT mousePointer; // Updated on screen object actions only
 		clock_t fiveSecondTimer;
