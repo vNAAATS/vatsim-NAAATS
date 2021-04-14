@@ -906,6 +906,12 @@ int CUtils::GetMach(int groundSpeed, int speedSound) {
 	return (int)result;
 }
 
+string CUtils::RoundDecimalPlaces(double num, int precision) {
+	std::stringstream ss;
+	ss << std::fixed << setprecision(precision) << num;
+	return ss.str();
+}
+
 string CUtils::PadWithZeros(int width, int number) {
 	std::stringstream ss;
 	ss << setfill('0') << setw(width) << number;
@@ -1145,21 +1151,54 @@ HANDLE CUtils::GetESProcess()
 	return NULL;
 }
 
-string CUtils::GetLatLonString(CPosition* pos) {
+string CUtils::GetLatLonString(CPosition* pos, bool space, int precision, bool showDecimal) { 
 	// Result string
 	string res;
 
 	// Parse latitude
-	if (pos->m_Latitude >= 0)
-		res += "N" + to_string(pos->m_Latitude);
-	else
-		res += "S" + to_string(abs(pos->m_Latitude));
+	if (pos->m_Latitude >= 0) {
+		if (showDecimal)
+			res += "N" + (precision == -1 ? to_string(pos->m_Latitude) : RoundDecimalPlaces(pos->m_Latitude, precision));
+		else
+			res += "N" + to_string((int)(pow(10, 2) * pos->m_Latitude));
+	}
+	else {
+		if (showDecimal)
+			res += "S" + (precision == -1 ? to_string(abs(pos->m_Latitude)) : RoundDecimalPlaces(abs(pos->m_Latitude), precision));
+		else
+			res += "S" + to_string((int)(pow(10, 2) * abs(pos->m_Latitude)));
+	}
 
 	// Parse longitude
-	if (pos->m_Longitude > 0)
-		res += " E" + to_string(pos->m_Longitude);
-	else
-		res += " W" + to_string(abs(pos->m_Longitude));
+	if (pos->m_Longitude > 0) {
+		if (space) {
+			if (showDecimal)
+				res += " E" + (precision == -1 ? to_string(pos->m_Longitude) : RoundDecimalPlaces(pos->m_Longitude, precision));
+			else
+				res += " E" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+		else {
+			if (showDecimal)
+				res += "E" + (precision == -1 ? to_string(pos->m_Longitude) : RoundDecimalPlaces(pos->m_Longitude, precision));
+			else
+				res += "E" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+	}		
+	else {
+		if (space) {
+			if (showDecimal)
+				res += " W" + (precision == -1 ? to_string(abs(pos->m_Longitude)) : RoundDecimalPlaces(abs(pos->m_Longitude), precision));
+			else
+				res += " W" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+		else {
+			if (showDecimal)
+				res += "W" + (precision == -1 ? to_string(abs(pos->m_Longitude)) : RoundDecimalPlaces(abs(pos->m_Longitude), precision));
+			else
+				res += "W" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+	}
+		
 
 	// Return result
 	return res;

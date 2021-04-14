@@ -13,6 +13,7 @@ namespace Colours {
 	const Color Disabled(164, 185, 215);
 	const Color Black(0, 0, 0);
 	const Color Grey(237, 237, 237);
+	const Color DarkGrey(182, 182, 182);
 	const Color TargetOrange(255, 128, 0);
 	const Color TargetBlue(130, 175, 192);
 	const Color LightGreen(81, 188, 161);

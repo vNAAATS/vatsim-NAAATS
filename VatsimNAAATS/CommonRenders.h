@@ -24,6 +24,6 @@ class CCommonRenders // Commonly rendered items, here for ease of access
 		// Screen actions
 		static void RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType type, CMenuBar* menubar);
 		static void RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen);
-		static void RenderQDM(CDC* dc, Graphics* g, CRadarScreen* screen, CPosition* position1, CPosition* position2, POINT cursorPosition);
+		static void RenderQDM(CDC* dc, Graphics* g, CRadarScreen* screen, CPosition* position1, CPosition* position2, POINT cursorPosition, CPosition* cursorLatlon);
 };
 

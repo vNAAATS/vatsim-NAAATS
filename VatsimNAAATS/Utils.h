@@ -110,6 +110,9 @@ class CUtils { // TODO: refactor into namespace
 		// Radians to degrees
 		static double ToDegrees(double radians);
 
+		// Round a double
+		static string RoundDecimalPlaces(double num, int precision);
+
 		// General solution to get the angle between two intersecting paths
 		static double GetPathAngle(double hdg1, double hdg2);
 
@@ -120,7 +123,7 @@ class CUtils { // TODO: refactor into namespace
 		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
 
 		// Get parsed lat lon string (i.e. with N/S or E/W)
-		static string GetLatLonString(CPosition* pos);
+		static string GetLatLonString(CPosition* pos, bool space = true, int precision = -1, bool showDecimal = true);
 
 		// So we can stop running threads
 		static HANDLE GetESProcess();

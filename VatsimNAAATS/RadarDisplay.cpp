@@ -558,9 +558,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// QDM draw
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_QDM)) {
 			// Check if first position is set
-			if (RulerPoint1.m_Latitude != 0.0 && RulerPoint1.m_Longitude) {
+			if (RulerPoint1.m_Latitude != 0.0 && RulerPoint1.m_Longitude != 0.0) {
 				// Render
-				CCommonRenders::RenderQDM(&dc, &g, this, &RulerPoint1, &RulerPoint2, appCursor->position);
+				CCommonRenders::RenderQDM(&dc, &g, this, &RulerPoint1, &RulerPoint2, appCursor->position, &appCursor->latLonPosition);
 			}
 		}
 
@@ -786,7 +786,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
 				// Increase refresh resolution for QDM
 				if (atoi(sObjectId) == CMenuBar::BTN_QDM) {
-					RefreshResolution = 0.05;
+					RefreshResolution = 0.04;
 				}
 				menuBar->ButtonPress(atoi(sObjectId), Button, this);
 			}
@@ -1172,7 +1172,7 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 
 	// Timer
 	clock_t hundredmsTimer = clock();
-	clock_t quarterSecTimer = clock();
+	clock_t refreshTimer = clock();
 
 	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
 	HANDLE hnd = CUtils::GetESProcess();
@@ -1184,7 +1184,7 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 			break;// Break if not
 
 		// Ok so the app is still active let's get the cursor data
-		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.1) { // Greater than or equal to 50ms
+		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 50ms
 			// Get cursor position (only if previous cursor position is inside the radar area)
 			bool isCursorInsideRadarArea = false;
 			CRect radarArea = cursor->screen->GetRadarArea();
@@ -1203,10 +1203,9 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 				cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
 				cursor->position.y < radarArea.bottom) {
 				isCursorInsideRadarArea = true;
+				// Get lat lon
+				cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
 			}
-
-			// Get lat lon
-			cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
 
 			// Get button presses
 			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
@@ -1237,6 +1236,17 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 						// It isn't filled so set it
 						cursor->screen->RulerPoint2.m_Latitude = cursor->latLonPosition.m_Latitude;
 						cursor->screen->RulerPoint2.m_Longitude = cursor->latLonPosition.m_Longitude;
+
+						// So we dont cancel the QDM automatically
+						pointSet = true;
+					}
+
+					// Both points are down so we need to reset
+					if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude != 0.0 && cursor->screen->RulerPoint2.m_Longitude != 0.0)) {
+						cursor->screen->RulerPoint1.m_Latitude = 0.0;
+						cursor->screen->RulerPoint1.m_Longitude = 0.0;
+						cursor->screen->RulerPoint2.m_Latitude = 0.0;
+						cursor->screen->RulerPoint2.m_Longitude = 0.0;
 					}
 				}
 
@@ -1271,12 +1281,12 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 		}*/
 		
 		// Call refresh sequence more often
-		if (((double)(clock() - quarterSecTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) { // Greater than or equal to 200ms
+		if (((double)(clock() - refreshTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) {
 			// Refresh the radar screen
 			cursor->screen->RequestRefresh();
 
 			// Reset clock
-			quarterSecTimer = clock();
+			refreshTimer = clock();
 		}
 		
  	}
