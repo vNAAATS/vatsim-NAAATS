@@ -666,7 +666,7 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	/// We check the selection values
 	// Position type
 	// Direction & area selection
-	bool direction = GetAircraftDirection(target->GetTrackHeading());
+	bool direction = GetAircraftDirection(target->GetPosition().GetReportedHeadingTrueNorth());
 	int areaSel = AreaSelection;
 	if (PosType == 800) {
 

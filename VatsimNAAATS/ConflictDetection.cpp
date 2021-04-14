@@ -21,8 +21,8 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	// Positions
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(target1.c_str());
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(target2.c_str());
-	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
-	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetPosition().GetReportedHeadingTrueNorth(), ac1.GetPosition().GetPosition());
+	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetPosition().GetReportedHeadingTrueNorth(), ac2.GetPosition().GetPosition());
 
 	// Get status
 	CSepStatus status = DetectStatus(screen, &status1, &status2);
@@ -73,8 +73,8 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	// Radar targets & aircraft objects
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
-	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
-	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetPosition().GetReportedHeadingTrueNorth(), ac1.GetPosition().GetPosition());
+	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetPosition().GetReportedHeadingTrueNorth(), ac2.GetPosition().GetPosition());
 
 	// Save the original aircraft positions
 	CPosition originalPos1 = status1.Position;
@@ -183,8 +183,8 @@ void CConflictDetection::PIVTool(CRadarScreen* screen, string targetA, string ta
 	// Radar targets, aircraft objects and routes
 	CRadarTarget ac1 = screen->GetPlugIn()->RadarTargetSelect(targetA.c_str());
 	CRadarTarget ac2 = screen->GetPlugIn()->RadarTargetSelect(targetB.c_str());
-	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetTrackHeading(), ac1.GetPosition().GetPosition());
-	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetTrackHeading(), ac2.GetPosition().GetPosition());
+	CAircraftStatus status1(ac1.GetCallsign(), ac1.GetPosition().GetPressureAltitude(), ac1.GetGS(), ac1.GetPosition().GetReportedHeadingTrueNorth(), ac1.GetPosition().GetPosition());
+	CAircraftStatus status2(ac2.GetCallsign(), ac2.GetPosition().GetPressureAltitude(), ac2.GetGS(), ac2.GetPosition().GetReportedHeadingTrueNorth(), ac2.GetPosition().GetPosition());
 
 	// Aircraft statuses along route
 	PIVLocations1 = GetStatusesAlongRoute(screen, status1.Callsign, status1.GroundSpeed, status1.Altitude, 1);
@@ -490,7 +490,7 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 
 	// Status for target
 	CAircraftStatus targetAc(target->GetCallsign(), target->GetPosition().GetPressureAltitude(), 
-		target->GetGS(), target->GetTrackHeading(), target->GetPosition().GetPosition());
+		target->GetGS(), target->GetPosition().GetReportedHeadingTrueNorth(), target->GetPosition().GetPosition());
 
 	// Detect the status
 	for (auto i = onScreenAircraft->begin(); i != onScreenAircraft->end(); i++) {
@@ -500,7 +500,7 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 
 		// Status for this aircraft
 		CAircraftStatus acTest(ac.GetCallsign(), ac.GetPosition().GetPressureAltitude(),
-			ac.GetGS(), ac.GetTrackHeading(), ac.GetPosition().GetPosition());
+			ac.GetGS(), ac.GetPosition().GetReportedHeadingTrueNorth(), ac.GetPosition().GetPosition());
 
 		// Get the separation status
 		CSepStatus status = DetectStatus(screen, &targetAc, &acTest);

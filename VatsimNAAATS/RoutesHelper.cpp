@@ -21,7 +21,7 @@ bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* route
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
 	// Get aircraft direction
-	bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+	bool direction = CUtils::GetAircraftDirection(target.GetPosition().GetReportedHeadingTrueNorth());
 	
 	// Loop through each route item
 	int totalDistance = 0;
@@ -55,7 +55,7 @@ bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* route
 				}
 			}
 			else { // Eastbound
-				if (target.GetPosition().GetPosition().m_Longitude > fp->Route[idx].Position.m_Longitude) {
+				if (target.GetPosition().GetPosition().m_Longitude < fp->Route[idx].Position.m_Longitude) {
 					if (totalDistance == 0) {
 						// Calculate distance from aircraft
 						totalDistance += target.GetPosition().GetPosition().DistanceTo(fp->Route[idx].Position);
@@ -265,7 +265,7 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 			// Find our entry and exit points
 			int entryPoint = -1;
 			int exitPoint = -1;
-			bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+			bool direction = CUtils::GetAircraftDirection(target.GetPosition().GetReportedHeadingTrueNorth());
 			for (int i = 0; i < route.GetPointsNumber(); i++) {
 				if (entryPoint == -1) { // Check entry point
 					if (CUtils::IsEntryPoint(string(route.GetPointName(i)), direction ? true : false)) {

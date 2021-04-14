@@ -310,7 +310,7 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Get aircraft point at that time
 		//int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
-		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetTrackHeading()));
+		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetPosition().GetReportedHeadingTrueNorth()));
 
 		// Draw leader
 		Pen pen(Colours::TargetOrange, 1);
@@ -351,7 +351,7 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 		// Get aircraft point at that time
 		//int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
-		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetTrackHeading()));
+		POINT haloPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetPosition().GetReportedHeadingTrueNorth()));
 
 		// Get distance
 		int radius = CUtils::GetDistanceBetweenPoints(acPoint, haloPoint);
