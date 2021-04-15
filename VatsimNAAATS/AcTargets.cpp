@@ -494,6 +494,10 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		int offsetX = 0;
 		int offsetY = 0;
 
+		// Callsign handoff initiated
+		if (acFP.GetTrackingControllerIsMe() && acFP.GetHandoffTargetControllerCallsign() != "")
+			dc->SetTextColor(TextWhite.ToCOLORREF());
+
 		// Callsign
 		text = acFP.GetCallsign();
 		dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
@@ -546,7 +550,7 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		if (isHandoffToMe) {
 			offsetY += 15;
 			text = "H/O";
-			dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx - 10, tagRect.top + offsetY, text.c_str());
+			dc->TextOutA(tagRect.right - dc->GetTextExtent("H/O").cx - 12, tagRect.top + offsetY, text.c_str());
 			offsetY += 15;
 		}
 		else {

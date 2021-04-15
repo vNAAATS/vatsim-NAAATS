@@ -1592,11 +1592,10 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 
 	string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
 	string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
-	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
-		|| string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) != "") {
+	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())) {
 		windowButtons[BTN_XCHANGE_TRANSFER].State = CInputState::DISABLED;
 		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::DISABLED;
-		if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
+		if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() && string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) == "")
 			windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 		else
 			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
@@ -1988,7 +1987,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 		windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 	}
 
-	if (currentController == "") {
+	if (currentController == "" || (currentController != "" && string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) != "")) {
 		SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::INACTIVE);
 		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_NOTIFY, CInputState::DISABLED);
 		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRACK, CInputState::INACTIVE);
@@ -2625,7 +2624,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			}
 		}
 		if (id == BTN_XCHANGE_TRACK) {
-			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
+			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() && screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign() == "") {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
@@ -2645,6 +2644,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		if (id == BTN_XCHANGE_TRANSFER) {
 			screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
 			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 			selectedAuthority = "";
 		}
 		if (id == BTN_UNCLEAR) {
