@@ -210,6 +210,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
     <ClCompile Include="RoutesHelper.cpp" />
+    <ClCompile Include="SetupWindow.cpp" />
     <ClCompile Include="Styles.cpp" />
     <ClCompile Include="TrackInfoWindow.cpp" />
     <ClCompile Include="Utils.cpp" />
@@ -244,6 +245,7 @@
     <ClInclude Include="RadarDisplay.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RoutesHelper.h" />
+    <ClInclude Include="SetupWindow.h" />
     <ClInclude Include="Structures.h" />
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />

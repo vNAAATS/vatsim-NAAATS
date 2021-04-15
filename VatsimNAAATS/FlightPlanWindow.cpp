@@ -102,8 +102,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_SPD] = CTextInput(TXT_MAN_SPD, WIN_FLTPLN, "Spd", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_TCK] = CTextInput(TXT_MAN_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::ACTIVE);
 	textInputs[TXT_MAN_DEST] = CTextInput(TXT_MAN_DEST, WIN_FLTPLN, "Dest", "", 60, CInputState::ACTIVE);
-	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "", 60, CInputState::ACTIVE);
-	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
+	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "DISABLED", 60, CInputState::DISABLED);
+	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "DISABLED", 60, CInputState::DISABLED);
 	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Selected Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_MAN_RTE] = CTextInput(TXT_MAN_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
@@ -1112,12 +1112,10 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 		textInputs.at(TXT_MAN_SPD).Content == "" ||
 		textInputs.at(TXT_MAN_TCK).Content == "" ||
 		textInputs.at(TXT_MAN_DEST).Content == "" ||
-		textInputs.at(TXT_MAN_RTE).Content == "" ||
-		textInputs.at(TXT_MAN_EP).Content == "" ||
-		textInputs.at(TXT_MAN_EPTIME).Content == "")
-		SetButtonState(BTN_MAN_SUBMIT, CInputState::DISABLED);
+		textInputs.at(TXT_MAN_RTE).Content == "")
+		windowButtons[BTN_MAN_SUBMIT].State = CInputState::DISABLED;
 	else 
-		SetButtonState(BTN_MAN_SUBMIT, CInputState::INACTIVE);
+		windowButtons[BTN_MAN_SUBMIT].State = CInputState::INACTIVE;
 
 	// Clean up
 	DeleteObject(darkerBrush);
@@ -2190,6 +2188,9 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 			else content[i] = toupper(content[i]);
 		}
 
+		// If the input was "RR" then return 
+		if (content == "RR") return;
+
 		// It's a string, check the length
 		if (content.size() > 3 || content.size() < 1) return;
 
@@ -2644,7 +2645,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		if (id == BTN_XCHANGE_TRANSFER) {
 			screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
 			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
-			SetButtonState(BTN_XCHANGE_TRACK, CInputState::DISABLED);
 			selectedAuthority = "";
 		}
 		if (id == BTN_UNCLEAR) {
