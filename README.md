@@ -25,4 +25,4 @@ vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on t
 ![Gander Logo](https://resources.ganderoceanic.com/media/img/brand/bnr/small_bnr.png)
 ![vNAAATS Logo](https://cdn.ganderoceanic.com/resources/media/img/vNAAATS-logo.png)
 
-Deleaker helps me find critical memory leaks in this C++ project. Go check it out here! http://deleaker.com/
+Deleaker has helped me to make vNAAATS amazing by helping me expose the root causes of countless, irritating memory leaks. Without this outstanding piece of software, vNAAATS would be nowhere near as developed as it is right now. Go check out the VS extension here! http://deleaker.com/
