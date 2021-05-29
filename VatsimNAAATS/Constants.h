@@ -319,5 +319,5 @@ enum class CRadarTargetMode {
     PRIMARY, // Asterisk
     SECONDARY_S, // Diamond with line
     SECONDARY_C, // Star
-    ADS_B // Airplane icon
+    ADS_B, // Airplane icon (also for cleared aircraft)
 };

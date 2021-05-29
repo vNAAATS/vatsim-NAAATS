@@ -489,9 +489,9 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 					}
 					else {
 						// Write coordinate down
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
 						offsetY += 28;
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
 						offsetY += 28;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
 						offsetY = 2;
@@ -2220,6 +2220,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 				for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {
 					routeString += primedPlan->RouteRaw[i] + " ";
 				}
+
 				// Set the contents
 				if (id == TXT_TCK) {
 					textInputs.find(TXT_RTE)->second.Content = routeString;

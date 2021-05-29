@@ -447,8 +447,8 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			// Get the toggle button
 			auto haloBtn = buttons.find(BTN_HALO);
 
-			// Increment if less than or equal 3 (20 minute halos max)
-			if (haloBtn->second.Cycle < 3) {
+			// Increment if less than or equal 7 (100 mile halos max)
+			if (haloBtn->second.Cycle < 7) {
 				haloBtn->second.Cycle++;
 			}
 			else {
@@ -468,6 +468,18 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			case 3:
 				haloBtn->second.Label = "Halo 20";
 				break;
+			case 4:
+				haloBtn->second.Label = "Halo 25";
+				break;
+			case 5:
+				haloBtn->second.Label = "Halo 30";
+				break;
+			case 6:
+				haloBtn->second.Label = "Halo 60";
+				break;
+			case 7:
+				haloBtn->second.Label = "Halo 100";
+				break;
 			}
 		}
 
@@ -475,8 +487,8 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			// Get the toggle button
 			auto ptlBtn = buttons.find(BTN_PTL);
 
-			// Increment if less than or equal 5 (30 minute lines max)
-			if (ptlBtn->second.Cycle < 5) {
+			// Increment if less than or equal 6 (60 minute lines max)
+			if (ptlBtn->second.Cycle < 6) {
 				ptlBtn->second.Cycle++;
 			}
 			else {
@@ -500,6 +512,9 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 				break;
 			case 5:
 				ptlBtn->second.Label = "PTL 30";
+				break;
+			case 6:
+				ptlBtn->second.Label = "PTL 60";
 				break;
 			}
 		}

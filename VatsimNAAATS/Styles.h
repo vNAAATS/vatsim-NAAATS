@@ -74,9 +74,8 @@ public:
 		monoFont15.CreateFontIndirect(&lFont);
 
 		// Get for ATC font
-		int i = AddFontResourceEx(string(CUtils::DllPath + "vNAAATS.ttf").c_str(), FR_PRIVATE, NULL);
-		basic_string<_TCHAR> faceName(_T("vNAAATS"));
-		copy(faceName.begin(), faceName.end(), lFont.lfFaceName);
+		AddFontResourceEx("9x15B.bdf", FR_PRIVATE, 0);
+		strcpy_s(lFont.lfFaceName, _T("FixedBold"));
 		// Normal weight
 		lFont.lfWeight = FW_REGULAR;
 		// Size 14

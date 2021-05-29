@@ -272,6 +272,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Loop all aircraft
 		while (ac.IsValid()) {
+			// The system plan
+			CAircraftFlightPlan aircraftFlightPlan;
+			CDataHandler::GetFlightData(cs.c_str(), aircraftFlightPlan);
+
 			// Check if they are a selected aircraft
 			if (ac.GetCallsign() == CAcTargets::SearchedAircraft) {
 				if (((double)(clock() - CAcTargets::fiveSecondTimer) / ((double)CLOCKS_PER_SEC)) >= 5) {
@@ -286,7 +290,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			if (!menuBar->IsButtonPressed(CMenuBar::BTN_PSSR)) {
 				// Check their PSSR state to hide all non ADS-B aircraft
 				if (CUtils::GetTargetMode(ac.GetPosition().GetRadarFlags()) != CRadarTargetMode::ADS_B) {
-					// Skip
+					// Select the next target
+					ac = GetPlugIn()->RadarTargetSelectNext(ac);
+					if (aircraftOnScreen.find(ac.GetCallsign()) != aircraftOnScreen.end()) aircraftOnScreen.erase(ac.GetCallsign());
 					continue;
 				}
 			}
@@ -315,8 +321,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			if (menuBar->GetButtonState(menuBar->BTN_TCKCTRL) == CInputState::ACTIVE && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
 				// Primed plan
 				string cs = (string)fp.GetCallsign();
-				CAircraftFlightPlan aircraftFlightPlan;
-				CDataHandler::GetFlightData(cs.c_str(), aircraftFlightPlan);
 				vector<string> tracks;
 				auto idx = find_if(CConflictDetection::CurrentSTCA.begin(), CConflictDetection::CurrentSTCA.end(), [&cs](const CSTCAStatus& obj) {return obj.CallsignA == cs || obj.CallsignB == cs; });
 				if (idx == CConflictDetection::CurrentSTCA.end())
@@ -770,13 +774,6 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 
 void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	// If radar screen
-	if (ObjectType == RADAR_SCREEN) {
-		if (CAcTargets::OpenTrackingDialog != "") { // If tracking dialog open
-			CAcTargets::OpenTrackingDialog = ""; // Close it
-		}
-	}
-
 	// If menu button
 	if (ObjectType == MENBAR) {
 		if (Button == BUTTON_RIGHT) { // Toggle buttons
@@ -821,6 +818,11 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
+
+			// Re-instantiate flight plan window if the aircraft is not the currently ASELed one
+			if (asel != sObjectId && fltPlnWindow->IsOpen) {
+				fltPlnWindow->Instantiate(this, asel);
+			}
 
 			// Probing tools
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)

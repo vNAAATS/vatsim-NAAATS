@@ -31,12 +31,12 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// Callsign
 	string cs = target->GetCallsign();
 
-	// Radar flags
-	CRadarTargetMode targetMode = CUtils::GetTargetMode(target->GetPosition().GetRadarFlags());
-
 	// Flight plan
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(cs.c_str());
 	CAircraftFlightPlan* acFP = CDataHandler::GetFlightData(cs);
+
+	// Radar flags
+	CRadarTargetMode targetMode = acFP->TargetMode;
 
 	// Check if there is an active handoff to client 
 	bool isHandoffToMe = string(fp.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
@@ -284,33 +284,36 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		int val = toggleData->at(CMenuBar::BTN_PTL).Cycle;
 
 		// Leader minutes
-		int dist = 0;
+		int min = 0;
 
 		// Switch
 		switch (val) {
 		case 0:
-			dist = 5;
+			min = 5;
 			break;
 		case 1:
-			dist = 10;
+			min = 10;
 			break;
 		case 2:
-			dist = 15;
+			min = 15;
 			break;
 		case 3:
-			dist = 20;
+			min = 20;
 			break;
 		case 4:
-			dist = 25;
+			min = 25;
 			break;
 		case 5:
-			dist = 30;
+			min = 30;
+			break;
+		case 6:
+			min = 60;
 			break;
 		}
 
 		// Get aircraft point at that time
-		//int distance = CUtils::GetDistanceSpeedTime(target->GetGS(), min * 60);
-		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), dist, target->GetPosition().GetReportedHeadingTrueNorth()));
+		int distance = CUtils::GetDistanceSpeedTime(target->GetPosition().GetReportedGS(), min * 60);
+		POINT ptlPoint = screen->ConvertCoordFromPositionToPixel(CUtils::GetPointDistanceBearing(target->GetPosition().GetPosition(), distance, target->GetPosition().GetReportedHeadingTrueNorth()));
 
 		// Draw leader
 		Pen pen(Colours::TargetOrange, 1);
@@ -330,22 +333,34 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		// Get ptl value
 		int val = toggleData->at(CMenuBar::BTN_HALO).Cycle;
 
-		// Leader minutes
+		// Leader miles (actually metres but whatever, the function converts)
 		int dist = 0;
 
 		// Switch
 		switch (val) {
 		case 0:
-			dist = 5;
+			dist = 9260; // 5 nautical miles in metres
 			break;
 		case 1:
-			dist = 10;
+			dist = 18520; // 10nm
 			break;
 		case 2:
-			dist = 15;
+			dist = 27780; // 15nm
 			break;
 		case 3:
-			dist = 20;
+			dist = 37040; // 20nm
+			break;
+		case 4:
+			dist = 46300; // 25nm
+			break;
+		case 5:
+			dist = 55560; // 30nm
+			break;
+		case 6:
+			dist = 111120; // 60nm
+			break;
+		case 7:
+			dist = 55560; // 100nm
 			break;
 		}
 

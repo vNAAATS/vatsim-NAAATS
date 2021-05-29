@@ -12,13 +12,13 @@
 using json = nlohmann::json;
 using namespace ApiKeys;
 
-const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.com/data";
-const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.com/resources/data/eventTracks.json";
+const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.ca/data";
+const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.ca/resources/data/eventTracks.json";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
-const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataSingleGet?callsign=";
-const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.com/api/FlightDataNewPost?code=" + ApiKeys::FUNC_KEY;
-const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.com/api/FlightDataUpdate?code=" + ApiKeys::FUNC_KEY;
+const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataSingleGet?callsign=";
+const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataNewPost?code=" + ApiKeys::FUNC_KEY;
+const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataUpdate?code=" + ApiKeys::FUNC_KEY;
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
@@ -172,6 +172,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
 	fp.CurrentMessage = nullptr;
 	fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
+	fp.TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
 
 	// Get SELCAL code
 	string remarks = fpData.GetFlightPlanData().GetRemarks();
@@ -347,7 +348,8 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 				fp->Depart = netFP.Departure;
 				fp->Dest = netFP.Arrival;
 				fp->IsEquipped = netFP.IsEquipped;
-					
+				fp->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
+
 				// Routes
 				vector<string> splitString;
 				CUtils::StringSplit(netFP.Route, ' ', &splitString);
