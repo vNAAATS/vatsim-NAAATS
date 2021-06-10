@@ -32,6 +32,10 @@ CRadarDisplay::CRadarDisplay()
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
+
+	// Main monitor resolution
+	screenResolution.first = GetSystemMetrics(SM_CXSCREEN);
+	screenResolution.second = GetSystemMetrics(SM_CYSCREEN);
 }
 
 CRadarDisplay::~CRadarDisplay()
@@ -623,11 +627,18 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
 		}
 		else {
+			// Flight plan object
+			CFlightPlan fpData = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign());
+
 			// Update exit time
-			int exitMinutes = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign()).GetSectorExitMinutes();
+			int exitMinutes = fpData.GetSectorExitMinutes();
 			if (exitMinutes != -1) {
 				fp->ExitTime = exitMinutes;
 			}
+
+			// Update selcal code (maybe move into an Update method in DataHandler if I find there is more to update than just the selcal code)
+			string selcal = CUtils::GetSelcalCode(&fpData);
+			fp->SELCAL = selcal != "" ? selcal : "N/A";
 
 			// Download the vNAAATS network data on the plane
 			CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
@@ -1168,6 +1179,7 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 	PopulateProgramData();
 }
 
+// TODO: Break into individual methods or create ScreenFunctions class/namespace
 void CRadarDisplay::CursorStateUpdater(void* args) {
 	// Pointer to cursor
 	CAppCursor* cursor = (CAppCursor*)args;
@@ -1183,21 +1195,21 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 	while (1) {
 		// Check if the app is still active
 		if (cursor->isESClosed || activeCode != STILL_ACTIVE)
-			break;// Break if not
+			break; // Break if not
 
 		// Ok so the app is still active let's get the cursor data
 		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 50ms
 			// Get cursor position (only if previous cursor position is inside the radar area)
 			bool isCursorInsideRadarArea = false;
 			CRect radarArea = cursor->screen->GetRadarArea();
-			// Get the position
-			GetCursorPos(&cursor->position);				
 
-			// Keep the coordinates down to one screen's worth
-			if (cursor->position.x > 3840) // Window is on 3rd screen
-				cursor->position.x -= 3840;
-			else if (cursor->position.x > 1920) // Window is on 2nd screen
-				cursor->position.x -= 1920;
+			// Get the position and monitor in which the point lies
+			GetCursorPos(&cursor->position);
+			HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
+
+			// Use screen resolution and ratios to get cursor position relative to monitor size
+			//int screenSizeX;
+			//int screenSizeY;
 
 			// Check if cursor inside radar area
 			if (cursor->position.x > radarArea.left &&
@@ -1265,22 +1277,6 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 			// Reset clock
 			hundredmsTimer = clock();
 		}
-
-		// Detect double click (probably don't need this and it doesn't work anyway)
-		/*if (cursor->singleClickTimer != 0) { // First check if the timer is active
-			if (((double)(clock() - cursor->singleClickTimer) / ((double)CLOCKS_PER_SEC)) <= 0.4) { // Check if timer still less than 0.4 seconds
-				// Now check the button state
-				if (cursor->button == 2 && !cursor->isDoubleClick) {
-					cursor->screen->GetPlugIn()->DisplayUserMessage("vNAAATS", "Info", string("Double click").c_str(), true, true, true, true, true);
-					cursor->isDoubleClick = true;
-				}				
-			}
-			else {
-				// Set timer to 0;
-				cursor->singleClickTimer = 0;
-				cursor->isDoubleClick = false;
-			}			
-		}*/
 		
 		// Call refresh sequence more often
 		if (((double)(clock() - refreshTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) {

@@ -930,6 +930,17 @@ bool CUtils::IsAllAlpha(string str) {
 	return isAllAlpha;
 }
 
+string CUtils::GetSelcalCode(CFlightPlan* fpData) {
+	// Get SELCAL code
+	string remarks = fpData->GetFlightPlanData().GetRemarks();
+	size_t found = remarks.find(string("SEL/"));
+	// If found
+	if (found != string::npos) {
+		return remarks.substr(found + 4, 4);
+	}
+	return "";
+}
+
 string CUtils::ParseZuluTime(bool delimit, int deltaTime, CFlightPlan* fp, int fix) {
 	time_t now = time(0);
 	tm* zuluTime = gmtime(&now);

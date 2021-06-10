@@ -55,6 +55,13 @@ class CRadarDisplay : public CRadarScreen
 			// Manually call save
 			OnAsrContentToBeSaved();
 			appCursor->isESClosed = true;
+
+			// Clean up
+			delete appCursor;
+			delete trackWindow;
+			delete fltPlnWindow;
+			delete msgWindow;
+			delete npWindow;
 			delete this;
 		}
 
@@ -69,6 +76,7 @@ class CRadarDisplay : public CRadarScreen
 			bool isDoubleClick = false;
 			bool isESClosed = false;			
 		};
+		pair<int, int> screenResolution;
 		CAppCursor* appCursor = new CAppCursor(); // Constantly being updated
 		POINT mousePointer; // Updated on screen object actions only
 		clock_t fiveSecondTimer;

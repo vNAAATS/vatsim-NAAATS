@@ -86,6 +86,9 @@ class CUtils { // TODO: refactor into namespace
 		// Check all alpha
 		static bool IsAllAlpha(string str);
 
+		// Find selcal code from remarks
+		static string GetSelcalCode(CFlightPlan* fpData);
+
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, int deltaTime = -1, CFlightPlan* fp = nullptr, int ep = -1);
 

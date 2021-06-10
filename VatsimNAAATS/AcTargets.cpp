@@ -25,6 +25,9 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
 
+	// Performance timer
+	double functionClock = clock();
+
 	// Get the aircraft's position and heading
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 
@@ -387,6 +390,9 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		DeleteObject(&pen2);
 	}
 
+	dc->SetTextAlign(TA_LEFT);
+	dc->TextOutA(10, 200, to_string((double)(clock() - functionClock)).c_str());
+	
 	// Restore context
 	dc->RestoreDC(sDC);
 

@@ -111,8 +111,6 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 
 CAircraftFlightPlan* CDataHandler::GetFlightData(string callsign) {
 	if (flights.find(callsign) != flights.end()) {
-		// Ben: this is for you, I have done the 'not found' code at the bottom you need to do the code that gets the existing flight data
-		// not sure whether it's as simple as return flights.at(callsign) or something more complex, depends on the API integration
 		
 		return &flights.find(callsign)->second;
 	}
@@ -174,16 +172,9 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
 	fp.TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
 
-	// Get SELCAL code
-	string remarks = fpData.GetFlightPlanData().GetRemarks();
-	size_t found = remarks.find(string("SEL/"));
-	// If found
-	if (found != string::npos) {
-		fp.SELCAL = remarks.substr(found + 4, 4);
-	}
-	else {
-		fp.SELCAL= "";
-	}
+	// Scrape the selcal from the remarks and set the flight plan property if it exists
+	string selcal = CUtils::GetSelcalCode(&fpData);
+	fp.SELCAL = selcal != "" ? selcal : "N/A";
 
 	// Get communication mode
 	string comType;
