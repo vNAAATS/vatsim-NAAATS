@@ -39,6 +39,9 @@ EuroScopePlugInInit(EuroScopePlugIn::CPlugIn** ppPlugInInstance)
 	GdiplusStartupInput gdiplusStartupInput;
 	GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, nullptr);
 	* ppPlugInInstance = (CPlugIn*)new CNAAATSPlugin();
+
+	// Instantiate logger as the very first thing we do
+	CLogger::InstantiateLogFile();
 }
 
 // Plugin exit

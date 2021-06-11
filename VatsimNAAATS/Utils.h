@@ -40,7 +40,7 @@ class CUtils { // TODO: refactor into namespace
 		// Load/save methods
 		static void SavePluginData(CRadarScreen* screen);
 		static void LoadPluginData(CRadarScreen* screen);
-
+		
 		// Text wrapping
 		static bool WrapText(CDC* dc, string textToWrap, char wrapChar, int contentWidth, vector<string>* ptrWrappedText);
 

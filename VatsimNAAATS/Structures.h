@@ -6,6 +6,53 @@
 #include <map>
 #include <unordered_map>
 
+// Describes the system information that is needed for each log instantiation
+struct CPluginSysInfo {
+	string OSVersion;
+	long InstalledMemoryMB;
+
+	CPluginSysInfo() {
+		// Get operating system and switch the version into readable format
+		OSVERSIONINFO osv;
+		GetVersionEx(&osv);
+		
+		// Major, minor and minor numbers
+		int major = osv.dwMajorVersion;
+		int minor = osv.dwMinorVersion;
+
+		// Win 10
+		if (major == 10 && minor == 0) {
+			OSVersion = "Windows 10";
+		}
+		else if (major == 6) {
+			if (minor == 3)
+				OSVersion = "Windows 8.1";
+			else if (minor == 2)
+				OSVersion = "Windows 8.0";
+			else if (minor == 1)
+				OSVersion == "Windows 7";
+			else if (minor == 0) {
+				OSVersion == "Windows Vista";
+			}
+		}
+		else if (major == 5) {
+			if (minor == 1)
+				OSVersion = "Windows XP";
+			else if (minor == 0) {
+				OSVersion = "Windows 2000";
+			}
+		}
+		else {
+			OSVersion = "Unknown OS";
+		}
+
+		// Get memory size in MB
+		uint64_t memKB;
+		GetPhysicallyInstalledSystemMemory(&memKB);
+		InstalledMemoryMB = memKB / 1000;
+	}
+};
+
 // Describes a NAT track
 struct CTrack {
 	string Identifier;

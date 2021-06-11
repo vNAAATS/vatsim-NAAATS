@@ -32,10 +32,6 @@ CRadarDisplay::CRadarDisplay()
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
-
-	// Main monitor resolution TODO
-	//screenResolution.first = GetSystemMetrics(SM_CXSCREEN);
-	//screenResolution.second = GetSystemMetrics(SM_CYSCREEN);
 }
 
 CRadarDisplay::~CRadarDisplay()

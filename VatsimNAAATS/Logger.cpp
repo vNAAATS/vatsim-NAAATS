@@ -3,38 +3,75 @@
 
 string CLogger::logFilePath = "";
 
-void CLogger::WriteLine(string logString) {
+void CLogger::Log(string text, CLogType type) {
+	// Prefix
+	string prefix = GeneratePrefix(type);
+
 	// Open, write then close
 	ofstream log;
 	log.open(logFilePath.c_str());
-	log << logString.c_str() << "\n";
+	log << prefix.c_str() << text.c_str() << "\n";
 	log.close();
 }
 
 void CLogger::InstantiateLogFile() {
+	
 	// Date string
 	time_t now = time(0);
 	tm* date = gmtime(&now);
 	string strDate;
-	strDate += to_string(date->tm_mon + 1);
+	strDate += to_string(date->tm_hour);
+	strDate += to_string(date->tm_min);
+	strDate += to_string(date->tm_sec);
 	strDate += to_string(date->tm_mday);
+	strDate += to_string(date->tm_mon + 1);
 	strDate += to_string(1900 + date->tm_year);
 
 	// Generate a new file name
-	logFilePath = CUtils::DllPath + "\\" + "vNAAATS-" + strDate;
+	logFilePath = CUtils::DllPath + "\\" + "vNAAATS_" + strDate + ".log";
 
-	// Write the initialisation
-	vector<string> output;
-	output.push_back
+	// Get rudimentary system information
+	CPluginSysInfo info;
+	
+	// Build output
+	string output;
+	output += "***** LOG INITIALISED FOR vNAAATS VERSION ";
+	output += PLUGIN_VERSION;
+	output += " *****\n";
+	output += "COPYRIGHT ";
+	output += PLUGIN_COPYRIGHT;
+	output += "\n\n OS: ";
+	output += info.OSVersion;
+	output += "\nRAM (MB): ";
+	output += info.InstalledMemoryMB;
+
+	// Write
+	Log(output, CLogType::INIT);
 }
 
-void CLogger::Log(vector<string> text, CLogType type) {
-
-}
-
-void CLogger::GeneratePrefix(CLogType type) {
+string CLogger::GeneratePrefix(CLogType type) {
 	// This will store the prefix
 	string prefix = "[";
+
+	// Date string (incl. milliseconds)
+	SYSTEMTIME t;
+	GetSystemTime(&t);
+	time_t now = time(0);
+	tm* date = gmtime(&now);
+	string strDate;
+	strDate += to_string(date->tm_mday);
+	strDate += "-";
+	strDate += to_string(date->tm_mon + 1);
+	strDate += "-";
+	strDate += to_string(1900 + date->tm_year);
+	strDate += " ";
+	strDate += to_string(t.wHour);
+	strDate += ":";
+	strDate += to_string(t.wMinute);
+	strDate += ":";
+	strDate += to_string(t.wSecond);
+	strDate += ".";
+	strDate += to_string(t.wMilliseconds);
 
 	// Begin
 	switch (type) {
@@ -54,4 +91,11 @@ void CLogger::GeneratePrefix(CLogType type) {
 		prefix += "EXC ";
 		break;
 	}
+
+	// Append date/time and closing bracket
+	prefix += strDate;
+	prefix += "] ";
+
+	// Return the prefix
+	return prefix;
 }
