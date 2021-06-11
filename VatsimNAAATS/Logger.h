@@ -14,7 +14,7 @@ class CLogger
 {
 	public:
 		// Log a message
-		static void Log(string text, CLogType type);
+		static void Log(CLogType type, string text, string invokedBy = "");
 
 		// Generate the log file
 		static void InstantiateLogFile();
@@ -25,5 +25,8 @@ class CLogger
 		
 		// Get log prefix (ID + date and time)
 		static string GeneratePrefix(CLogType type);
+
+		// To append lines after initialisation instead of overwriting
+		static bool initialised;
 };
 

@@ -40,6 +40,11 @@ EuroScopePlugInInit(EuroScopePlugIn::CPlugIn** ppPlugInInstance)
 	GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, nullptr);
 	* ppPlugInInstance = (CPlugIn*)new CNAAATSPlugin();
 
+	// Get DLL path
+	GetModuleFileNameA(HINSTANCE(&__ImageBase), CUtils::DllPathFile, sizeof(CUtils::DllPathFile));
+	CUtils::DllPath = CUtils::DllPathFile;
+	CUtils::DllPath.resize(CUtils::DllPath.size() - strlen("VatsimNAAATS.dll"));
+
 	// Instantiate logger as the very first thing we do
 	CLogger::InstantiateLogFile();
 }

@@ -63,6 +63,9 @@ CMenuBar::CMenuBar() {
 	map.insert(make_pair("OCA Enroute", false));
 	map.insert(make_pair("Multi-role", false));
 	dropDowns[DRP_TYPESEL] = CDropDown(DRP_TYPESEL, MENBAR, "Multi-role", &map, CInputState::INACTIVE, 143);
+
+	// Clogger
+	CLogger::Log(CLogType::NORM, "Finished instantiation.", "MENUBAR");
 }
 
 void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel) {

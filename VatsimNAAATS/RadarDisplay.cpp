@@ -32,6 +32,9 @@ CRadarDisplay::CRadarDisplay()
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
+
+	// Clogger
+	CLogger::Log(CLogType::NORM, "Finished initialisation.", "CRadarDisplay");
 }
 
 CRadarDisplay::~CRadarDisplay()
@@ -87,17 +90,13 @@ void CRadarDisplay::PopulateProgramData() {
 	// Set tracks in menu bar
 	menuBar->MakeDropDownItems(menuBar->DRP_TCKCTRL);
 
-	// Get DLL path
-	GetModuleFileNameA(HINSTANCE(&__ImageBase), CUtils::DllPathFile, sizeof(CUtils::DllPathFile));
-	CUtils::DllPath = CUtils::DllPathFile;
-	CUtils::DllPath.resize(CUtils::DllPath.size() - strlen("VatsimNAAATS.dll"));
-
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 
 	// Start cursor update loop
 	//appCursor->screen = this;
 	//_beginthread(CursorStateUpdater, 0, (void*) appCursor);
+	//CLogger::Log(CLogType::NORM, "Cursor update sequence started.", "CRadarDisplay");
 }
 
 // On radar screen refresh (modified to occur 4 times a second)
@@ -140,6 +139,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	if (GetPlugIn()->FlightPlanSelectASEL().GetCallsign() != asel) {
 		asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+		CLogger::Log(CLogType::NORM, "Selected aircraft changed to " + asel + ".", "CRadarDisplay");
 	}
 
 	// Set the flight plan button state
@@ -1190,8 +1190,10 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 	GetExitCodeProcess(hnd, &activeCode);
 	while (1) {
 		// Check if the app is still active
-		if (cursor->isESClosed || activeCode != STILL_ACTIVE)
+		if (cursor->isESClosed || activeCode != STILL_ACTIVE) {
+			CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
 			break; // Break if not
+		}
 
 		// Ok so the app is still active let's get the cursor data
 		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 50ms

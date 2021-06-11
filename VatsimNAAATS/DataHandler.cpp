@@ -37,7 +37,9 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		if (FAILED(hr)) {
 			int code = (int)hr;
 			// Show user message
-			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to load NAT Track data. Code: " + code, true, true, true, true, true);
+			plugin->DisplayUserMessage("vNAAATS", "Error", "Track data download failed. Code: " + code, true, true, true, true, true);
+			// Clogger
+			CLogger::Log(CLogType::ERR, "Could not connect to tracks API. Code: " + code, "CDataHandler");
 			return 1;
 		}
 		// Put data into buffer
@@ -50,7 +52,10 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		}
 	}
 	catch (exception & e) {
+		// Log to ES
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to load NAT Track data: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Clogger
+		CLogger::Log(CLogType::EXC, "Failed to load NAT Track data: " + string(string(e.what())), "CDataHandler");
 		return 1;
 	}
 	
@@ -101,10 +106,15 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		}
 		// Everything succeeded, show to user
 		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + CRoutesHelper::CurrentTMI + ".").c_str(), false, false, false, false, false);
+		// Clogger
+		CLogger::Log(CLogType::NORM, string("Track data loaded successfully. TMI is " + CRoutesHelper::CurrentTMI + "."), "CDataHandler");
 		return 0;
 	}
 	catch (exception & e) {
-		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse NAT track data: " + string(e.what())).c_str(), true, true, true, true, true);
+		// User message
+		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse NAT track JSON return: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Clogger
+		CLogger::Log(CLogType::EXC, "Failed to parse NAT track JSON return: " + string(e.what()), "CDataHandler");
 		return 1;
 	}
 }
@@ -156,66 +166,86 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 	// SECTOR
 	// STATE
 
-	// Euroscope flight plan and my flight plan
-	CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str());
-	CAircraftFlightPlan fp;	
-	// Instantiate aircraft information
-	fp.Callsign = callsign;
-	fp.Type = fpData.GetFlightPlanData().GetAircraftFPType();
-	fp.Depart = fpData.GetFlightPlanData().GetOrigin();
-	fp.Dest = fpData.GetFlightPlanData().GetDestination();
-	fp.Etd = CUtils::ParseZuluTime(false, atoi(fpData.GetFlightPlanData().GetEstimatedDepartureTime()));
-	fp.ExitTime = fpData.GetSectorExitMinutes();
-	fp.DLStatus = ""; // TEMPORARY
-	fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
-	fp.CurrentMessage = nullptr;
-	fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
-	fp.TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
+	try {
+		// Euroscope flight plan and my flight plan
+		CFlightPlan fpData = screen->GetPlugIn()->FlightPlanSelect(callsign.c_str());
+		CAircraftFlightPlan fp;
+		// Instantiate aircraft information
+		fp.Callsign = callsign;
+		fp.Type = fpData.GetFlightPlanData().GetAircraftFPType();
+		fp.Depart = fpData.GetFlightPlanData().GetOrigin();
+		fp.Dest = fpData.GetFlightPlanData().GetDestination();
+		fp.Etd = CUtils::ParseZuluTime(false, atoi(fpData.GetFlightPlanData().GetEstimatedDepartureTime()));
+		fp.ExitTime = fpData.GetSectorExitMinutes();
+		fp.DLStatus = ""; // TEMPORARY
+		fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
+		fp.CurrentMessage = nullptr;
+		fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
+		fp.TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
 
-	// Scrape the selcal from the remarks and set the flight plan property if it exists
-	string selcal = CUtils::GetSelcalCode(&fpData);
-	fp.SELCAL = selcal != "" ? selcal : "N/A";
+		// Scrape the selcal from the remarks and set the flight plan property if it exists
+		string selcal = CUtils::GetSelcalCode(&fpData);
+		fp.SELCAL = selcal != "" ? selcal : "N/A";
 
-	// Get communication mode
-	string comType;
-	comType += toupper(fpData.GetFlightPlanData().GetCommunicationType());
-	if (comType == "V") { // Switch each of the values
-		comType = "VOX";
+		// Get communication mode
+		string comType;
+		comType += toupper(fpData.GetFlightPlanData().GetCommunicationType());
+		if (comType == "V") { // Switch each of the values
+			comType = "VOX";
+		}
+		else if (comType == "T") {
+			comType = "TXT";
+		}
+		else if (comType == "R") {
+			comType = "RCV";
+		}
+		else {
+			comType = "VOX"; // We assume voice if it defaults
+		}
+		fp.Communications = comType; // Set the type
+
+		// Set IsCleared
+		fp.IsCleared = false;
+
+		// Flight plan is valid
+		fp.IsValid = true;
+
+		// Add FP to map
+		flights[callsign] = fp;
+
+		// Generate route
+		CUtils::CAsyncData* data = new CUtils::CAsyncData();
+		data->Screen = screen;
+		data->Callsign = callsign;
+		_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*)data); // Async
+
+		// Log string
+		string fDLog = "Flight data object " + data->Callsign + " generated successfully.";
+		// Verbose details
+		fDLog.append("\nType: " + fp.Type);
+		fDLog.append("\nDoF: " + CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth()) ? "East" : "West");
+		fDLog.append("\Equipped?: " + fp.IsEquipped ? "True" : "False");
+		fDLog.append("\TimeToExit: " + fp.ExitTime);
+		CLogger::Log(CLogType::NORM, "Flight data object for " + data->Callsign + " generated successfully.", "CDataHandler");
+
+		// Success
+		return 0;
 	}
-	else if (comType == "T") {
-		comType = "TXT";
+	catch (exception & ex) {
+		// Clogger
+		CLogger::Log(CLogType::EXC, "Flight data generation for " + callsign + " failed: " + string(ex.what()), "CDataHandler");
+
+		// Failed
+		return 1;
 	}
-	else if (comType == "R") {
-		comType = "RCV";
-	}
-	else {
-		comType = "VOX"; // We assume voice if it defaults
-	}
-	fp.Communications = comType; // Set the type
-
-	// Set IsCleared
-	fp.IsCleared = false;
-
-	// Flight plan is valid
-	fp.IsValid = true;
-
-	// Add FP to map
-	flights[callsign] = fp;
-
-	// Generate route
-	CUtils::CAsyncData* data = new CUtils::CAsyncData();
-	data->Screen = screen;
-	data->Callsign = callsign;
-	_beginthread(CRoutesHelper::InitialiseRoute, 0, (void*) data); // Async
-
-	// Success
-	return 0;
 }
 
 int CDataHandler::DeleteFlightData(string callsign) {
 	if (flights.find(callsign) != flights.end()) {
 		// Remove the flight if it exists
 		flights.erase(callsign);
+		// Clogger
+		CLogger::Log(CLogType::NORM, "Flight data object for " + callsign + " destroyed successfully.", "CDataHandler");
 		return 0;
 	}
 	else {
@@ -299,6 +329,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		CLogger::Log(CLogType::EXC, "Could not download network data for aircraft " + callsign + ": " + string(e.what()), "NETWORK");
 		// Cleanup
 		delete args;
 		return;
@@ -371,6 +402,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse aircraft data for " + callsign +". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		CLogger::Log(CLogType::EXC, "Could not parse downloaded JSON for network aircraft " + callsign + ": " + string(e.what()), "NETWORK");
 		// Cleanup
 		delete args;
 		return;
@@ -416,6 +448,7 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 		if (FAILED(hr)) {
 			// We want to know about it
 			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". The server returned an error.").c_str(), true, true, true, true, true);
+			CLogger::Log(CLogType::ERR, "Could not post aircraft " + data->FP->Callsign + " to the network. A connection to the server could not be established.", "NETWORK");
 			// Cleanup
 			delete data->FP;
 			delete args;
@@ -430,6 +463,7 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "NETWORK");
 		// Cleanup
 		delete data->FP;
 		delete args;
@@ -469,6 +503,7 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 		if (FAILED(hr)) {
 			// We want to know about it
 			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". The server returned an error.").c_str(), true, true, true, true, true);
+			CLogger::Log(CLogType::ERR, "Could not post update for aircraft " + data->FP->Callsign + ".  A connection to the server could not be established.", "NETWORK");
 			// Cleanup
 			delete data->FP;
 			delete args;
@@ -483,6 +518,7 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
+		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "NETWORK");
 		// Cleanup
 		delete data->FP;
 		delete args;

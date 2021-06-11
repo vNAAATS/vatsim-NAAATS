@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include "ConflictDetection.h"
 #include "MenuBar.h"
+#include "Logger.h"
 
 using namespace Colours;
 
@@ -389,9 +390,6 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 		DeleteObject(&pen);
 		DeleteObject(&pen2);
 	}
-
-	dc->SetTextAlign(TA_LEFT);
-	dc->TextOutA(10, 200, to_string((double)(clock() - functionClock)).c_str());
 	
 	// Restore context
 	dc->RestoreDC(sDC);
@@ -409,11 +407,23 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	DeleteObject(&orangePen);
 	DeleteObject(&redPen);
 	DeleteObject(&yellowPen);
+
+	// Compute render time and store it
+	clock_t t = clock();
+	double lastRenderTimeMs = (t - functionClock) / (CLOCKS_PER_SEC / 1000);
+
+	// Log if render time was greater than 4ms
+	if (lastRenderTimeMs >= 4) {
+		CLogger::Log(CLogType::WARN, "TARGET render time was >= 4ms. Elapsed: " + to_string((int)round(lastRenderTimeMs)) + "ms.", target->GetCallsign());
+	}
 }
 
 POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {	
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
+
+	// Performance timer
+	double functionClock = clock();
 
 	// Get the aircraft's position and flight plan
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
@@ -646,10 +656,24 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		DeleteObject(pen);
 		DeleteObject(&textColour);
 
-		return { tagRect.left, tagRect.top };
+		// Compute render time and store it
+		clock_t t = clock();
+		double lastRenderTimeMs = (t - functionClock) / (CLOCKS_PER_SEC / 1000);
+
+		// Log if render time was greater than 4ms
+		if (lastRenderTimeMs >= 4) {
+			CLogger::Log(CLogType::WARN, "TAG render time was >= 4ms. Elapsed: " + to_string((int)round(lastRenderTimeMs)) + "ms.", target->GetCallsign());
+		}
+
+		return { tagRect.left, tagRect.top };		
 	}
 	catch (exception & e) {
+		// Log inside EuroScope
 		screen->GetPlugIn()->DisplayUserMessage("vNAAATS", "Error", string(string(e.what())).c_str(), true, true, true, true, true);
+
+		// Clogger
+		CLogger::Log(CLogType::ERR, string(string(e.what())), "CAcTargets::RenderTag()");
+
 		return { tagRect.left, tagRect.top };
 	}
 }

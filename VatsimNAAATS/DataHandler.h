@@ -4,6 +4,7 @@
 #include "EuroScopePlugIn.h"
 #include "Overlays.h"
 #include "Utils.h"
+#include "Logger.h"
 #include <json.hpp>
 
 using namespace std;

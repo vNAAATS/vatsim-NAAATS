@@ -2,36 +2,36 @@
 #include "Logger.h"
 
 string CLogger::logFilePath = "";
+bool CLogger::initialised = false;
 
-void CLogger::Log(string text, CLogType type) {
+void CLogger::Log(CLogType type, string text, string invokedBy) {
 	// Prefix
 	string prefix = GeneratePrefix(type);
 
+	// Format invokedBy if not an empty string
+	invokedBy = invokedBy != "" ? "[" + invokedBy + "] " : "";
+	
 	// Open, write then close
 	ofstream log;
-	log.open(logFilePath.c_str());
-	log << prefix.c_str() << text.c_str() << "\n";
+	if (!initialised) { // Overwrite first time
+		log.open(logFilePath.c_str());
+		initialised = true;
+	}
+	else { // Append thereafter
+		log.open(logFilePath.c_str(), std::ios_base::app | std::ios_base::out);
+	}
+	log << prefix.c_str() << invokedBy << text.c_str() << "\n";
 	log.close();
 }
 
 void CLogger::InstantiateLogFile() {
-	
-	// Date string
-	time_t now = time(0);
-	tm* date = gmtime(&now);
-	string strDate;
-	strDate += to_string(date->tm_hour);
-	strDate += to_string(date->tm_min);
-	strDate += to_string(date->tm_sec);
-	strDate += to_string(date->tm_mday);
-	strDate += to_string(date->tm_mon + 1);
-	strDate += to_string(1900 + date->tm_year);
+	// Instantiate file path
+	logFilePath = CUtils::DllPath + "\\vNAAATS.log";
 
-	// Generate a new file name
-	logFilePath = CUtils::DllPath + "\\" + "vNAAATS_" + strDate + ".log";
-
-	// Get rudimentary system information
-	CPluginSysInfo info;
+	// Get system memory size in MB
+	uint64_t memKB;
+	GetPhysicallyInstalledSystemMemory(&memKB);
+	long installedMemoryMB = memKB / 1000;
 	
 	// Build output
 	string output;
@@ -40,13 +40,14 @@ void CLogger::InstantiateLogFile() {
 	output += " *****\n";
 	output += "COPYRIGHT ";
 	output += PLUGIN_COPYRIGHT;
-	output += "\n\n OS: ";
-	output += info.OSVersion;
 	output += "\nRAM (MB): ";
-	output += info.InstalledMemoryMB;
+	output += to_string(installedMemoryMB);
+	output += "\nAlpha?:";
+	output += IS_ALPHA ? " TRUE" : " FALSE";
+	output += "\n----------------------------------";
 
 	// Write
-	Log(output, CLogType::INIT);
+	Log(CLogType::INIT, output);
 }
 
 string CLogger::GeneratePrefix(CLogType type) {
@@ -56,22 +57,14 @@ string CLogger::GeneratePrefix(CLogType type) {
 	// Date string (incl. milliseconds)
 	SYSTEMTIME t;
 	GetSystemTime(&t);
-	time_t now = time(0);
-	tm* date = gmtime(&now);
-	string strDate;
-	strDate += to_string(date->tm_mday);
-	strDate += "-";
-	strDate += to_string(date->tm_mon + 1);
-	strDate += "-";
-	strDate += to_string(1900 + date->tm_year);
-	strDate += " ";
-	strDate += to_string(t.wHour);
-	strDate += ":";
-	strDate += to_string(t.wMinute);
-	strDate += ":";
-	strDate += to_string(t.wSecond);
-	strDate += ".";
-	strDate += to_string(t.wMilliseconds);
+	string strTime;
+	strTime += CUtils::PadWithZeros(2, t.wHour);
+	strTime += ":";
+	strTime += CUtils::PadWithZeros(2, t.wMinute);
+	strTime += ":";
+	strTime += CUtils::PadWithZeros(2, t.wSecond);
+	strTime += ".";
+	strTime += to_string(t.wMilliseconds);
 
 	// Begin
 	switch (type) {
@@ -93,7 +86,7 @@ string CLogger::GeneratePrefix(CLogType type) {
 	}
 
 	// Append date/time and closing bracket
-	prefix += strDate;
+	prefix += strTime;
 	prefix += "] ";
 
 	// Return the prefix

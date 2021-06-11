@@ -4,6 +4,7 @@
 #include <iostream>
 #include <gdiplus.h>
 #include "Utils.h"
+#include "Logger.h"
 
 using namespace Gdiplus;
 
@@ -93,6 +94,7 @@ public:
 
 		// Initialised
 		fontsInitialised = true;
+		CLogger::Log(CLogType::NORM, "Fonts initialised.", "FontSelector");
 		return 0;
 	}
 

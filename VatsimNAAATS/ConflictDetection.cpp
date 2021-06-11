@@ -587,8 +587,8 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 	// Default status obj
 	CSepStatus status;
 	status.AltDifference = altA > altB ? altA - altB : altB - altA;
-	status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftB->GroundSpeed);
 	status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
+	status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(status.DistanceAsNM, aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(status.DistanceAsNM, aircraftB->GroundSpeed);
 	CTrackStatus trackStatus = CTrackStatus::NA;
 	status.AircraftLocations = make_pair(aircraftA->Position, aircraftB->Position);
 

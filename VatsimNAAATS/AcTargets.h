@@ -13,7 +13,7 @@ using namespace EuroScopePlugIn;
 class CAcTargets
 {
 	public:
-		// Timers (for flashing white if critical conflict & halo around searched aircraft)
+		// Blink timers (for flashing white if critical conflict & halo around searched aircraft)
 		static clock_t twoSecondTimer;
 		static clock_t fiveSecondTimer;
 
