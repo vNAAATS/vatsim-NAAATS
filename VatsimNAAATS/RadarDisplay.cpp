@@ -33,9 +33,9 @@ CRadarDisplay::CRadarDisplay()
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
 
-	// Main monitor resolution
-	screenResolution.first = GetSystemMetrics(SM_CXSCREEN);
-	screenResolution.second = GetSystemMetrics(SM_CYSCREEN);
+	// Main monitor resolution TODO
+	//screenResolution.first = GetSystemMetrics(SM_CXSCREEN);
+	//screenResolution.second = GetSystemMetrics(SM_CYSCREEN);
 }
 
 CRadarDisplay::~CRadarDisplay()
@@ -100,8 +100,8 @@ void CRadarDisplay::PopulateProgramData() {
 	FontSelector::InitialiseFonts();
 
 	// Start cursor update loop
-	appCursor->screen = this;
-	_beginthread(CursorStateUpdater, 0, (void*) appCursor);
+	//appCursor->screen = this;
+	//_beginthread(CursorStateUpdater, 0, (void*) appCursor);
 }
 
 // On radar screen refresh (modified to occur 4 times a second)
