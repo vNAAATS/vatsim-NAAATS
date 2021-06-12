@@ -18,7 +18,7 @@ void CConflictList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 
 	/// Make "Conflict" text
 	// Font
-	FontSelector::SelectMonoFont(15, dc);
+	CFontSelector::SelectMonoFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -31,7 +31,7 @@ void CConflictList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 	}
 
 	// Text
-	FontSelector::SelectATCFont(18, dc);
+	CFontSelector::SelectATCFont(18, dc);
 	dc->SetTextAlign(TA_LEFT);
 
 	// Make text lines

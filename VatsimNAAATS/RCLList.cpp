@@ -20,7 +20,7 @@ void CRCLList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 
 	/// Make "RCLs" text
 	// Font
-	FontSelector::SelectMonoFont(15, dc);
+	CFontSelector::SelectMonoFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 

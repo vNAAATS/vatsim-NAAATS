@@ -22,7 +22,7 @@ void COtherList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 
 	/// Make "Others" text
 	// Font
-	FontSelector::SelectMonoFont(15, dc);
+	CFontSelector::SelectMonoFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -57,7 +57,7 @@ void COtherList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen) {
 	}
 
 	// Text
-	FontSelector::SelectATCFont(18, dc);
+	CFontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 

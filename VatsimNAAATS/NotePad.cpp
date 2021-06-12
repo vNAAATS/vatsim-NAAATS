@@ -33,7 +33,7 @@ void CNotePad::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	CBrush evenDarkerBrush(ButtonPressed.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 

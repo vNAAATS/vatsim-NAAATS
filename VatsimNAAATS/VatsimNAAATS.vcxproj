@@ -214,6 +214,12 @@
     <ClCompile Include="SetupWindow.cpp" />
     <ClCompile Include="Styles.cpp" />
     <ClCompile Include="TrackInfoWindow.cpp" />
+    <ClCompile Include="UIButton.cpp" />
+    <ClCompile Include="UICheckBox.cpp" />
+    <ClCompile Include="UIDropDown.cpp" />
+    <ClCompile Include="UIElement.cpp" />
+    <ClCompile Include="UIInput.cpp" />
+    <ClCompile Include="UIScrollBar.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
     <ClCompile Include="DataHandler.cpp" />
@@ -252,6 +258,12 @@
     <ClInclude Include="Styles.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TrackInfoWindow.h" />
+    <ClInclude Include="UIButton.h" />
+    <ClInclude Include="UICheckBox.h" />
+    <ClInclude Include="UIDropDown.h" />
+    <ClInclude Include="UserInterface.h" />
+    <ClInclude Include="UIInput.h" />
+    <ClInclude Include="UIScrollBar.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="VatsimNAAATS.h" />
     <ClInclude Include="DataHandler.h" />

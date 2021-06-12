@@ -91,7 +91,7 @@ void CRadarDisplay::PopulateProgramData() {
 	menuBar->MakeDropDownItems(menuBar->DRP_TCKCTRL);
 
 	// Initialise fonts
-	FontSelector::InitialiseFonts();
+	CFontSelector::InitialiseFonts();
 
 	// Start cursor update loop
 	//appCursor->screen = this;
@@ -243,7 +243,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		/// Write current lat lon on screen
 		int sDC = dc.SaveDC();
 		// Select font
-		FontSelector::SelectMonoFont(12, &dc);
+		CFontSelector::SelectMonoFont(12, &dc);
 		dc.SetTextColor(TextWhite.ToCOLORREF());
 		dc.SetTextAlign(TA_LEFT);
 		// Get radar area and lat lon

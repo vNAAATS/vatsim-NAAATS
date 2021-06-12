@@ -46,7 +46,7 @@ void CConflictDetection::RBLTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	POINT midpoint = CUtils::GetMidPoint(t1Point, t2Point);
 
 	// Font and colour
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->SetTextCharacterExtra(2);
@@ -164,7 +164,7 @@ void CConflictDetection::SepTool(CDC* dc, Graphics* g, CRadarScreen* screen, str
 	POINT midpoint = CUtils::GetMidPoint(screen->ConvertCoordFromPositionToPixel(status1.Position), screen->ConvertCoordFromPositionToPixel(status2.Position));
 	
 	// Text label plus colour switching
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->SetTextCharacterExtra(2);
@@ -268,7 +268,7 @@ void CConflictDetection::RenderPIV(CDC* dc, Graphics* g, CRadarScreen* screen, s
 	SolidBrush brush(TargetOrange);
 
 	// Font
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 

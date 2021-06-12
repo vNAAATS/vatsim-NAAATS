@@ -29,11 +29,11 @@ CRect CCommonRenders::RenderButton(CDC* dc, CRadarScreen* screen, POINT topLeft,
 
 	// Draw text
 	if (obj->Label == "PSR_SYMBOL") {
-		FontSelector::SelectNormalFont(30, dc);
+		CFontSelector::SelectNormalFont(30, dc);
 		obj->Label = "*";
 	}
 	else {
-		FontSelector::SelectNormalFont(16, dc);
+		CFontSelector::SelectNormalFont(16, dc);
 	}
 		
 	if (obj->State == CInputState::DISABLED) { // Disabled text colour
@@ -60,7 +60,7 @@ void CCommonRenders::RenderTextInput(CDC* dc, CRadarScreen* screen, POINT topLef
 	int sDC = dc->SaveDC();
 
 	// Select font
-	FontSelector::SelectATCFont(14, dc);
+	CFontSelector::SelectATCFont(14, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -146,7 +146,7 @@ void CCommonRenders::RenderDropDown(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	dc->FillSolidRect(dropDown, ScreenBlue.ToCOLORREF());
 
 	// Select font
-	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+	CFontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -342,7 +342,7 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 	Pen pen(TextWhite, 2);
 
 	// Font
-	FontSelector::SelectMonoFont(14, dc);
+	CFontSelector::SelectMonoFont(14, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -408,7 +408,7 @@ void CCommonRenders::RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	SolidBrush brush(TargetOrange);
 
 	// Font
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TargetOrange.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -488,7 +488,7 @@ void CCommonRenders::RenderQDM(CDC* dc, Graphics* g, CRadarScreen* screen, CPosi
 	SolidBrush brush(DarkGrey);
 
 	// Font
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 

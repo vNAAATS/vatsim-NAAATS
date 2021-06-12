@@ -199,7 +199,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -275,7 +275,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 		if (kv.first == TXT_SPD) break; // Break if end
 
 		// Font
-		FontSelector::SelectNormalFont(15, dc);
+		CFontSelector::SelectNormalFont(15, dc);
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 		dc->SetTextAlign(TA_LEFT);
 
@@ -429,7 +429,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 	// Show callsign in coloured box
 	CRect idBox(topLeft.x + 6, dataBarRect.top + 8, topLeft.x + 150, dataBarRect.top + 36);
 	dc->FillRect(idBox, &lightBackground);
-	FontSelector::SelectATCFont(18, dc);
+	CFontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(idBox.left + (idBox.Width() / 2), dataBarRect.top + (idBox.Height() / 2) - 2, primedPlan->Callsign.c_str());
@@ -449,7 +449,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
 
 	// Text align
-	FontSelector::SelectATCFont(16, dc);
+	CFontSelector::SelectATCFont(16, dc);
 	dc->SetTextAlign(TA_LEFT);
 
 	// Parse the route text
@@ -543,7 +543,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		CTextInput idx = textInputs.at(counter);
 
 		// Font
-		FontSelector::SelectNormalFont(15, dc);
+		CFontSelector::SelectNormalFont(15, dc);
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 		dc->SetTextAlign(TA_LEFT);
 
@@ -615,7 +615,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -646,7 +646,7 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 		scrollBars[SCRL_CONF_Y] = CWinScrollBar(SCRL_CONF_Y, WIN_FLTPLN, content.Height(), content.Height(), false);
 
 	// Select content font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -720,7 +720,7 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -751,7 +751,7 @@ void CFlightPlanWindow::RenderMessageWindow(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -833,7 +833,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -862,7 +862,7 @@ void CFlightPlanWindow::RenderClearanceWindow(CDC* dc, Graphics* g, CRadarScreen
 	dc->Draw3dRect(contentB, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -970,7 +970,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	CBrush lightBackground(LightBackground.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -989,7 +989,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	// Show callsign in coloured box
 	CRect idBox(topLeft.x + 6, titleRect.bottom + 8, topLeft.x + 150, titleRect.bottom + 36);
 	dc->FillRect(idBox, &lightBackground);
-	FontSelector::SelectATCFont(18, dc);
+	CFontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 	dc->TextOutA(idBox.left + (idBox.Width() / 2), idBox.top + (idBox.Height() / 2) - 10, primedPlan->Callsign.c_str());
@@ -1008,7 +1008,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
 
 	// Text align
-	FontSelector::SelectATCFont(16, dc);
+	CFontSelector::SelectATCFont(16, dc);
 	dc->SetTextAlign(TA_LEFT);
 
 	if (textInputs[TXT_MAN_FL].Content == "" || textInputs[TXT_MAN_SPD].Content == "") {
@@ -1069,7 +1069,7 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 	offsetY = 12;
 	for (int idx = TXT_MAN_FL; idx <= TXT_MAN_EPTIME; idx++) {
 		// Font
-		FontSelector::SelectNormalFont(15, dc);
+		CFontSelector::SelectNormalFont(15, dc);
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 		dc->SetTextAlign(TA_LEFT);
 
@@ -1129,7 +1129,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -1165,7 +1165,7 @@ void CFlightPlanWindow::RenderCoordModal(CDC* dc, Graphics* g, CRadarScreen* scr
 	dc->Draw3dRect(history, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Select font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -1283,7 +1283,7 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	}
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -1315,7 +1315,7 @@ void CFlightPlanWindow::RenderHistoryModal(CDC* dc, Graphics* g, CRadarScreen* s
 	CCommonRenders::RenderScrollBar(dc, g, screen, { content.right + 3, content.top - 1 }, &scrollBars[SCRL_HIST]);
 
 	// Font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -1352,7 +1352,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	CAircraftFlightPlan* plan = IsCopyMade ? &copiedPlan : primedPlan;
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -1378,7 +1378,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 
 
 	// Select font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextAlign(TA_LEFT);
 
 	// Create the restrictions panel
@@ -1425,7 +1425,7 @@ void CFlightPlanWindow::RenderATCRestrictModal(CDC* dc, Graphics* g, CRadarScree
 	dc->Draw3dRect(content, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Select font
-	FontSelector::SelectNormalFont(14, dc);
+	CFontSelector::SelectNormalFont(14, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -1490,7 +1490,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -1518,7 +1518,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_XCHANGE).c_str(), titleRect, true, "");
 
 	// Select font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -1530,7 +1530,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	dc->TextOutA(content.left + 3, content.top - dc->GetTextExtent("Active Authorities").cy - 2, "Active Authorities");
 
 	// Select font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 
 	// List content
 	int offsetX = 2;
@@ -1636,7 +1636,7 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 	offsetY = content.top;
 	for (int idx = TXT_XCHANGE_CURRENT; idx <= TXT_XCHANGE_NEXT; idx++) {
 		// Font
-		FontSelector::SelectNormalFont(15, dc);
+		CFontSelector::SelectNormalFont(15, dc);
 		dc->SetTextColor(TextWhite.ToCOLORREF());
 		dc->SetTextAlign(TA_LEFT);
 
@@ -1666,7 +1666,7 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -1685,7 +1685,7 @@ void CFlightPlanWindow::RenderATCRestrictSubModal(CDC* dc, Graphics* g, CRadarSc
 	screen->AddScreenObject(WIN_FLTPLN, to_string(SUBWIN_ATCR).c_str(), titleRect, true, "");
 
 	// Select font
-	FontSelector::SelectNormalFont(15, dc);
+	CFontSelector::SelectNormalFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 

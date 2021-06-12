@@ -103,7 +103,7 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 
 	// Draw the tracking controller
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(textColour);
 	dc->SetTextAlign(TA_CENTER);
 	string line;
@@ -516,7 +516,7 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		}
 
 		// Pick font for callsign
-		FontSelector::SelectATCFont(16, dc);
+		CFontSelector::SelectATCFont(16, dc);
 		dc->SetTextColor(textColour);
 		dc->SetTextAlign(TA_LEFT);
 		string text;
@@ -560,7 +560,7 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 			if (position.m_Latitude < 80 && position.m_Longitude < -35)
 				textColour = TargetOrange.ToCOLORREF();
 		}
-		FontSelector::SelectMonoFont(12, dc);
+		CFontSelector::SelectMonoFont(12, dc);
 		dc->SetTextColor(textColour);
 		text = to_string(target->GetPosition().GetFlightLevel() / 100);
 		dc->TextOutA(tagRect.left, tagRect.top + offsetY, text.c_str());
@@ -716,7 +716,7 @@ void CAcTargets::RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsi
 	dc->Draw3dRect(coordBox, BevelDark.ToCOLORREF(), BevelLight.ToCOLORREF());
 
 	// Draw buttons
-	FontSelector::SelectMonoFont(12, dc);
+	CFontSelector::SelectMonoFont(12, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	
 	// Check the state & draw buttons

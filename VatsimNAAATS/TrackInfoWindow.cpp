@@ -32,7 +32,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	CBrush evenDarkerBrush(ButtonPressed.ToCOLORREF());
 
 	// Select title font
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(Black.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 
@@ -64,7 +64,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	CCommonRenders::RenderButton(dc, screen, { (buttonBarRect.right - 60) - 10, buttonBarRect.top + 10 }, 55, 30, &windowButtons.at(BTN_CLOSE));
 
 	// Draw lines
-	FontSelector::SelectNormalFont(16, dc);
+	CFontSelector::SelectNormalFont(16, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 

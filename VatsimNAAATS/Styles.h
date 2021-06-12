@@ -33,7 +33,7 @@ namespace Colours {
 }
 
 // Fonts
-class FontSelector
+class CFontSelector
 {
 public:
 	static int InitialiseFonts() {
@@ -94,7 +94,7 @@ public:
 
 		// Initialised
 		fontsInitialised = true;
-		CLogger::Log(CLogType::NORM, "Fonts initialised.", "FontSelector");
+		CLogger::Log(CLogType::NORM, "Fonts initialised.", "CFontSelector");
 		return 0;
 	}
 

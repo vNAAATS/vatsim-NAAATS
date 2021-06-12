@@ -97,12 +97,12 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 	
 	/// ITEM RENDERING
 	// Render zulu time
-	FontSelector::SelectNormalFont(30, dc);
+	CFontSelector::SelectNormalFont(30, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->TextOutA(screen->GetRadarArea().right / 2, MENBAR_HEIGHT + 5, CUtils::ParseZuluTime(true).c_str());
 
 	// Font selection
-	FontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
+	CFontSelector::SelectNormalFont(MEN_FONT_SIZE, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_CENTER);
 

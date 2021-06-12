@@ -27,7 +27,7 @@ void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 	Rect rectangle(topleft.x, topleft.y, LIST_INBOUND_WIDTH, 500);
 	
 	// Text
-	FontSelector::SelectATCFont(18, dc);
+	CFontSelector::SelectATCFont(18, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 
@@ -96,7 +96,7 @@ void CInboundList::RenderList(Graphics* g, CDC* dc, CRadarScreen* screen)
 
 	/// Make "Inbound" text
 	// Font
-	FontSelector::SelectMonoFont(15, dc);
+	CFontSelector::SelectMonoFont(15, dc);
 	dc->SetTextColor(TextWhite.ToCOLORREF());
 	dc->SetTextAlign(TA_LEFT);
 	// Draw header but don't show size if none
