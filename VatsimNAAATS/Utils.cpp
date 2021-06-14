@@ -5,28 +5,7 @@
 #include "Constants.h"
 #include "RadarDisplay.h"
 
-// Default values
-int CUtils::InboundX = 1400;
-int CUtils::InboundY = 170;
-int CUtils::OthersX = 1200;
-int CUtils::OthersY = 150;
-int CUtils::ConflictX = 60;
-int CUtils::ConflictY = 120;
-int CUtils::RCLX = 600;
-int CUtils::RCLY = 150;
-int CUtils::TrackWindowX = 300;
-int CUtils::TrackWindowY = 200;
-int CUtils::AltFiltLow = 0;
-int CUtils::AltFiltHigh = 700;
-bool CUtils::GridEnabled = false;
-bool CUtils::TagsEnabled = true;
-bool CUtils::QckLookEnabled = false;
-bool CUtils::OverlayEnabled = false;
-int CUtils::AreaSelection = 802;
-int CUtils::SelectedOverlay = 800;
-int CUtils::PosType = 802;
-char CUtils::DllPathFile[_MAX_PATH];
-string CUtils::DllPath;
+using namespace CUtils;
 
 // Save plugin data
 void CUtils::SavePluginData(CRadarScreen* screen) {

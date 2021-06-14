@@ -6,6 +6,7 @@
 #include "Utils.h"
 #include "Logger.h"
 
+using namespace CUtils;
 using namespace Gdiplus;
 
 // Colours for the program

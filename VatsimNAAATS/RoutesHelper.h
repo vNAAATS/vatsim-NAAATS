@@ -5,6 +5,7 @@
 #include "Utils.h"
 
 using namespace std;
+using namespace CUtils;
 using namespace EuroScopePlugIn;
 
 class CRoutesHelper

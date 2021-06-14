@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace Colours;
+using namespace CUtils;
 using namespace Gdiplus;
 using namespace EuroScopePlugIn;
 

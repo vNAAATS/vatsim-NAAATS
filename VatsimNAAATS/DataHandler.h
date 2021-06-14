@@ -8,6 +8,7 @@
 #include <json.hpp>
 
 using namespace std;
+using namespace CUtils;
 using namespace EuroScopePlugIn;
 
 class CDataHandler

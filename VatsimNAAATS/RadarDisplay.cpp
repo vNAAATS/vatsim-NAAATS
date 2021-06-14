@@ -14,6 +14,7 @@
 #include <iostream>
 
 using namespace Gdiplus;
+using namespace CUtils;
 using namespace std;
 using namespace EuroScopePlugIn;
 

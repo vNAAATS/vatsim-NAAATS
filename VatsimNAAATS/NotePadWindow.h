@@ -1,17 +1,17 @@
 #pragma once
 #include "pch.h"
+#include "UIWindow.h"
 #include "UserInterface.h"
-#include "UIElement.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 
 namespace UserInterface {
-	class CUIDropDown : public CUIElement
+	class CNotePadWindow : public CUIWindow
 	{
 		public:
 
-		protected:
+		private:
 
 	};
 }

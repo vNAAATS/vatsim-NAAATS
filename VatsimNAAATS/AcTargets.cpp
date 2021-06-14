@@ -5,6 +5,7 @@
 #include "MenuBar.h"
 #include "Logger.h"
 
+using namespace CUtils;
 using namespace Colours;
 
 clock_t CAcTargets::twoSecondTimer = clock();

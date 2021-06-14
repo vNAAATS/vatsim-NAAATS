@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -193,25 +193,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AcTargets.cpp" />
-    <ClCompile Include="BaseList.cpp" />
-    <ClCompile Include="BaseWindow.cpp" />
     <ClCompile Include="CommonRenders.cpp" />
     <ClCompile Include="ConflictList.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="RCLList.cpp" />
-    <ClCompile Include="MenuBar.cpp" />
-    <ClCompile Include="MessageWindow.cpp" />
-    <ClCompile Include="ConflictDetection.cpp" />
     <ClCompile Include="FlightPlanWindow.cpp" />
     <ClCompile Include="InboundList.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="MenuBar.cpp" />
+    <ClCompile Include="ConflictDetection.cpp" />
     <ClCompile Include="NAAATS.cpp" />
-    <ClCompile Include="NotePad.cpp" />
+    <ClCompile Include="NotePadWindow.cpp" />
     <ClCompile Include="OtherList.cpp" />
     <ClCompile Include="Overlays.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="RadarDisplay.cpp" />
     <ClCompile Include="RoutesHelper.cpp" />
     <ClCompile Include="SetupWindow.cpp" />
+    <ClCompile Include="Structures.cpp" />
     <ClCompile Include="Styles.cpp" />
     <ClCompile Include="TrackInfoWindow.cpp" />
     <ClCompile Include="UIButton.cpp" />
@@ -219,7 +216,9 @@
     <ClCompile Include="UIDropDown.cpp" />
     <ClCompile Include="UIElement.cpp" />
     <ClCompile Include="UIInput.cpp" />
+    <ClCompile Include="UIList.cpp" />
     <ClCompile Include="UIScrollBar.cpp" />
+    <ClCompile Include="UIWindow.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VatsimNAAATS.cpp" />
     <ClCompile Include="DataHandler.cpp" />
@@ -231,22 +230,18 @@
   <ItemGroup>
     <ClInclude Include="..\lib\include\EuroScopePlugIn.h" />
     <ClInclude Include="AcTargets.h" />
-    <ClInclude Include="BaseList.h" />
-    <ClInclude Include="BaseWindow.h" />
     <ClInclude Include="CommonRenders.h" />
     <ClInclude Include="ConflictDetection.h" />
     <ClInclude Include="ConflictList.h" />
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="Keys.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="RCLList.h" />
     <ClInclude Include="FlightPlanWindow.h" />
     <ClInclude Include="InboundList.h" />
+    <ClInclude Include="Keys.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="MenuBar.h" />
-    <ClInclude Include="MessageWindow.h" />
     <ClInclude Include="NAAATS.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="NotePad.h" />
+    <ClInclude Include="NotePadWindow.h" />
     <ClInclude Include="OtherList.h" />
     <ClInclude Include="Overlays.h" />
     <ClInclude Include="pch.h" />
@@ -261,6 +256,9 @@
     <ClInclude Include="UIButton.h" />
     <ClInclude Include="UICheckBox.h" />
     <ClInclude Include="UIDropDown.h" />
+    <ClInclude Include="UIElement.h" />
+    <ClInclude Include="UIList.h" />
+    <ClInclude Include="UIWindow.h" />
     <ClInclude Include="UserInterface.h" />
     <ClInclude Include="UIInput.h" />
     <ClInclude Include="UIScrollBar.h" />

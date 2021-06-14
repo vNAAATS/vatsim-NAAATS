@@ -13,6 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\UserInterface">
+      <UniqueIdentifier>{2ff97f96-e2c0-4c5f-a562-71947c29fe41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UserInterface">
+      <UniqueIdentifier>{8f1b6b8e-4d31-4c1b-b2ba-b123896d2b29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UserInterface\Windows">
+      <UniqueIdentifier>{b64f8690-b1cb-4ba7-b16e-e3d582b0f8f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UserInterface\Lists">
+      <UniqueIdentifier>{3fcfc361-99c2-4974-bfeb-fdbd516499ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UserInterface\Elements">
+      <UniqueIdentifier>{fb77a75a-3299-4c53-84cd-30a67fa589b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UserInterface\Lists">
+      <UniqueIdentifier>{b15cc6ce-51c7-4b1a-8de1-361adbf27a09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UserInterface\Windows">
+      <UniqueIdentifier>{de61c22a-4fcc-4a29-beb7-9cf5a57e1b4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UserInterface\Elements">
+      <UniqueIdentifier>{9e7d9078-f38a-415c-9f7a-2ceda26da2b4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="VatsimNAAATS.cpp">
@@ -30,12 +54,6 @@
     <ClCompile Include="AcTargets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InboundList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OtherList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,65 +66,68 @@
     <ClCompile Include="DataHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TrackInfoWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FlightPlanWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Styles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MessageWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CommonRenders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MenuBar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NotePad.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RoutesHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConflictList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RCLList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetupWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIElement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIButton.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIInput.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UICheckBox.cpp">
+    <ClCompile Include="Structures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UIScrollBar.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="UIInput.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="UIElement.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
     </ClCompile>
     <ClCompile Include="UIDropDown.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="UICheckBox.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="UIButton.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="UIWindow.cpp">
+      <Filter>Source Files\UserInterface\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="UIList.cpp">
+      <Filter>Source Files\UserInterface\Lists</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuBar.cpp">
+      <Filter>Source Files\UserInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="InboundList.cpp">
+      <Filter>Source Files\UserInterface\Lists</Filter>
+    </ClCompile>
+    <ClCompile Include="OtherList.cpp">
+      <Filter>Source Files\UserInterface\Lists</Filter>
+    </ClCompile>
+    <ClCompile Include="ConflictList.cpp">
+      <Filter>Source Files\UserInterface\Lists</Filter>
+    </ClCompile>
+    <ClCompile Include="TrackInfoWindow.cpp">
+      <Filter>Source Files\UserInterface\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="SetupWindow.cpp">
+      <Filter>Source Files\UserInterface\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="NotePadWindow.cpp">
+      <Filter>Source Files\UserInterface\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="FlightPlanWindow.cpp">
+      <Filter>Source Files\UserInterface\Windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -151,12 +172,6 @@
     <ClInclude Include="Styles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InboundList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OtherList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -172,65 +187,68 @@
     <ClInclude Include="Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TrackInfoWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FlightPlanWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MessageWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CommonRenders.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MenuBar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NotePad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RoutesHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConflictList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RCLList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Keys.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetupWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UIButton.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="UserInterface.h">
+      <Filter>Header Files\UserInterface</Filter>
     </ClInclude>
-    <ClInclude Include="UIInput.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="UIWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="UICheckBox.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="UIList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
     </ClInclude>
     <ClInclude Include="UIScrollBar.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="UIButton.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="UICheckBox.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
     </ClInclude>
     <ClInclude Include="UIDropDown.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UserInterface\Elements</Filter>
     </ClInclude>
-    <ClInclude Include="UserInterface.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="UIElement.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="UIInput.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuBar.h">
+      <Filter>Header Files\UserInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="InboundList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
+    </ClInclude>
+    <ClInclude Include="OtherList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
+    </ClInclude>
+    <ClInclude Include="ConflictList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
+    </ClInclude>
+    <ClInclude Include="TrackInfoWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="SetupWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="NotePadWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="FlightPlanWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

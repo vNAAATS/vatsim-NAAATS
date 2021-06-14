@@ -8,6 +8,7 @@
 #include "Overlays.h"
 
 using namespace Colours;
+using namespace CUtils;
 
 CMenuBar::CMenuBar() {
 	// Button defaults

@@ -6,7 +6,6 @@
 
 #include "Constants.h"
 #include "RadarDisplay.h"
-#include "Utils.h"
 
 CNAAATSPlugin::CNAAATSPlugin() : CPlugIn(COMPATIBILITY_CODE, PLUGIN_NAME.c_str(), PLUGIN_VERSION.c_str(), PLUGIN_AUTHOR.c_str(), PLUGIN_COPYRIGHT.c_str())
 {

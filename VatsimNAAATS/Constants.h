@@ -267,13 +267,6 @@ enum class CTrackStatus {
     SAME
 };
 
-// Button states
-enum class CInputState {
-    INACTIVE,
-    ACTIVE,
-    DISABLED
-};
-
 // Flight plan mode
 enum class CFlightPlanMode {
     NOT_OWNED,
