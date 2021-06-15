@@ -81,62 +81,62 @@
     <ClCompile Include="Structures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIScrollBar.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
+    <ClCompile Include="User_Interface\MenuBar.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIInput.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="UIElement.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="UIDropDown.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="UICheckBox.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="UIButton.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="UIWindow.cpp">
-      <Filter>Source Files\UserInterface\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="UIList.cpp">
+    <ClCompile Include="User_Interface\Lists\UIList.cpp">
       <Filter>Source Files\UserInterface\Lists</Filter>
     </ClCompile>
-    <ClCompile Include="InboundList.cpp">
+    <ClCompile Include="User_Interface\Lists\InboundList.cpp">
       <Filter>Source Files\UserInterface\Lists</Filter>
     </ClCompile>
-    <ClCompile Include="OtherList.cpp">
+    <ClCompile Include="User_Interface\Lists\ConflictList.cpp">
       <Filter>Source Files\UserInterface\Lists</Filter>
     </ClCompile>
-    <ClCompile Include="ConflictList.cpp">
+    <ClCompile Include="User_Interface\Lists\OtherList.cpp">
       <Filter>Source Files\UserInterface\Lists</Filter>
     </ClCompile>
-    <ClCompile Include="TrackInfoWindow.cpp">
+    <ClCompile Include="User_Interface\Windows\FlightPlanWindow.cpp">
       <Filter>Source Files\UserInterface\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="SetupWindow.cpp">
+    <ClCompile Include="User_Interface\Windows\NotePadWindow.cpp">
       <Filter>Source Files\UserInterface\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="NotePadWindow.cpp">
+    <ClCompile Include="User_Interface\Windows\SetupWindow.cpp">
       <Filter>Source Files\UserInterface\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="FlightPlanWindow.cpp">
+    <ClCompile Include="User_Interface\Windows\TrackInfoWindow.cpp">
       <Filter>Source Files\UserInterface\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="UIContextMenu.cpp">
+    <ClCompile Include="User_Interface\Windows\UIWindow.cpp">
+      <Filter>Source Files\UserInterface\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIScrollBar.cpp">
       <Filter>Source Files\UserInterface\Elements</Filter>
     </ClCompile>
-    <ClCompile Include="MenuBar.cpp">
+    <ClCompile Include="User_Interface\Elements\UIButton.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UICheckBox.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIContextMenu.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIDropDown.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIElement.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIInput.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIRichText.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\UIBase.cpp">
       <Filter>Source Files\UserInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="UIBase.cpp">
-      <Filter>Source Files\UserInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="UIRichText.cpp">
-      <Filter>Source Files\UserInterface\Elements</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -208,65 +208,65 @@
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="User_Interface.h">
+    <ClInclude Include="User_Interface\MenuBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\UIBase.h">
       <Filter>Header Files\UserInterface</Filter>
     </ClInclude>
-    <ClInclude Include="UIWindow.h">
-      <Filter>Header Files\UserInterface\Windows</Filter>
-    </ClInclude>
-    <ClInclude Include="UIList.h">
-      <Filter>Header Files\UserInterface\Lists</Filter>
-    </ClInclude>
-    <ClInclude Include="UIScrollBar.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="UIButton.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="UICheckBox.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="UIDropDown.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="UIElement.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="UIInput.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="InboundList.h">
-      <Filter>Header Files\UserInterface\Lists</Filter>
-    </ClInclude>
-    <ClInclude Include="OtherList.h">
-      <Filter>Header Files\UserInterface\Lists</Filter>
-    </ClInclude>
-    <ClInclude Include="ConflictList.h">
-      <Filter>Header Files\UserInterface\Lists</Filter>
-    </ClInclude>
-    <ClInclude Include="TrackInfoWindow.h">
-      <Filter>Header Files\UserInterface\Windows</Filter>
-    </ClInclude>
-    <ClInclude Include="SetupWindow.h">
-      <Filter>Header Files\UserInterface\Windows</Filter>
-    </ClInclude>
-    <ClInclude Include="NotePadWindow.h">
-      <Filter>Header Files\UserInterface\Windows</Filter>
-    </ClInclude>
-    <ClInclude Include="FlightPlanWindow.h">
-      <Filter>Header Files\UserInterface\Windows</Filter>
-    </ClInclude>
-    <ClInclude Include="UIContextMenu.h">
-      <Filter>Header Files\UserInterface\Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="MenuBar.h">
+    <ClInclude Include="User_Interface\User_Interface.h">
       <Filter>Header Files\UserInterface</Filter>
     </ClInclude>
-    <ClInclude Include="UIBase.h">
-      <Filter>Header Files\UserInterface</Filter>
+    <ClInclude Include="User_Interface\Windows\UIWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="UIRichText.h">
+    <ClInclude Include="User_Interface\Elements\UIScrollBar.h">
       <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIRichText.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\UIList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIInput.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIDropDown.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIContextMenu.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIElement.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UICheckBox.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIButton.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\SetupWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\TrackInfoWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\NotePadWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\FlightPlanWindow.h">
+      <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\ConflictList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\OtherList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\InboundList.h">
+      <Filter>Header Files\UserInterface\Lists</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

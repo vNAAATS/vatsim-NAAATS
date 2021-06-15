@@ -9,13 +9,13 @@
 // Main App
 class CVatsimNAAATSApp : public CWinApp
 {
-public:
-	CVatsimNAAATSApp();
+	public:
+		CVatsimNAAATSApp();
 
-// Overrides
-public:
-	virtual BOOL InitInstance();
+	// Overrides
+	public:
+		virtual BOOL InitInstance();
 
-	DECLARE_MESSAGE_MAP()
+		DECLARE_MESSAGE_MAP()
 };
 
