@@ -1,17 +1,15 @@
 #pragma once
 #include "pch.h"
-#include "UserInterface.h"
+#include "User_Interface.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 
-namespace UserInterface {
-	class CUIWindow
+namespace User_Interface {
+	class CUIWindow : public CUIBase
 	{
 		public:
-			// Construct/destruct
-			CUIWindow(POINT topLeft);
-			virtual ~CUIWindow();
+			CUIWindow(POINT topLeft, SWindowConfig config);
 
 			// Shared methods
 			POINT GetPosition();
@@ -21,20 +19,27 @@ namespace UserInterface {
 
 			// Forced overrides
 			virtual void RenderContent(CDC* dc, Graphics* g, CRadarScreen* screen) = 0;
-			virtual void RegisterElements() = 0;
 
-			// Closed status
+			// Base overrides
+			virtual void RegisterElements() = 0;
+			virtual void Interact(int id) = 0;
+
+			// Fields
+			int ID;
+			int LocID;
 			bool IsClosed = true;
+			SWindowConfig Config;
 
 		protected:
 			// Fields
 			POINT topLeft;
+			int width;
+			int height;
+	};
 
-			// Window elements
-			map<int, CUIButton> windowButtons;
-			map<int, CUIInput> textInputs;
-			map<int, CUICheckbox> checkBoxes;
-			map<int, CUIDropDown> dropDowns;
-			map<int, CUIScrollBar> scrollBars;
+	// Config to enable customisation of some behaviours/parameters
+	struct SWindowConfig { 
+		SWindowConfig() {};
+		bool IsModal = false;
 	};
 }

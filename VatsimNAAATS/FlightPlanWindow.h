@@ -1,17 +1,26 @@
 #pragma once
 #include "pch.h"
 #include "UIWindow.h"
-#include "UserInterface.h"
+#include "User_Interface.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 
-namespace UserInterface {
+namespace User_Interface {
 	class CFlightPlanWindow : public CUIWindow
 	{
 		public:
+			// Construct
+			inline CFlightPlanWindow(POINT topLeft, SWindowConfig config) : CUIWindow(topLeft, config) {};
 
-		private:
+			// Inherited methods
+			virtual void RenderContent(CDC* dc, Graphics* g, CRadarScreen* screen);
+			virtual void RegisterElements();
+			virtual void Interact(int id);
 
+			// ELEMENT MATRIX DEFINITIONS AND STANDALONE ELEMENTS HERE
+			// 
+			// static const int kMatrix[x][y] = ...; // element matrix
+			// static const int kCheckbox = ...; // STANDALONE element
 	};
 }

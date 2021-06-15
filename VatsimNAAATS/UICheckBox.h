@@ -1,17 +1,17 @@
 #pragma once
 #include "pch.h"
-#include "UserInterface.h"
+#include "User_Interface.h"
 #include "UIElement.h"
 
 using namespace std;
 using namespace EuroScopePlugIn;
 
-namespace UserInterface {
+namespace User_Interface {
 	class CUICheckBox : public CUIElement
 	{
 		public:
 
-		protected:
+		private:
 
 	};
 }
