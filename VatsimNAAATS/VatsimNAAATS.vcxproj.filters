@@ -105,9 +105,6 @@
     <ClCompile Include="UIList.cpp">
       <Filter>Source Files\UserInterface\Lists</Filter>
     </ClCompile>
-    <ClCompile Include="MenuBar.cpp">
-      <Filter>Source Files\UserInterface</Filter>
-    </ClCompile>
     <ClCompile Include="InboundList.cpp">
       <Filter>Source Files\UserInterface\Lists</Filter>
     </ClCompile>
@@ -128,6 +125,18 @@
     </ClCompile>
     <ClCompile Include="FlightPlanWindow.cpp">
       <Filter>Source Files\UserInterface\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="UIContextMenu.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuBar.cpp">
+      <Filter>Source Files\UserInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="UIBase.cpp">
+      <Filter>Source Files\UserInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="UIRichText.cpp">
+      <Filter>Source Files\UserInterface\Elements</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,7 +208,7 @@
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UserInterface.h">
+    <ClInclude Include="User_Interface.h">
       <Filter>Header Files\UserInterface</Filter>
     </ClInclude>
     <ClInclude Include="UIWindow.h">
@@ -226,9 +235,6 @@
     <ClInclude Include="UIInput.h">
       <Filter>Header Files\UserInterface\Elements</Filter>
     </ClInclude>
-    <ClInclude Include="MenuBar.h">
-      <Filter>Header Files\UserInterface</Filter>
-    </ClInclude>
     <ClInclude Include="InboundList.h">
       <Filter>Header Files\UserInterface\Lists</Filter>
     </ClInclude>
@@ -249,6 +255,18 @@
     </ClInclude>
     <ClInclude Include="FlightPlanWindow.h">
       <Filter>Header Files\UserInterface\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="UIContextMenu.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuBar.h">
+      <Filter>Header Files\UserInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="UIBase.h">
+      <Filter>Header Files\UserInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="UIRichText.h">
+      <Filter>Header Files\UserInterface\Elements</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
