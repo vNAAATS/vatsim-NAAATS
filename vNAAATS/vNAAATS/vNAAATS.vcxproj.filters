@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="vNAAATS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VNAAATSPlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginDisplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Custom_Components\MenuBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\Custom\UIRouteBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UICheckBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIContextMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIDropDown.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIListBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIRichText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Elements\UIScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Lists\ConflictList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Lists\InboundList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Lists\OtherList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Lists\UIList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Windows\FlightPlanWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Windows\NotePadWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Windows\SetupWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Windows\TrackInfoWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Windows\UIWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="User_Interface\Styling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vNAAATS.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="res\vNAAATS.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vNAAATS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VNAAATSPlugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginDisplay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Custom_Components\MenuBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\Custom\UIRouteBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UICheckBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIContextMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIDropDown.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIElement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIListBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIRichText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Elements\UIScrollBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\ConflictList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\InboundList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\OtherList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Lists\UIList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\FlightPlanWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\NotePadWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\SetupWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\TrackInfoWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Windows\UIWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\Styling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\UIComponentBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\UIIncludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User_Interface\User_Interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="vNAAATS.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
