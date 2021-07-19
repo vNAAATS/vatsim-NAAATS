@@ -15,7 +15,6 @@ namespace User_Interface {
 	/// This is the User_Interface namespace. If it draws onto the screen, in most cases, the code can be found in here.
 	/// Each User_Interface element has a specific range of IDs assigned to them associated with a location 
 	/// (usually a specific window) so that each element can have an unique ID.
-	///
 
 	/// ID ranges:
 	/// - (-1)-9 (LOCATION IDS (LOC))
@@ -23,10 +22,13 @@ namespace User_Interface {
 	/// - 50-59 (LISTS)
 	/// - 60-69 (CUSTOM COMPONENTS)
 	/// - 100-199 (BUTTON)
-	/// - 200-299 (DROPDOWN) and 2000-2099 (DROPDOWN ITEM)
+	/// - 200-299 (DROPDOWN) and [DROPDOWN * 1000] + n (DROPDOWN ITEM). Dropdown from Dropdown Element: floor(DROPDOWN/1000)
 	/// - 300-399 (TEXT INPUT)
 	/// - 400-499 (CHECKBOX)
 	/// - 500-599 (SCROLL BAR)
+	/// - 600-699 (RICH TEXT)
+	/// - 700-799 (CONTEXT MENU) and [CONTEXT MENU * 1000] + n (CM ITEM). Item from Context Menu Element: floor(CM ITEM/1000)
+	/// - 800-899 (LIST BOX) and [LIST BOX * 1000] + n (LB ITEM). Item from Context Menu Element: floor(LB ITEM/1000)
 
 	// For empty spaces in element matrices
 	const int kVoid = -1; 
