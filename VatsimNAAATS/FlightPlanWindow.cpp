@@ -489,9 +489,9 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 					}
 					else {
 						// Write coordinate down
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
 						offsetY += 28;
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
 						offsetY += 28;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
 						offsetY = 2;
@@ -2333,8 +2333,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 
 			// Set route
 			string route;
-			for (int i = 0; i < copiedPlan.RouteRaw.size(); i++) {
-				route += copiedPlan.RouteRaw[i] + " ";
+			for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {
+				route += primedPlan->RouteRaw[i] + " ";
 			}
 
 			textInputs[TXT_SPD_CPY].Content = string("M") + CUtils::PadWithZeros(3, stoi(copiedPlan.Mach));
@@ -2590,19 +2590,20 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				else { // Delete this duplicate code nonsense
 					// Create network object
 					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
-					netFP->Callsign = primedPlan->Callsign;
-					netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
-					netFP->AssignedMach = stoi(primedPlan->Mach);
-					netFP->Track = primedPlan->Track;
-					netFP->Departure = primedPlan->Depart;
-					netFP->Arrival = primedPlan->Dest;
-					netFP->IsEquipped = primedPlan->IsEquipped;
+					netFP->Callsign = copiedPlan.Callsign;
+					netFP->AssignedLevel = stoi(copiedPlan.FlightLevel);
+					netFP->AssignedMach = stoi(copiedPlan.Mach);
+					netFP->Track = copiedPlan.Track;
+					netFP->Departure = copiedPlan.Depart;
+					netFP->Arrival = copiedPlan.Dest;
+					netFP->IsEquipped = copiedPlan.IsEquipped;
 					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 					netFP->Route = ""; // Initialise
 					netFP->RouteEtas = ""; // Initialise
 
 					// Get routes and estimates
 					vector<CRoutePosition> rte;
+					copiedPlan.IsValid = true;
 					CRoutesHelper::GetRoute(screen, &rte, copiedPlan.Callsign, &copiedPlan);
 					for (int i = 0; i < rte.size(); i++) {
 						if (i != rte.size() - 1) {
@@ -2625,7 +2626,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			}
 		}
 		if (id == BTN_XCHANGE_TRACK) {
-			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() && screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign() == "") {
+			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() 
+				&& screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign() == "") {
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);

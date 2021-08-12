@@ -187,13 +187,13 @@
     <ClInclude Include="RCLList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Keys.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SetupWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Keys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

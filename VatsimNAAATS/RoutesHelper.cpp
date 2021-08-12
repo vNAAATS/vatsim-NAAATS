@@ -341,29 +341,29 @@ int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack, CA
 		else {
 			// Check concorde
 			if (rawInput == "SM") {
+				track = rawInput;
 				for (int i = 0; i < NatSM.size(); i++) {
-					route.push_back(NatSM[i].Name);
-					track = rawInput;
+									
 				}
 			}
 			else if (rawInput == "SN") {
+				track = rawInput;
 				for (int i = 0; i < NatSN.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else if (rawInput == "SP") {
+				track = rawInput;
 				for (int i = 0; i < NatSP.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else if (rawInput == "SL") {
+				track = rawInput;
 				for (int i = 0; i < NatSL.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else if (rawInput == "SO") {
+				track = rawInput;
 				for (int i = 0; i < NatSO.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else {

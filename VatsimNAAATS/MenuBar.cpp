@@ -34,7 +34,7 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_GRID] = CWinButton(BTN_GRID, MENBAR, "Grid", CInputState::DISABLED, 73);
 	buttons[BTN_SEP] = CWinButton(BTN_SEP, MENBAR, "Sep", CInputState::INACTIVE, 43);
 	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::DISABLED, 86);
-	buttons[BTN_PSSR] = CWinButton(BTN_PSSR, MENBAR, "PSR_SYMBOL", CInputState::ACTIVE, 40);
+	buttons[BTN_PSSR] = CWinButton(BTN_PSSR, MENBAR, "PSR_SYMBOL", CInputState::DISABLED, 40);
 	buttons[BTN_EXT] = CWinButton(BTN_EXT, MENBAR, "Ext", CInputState::INACTIVE, 40);
 	buttons[BTN_AUTOTAG] = CWinButton(BTN_AUTOTAG, MENBAR, "Auto Tag", CInputState::DISABLED, 75);
 	buttons[BTN_ALL] = CWinButton(BTN_ALL, MENBAR, "ALL", CInputState::INACTIVE, 40);

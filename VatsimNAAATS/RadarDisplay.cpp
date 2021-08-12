@@ -94,9 +94,9 @@ void CRadarDisplay::PopulateProgramData() {
 	FontSelector::InitialiseFonts();
 
 	// Start cursor update loop
-	//appCursor->screen = this;
-	//_beginthread(CursorStateUpdater, 0, (void*) appCursor);
-	//CLogger::Log(CLogType::NORM, "Cursor update sequence started.", "CRadarDisplay");
+	appCursor->screen = this;
+	_beginthread(CursorStateUpdater, 0, (void*) appCursor);
+	CLogger::Log(CLogType::NORM, "Cursor update sequence started.", "CRadarDisplay");
 }
 
 // On radar screen refresh (modified to occur 4 times a second)
@@ -1196,32 +1196,34 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 		}
 
 		// Ok so the app is still active let's get the cursor data
-		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 50ms
+		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 40ms
 			// Get cursor position (only if previous cursor position is inside the radar area)
 			bool isCursorInsideRadarArea = false;
 			CRect radarArea = cursor->screen->GetRadarArea();
 
 			// Get the position and monitor in which the point lies
 			GetCursorPos(&cursor->position);
-			HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
 
-			// Use screen resolution and ratios to get cursor position relative to monitor size
-			//int screenSizeX;
-			//int screenSizeY;
+			// Keep the coordinates down to one screen's worth
+			if (cursor->position.x > 3840) // Window is on 3rd screen
+				cursor->position.x -= 3840;
+			else if (cursor->position.x > 1920) // Window is on 2nd screen
+				cursor->position.x -= 1920;
 
+			// Get button presses
+			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
+			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
+			
 			// Check if cursor inside radar area
 			if (cursor->position.x > radarArea.left &&
 				cursor->position.x < radarArea.right &&
 				cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
 				cursor->position.y < radarArea.bottom) {
 				isCursorInsideRadarArea = true;
-				// Get lat lon
-				cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
 			}
 
-			// Get button presses
-			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
-			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
+			// Lat/lon position
+			cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
 
 			// Check button presses
 			if ((!leftBtnPressed && !rightBtnPressed) || !isCursorInsideRadarArea) {
