@@ -4,6 +4,7 @@
 #endif
 #include "resource.h"
 #include <EuroScopePlugIn.h>
+#include "Logger.h"
 
 // Main App
 class CVatsimNAAATSApp : public CWinApp

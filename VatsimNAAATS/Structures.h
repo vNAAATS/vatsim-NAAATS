@@ -78,16 +78,18 @@ struct CAircraftStatus {
 // STCA status
 struct CSTCAStatus {
 	CSTCAStatus() {}; // Default constructor
-	CSTCAStatus(string csA, string csB, CConflictStatus status, int distance) {
+	CSTCAStatus(string csA, string csB, CConflictStatus status, int distanceTime, int distanceNM) {
 		CallsignA = csA;
 		CallsignB = csB;
 		ConflictStatus = status;
-		DistanceAsTime = distance;
+		DistanceAsTime = distanceTime;
+		DistanceAsNM = distanceNM;
 	}
 	string CallsignA;
 	string CallsignB;
 	CConflictStatus ConflictStatus;
 	int DistanceAsTime;
+	int DistanceAsNM;
 };
 
 // Describes a separation status
@@ -269,6 +271,20 @@ struct CFlightRestriction {
 	string Human;
 };
 
+struct CNetworkFlightPlan {
+	string Callsign;
+	int AssignedLevel;
+	int AssignedMach;
+	string Track;
+	string Route;
+	string RouteEtas;
+	string Departure;
+	string Arrival;
+	bool IsEquipped;
+	string TrackedBy;
+	string LastUpdated;
+};
+
 struct CAircraftFlightPlan {
 	CAircraftFlightPlan() {}; // Default constructor
 	CAircraftFlightPlan(
@@ -340,7 +356,9 @@ struct CAircraftFlightPlan {
 	int ExitTime;
 	bool IsEquipped;
 	bool IsValid = false;
-	bool IsCleared;
+	bool IsFirstUpdate = false; // So that we can disable flight plan window until the plan has been fetched from server at least once
+	CRadarTargetMode TargetMode = CRadarTargetMode::ADS_B;
+	bool IsCleared = false;
 };
 
 

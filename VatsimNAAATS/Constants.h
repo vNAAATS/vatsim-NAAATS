@@ -109,10 +109,11 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v1.1.0a";
-const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678 w/ Pierre Ferran";
-const string PLUGIN_COPYRIGHT = "Gander Oceanic vNAAATS";
-const bool IS_ALPHA = true;
+const string PLUGIN_VERSION = "v1.2.0";
+const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
+const string PLUGIN_COPYRIGHT = "(C) 2021 Gander Oceanic vNAAATS";
+const bool IS_ALPHA = false;
+const bool DEBUG_MODE = true;
 
 // Sector file & geo constants
 const int SECTELEMENT_COORD_IDX = 7;
@@ -173,7 +174,10 @@ const int STCA_TIME = 480; // 8 minutes
 
 /// OBJECT HANDLES
 // Screen
+const int RADAR_SCREEN = -1;
 const int SCREEN_TAG = 1;
+const int SCREEN_TAG_CS = 11;
+const int SCREEN_TAG_CS_BTN = 12;
 const int MENBAR = 2;
 const int WINDOW = 3;
 
@@ -201,10 +205,10 @@ const int LIST_CONFLICT = 303;
 const int DRP_AREA_EGGX = 801;
 const int DRP_AREA_CZQX = 802;
 const int DRP_AREA_BDBX = 803;
-const int DRP_OVL_ALL = 801;
-const int DRP_OVL_EAST = 802;
-const int DRP_OVL_WEST = 803;
-const int DRP_OVL_SEL = 804;
+const int DRP_OVL_ALL = 800;
+const int DRP_OVL_EAST = 801;
+const int DRP_OVL_WEST = 802;
+const int DRP_OVL_SEL = 803;
 const int DRP_TYPE_DEL = 801;
 const int DRP_TYPE_ENR = 802;
 const int DRP_TYPE_MULTI = 803;
@@ -310,4 +314,19 @@ enum class CRestrictionType {
     ATB,
     XAT,
     INT
+};
+
+enum class CRadarTargetMode {
+    PRIMARY, // Asterisk
+    SECONDARY_S, // Diamond with line
+    SECONDARY_C, // Star
+    ADS_B, // Airplane icon (also for cleared aircraft)
+};
+
+enum class CLogType {
+    INIT, // Initialisation message
+    NORM, // General log item
+    WARN, // Warning
+    ERR, // Handled exception
+    EXC, // Unhandled exception
 };

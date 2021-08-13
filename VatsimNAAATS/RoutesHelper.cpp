@@ -21,7 +21,7 @@ bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* route
 	CRadarTarget target = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str());
 
 	// Get aircraft direction
-	bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+	bool direction = CUtils::GetAircraftDirection(target.GetPosition().GetReportedHeadingTrueNorth());
 	
 	// Loop through each route item
 	int totalDistance = 0;
@@ -47,7 +47,7 @@ bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* route
 						totalDistance += fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
 						position.DistanceFromLastPoint = fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
 					}
-					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
+					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetPosition().GetReportedGS()));
 				}
 				else {
 					position.Estimate = "--";
@@ -66,7 +66,7 @@ bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* route
 						totalDistance += fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
 						position.DistanceFromLastPoint = fp->Route.at(idx - 1).Position.DistanceTo(fp->Route.at(idx).Position);
 					}
-					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetGS()));
+					position.Estimate = CUtils::ParseZuluTime(false, CUtils::GetTimeDistanceSpeed((int)round(totalDistance), target.GetPosition().GetReportedGS()));
 				}
 				else {
 					position.Estimate = "--";
@@ -265,7 +265,7 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 			// Find our entry and exit points
 			int entryPoint = -1;
 			int exitPoint = -1;
-			bool direction = CUtils::GetAircraftDirection(target.GetTrackHeading());
+			bool direction = CUtils::GetAircraftDirection(target.GetPosition().GetReportedHeadingTrueNorth());
 			for (int i = 0; i < route.GetPointsNumber(); i++) {
 				if (entryPoint == -1) { // Check entry point
 					if (CUtils::IsEntryPoint(string(route.GetPointName(i)), direction ? true : false)) {
@@ -341,29 +341,29 @@ int CRoutesHelper::ParseRoute(string callsign, string rawInput, bool isTrack, CA
 		else {
 			// Check concorde
 			if (rawInput == "SM") {
+				track = rawInput;
 				for (int i = 0; i < NatSM.size(); i++) {
-					route.push_back(NatSM[i].Name);
-					track = rawInput;
+									
 				}
 			}
 			else if (rawInput == "SN") {
+				track = rawInput;
 				for (int i = 0; i < NatSN.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else if (rawInput == "SP") {
+				track = rawInput;
 				for (int i = 0; i < NatSP.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else if (rawInput == "SL") {
+				track = rawInput;
 				for (int i = 0; i < NatSL.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else if (rawInput == "SO") {
+				track = rawInput;
 				for (int i = 0; i < NatSO.size(); i++) {
-					track = rawInput;
 				}
 			}
 			else {

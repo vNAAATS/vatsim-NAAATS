@@ -50,17 +50,18 @@ class CMenuBar
 		static const int BTN_HALO = 14;
 		static const int BTN_RBL = 15;
 		static const int BTN_RINGS = 16;
-		static const int BTN_PTL = 17;
-		static const int BTN_PIV = 18;
-		static const int BTN_GRID = 19;
-		static const int BTN_SEP = 20;
-		static const int BTN_QCKLOOK = 21;
-		static const int BTN_PSR_FILT = 22;
-		static const int BTN_EXT = 23;
-		static const int BTN_AUTOTAG = 24;
-		static const int BTN_ALL = 25;
-		static const int BTN_RTEDEL = 26;
-	
+		static const int BTN_QDM = 17;
+		static const int BTN_PTL = 18;
+		static const int BTN_PIV = 19;
+		static const int BTN_GRID = 20;
+		static const int BTN_SEP = 21;
+		static const int BTN_QCKLOOK = 22;
+		static const int BTN_PSSR = 23;
+		static const int BTN_EXT = 24;
+		static const int BTN_AUTOTAG = 25;
+		static const int BTN_ALL = 26;
+		static const int BTN_RTEDEL = 27;
+		
 		static const int DRP_AREASEL = 100;
 		static const int DRP_TCKCTRL = 101;
 		static const int DRP_OVERLAYS = 102;

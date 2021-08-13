@@ -5,7 +5,7 @@ COverlayType COverlays::CurrentType = COverlayType::TCKS_ALL;
 
 void COverlays::ShowCurrentOverlay(CDC* dc, Graphics* g, CRadarScreen* screen, CMenuBar* menubar) {
 	// Render the tracks path
-	CCommonRenders::RenderTracks(dc, g, screen, &CurrentType, menubar);
+	CCommonRenders::RenderTracks(dc, g, screen, CurrentType, menubar);
 }
 
 // Show and hide the grid reference and waypoints

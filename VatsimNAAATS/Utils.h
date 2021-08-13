@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include <psapi.h>
 #include "Structures.h"
 
 using namespace std;
@@ -39,7 +40,7 @@ class CUtils { // TODO: refactor into namespace
 		// Load/save methods
 		static void SavePluginData(CRadarScreen* screen);
 		static void LoadPluginData(CRadarScreen* screen);
-
+		
 		// Text wrapping
 		static bool WrapText(CDC* dc, string textToWrap, char wrapChar, int contentWidth, vector<string>* ptrWrappedText);
 
@@ -68,7 +69,7 @@ class CUtils { // TODO: refactor into namespace
 		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false);
 
 		// Check if aircraft is AGCS equipped
-		static bool IsAircraftEquipped(string rawInfo, char equipCode);
+		static bool IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipCode);
 		
 		// Get CPosition from lat/lon
 		static CPosition PositionFromLatLon(double lat, double lon);
@@ -76,11 +77,17 @@ class CUtils { // TODO: refactor into namespace
 		// Calculate Mach
 		static int GetMach(int groundSpeed, int speedSound);
 
+		// Get radar target mode
+		static CRadarTargetMode GetTargetMode(int radarFlags);
+
 		// Pad zeroes
 		static string PadWithZeros(int width, int number);
 
 		// Check all alpha
 		static bool IsAllAlpha(string str);
+
+		// Find selcal code from remarks
+		static string GetSelcalCode(CFlightPlan* fpData);
 
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, int deltaTime = -1, CFlightPlan* fp = nullptr, int ep = -1);
@@ -106,6 +113,9 @@ class CUtils { // TODO: refactor into namespace
 		// Radians to degrees
 		static double ToDegrees(double radians);
 
+		// Round a double
+		static string RoundDecimalPlaces(double num, int precision);
+
 		// General solution to get the angle between two intersecting paths
 		static double GetPathAngle(double hdg1, double hdg2);
 
@@ -115,10 +125,28 @@ class CUtils { // TODO: refactor into namespace
 		// Get intersection of two vectors
 		static POINT GetIntersectionFromPointBearing(POINT position1, POINT position2, double bearing1, double bearing2);
 
+		// Get parsed lat lon string (i.e. with N/S or E/W)
+		static string GetLatLonString(CPosition* pos, bool space = true, int precision = -1, bool showDecimal = true);
+
+		// So we can stop running threads
+		static HANDLE GetESProcess();
+
 		// We need this struct for flight plan threading
 		struct CAsyncData {
 			CRadarScreen* Screen;
 			string Callsign;
 			CAircraftFlightPlan* FP = nullptr;
 		};
+
+		// This is for asyncing vNAAATS API data
+		struct CNetworkAsyncData {
+			CRadarScreen* Screen;
+			string Callsign;
+			CPlugIn* plugin = nullptr;
+			CNetworkFlightPlan* FP = nullptr;
+		};
+
+		// DLL path
+		static char DllPathFile[_MAX_PATH];
+		static string DllPath;
 };

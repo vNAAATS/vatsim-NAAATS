@@ -32,6 +32,9 @@ CRadarDisplay::CRadarDisplay()
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
+
+	// Clogger
+	CLogger::Log(CLogType::NORM, "Finished initialisation.", "CRadarDisplay");
 }
 
 CRadarDisplay::~CRadarDisplay()
@@ -89,9 +92,14 @@ void CRadarDisplay::PopulateProgramData() {
 
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
+
+	// Start cursor update loop
+	appCursor->screen = this;
+	_beginthread(CursorStateUpdater, 0, (void*) appCursor);
+	CLogger::Log(CLogType::NORM, "Firing cursor update sequence thread.", "CRadarDisplay::PopulateProgramData");
 }
 
-// On radar screen refresh (occurs about once a second)
+// On radar screen refresh (modified to occur 4 times a second)
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
 	// Create device context
@@ -109,9 +117,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	// Clear lists if not empty and time is greater than 1 second
 	if (fiveSecT >= 5 && !inboundList->AircraftList.empty()) {
 		inboundList->AircraftList.clear();
+		CLogger::Log(CLogType::NORM, "Refreshing Inbound list.", "CRadarDisplay::OnRefresh");
 	}
 	if (fiveSecT >= 5 && !otherList->AircraftList.empty()) {
 		otherList->AircraftList.clear();
+		CLogger::Log(CLogType::NORM, "Refreshing Other list.", "CRadarDisplay::OnRefresh");
 	}
 
 	// Online controllers
@@ -125,16 +135,21 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			if (string(controller.GetCallsign()).find("CTR") != string::npos || string(controller.GetCallsign()).find("FSS") != string::npos)
 			fltPlnWindow->onlineControllers[controller.GetCallsign()] = controller;
 		}
+		CLogger::Log(CLogType::NORM, "Refreshing controller list.", "CRadarDisplay::OnRefresh");
+
+		// Log cursor position every 5 seconds
+		CLogger::Log(CLogType::NORM, "Current cursor position: (" + to_string(appCursor->position.x) + ", " + to_string(appCursor->position.y) + ")", "CRadarDisplay::OnRefresh");
 	}
 
 	// Set the ASEL if it is different to the current one in program
 	string cs = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	if (GetPlugIn()->FlightPlanSelectASEL().GetCallsign() != asel) {
 		asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
+		CLogger::Log(CLogType::NORM, "Selected aircraft changed to " + asel + ".", "CRadarDisplay::OnRefresh");
 	}
 
 	// Set the flight plan button state
-	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid || !GetPlugIn()->ControllerMyself().IsController()) {
+	if (aircraftOnScreen.empty() || asel == "" || !CDataHandler::GetFlightData(asel)->IsValid || !CDataHandler::GetFlightData(asel)->IsFirstUpdate || !GetPlugIn()->ControllerMyself().IsController()) {
 		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) != CInputState::DISABLED)
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::DISABLED);
 	}
@@ -145,6 +160,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 	// Reset currently on screen list
 	if (tenSecT >= 10 && !aircraftOnScreen.empty()) {
+		CLogger::Log(CLogType::NORM, "Refreshing internal aircraft on screen list.", "CRadarDisplay::OnRefresh");
 		// Loop on screen aircraft
 		auto idx = aircraftOnScreen.begin();
 		while(idx != aircraftOnScreen.end()) {
@@ -157,13 +173,16 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					// Reset RBL (if active)
 					if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
 						menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
+						CLogger::Log(CLogType::NORM, "Resetting RBL tool.", "CRadarDisplay::OnRefresh");
 					}
 					// Reset SEP (if active)
 					if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+						CLogger::Log(CLogType::NORM, "Resetting SEP tool.", "CRadarDisplay::OnRefresh");
 						menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 					}
 					// Reset PIV (if active)
 					if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+						CLogger::Log(CLogType::NORM, "Resetting PIV tool.", "CRadarDisplay::OnRefresh");
 						menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 					}
 				}
@@ -177,7 +196,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				// Loop this way to avoid a vector overflow
 				while (jdx != CConflictDetection::CurrentSTCA.end()) {
 					if (idx->first == jdx->CallsignA || idx->first == jdx->CallsignB) {
-						jdx = CConflictDetection::CurrentSTCA.erase(jdx);
+						CLogger::Log(CLogType::NORM, "Erasing STCA for " + idx->first + ".", "CRadarDisplay::OnRefresh");
+						jdx = CConflictDetection::CurrentSTCA.erase(jdx);						
 					}
 					else {
 						jdx++;
@@ -189,7 +209,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				// Loop this way to avoid a vector overflow
 				while (kdx != CRoutesHelper::ActiveRoutes.end()) {
 					if (idx->first == *kdx || idx->first == *kdx) {
-						kdx = CRoutesHelper::ActiveRoutes.erase(kdx);
+						CLogger::Log(CLogType::NORM, "Erasing route for " + idx->first + ".", "CRadarDisplay::OnRefresh");
+						kdx = CRoutesHelper::ActiveRoutes.erase(kdx);						
 					}
 					else {
 						kdx++;
@@ -197,7 +218,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 
 				if (CDataHandler::GetFlightData(idx->first)->IsValid) {
-					CDataHandler::DeleteFlightData(idx->first);
+					CLogger::Log(CLogType::NORM, "Deleting flight data for " + idx->first + ".", "CRadarDisplay::OnRefresh");
+					CDataHandler::DeleteFlightData(idx->first);					
 				}
 
 				// Erase flight plan window
@@ -205,6 +227,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				fltPlnWindow->IsOpen = false;
 
 				// Finally erase the on screen reference
+				CLogger::Log(CLogType::NORM, "Erasing reference for " + idx->first + ".", "CRadarDisplay");
 				idx = aircraftOnScreen.erase(idx);
 			}
 			else {
@@ -215,10 +238,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 	// Redo the PIV calculations every 5 seconds
 	if (fiveSecT >= 5 && menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
-		CConflictDetection::PIVLocations1.clear();
-		CConflictDetection::PIVLocations2.clear();
-		CConflictDetection::PIVSeparationStatuses.clear();
-		CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
+		CLogger::Log(CLogType::NORM, "Recalculating PIV between " + aircraftSel1 + " and " + aircraftSel2 + ".", "CRadarDisplay::OnRefresh");
+		try {
+			CConflictDetection::PIVLocations1.clear();
+			CConflictDetection::PIVLocations2.clear();
+			CConflictDetection::PIVSeparationStatuses.clear();
+			CConflictDetection::PIVTool(this, aircraftSel1, aircraftSel2);
+		}
+		catch (exception & ex) {
+			CLogger::Log(CLogType::ERR, "An error occurred when trying to recalculate PIV. " + string(ex.what()), "CRadarDisplay::OnRefresh");
+		}
+		
 	}
 
 	// Check if the altitude filter is on
@@ -231,6 +261,18 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	RadarArea.bottom = GetChatArea().bottom;
 
 	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
+		/// Write current lat lon on screen
+		int sDC = dc.SaveDC();
+		// Select font
+		FontSelector::SelectMonoFont(12, &dc);
+		dc.SetTextColor(TextWhite.ToCOLORREF());
+		dc.SetTextAlign(TA_LEFT);
+		// Get radar area and lat lon
+		CRect radarBounds = this->GetRadarArea();
+		dc.TextOutA(radarBounds.right - 185, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 2, 
+			CUtils::GetLatLonString(&appCursor->latLonPosition).c_str());
+		dc.RestoreDC(sDC);
+
 		// Draw overlays if enabled
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS)) {
 			COverlays::ShowCurrentOverlay(&dc, &g, this, menuBar);
@@ -251,6 +293,10 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 		// Loop all aircraft
 		while (ac.IsValid()) {
+			// The system plan
+			CAircraftFlightPlan aircraftFlightPlan;
+			CDataHandler::GetFlightData(cs.c_str(), aircraftFlightPlan);
+
 			// Check if they are a selected aircraft
 			if (ac.GetCallsign() == CAcTargets::SearchedAircraft) {
 				if (((double)(clock() - CAcTargets::fiveSecondTimer) / ((double)CLOCKS_PER_SEC)) >= 5) {
@@ -261,6 +307,17 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					CAcTargets::RenderSelectionHalo(&g, this, &ac);
 				}
 			}
+			// If PSSR button not pressed
+			if (!menuBar->IsButtonPressed(CMenuBar::BTN_PSSR)) {
+				// Check their PSSR state to hide all non ADS-B aircraft
+				if (CUtils::GetTargetMode(ac.GetPosition().GetRadarFlags()) != CRadarTargetMode::ADS_B) {
+					// Select the next target
+					ac = GetPlugIn()->RadarTargetSelectNext(ac);
+					if (aircraftOnScreen.find(ac.GetCallsign()) != aircraftOnScreen.end()) aircraftOnScreen.erase(ac.GetCallsign());
+					continue;
+				}
+			}
+
 			// Check their altitude, if they are outside the filter, skip them
 			if (altFiltEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
 				if (ac.GetPosition().GetPressureAltitude() / 100 < CUtils::AltFiltLow || ac.GetPosition().GetPressureAltitude() / 100 > CUtils::AltFiltHigh) {
@@ -285,8 +342,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			if (menuBar->GetButtonState(menuBar->BTN_TCKCTRL) == CInputState::ACTIVE && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
 				// Primed plan
 				string cs = (string)fp.GetCallsign();
-				CAircraftFlightPlan aircraftFlightPlan;
-				CDataHandler::GetFlightData(cs.c_str(), aircraftFlightPlan);
 				vector<string> tracks;
 				auto idx = find_if(CConflictDetection::CurrentSTCA.begin(), CConflictDetection::CurrentSTCA.end(), [&cs](const CSTCAStatus& obj) {return obj.CallsignA == cs || obj.CallsignB == cs; });
 				if (idx == CConflictDetection::CurrentSTCA.end())
@@ -445,7 +500,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 				}
 
 				// Get STCA so it can be drawn
-				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK, -1); // Create default
+				CSTCAStatus stcaStatus(ac.GetCallsign(), "", CConflictStatus::OK, -1, -1); // Create default
 				auto idx = CConflictDetection::CurrentSTCA.begin();
 				for (idx = CConflictDetection::CurrentSTCA.begin(); idx != CConflictDetection::CurrentSTCA.end(); idx++) {
 					if (ac.GetCallsign() == idx->CallsignA || ac.GetCallsign() == idx->CallsignB) {
@@ -459,13 +514,18 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
-					CAcTargets::DrawTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+					CAcTargets::RenderTarget(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
+					POINT tagPosition = CAcTargets::RenderTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+
+					// If tracking dialog open
+					if (CAcTargets::OpenTrackingDialog != "" && CAcTargets::OpenTrackingDialog == ac.GetCallsign()) {
+						CAcTargets::RenderCoordTagItem(&dc, this, ac.GetCallsign(), tagPosition);
+					}
 
 				}
 				else {
 					if (aircraftOnScreen.find(ac.GetCallsign()) == aircraftOnScreen.end()) aircraftOnScreen.insert(make_pair(ac.GetCallsign(), 0));
-					CAcTargets::DrawAirplane(&g, &dc, this, &ac, false, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
+					CAcTargets::RenderTarget(&g, &dc, this, &ac, false, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
 				}
 			}
 			else { // If not there, and the aircraft was on the screen, then delete
@@ -520,6 +580,15 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			}
 		}
 
+		// QDM draw
+		if (menuBar->IsButtonPressed(CMenuBar::BTN_QDM)) {
+			// Check if first position is set
+			if (RulerPoint1.m_Latitude != 0.0 && RulerPoint1.m_Longitude != 0.0) {
+				// Render
+				CCommonRenders::RenderQDM(&dc, &g, this, &RulerPoint1, &RulerPoint2, appCursor->position, &appCursor->latLonPosition);
+			}
+		}
+
 		// Draw track info window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_TCKINFO)) {
 			trackWindow->RenderWindow(&dc, &g, this, menuBar);
@@ -548,6 +617,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			fiveSecondTimer = clock();
 		}
 		if (tenSecT >= 10) {
+			CLogger::Log(CLogType::NORM, "Recalculating STCA.", "CRadarDisplay::OnRefresh");
 			tenSecondTimer = clock();
 		}
 		if (double twoSecT = (double)(clock() - CAcTargets::twoSecondTimer) / ((double)CLOCKS_PER_SEC) >= 2.2) { // Ac target and tag colours
@@ -561,7 +631,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	dc.DeleteDC();
 }
 
-// Data updates must be done here asynchronously, see my example in CDataHandler for threading
+// Data updates
 void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	// Check if they are relevant on the screen
 	bool filtersDisabled = menuBar->IsButtonPressed(CMenuBar::BTN_ALL);
@@ -571,23 +641,37 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 
 		// If not valid then it doesn't exist and we need to make it
 		if (!fp->IsValid) {
+			// Create it
 			CDataHandler::CreateFlightData(this, RadarTarget.GetCallsign());
 		}
 		else {
+			// Flight plan object
+			CFlightPlan fpData = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign());
+
 			// Update exit time
-			int exitMinutes = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign()).GetSectorExitMinutes();
+			int exitMinutes = fpData.GetSectorExitMinutes();
 			if (exitMinutes != -1) {
 				fp->ExitTime = exitMinutes;
 			}
+
+			// Update selcal code (maybe move into an Update method in DataHandler if I find there is more to update than just the selcal code)
+			string selcal = CUtils::GetSelcalCode(&fpData);
+			fp->SELCAL = selcal != "" ? selcal : "N/A";
+
+			// Download the vNAAATS network data on the plane
+			CLogger::Log(CLogType::NORM, "Polling vNAAATS network to update " + string(RadarTarget.GetCallsign()), "CRadarDisplay::OnRadarTargetPositionUpdate");
+			CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+			data->Screen = this;
+			data->Callsign = fp->Callsign;
+			if (!fp->IsFirstUpdate) fp->IsFirstUpdate = true;
+			_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
 		}
 	}
 	else { // Not relevant
 		// Check if they have a flight plan data object
-		if (CDataHandler::GetFlightData(RadarTarget.GetCallsign())->IsValid) {
-			// For now just disable the flight plan window/
-			//menuBar->SetButtonState(menuBar->BTN_FLIGHTPLAN, CInputState::DISABLED);
-			//fltPlnWindow->IsOpen = false;
-
+		CAircraftFlightPlan* fp = CDataHandler::GetFlightData(RadarTarget.GetCallsign());
+		if (fp->IsValid) {
+			std::async(CLogger::Log, CLogType::WARN, "Aircraft " + string(fp->Callsign) + " outside relevant scope and will be erased. SectorExitMinutes: " + to_string(fp->ExitTime) + ".", "CRadarDisplay::OnRadarTargetPositionUpdate");
 			// Delete the flight data object
 			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
 		}
@@ -651,7 +735,7 @@ void CRadarDisplay::OnMoveScreenObject(int ObjectType, const char* sObjectId, PO
 	}
 
 	// Move tag
-	if (ObjectType == SCREEN_TAG) {
+	if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
 		auto kv = tagStatuses.find(sObjectId);
 		POINT acPosPix = ConvertCoordFromPositionToPixel(GetPlugIn()->RadarTargetSelect(sObjectId).GetPosition().GetPosition());
 		kv->second.second = { Area.left - acPosPix.x, Area.top - acPosPix.y };
@@ -711,7 +795,11 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 	else if (ObjectType == ACTV_MESSAGE) {
 		msgWindow->SelectedMessage = atoi(sObjectId);
 	}
-
+	// If it is a button on the tracking dialog
+	if (ObjectType == SCREEN_TAG_CS_BTN) {
+		CAcTargets::ButtonStates[sObjectId] = true;
+	}
+	// TODO: button state reset
 	// Refresh
 	RequestRefresh();
 }
@@ -725,9 +813,25 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 		else {
 			if (!menuBar->IsButtonPressed(atoi(sObjectId))) {
+				// Increase refresh resolution for QDM
+				if (atoi(sObjectId) == CMenuBar::BTN_QDM) {
+					CLogger::Log(CLogType::NORM, "QDM enabled. Increasing refresh resolution to " + to_string(RefreshResolution) + ".", "CRadarDisplay::OnClickScreenObject");
+					RefreshResolution = 0.04;
+				}
 				menuBar->ButtonPress(atoi(sObjectId), Button, this);
 			}
 			else {
+				// Disable all QDM if it is the QDM button
+				if (atoi(sObjectId) == CMenuBar::BTN_QDM) {
+					CLogger::Log(CLogType::NORM, "QDM disabled. Resetting refresh resolution to " + to_string(RefreshResolution) + " and clearing lat/lon values.", "CRadarDisplay::OnClickScreenObject");
+					RulerPoint1.m_Latitude = 0.0;
+					RulerPoint1.m_Longitude = 0.0;
+					RulerPoint2.m_Latitude = 0.0;
+					RulerPoint2.m_Longitude = 0.0;
+
+					// Reset refresh resolution
+					RefreshResolution = 0.2;
+				}
 				menuBar->ButtonUnpress(atoi(sObjectId), Button, this);
 			}
 		}
@@ -743,11 +847,17 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	// Left button actions
 	if (Button == BUTTON_LEFT) {
 		// If screen object is a tag
-		if (ObjectType == SCREEN_TAG) {
+		if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
 			// Set the ASEL
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
+			CLogger::Log(CLogType::NORM, "Selected aircraft changed to " + asel + ".", "CRadarDisplay::OnClickScreenObject");
+
+			// Re-instantiate flight plan window if the aircraft is not the currently ASELed one
+			if (asel != sObjectId && fltPlnWindow->IsOpen) {
+				fltPlnWindow->Instantiate(this, asel);
+			}
 
 			// Probing tools
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)
@@ -778,23 +888,28 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// Qck Look button
 		if (atoi(sObjectId) == CMenuBar::BTN_EXT) {
+			CLogger::Log(CLogType::NORM, "Extended tags enabled.", "CRadarDisplay::OnClickScreenObject");
 			aselDetailed = false;
 		}
 
 		// Detailed button
 		if (atoi(sObjectId) == CMenuBar::BTN_DETAILED) {
+			CLogger::Log(CLogType::NORM, "Detailed tag enabled for currently selected aircraft. Current ASEL: " + asel + ".", "CRadarDisplay::OnClickScreenObject");
 			aselDetailed = true;
 		}
 
 		// If the button is the PIV button
 		if (atoi(sObjectId) == CMenuBar::BTN_PIV) {
+			CLogger::Log(CLogType::NORM, "PIV tool activated.", "CRadarDisplay::OnClickScreenObject");
 			// Erase RBL (if active)
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
 				menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
+				CLogger::Log(CLogType::NORM, "Deactivating RBL tool.", "CRadarDisplay::OnClickScreenObject");
 			}
 
 			// Erase SEP (if active)
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				CLogger::Log(CLogType::NORM, "Deactivating SEP tool.", "CRadarDisplay::OnClickScreenObject");
 				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
 
@@ -803,6 +918,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				CConflictDetection::PIVLocations1.clear();
 				CConflictDetection::PIVLocations2.clear();
 				CConflictDetection::PIVSeparationStatuses.clear();
+				CLogger::Log(CLogType::NORM, "PIV already active. Clearing old PIV.", "CRadarDisplay::OnClickScreenObject");
 			}
 			// Reset ASELs
 			aircraftSel1 = "";
@@ -811,13 +927,16 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// If the button is the RBL button
 		if (atoi(sObjectId) == CMenuBar::BTN_RBL) {
+			CLogger::Log(CLogType::NORM, "RBL tool activated.", "CRadarDisplay::OnClickScreenObject");
 			// Erase PIV (if active)
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+				CLogger::Log(CLogType::NORM, "Deactivating PIV tool.", "CRadarDisplay::OnClickScreenObject");
 				menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 			}
 
 			// Erase SEP (if active)
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_SEP)) {
+				CLogger::Log(CLogType::NORM, "Deactivating SEP tool.", "CRadarDisplay::OnClickScreenObject");
 				menuBar->SetButtonState(CMenuBar::BTN_SEP, CInputState::INACTIVE);
 			}
 
@@ -828,13 +947,16 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 		// If the button is the SEP button
 		if (atoi(sObjectId) == CMenuBar::BTN_SEP) {
+			CLogger::Log(CLogType::NORM, "SEP tool activated.", "CRadarDisplay::OnClickScreenObject");
 			// Erase RBL (if active)
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
+				CLogger::Log(CLogType::NORM, "Deactivating RBL tool.", "CRadarDisplay::OnClickScreenObject");
 				menuBar->SetButtonState(CMenuBar::BTN_RBL, CInputState::INACTIVE);
 			}
 
 			// Erase PIV (if active)
 			if (menuBar->IsButtonPressed(CMenuBar::BTN_PIV)) {
+				CLogger::Log(CLogType::NORM, "Deactivating PIV tool.", "CRadarDisplay::OnClickScreenObject");
 				menuBar->SetButtonState(CMenuBar::BTN_PIV, CInputState::INACTIVE);
 			}
 
@@ -871,11 +993,13 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		if (ObjectType == LIST_INBOUND) {
 			if (string(sObjectId) == "HIDESHOW") {
 				inboundList->HideShowButton = inboundList->HideShowButton == true ? false : true;
+				CLogger::Log(CLogType::NORM, "Toggling Inbound list. Current status: " + to_string(inboundList->HideShowButton), "CRadarDisplay::OnClickScreenObject");
 			}
 		}
 		if (ObjectType == LIST_OTHERS) {
 			if (string(sObjectId) == "HIDESHOW") {
 				otherList->HideShowButton = otherList->HideShowButton == true ? false : true;
+				CLogger::Log(CLogType::NORM, "Toggling Other list. Current status: " + to_string(inboundList->HideShowButton), "CRadarDisplay::OnClickScreenObject");
 			}
 		}
 
@@ -894,7 +1018,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	}
 
 	if (Button == BUTTON_RIGHT) {
-		if (ObjectType == SCREEN_TAG) {
+		if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
 			/// Set route drawing
 			// Make sure flight plan exists otherwise it will crash, and also that they aren't PIV aircraft
 			if (CDataHandler::GetFlightData(string(sObjectId))->IsValid && string(sObjectId) != aircraftSel1 && string(sObjectId) != aircraftSel2) {
@@ -910,15 +1034,18 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 
 				// Erase if the item was found, otherwise add
 				if (found != -1) {
+					CLogger::Log(CLogType::NORM, "Erasing route draw for: " + string(sObjectId), "CRadarDisplay::OnClickScreenObject");
 					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
 				}
 				else {
+					CLogger::Log(CLogType::NORM, "Enabling route draw for: " + string(sObjectId), "CRadarDisplay::OnClickScreenObject");
 					CRoutesHelper::ActiveRoutes.push_back(string(sObjectId));
 				}
 			}
 		}
 	}
 
+	CLogger::Log(CLogType::NORM, "Screen refresh forced.", "CRadarDisplay::OnClickScreenObject");
 	RequestRefresh();
 }
 
@@ -950,6 +1077,7 @@ void CRadarDisplay::OnButtonDownScreenObject(int ObjectType, const char* sObject
 	}
 
 	// Refresh
+	CLogger::Log(CLogType::NORM, "Screen refresh forced.", "CRadarDisplay::OnButtonDownScreenObject");
 	RequestRefresh();
 }
 
@@ -1003,6 +1131,7 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 	}
 
 	// Refresh
+	CLogger::Log(CLogType::NORM, "Screen refresh forced.", "CRadarDisplay::OnButtonUpScreenObject");
 	RequestRefresh();
 }
 
@@ -1063,6 +1192,10 @@ void CRadarDisplay::OnDoubleClickScreenObject(int ObjectType, const char* sObjec
 	if (ObjectType == WIN_FLTPLN) {
 		fltPlnWindow->ButtonDoubleClick(atoi(sObjectId));
 	}
+	// If it is an aircraft callsign
+	if (ObjectType == SCREEN_TAG_CS) {
+		//CAcTargets::OpenTrackingDialog = sObjectId;
+	}
 }
 
 void CRadarDisplay::OnAsrContentToBeSaved(void)
@@ -1072,8 +1205,10 @@ void CRadarDisplay::OnAsrContentToBeSaved(void)
 	CUtils::GridEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_GRID) ? true : false;
 	CUtils::OverlayEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_OVERLAYS) ? true : false;
 	CUtils::QckLookEnabled = menuBar->IsButtonPressed(CMenuBar::BTN_QCKLOOK) ? true : false; // TODO: Change this to Ext
-
+	
+	// Save
 	CUtils::SavePluginData(this);
+	CLogger::Log(CLogType::NORM, "Saving plugin data...", "CRadarDisplay::OnAsrContentToBeSaved");
 }
 
 void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
@@ -1086,4 +1221,123 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 
 	// Populate it
 	PopulateProgramData();
+}
+
+// TODO: Break into individual methods or create ScreenFunctions class/namespace
+void CRadarDisplay::CursorStateUpdater(void* args) {
+	// Pointer to cursor
+	CAppCursor* cursor = (CAppCursor*)args;
+
+	// Timer
+	clock_t hundredmsTimer = clock();
+	clock_t refreshTimer = clock();
+
+	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
+	HANDLE hnd = CUtils::GetESProcess();
+	DWORD activeCode;
+	GetExitCodeProcess(hnd, &activeCode);
+	while (1) {
+		// Check if the app is still active
+		if (cursor->isESClosed || activeCode != STILL_ACTIVE) {
+			CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
+			break; // Break if not
+		}
+
+		// Ok so the app is still active let's get the cursor data
+		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 40ms
+			// Get cursor position (only if previous cursor position is inside the radar area)
+			bool isCursorInsideRadarArea = false;
+			CRect radarArea = cursor->screen->GetRadarArea();
+
+			// Get the position and monitor in which the point lies
+			GetCursorPos(&cursor->position);
+
+			// Keep the coordinates down to one screen's worth
+			if (cursor->position.x > 3840) // Window is on 3rd screen
+				cursor->position.x -= 3840;
+			else if (cursor->position.x > 1920) // Window is on 2nd screen
+				cursor->position.x -= 1920;
+
+			// Get button presses
+			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
+			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
+			
+			// Check if cursor inside radar area
+			if (cursor->position.x > radarArea.left &&
+				cursor->position.x < radarArea.right &&
+				cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
+				cursor->position.y < radarArea.bottom) {
+				isCursorInsideRadarArea = true;
+			}
+
+			// Lat/lon position
+			cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
+
+			// Check button presses
+			if ((!leftBtnPressed && !rightBtnPressed) || !isCursorInsideRadarArea) {
+				cursor->button = 0;
+			}
+
+			/// Events!
+			// On left click
+			if (leftBtnPressed && cursor->button == 0) {
+				// QDM button
+				if (cursor->screen->menuBar->IsButtonPressed(CMenuBar::BTN_QDM) && isCursorInsideRadarArea) {
+					bool pointSet = false;
+					// Activate QDM, first check if first ruler point already filled
+					if (cursor->screen->RulerPoint1.m_Latitude == 0.0 && cursor->screen->RulerPoint1.m_Longitude == 0.0) {
+						// It isn't filled so set it
+						cursor->screen->RulerPoint1.m_Latitude = cursor->latLonPosition.m_Latitude;
+						cursor->screen->RulerPoint1.m_Longitude = cursor->latLonPosition.m_Longitude;
+
+						// So that we don't accidently set the 2nd point at the same time
+						pointSet = true;
+					}
+					// Check the 2nd point
+					if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude == 0.0 && cursor->screen->RulerPoint2.m_Longitude == 0.0)) {
+						// It isn't filled so set it
+						cursor->screen->RulerPoint2.m_Latitude = cursor->latLonPosition.m_Latitude;
+						cursor->screen->RulerPoint2.m_Longitude = cursor->latLonPosition.m_Longitude;
+
+						// So we dont cancel the QDM automatically
+						pointSet = true;
+					}
+
+					// Both points are down so we need to reset
+					if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude != 0.0 && cursor->screen->RulerPoint2.m_Longitude != 0.0)) {
+						cursor->screen->RulerPoint1.m_Latitude = 0.0;
+						cursor->screen->RulerPoint1.m_Longitude = 0.0;
+						cursor->screen->RulerPoint2.m_Latitude = 0.0;
+						cursor->screen->RulerPoint2.m_Longitude = 0.0;
+					}
+				}
+
+				// Set the button so the event doesn't fire again
+				cursor->button = 2;
+			}
+			// On right click
+			if (rightBtnPressed && cursor->button == 0) {
+
+				// Set the button so the event doesn't fire again
+				cursor->button = 1;
+			}
+
+			// Reset clock
+			hundredmsTimer = clock();
+		}
+		
+		// Call refresh sequence more often
+		if (((double)(clock() - refreshTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) {
+			// Refresh the radar screen
+			cursor->screen->RequestRefresh();
+
+			// Reset clock
+			refreshTimer = clock();
+		}
+		
+ 	}
+
+	// Clean up and return
+	delete args;
+	return;
 }

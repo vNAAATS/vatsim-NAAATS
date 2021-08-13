@@ -30,6 +30,11 @@ class CRadarDisplay : public CRadarScreen
 		// Custom methods	
 		void PopulateProgramData();
 
+		// Public properties
+		CPosition RulerPoint1;
+		CPosition RulerPoint2;
+		double RefreshResolution = 0.2;
+
 		// Inherited methods
 		void OnRefresh(HDC hDC, int Phase);
 		void OnRadarTargetPositionUpdate(CRadarTarget RadarTarget);
@@ -43,16 +48,37 @@ class CRadarDisplay : public CRadarScreen
 		void OnDoubleClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button);
 		void OnAsrContentToBeSaved(void);
 		void OnAsrContentLoaded(bool Loaded);
+		static void CursorStateUpdater(void* args); // Asynchronous loop
 
 		inline void OnAsrContentToBeClosed(void)
 		{
 			// Manually call save
 			OnAsrContentToBeSaved();
+			appCursor->isESClosed = true;
+
+			// Clean up
+			delete appCursor;
+			delete trackWindow;
+			delete fltPlnWindow;
+			delete msgWindow;
+			delete npWindow;
 			delete this;
 		}
 
 	private:
-		POINT mousePointer;
+		// Cursor position structure for async
+		struct CAppCursor {
+			CRadarDisplay* screen;
+			POINT position; // Screen coordinates
+			CPosition latLonPosition; // Lat lon
+			int button;
+			clock_t singleClickTimer = 0; // activate on every single click to detect double click
+			bool isDoubleClick = false;
+			bool isESClosed = false;			
+		};
+		pair<int, int> screenResolution;
+		CAppCursor* appCursor = new CAppCursor(); // Constantly being updated
+		POINT mousePointer; // Updated on screen object actions only
 		clock_t fiveSecondTimer;
 		clock_t tenSecondTimer;
 		bool aselDetailed;	

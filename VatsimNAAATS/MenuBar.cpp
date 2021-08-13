@@ -28,12 +28,13 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_HALO] = CWinButton(BTN_HALO, MENBAR, "Halo 5", CInputState::INACTIVE, 68, 0);
 	buttons[BTN_RBL] = CWinButton(BTN_RBL, MENBAR, "RBL", CInputState::INACTIVE, 48);
 	buttons[BTN_RINGS] = CWinButton(BTN_RINGS, MENBAR, "Rings 1", CInputState::DISABLED, 73, 0);
+	buttons[BTN_QDM] = CWinButton(BTN_QDM, MENBAR, "QDM", CInputState::INACTIVE, 43);
 	buttons[BTN_PTL] = CWinButton(BTN_PTL, MENBAR, "PTL 5", CInputState::INACTIVE, 68, 0);
 	buttons[BTN_PIV] = CWinButton(BTN_PIV, MENBAR, "PIV", CInputState::INACTIVE, 48);
 	buttons[BTN_GRID] = CWinButton(BTN_GRID, MENBAR, "Grid", CInputState::DISABLED, 73);
 	buttons[BTN_SEP] = CWinButton(BTN_SEP, MENBAR, "Sep", CInputState::INACTIVE, 43);
 	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::DISABLED, 86);
-	buttons[BTN_PSR_FILT] = CWinButton(BTN_PSR_FILT, MENBAR, "PSR_SYMBOL", CInputState::DISABLED, 40);
+	buttons[BTN_PSSR] = CWinButton(BTN_PSSR, MENBAR, "PSR_SYMBOL", CInputState::DISABLED, 40);
 	buttons[BTN_EXT] = CWinButton(BTN_EXT, MENBAR, "Ext", CInputState::INACTIVE, 40);
 	buttons[BTN_AUTOTAG] = CWinButton(BTN_AUTOTAG, MENBAR, "Auto Tag", CInputState::DISABLED, 75);
 	buttons[BTN_ALL] = CWinButton(BTN_ALL, MENBAR, "ALL", CInputState::INACTIVE, 40);
@@ -62,6 +63,9 @@ CMenuBar::CMenuBar() {
 	map.insert(make_pair("OCA Enroute", false));
 	map.insert(make_pair("Multi-role", false));
 	dropDowns[DRP_TYPESEL] = CDropDown(DRP_TYPESEL, MENBAR, "Multi-role", &map, CInputState::INACTIVE, 143);
+
+	// Clogger
+	CLogger::Log(CLogType::NORM, "Finished instantiation.", "MENUBAR");
 }
 
 void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel) {
@@ -159,7 +163,7 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 			case BTN_QCKLOOK:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + 11;
 				break;
-			case BTN_PSR_FILT:
+			case BTN_PSSR:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + RECT3_WIDTH + RECT4_WIDTH + RECT5_WIDTH + RECT6_WIDTH + RECT7_WIDTH + 35;
 				offsetY = 30;
 				offsetIsItemSize = true;
@@ -409,7 +413,7 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 						COverlays::CurrentType = COverlayType::TCKS_ALL;
 						break;
 					case 801: // TCKS_ACTV
-						//COverlays::CurrentType = COverlayType::TCKS_ACTV;
+						COverlays::CurrentType = COverlayType::TCKS_ACTV;
 						break;
 					case 802: // TCKS_EAST
 						COverlays::CurrentType = COverlayType::TCKS_EAST;
@@ -446,8 +450,8 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			// Get the toggle button
 			auto haloBtn = buttons.find(BTN_HALO);
 
-			// Increment if less than or equal 3 (20 minute halos max)
-			if (haloBtn->second.Cycle < 3) {
+			// Increment if less than or equal 7 (100 mile halos max)
+			if (haloBtn->second.Cycle < 7) {
 				haloBtn->second.Cycle++;
 			}
 			else {
@@ -467,6 +471,18 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			case 3:
 				haloBtn->second.Label = "Halo 20";
 				break;
+			case 4:
+				haloBtn->second.Label = "Halo 25";
+				break;
+			case 5:
+				haloBtn->second.Label = "Halo 30";
+				break;
+			case 6:
+				haloBtn->second.Label = "Halo 60";
+				break;
+			case 7:
+				haloBtn->second.Label = "Halo 100";
+				break;
 			}
 		}
 
@@ -474,8 +490,8 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 			// Get the toggle button
 			auto ptlBtn = buttons.find(BTN_PTL);
 
-			// Increment if less than or equal 5 (30 minute lines max)
-			if (ptlBtn->second.Cycle < 5) {
+			// Increment if less than or equal 6 (60 minute lines max)
+			if (ptlBtn->second.Cycle < 6) {
 				ptlBtn->second.Cycle++;
 			}
 			else {
@@ -499,6 +515,9 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 				break;
 			case 5:
 				ptlBtn->second.Label = "PTL 30";
+				break;
+			case 6:
+				ptlBtn->second.Label = "PTL 60";
 				break;
 			}
 		}

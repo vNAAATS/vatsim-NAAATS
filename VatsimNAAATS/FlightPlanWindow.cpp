@@ -87,7 +87,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_SELCAL] = CTextInput(TXT_SELCAL, WIN_FLTPLN, "SELCAL", "", 55, CInputState::INACTIVE);
 	textInputs[TXT_DATALINK] = CTextInput(TXT_DATALINK, WIN_FLTPLN, "Datalink", "", 60, CInputState::INACTIVE);
 	textInputs[TXT_COMMS] = CTextInput(TXT_COMMS, WIN_FLTPLN, "Com", "", 35, CInputState::INACTIVE);
-	textInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 25, CInputState::INACTIVE);
+	textInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 30, CInputState::INACTIVE);
 	textInputs[TXT_SPD] = CTextInput(TXT_SPD, WIN_FLTPLN, "Spd", "", 50, CInputState::ACTIVE);
 	textInputs[TXT_LEVEL] = CTextInput(TXT_LEVEL, WIN_FLTPLN, "FL", "", 90, CInputState::ACTIVE);
 	textInputs[TXT_DEST] = CTextInput(TXT_DEST, WIN_FLTPLN, "Dest", "", 45, CInputState::ACTIVE);
@@ -102,8 +102,8 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_MAN_SPD] = CTextInput(TXT_MAN_SPD, WIN_FLTPLN, "Spd", "", 60, CInputState::ACTIVE);
 	textInputs[TXT_MAN_TCK] = CTextInput(TXT_MAN_TCK, WIN_FLTPLN, "Tck", "", 25, CInputState::ACTIVE);
 	textInputs[TXT_MAN_DEST] = CTextInput(TXT_MAN_DEST, WIN_FLTPLN, "Dest", "", 60, CInputState::ACTIVE);
-	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "", 60, CInputState::ACTIVE);
-	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "", 60, CInputState::ACTIVE);
+	textInputs[TXT_MAN_EP] = CTextInput(TXT_MAN_EP, WIN_FLTPLN, "Entry", "DISABLED", 60, CInputState::DISABLED);
+	textInputs[TXT_MAN_EPTIME] = CTextInput(TXT_MAN_EPTIME, WIN_FLTPLN, "Time", "DISABLED", 60, CInputState::DISABLED);
 	textInputs[TXT_XCHANGE_CURRENT] = CTextInput(TXT_XCHANGE_CURRENT, WIN_FLTPLN, "Current Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_XCHANGE_NEXT] = CTextInput(TXT_XCHANGE_NEXT, WIN_FLTPLN, "Selected Authority", "NONE", 160, CInputState::INACTIVE);
 	textInputs[TXT_MAN_RTE] = CTextInput(TXT_MAN_RTE, WIN_FLTPLN, "", "", 0, CInputState::ACTIVE);
@@ -322,7 +322,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "" && controllerIsMe) {
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "") {
 			if (primedPlan->CurrentMessage != nullptr) {
 				if (primedPlan->CurrentMessage->Type != CMessageType::CLEARANCE_REQ) {
 					windowButtons[BTN_COPY].State = CInputState::INACTIVE;
@@ -332,21 +332,18 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 				windowButtons[BTN_COPY].State = CInputState::INACTIVE;
 			}
 		}
-		if ((windowButtons[BTN_MANENTRY].State == CInputState::INACTIVE && !controllerIsMe))
-			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
-		if (!primedPlan->IsCleared && !controllerIsMe) {
-			IsData = false;
-		}
 	}
 
-	if (!controllerIsMe) {
+	if (!IsData)
+		windowButtons[BTN_MANENTRY].State = CInputState::INACTIVE;
+	else
 		windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
+
+	if ((!primedPlan->IsCleared && IsData) || IsCopyMade) {
+		windowButtons[BTN_READBK].State = CInputState::INACTIVE;
 	}
 	else {
-		if (!IsData)
-			windowButtons[BTN_MANENTRY].State = CInputState::INACTIVE;
-		else
-			windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
+		windowButtons[BTN_READBK].State = CInputState::DISABLED;
 	}
 
 	// Copy panel
@@ -411,7 +408,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Cleanup
 	DeleteObject(darkerBrush);
 	DeleteObject(lighterBrush);
-
 
 	// Restore device context
 	dc->RestoreDC(iDC);
@@ -493,9 +489,9 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 					}
 					else {
 						// Write coordinate down
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
-						offsetY += 28;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "N").c_str());
+						offsetY += 28;
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "W").c_str());
 						offsetY += 28;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
 						offsetY = 2;
@@ -663,15 +659,15 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 		int offsetY = content.top + 5;
 		// Draw main aircraft data
 		dc->TextOutA(offsetX, offsetY, primedPlan->Callsign.c_str());
-		offsetX += 60;
+		offsetX += 65;
 		dc->TextOutA(offsetX, offsetY, primedPlan->FlightLevel.c_str());
-		offsetX += 40;
-		dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, stoi(primedPlan->Mach))).c_str());
 		offsetX += 30;
+		dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, stoi(primedPlan->Mach))).c_str());
+		offsetX += 45;
 		// Draw main route
 		for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {			
 			dc->TextOutA(offsetX, offsetY, primedPlan->RouteRaw[i].c_str());
-			offsetX += 50;
+			offsetX += 45;
 		}
 		
 		offsetY += dc->GetTextExtent("ABCD").cy + 2;
@@ -684,16 +680,16 @@ void CFlightPlanWindow::RenderConflictWindow(CDC* dc, Graphics* g, CRadarScreen*
 			int mach = target.GetCorrelatedFlightPlan().GetFlightPlanData().PerformanceGetMach(target.GetPosition().GetPressureAltitude(), target.GetVerticalSpeed());
 			// Draw aircraft data
 			dc->TextOutA(offsetX, offsetY, kv.first.c_str());
-			offsetX += 60;
+			offsetX += 65;
 			dc->TextOutA(offsetX, offsetY, to_string((int)(round(target.GetPosition().GetFlightLevel()) / 100.0)).c_str());
-			offsetX += 40;
-			dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, mach)).c_str());
 			offsetX += 30;
+			dc->TextOutA(offsetX, offsetY, ("M" + CUtils::PadWithZeros(3, mach)).c_str());
+			offsetX += 45;
 			// Draw statuses
 			for (int i = 0; i < kv.second.size(); i++) {
-				char conflict = kv.second[i].ConflictStatus == CConflictStatus::WARNING ? 'W' : 'C';
+				char conflict = kv.second[i].ConflictStatus == CConflictStatus::CRITICAL ? 'C' : 'W';
 				dc->TextOutA(offsetX, offsetY, (conflict + to_string(kv.second[i].DistanceAsTime)).c_str());
-				offsetX += 50;
+				offsetX += 45;
 			}
 		}
 	}
@@ -1110,6 +1106,16 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 
 		offsetX += 70;
 	}
+
+	// Validation
+	if (textInputs.at(TXT_MAN_FL).Content == "" ||
+		textInputs.at(TXT_MAN_SPD).Content == "" ||
+		textInputs.at(TXT_MAN_TCK).Content == "" ||
+		textInputs.at(TXT_MAN_DEST).Content == "" ||
+		textInputs.at(TXT_MAN_RTE).Content == "")
+		windowButtons[BTN_MAN_SUBMIT].State = CInputState::DISABLED;
+	else 
+		windowButtons[BTN_MAN_SUBMIT].State = CInputState::INACTIVE;
 
 	// Clean up
 	DeleteObject(darkerBrush);
@@ -1586,11 +1592,10 @@ void CFlightPlanWindow::RenderExchangeModal(CDC* dc, Graphics* g, CRadarScreen* 
 
 	string controller = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign();
 	string controllerMe = screen->GetPlugIn()->ControllerMyself().GetCallsign();
-	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
-		|| string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) != "") {
+	if ((string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign()) != "" && !screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())) {
 		windowButtons[BTN_XCHANGE_TRANSFER].State = CInputState::DISABLED;
 		windowButtons[BTN_XCHANGE_TRACK].State = CInputState::DISABLED;
-		if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe())
+		if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() && string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) == "")
 			windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 		else
 			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
@@ -1982,7 +1987,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 		windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 	}
 
-	if (currentController == "") {
+	if (currentController == "" || (currentController != "" && string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign()) != "")) {
 		SetButtonState(CFlightPlanWindow::BTN_COPY, CInputState::INACTIVE);
 		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_NOTIFY, CInputState::DISABLED);
 		SetButtonState(CFlightPlanWindow::BTN_XCHANGE_TRACK, CInputState::INACTIVE);
@@ -2182,6 +2187,9 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 			else content[i] = toupper(content[i]);
 		}
 
+		// If the input was "RR" then return 
+		if (content == "RR") return;
+
 		// It's a string, check the length
 		if (content.size() > 3 || content.size() < 1) return;
 
@@ -2212,6 +2220,7 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 				for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {
 					routeString += primedPlan->RouteRaw[i] + " ";
 				}
+
 				// Set the contents
 				if (id == TXT_TCK) {
 					textInputs.find(TXT_RTE)->second.Content = routeString;
@@ -2324,8 +2333,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 
 			// Set route
 			string route;
-			for (int i = 0; i < copiedPlan.RouteRaw.size(); i++) {
-				route += copiedPlan.RouteRaw[i] + " ";
+			for (int i = 0; i < primedPlan->RouteRaw.size(); i++) {
+				route += primedPlan->RouteRaw[i] + " ";
 			}
 
 			textInputs[TXT_SPD_CPY].Content = string("M") + CUtils::PadWithZeros(3, stoi(copiedPlan.Mach));
@@ -2494,7 +2503,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			textInputs[TXT_RTE].State = CInputState::DISABLED;
 		}
 		if (id == BTN_READBK || id == BTN_CLRC_READBK) {
-			if (windowButtons[BTN_READBK].State == CInputState::ACTIVE) {
+			if (windowButtons[BTN_READBK].State != CInputState::DISABLED) {
 				/// Temporary until messages implemented
 				SetButtonState(BTN_PROBE, CInputState::DISABLED);
 				IsConflictWindow = false;
@@ -2543,11 +2552,83 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					textInputs[TXT_DEST].State = CInputState::DISABLED;
 					textInputs[TXT_TCK].State = CInputState::DISABLED;
 					textInputs[TXT_RTE].State = CInputState::DISABLED;
+
+					// Create network object
+					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+					netFP->Callsign = primedPlan->Callsign;
+					netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+					netFP->AssignedMach = stoi(primedPlan->Mach);
+					netFP->Track = primedPlan->Track;
+					netFP->Departure = primedPlan->Depart;
+					netFP->Arrival = primedPlan->Dest;
+					netFP->IsEquipped = primedPlan->IsEquipped;
+					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->Route = ""; // Initialise
+					netFP->RouteEtas = ""; // Initialise
+
+					// Get routes and estimates
+					vector<CRoutePosition> rte;
+					CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
+					for (int i = 0; i < rte.size(); i++) {
+						if (i != rte.size() - 1) {
+							netFP->Route += rte[i].Fix + " ";
+							netFP->RouteEtas += rte[i].Estimate + " ";
+						}
+						else {
+							netFP->Route += rte[i].Fix;
+							netFP->RouteEtas += rte[i].Estimate;
+						}							
+					}
+
+					// Post data to the database
+					CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+					data->Screen = screen;
+					data->Callsign = primedPlan->Callsign;
+					data->FP = netFP;
+					_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
+				}
+				else { // Delete this duplicate code nonsense
+					// Create network object
+					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+					netFP->Callsign = copiedPlan.Callsign;
+					netFP->AssignedLevel = stoi(copiedPlan.FlightLevel);
+					netFP->AssignedMach = stoi(copiedPlan.Mach);
+					netFP->Track = copiedPlan.Track;
+					netFP->Departure = copiedPlan.Depart;
+					netFP->Arrival = copiedPlan.Dest;
+					netFP->IsEquipped = copiedPlan.IsEquipped;
+					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->Route = ""; // Initialise
+					netFP->RouteEtas = ""; // Initialise
+
+					// Get routes and estimates
+					vector<CRoutePosition> rte;
+					copiedPlan.IsValid = true;
+					CRoutesHelper::GetRoute(screen, &rte, copiedPlan.Callsign, &copiedPlan);
+					for (int i = 0; i < rte.size(); i++) {
+						if (i != rte.size() - 1) {
+							netFP->Route += rte[i].Fix + " ";
+							netFP->RouteEtas += rte[i].Estimate + " ";
+						}
+						else {
+							netFP->Route += rte[i].Fix;
+							netFP->RouteEtas += rte[i].Estimate;
+						}
+					}
+
+					// Post data to the database
+					CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+					data->Screen = screen;
+					data->Callsign = primedPlan->Callsign;
+					data->FP = netFP;
+					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
 				}
 			}
 		}
 		if (id == BTN_XCHANGE_TRACK) {
-			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
+			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() 
+				&& screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign() == "") {
+				CLogger::Log(CLogType::NORM, "Attempting to drop aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
@@ -2559,17 +2640,17 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
 			}
 			else {
+				CLogger::Log(CLogType::NORM, "Attempting to track aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
-				if (!primedPlan->IsCleared)
-					windowButtons[BTN_MANENTRY].State = CInputState::DISABLED;
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 			}
 		}
 		if (id == BTN_XCHANGE_TRANSFER) {
+			CLogger::Log(CLogType::NORM, "Initiating handoff of aircraft " + primedPlan->Callsign + " to station " + selectedAuthority + ".", "CRadarDisplay::OnRefresh");
 			screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
 			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
-			SetButtonState(BTN_XCHANGE_TRACK, CInputState::DISABLED);
+			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 			selectedAuthority = "";
 		}
 		if (id == BTN_UNCLEAR) {

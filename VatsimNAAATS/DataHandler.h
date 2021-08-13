@@ -4,6 +4,7 @@
 #include "EuroScopePlugIn.h"
 #include "Overlays.h"
 #include "Utils.h"
+#include "Logger.h"
 #include <json.hpp>
 
 using namespace std;
@@ -31,10 +32,28 @@ class CDataHandler
 
 	// Set route
 	static int SetRoute(string callsign, vector<CWaypoint>* route, string track, CAircraftFlightPlan* copiedPlan = nullptr);
+
+	/// vNAAATS network methods
+	// Download aircraft data (single)
+	static void DownloadNetworkAircraft(void* args);
+
+	// Download all aircraft data
+	static void GetAllNetworkAircraft();
+
+	// Post new aircraft data
+	static void PostNetworkAircraft(void* args);
+
+	// Update aircraft data
+	static void UpdateNetworkAircraft(void* args);
 	
 	private:
 		// NAT Track URL
 		static const string TrackURL;
 		static const string EventTrackUrl;
 		static map<string, CAircraftFlightPlan> flights;
+
+		// vNAAATS API Links
+		static const string GetSingleAircraft;
+		static const string FlightDataUpdate;
+		static const string PostSingleAircraft;
 };

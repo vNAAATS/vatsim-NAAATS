@@ -25,6 +25,8 @@ bool CUtils::OverlayEnabled = false;
 int CUtils::AreaSelection = 802;
 int CUtils::SelectedOverlay = 800;
 int CUtils::PosType = 802;
+char CUtils::DllPathFile[_MAX_PATH];
+string CUtils::DllPath;
 
 // Save plugin data
 void CUtils::SavePluginData(CRadarScreen* screen) {
@@ -533,7 +535,7 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
 
 	if (IS_ALPHA)
-		screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("This is an ALPHA version. Please report any issues to a.ogden@vatcan.ca.").c_str(), false, false, false, false, false);
+		screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("This is a BETA version. Please report any issues to a.ogden@vatcan.ca or submit them here: https://ganderoceanic.com/vnaaats-feedback.").c_str(), false, false, false, false, false);
 }
 
 // Returns the requested format, or returns the same string if the format was unchanged
@@ -654,8 +656,9 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	// Flag
 	bool valid = true;
 
-	// Flight plan
+	// Flight plan & position
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
+	CPosition pos = target->GetPosition().GetPosition();
 
 	// Time and direction
 	int entryMinutes = fp.GetSectorEntryMinutes();
@@ -663,12 +666,14 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	/// We check the selection values
 	// Position type
 	// Direction & area selection
-	bool direction = GetAircraftDirection(target->GetTrackHeading());
+	bool direction = GetAircraftDirection(target->GetPosition().GetReportedHeadingTrueNorth());
 	int areaSel = AreaSelection;
 	if (PosType == 800) {
 
 		// If greater than sixty minutes out or already in the airspace
-		if (entryMinutes == 0 || entryMinutes < 0 || entryMinutes > 60) {
+		if (entryMinutes < 0)
+			valid = false;
+		if (entryMinutes == 0 || entryMinutes > 60) {
 			valid = false;
 		}
 		
@@ -682,7 +687,9 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	}
 	else if (PosType == 801) {
 		// If not ever going to enter, or greater than 60 min out
-		if (entryMinutes < 0 || entryMinutes > 60) {
+		if (entryMinutes < 0)
+			valid = false;
+		if (entryMinutes > 60) {
 			valid = false;
 		}
 
@@ -691,12 +698,22 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 			valid = false;
 		}
 		if (!direction && areaSel == 801 && entryMinutes != 0) {
+			valid = false;
+		}
+
+		// Check now to not display aircraft east/west of certain longitude based on area selection
+		if (areaSel == 802 && pos.m_Longitude < -32 && entryMinutes == 0) {
+			valid = false;
+		}
+		if (areaSel == 801 && pos.m_Longitude > -28 && entryMinutes == 0) {
 			valid = false;
 		}
 	}
 	else {
 		// If not ever going to enter, or greater than 20 min out
-		if (entryMinutes < 0 || entryMinutes > 20) {
+		if (entryMinutes < 0)
+			valid = false;
+		if (entryMinutes > 20) {
 			valid = false;
 		}
 
@@ -707,7 +724,28 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		if (!direction && areaSel == 801 && entryMinutes != 0) {
 			valid = false;
 		}
+
+		// Check now to not display aircraft east/west of certain longitude based on area selection
+		if (areaSel == 802 && pos.m_Longitude < -32 && entryMinutes == 0) {
+			valid = false;
+		}
+		if (areaSel == 801 && pos.m_Longitude > -28 && entryMinutes == 0) {
+			valid = false;
+		}
 	}	
+
+	// Let's check if filtering disabled
+	if (filtersDisabled) { // ALL btn is pressed
+		// If not ever going to enter, or greater than 90 min out
+		if (entryMinutes < 0)
+			valid = false;
+		if (entryMinutes > 90) {
+			valid = false;
+		}
+		else {
+			valid = true;
+		}
+	}
 
 	/// However we should keep them on the screen if they aren't long out of the airspace
 	CAircraftFlightPlan* acFp = CDataHandler::GetFlightData(target->GetCallsign());
@@ -729,23 +767,11 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	
 	string callsign = (string)screen->GetPlugIn()->ControllerMyself().GetCallsign();
 	if (!screen->GetPlugIn()->ControllerMyself().IsController() || callsign.find("SUP") != string::npos) {
-		CPosition position = target->GetPosition().GetPosition();
 
-		if (position.m_Longitude > -70 && position.m_Longitude < -5)
+		if (pos.m_Longitude > -70 && pos.m_Longitude < -5)
 			valid = true;
-		if (position.m_Latitude < 80 && position.m_Longitude < -35)
+		if (pos.m_Latitude < 80 && pos.m_Longitude < -35)
 			valid = true;
-	}
-
-	// Let's check if filtering disabled
-	if (filtersDisabled) { // ALL btn is pressed
-		// If not ever going to enter, or greater than 90 min out
-		if (entryMinutes < 0 || entryMinutes > 90) {
-			valid = false;
-		}
-		else {
-			valid = true;
-		}
 	}
 
 	// Lastly let's check if they are assumed
@@ -756,7 +782,24 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	return valid;
 }
 
-bool CUtils::IsAircraftEquipped(string rawInfo, char equipCode) {
+bool CUtils::IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipCode) {
+	// Check for PBN string code
+	size_t pbnFound = rawRemarks.find("PBN/");
+
+	// Extract B1 & B2 if they exist
+	if (pbnFound != string::npos) {
+		pbnFound += 4;
+		for (char c = rawRemarks[pbnFound]; c != ' '; c = rawRemarks[pbnFound]) {
+			if (c == 'B' && (rawRemarks[pbnFound + 1] == '1' || rawRemarks[pbnFound + 1] == '2')) {
+				return true;
+			}
+			// Increment
+			pbnFound++;
+		}
+		// We didn't find one so return false
+		return false;
+	}
+
 	// Check equipment code
 	if (equipCode != '?') {
 		// Check if it L
@@ -764,29 +807,28 @@ bool CUtils::IsAircraftEquipped(string rawInfo, char equipCode) {
 			return true; // Aircraft is AGCS equipped
 		return false;
 	}
-	
-	// Check for ICAO code
-	vector<string> splitString;
-	StringSplit(rawInfo, '/', &splitString);
-	if (splitString.size() == 2) {
-		if (splitString.at(0).length() == 1) { // If just the HEAVY identifier at the beginning
-			return false;
-		}
-		else {
-			if (splitString.at(1).find("B1") != string::npos || splitString.at(1).find("B2") != string::npos) {
-				return true; // Specific ICAO identifier for ADS-B support found
-			}
-			return false;
-		}
-	}
-	else if (splitString.size() == 3) { // Heavy identifier and an ICAO equipment code found
-		if (splitString.at(2).find("B1") != string::npos || splitString.at(1).find("B2") != string::npos) {
-			return true; // Specific ICAO identifier for ADS-B support found
-		}
-		return false;
-	}
-	else { // Length is just 1
-		return false;
+}
+
+// Get radar target mode
+CRadarTargetMode CUtils::GetTargetMode(int radarFlags) {
+	// Switch the flags
+	switch (radarFlags) {
+		case 0:
+			return CRadarTargetMode::ADS_B;
+			break;
+		case 1:
+		case 7:
+			return CRadarTargetMode::PRIMARY;
+			break;
+		case 3:
+		case 2:
+			return CRadarTargetMode::SECONDARY_C;
+			break;
+		case 6:
+			return CRadarTargetMode::SECONDARY_S;
+			break;
+		default:
+			return CRadarTargetMode::ADS_B;
 	}
 }
 
@@ -872,6 +914,12 @@ int CUtils::GetMach(int groundSpeed, int speedSound) {
 	return (int)result;
 }
 
+string CUtils::RoundDecimalPlaces(double num, int precision) {
+	std::stringstream ss;
+	ss << std::fixed << setprecision(precision) << num;
+	return ss.str();
+}
+
 string CUtils::PadWithZeros(int width, int number) {
 	std::stringstream ss;
 	ss << setfill('0') << setw(width) << number;
@@ -888,6 +936,17 @@ bool CUtils::IsAllAlpha(string str) {
 	}
 
 	return isAllAlpha;
+}
+
+string CUtils::GetSelcalCode(CFlightPlan* fpData) {
+	// Get SELCAL code
+	string remarks = fpData->GetFlightPlanData().GetRemarks();
+	size_t found = remarks.find(string("SEL/"));
+	// If found
+	if (found != string::npos) {
+		return remarks.substr(found + 4, 4);
+	}
+	return "";
 }
 
 string CUtils::ParseZuluTime(bool delimit, int deltaTime, CFlightPlan* fp, int fix) {
@@ -1069,3 +1128,97 @@ POINT CUtils::GetIntersectionFromPointBearing(POINT position1, POINT position2, 
 	return POINT({ newX, newY });
 }
 
+HANDLE CUtils::GetESProcess()
+{
+	CString strProcessName = "EuroScope.exe";
+
+	DWORD aProcesses[1024], cbNeeded, cProcesses;
+	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+		return NULL;
+
+	// Calculate how many process identifiers were returned.
+	cProcesses = cbNeeded / sizeof(DWORD);
+
+	// Print the name and process identifier for each process.
+	for (unsigned int i = 0; i < cProcesses; i++)
+	{
+		DWORD dwProcessID = aProcesses[i];
+		// Get a handle to the process
+		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcessID);
+
+		// Get the process name
+		TCHAR szEachProcessName[MAX_PATH];
+		if (NULL != hProcess)
+		{
+			HMODULE hMod;
+			DWORD cbNeeded;
+
+			// Iterate
+			if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded))
+			{
+				GetModuleBaseName(hProcess, hMod, szEachProcessName, sizeof(szEachProcessName) / sizeof(TCHAR));
+			}
+		}
+
+		// Return
+		if (strProcessName.CompareNoCase(szEachProcessName) == 0)
+			return hProcess;
+
+		CloseHandle(hProcess);
+	}
+
+	return NULL;
+}
+
+string CUtils::GetLatLonString(CPosition* pos, bool space, int precision, bool showDecimal) { 
+	// Result string
+	string res;
+
+	// Parse latitude
+	if (pos->m_Latitude >= 0) {
+		if (showDecimal)
+			res += "N" + (precision == -1 ? to_string(pos->m_Latitude) : RoundDecimalPlaces(pos->m_Latitude, precision));
+		else
+			res += "N" + to_string((int)(pow(10, 2) * pos->m_Latitude));
+	}
+	else {
+		if (showDecimal)
+			res += "S" + (precision == -1 ? to_string(abs(pos->m_Latitude)) : RoundDecimalPlaces(abs(pos->m_Latitude), precision));
+		else
+			res += "S" + to_string((int)(pow(10, 2) * abs(pos->m_Latitude)));
+	}
+
+	// Parse longitude
+	if (pos->m_Longitude > 0) {
+		if (space) {
+			if (showDecimal)
+				res += " E" + (precision == -1 ? to_string(pos->m_Longitude) : RoundDecimalPlaces(pos->m_Longitude, precision));
+			else
+				res += " E" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+		else {
+			if (showDecimal)
+				res += "E" + (precision == -1 ? to_string(pos->m_Longitude) : RoundDecimalPlaces(pos->m_Longitude, precision));
+			else
+				res += "E" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+	}		
+	else {
+		if (space) {
+			if (showDecimal)
+				res += " W" + (precision == -1 ? to_string(abs(pos->m_Longitude)) : RoundDecimalPlaces(abs(pos->m_Longitude), precision));
+			else
+				res += " W" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+		else {
+			if (showDecimal)
+				res += "W" + (precision == -1 ? to_string(abs(pos->m_Longitude)) : RoundDecimalPlaces(abs(pos->m_Longitude), precision));
+			else
+				res += "W" + to_string((int)(pow(10, 2) * abs(pos->m_Longitude)));
+		}
+	}
+		
+
+	// Return result
+	return res;
+}

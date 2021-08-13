@@ -1,7 +1,10 @@
 #pragma once
 #include "pch.h"
 #include "Constants.h"
+#include <iostream>
 #include <gdiplus.h>
+#include "Utils.h"
+#include "Logger.h"
 
 using namespace Gdiplus;
 
@@ -11,6 +14,7 @@ namespace Colours {
 	const Color Disabled(164, 185, 215);
 	const Color Black(0, 0, 0);
 	const Color Grey(237, 237, 237);
+	const Color DarkGrey(182, 182, 182);
 	const Color TargetOrange(255, 128, 0);
 	const Color TargetBlue(130, 175, 192);
 	const Color LightGreen(81, 188, 161);
@@ -71,8 +75,8 @@ public:
 		monoFont15.CreateFontIndirect(&lFont);
 
 		// Get for ATC font
-		AddFontResourceEx("vNAAATS.ttf", FR_PRIVATE, 0);
-		strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
+		AddFontResourceEx("9x15B.bdf", FR_PRIVATE, 0);
+		strcpy_s(lFont.lfFaceName, _T("FixedBold"));
 		// Normal weight
 		lFont.lfWeight = FW_REGULAR;
 		// Size 14
@@ -90,6 +94,7 @@ public:
 
 		// Initialised
 		fontsInitialised = true;
+		CLogger::Log(CLogType::NORM, "Fonts initialised.", "FontSelector");
 		return 0;
 	}
 

@@ -334,7 +334,7 @@ void CCommonRenders::RenderScrollBar(CDC* dc, Graphics* g, CRadarScreen* screen,
 	dc->RestoreDC(sDC);
 }
 
-void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType* type, CMenuBar* menubar) {
+void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, COverlayType type, CMenuBar* menubar) {
 	// Save context
 	int iDC = dc->SaveDC();
 
@@ -352,16 +352,16 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 	// Loop tracks
 	for (auto kv : CRoutesHelper::CurrentTracks) {
 		// Show eastbound/eastbound only if that type is selected
-		if (*type == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
+		if (type == COverlayType::TCKS_EAST && kv.second.Direction != CTrackDirection::EAST) {
 			continue;
 		}
-		else if (*type == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
+		else if (type == COverlayType::TCKS_WEST && kv.second.Direction != CTrackDirection::WEST) {
 			continue;
 		}
 		
 
 		// Show selected overlays
-		if (*type == COverlayType::TCKS_SEL) {
+		if (type == COverlayType::TCKS_SEL) {
 			vector<string> tracks;
 			menubar->GetSelectedTracks(tracks);
 			bool show = false;
@@ -461,6 +461,87 @@ void CCommonRenders::RenderRoutes(CDC* dc, Graphics* g, CRadarScreen* screen) {
 			g->DrawLine(&pen, lastPoint.x, lastPoint.y, screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw).x, (screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw).y));
 			lastPoint = screen->ConvertCoordFromPositionToPixel(route.at(j).PositionRaw);
 		}
+	}
+
+	// Cleanup
+	DeleteObject(&pen);
+	DeleteObject(&brush);
+
+	// Restore context
+	dc->RestoreDC(iDC);
+}
+
+void CCommonRenders::RenderQDM(CDC* dc, Graphics* g, CRadarScreen* screen, CPosition* position1, CPosition* position2, POINT cursorPosition, CPosition* cursorLatLon) {
+	// Save context
+	int iDC = dc->SaveDC();
+
+	// Get raw screen coordinates
+	POINT rawPoint1(screen->ConvertCoordFromPositionToPixel(*position1));
+	POINT rawPoint2(screen->ConvertCoordFromPositionToPixel(*position2));
+
+	// Convert to Point objects
+	Point point1(rawPoint1.x, rawPoint1.y);
+	Point point2(rawPoint2.x, rawPoint2.y);
+
+	// Drawing tools
+	Pen pen(DarkGrey, 2);
+	SolidBrush brush(DarkGrey);
+
+	// Font
+	FontSelector::SelectMonoFont(12, dc);
+	dc->SetTextColor(TextWhite.ToCOLORREF());
+	dc->SetTextAlign(TA_CENTER);
+
+	// Anti-aliasing
+	g->SetSmoothingMode(SmoothingModeAntiAlias);
+
+	// Define the positions
+	Rect positionRect1(point1.X - 2, point1.Y - 2, 4, 4);
+	Rect positionRect2(point2.X - 2, point2.Y - 2, 4, 4);
+
+	// Fill number 1
+	g->FillEllipse(&brush, positionRect1);
+
+	// If number 2 defined fill it and draw line between, otherwise draw line to cursor position
+	if (position2->m_Latitude != 0.0 && position2->m_Longitude != 0.0) {
+		// Draw dots and connect
+		g->FillEllipse(&brush, positionRect2);
+		g->DrawLine(&pen, point1, point2);
+
+		// Draw the lat lon text
+		if (point1.Y < point2.Y) {
+			// Point 1 has text on top
+			dc->TextOutA(point1.X, point1.Y - 15, CUtils::GetLatLonString(position1, false, 2, false).c_str());
+			dc->TextOutA(point2.X, point2.Y + 10, CUtils::GetLatLonString(position2, false, 2, false).c_str());
+		}
+		else {
+			// Point 2 has text on top
+			dc->TextOutA(point2.X, point2.Y - 15, CUtils::GetLatLonString(position2, false, 2, false).c_str());
+			dc->TextOutA(point1.X, point1.Y + 10, CUtils::GetLatLonString(position1, false, 2, false).c_str());
+		}
+
+		// Draw distance text
+		POINT midpoint = CUtils::GetMidPoint(rawPoint1, rawPoint2);
+		dc->TextOutA(midpoint.x, midpoint.y, (to_string((int)position1->DistanceTo(*position2)) + "nm").c_str());
+	}
+	else {
+		g->DrawLine(&pen, point1, Point(cursorPosition.x, cursorPosition.y));
+
+		// Draw the lat lon text
+		if (point1.Y < cursorPosition.y) {
+			// Point 1 has text on top
+			dc->TextOutA(point1.X, point1.Y - 15, CUtils::GetLatLonString(position1, false, 1, false).c_str());
+			dc->TextOutA(cursorPosition.x, cursorPosition.y + 10, CUtils::GetLatLonString(cursorLatLon, false, 2, false).c_str());
+		}
+		else {
+			// Point 2 has text on top
+			dc->TextOutA(cursorPosition.x, cursorPosition.y - 15, CUtils::GetLatLonString(cursorLatLon, false, 2, false).c_str());
+			dc->TextOutA(point1.X, point1.Y + 10, CUtils::GetLatLonString(position1, false, 1, false).c_str());
+		}
+
+		// Draw distance text
+		POINT midpoint = CUtils::GetMidPoint(cursorPosition, rawPoint1);
+		dc->TextOutA(midpoint.x, midpoint.y, (to_string((int)position1->DistanceTo(*cursorLatLon)) + "nm").c_str());
 	}
 
 	// Cleanup
