@@ -2628,6 +2628,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 		if (id == BTN_XCHANGE_TRACK) {
 			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe() 
 				&& screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetHandoffTargetControllerCallsign() == "") {
+				CLogger::Log(CLogType::NORM, "Attempting to drop aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
@@ -2639,12 +2640,14 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
 			}
 			else {
+				CLogger::Log(CLogType::NORM, "Attempting to track aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 			}
 		}
 		if (id == BTN_XCHANGE_TRANSFER) {
+			CLogger::Log(CLogType::NORM, "Initiating handoff of aircraft " + primedPlan->Callsign + " to station " + selectedAuthority + ".", "CRadarDisplay::OnRefresh");
 			screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
 			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
 			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";

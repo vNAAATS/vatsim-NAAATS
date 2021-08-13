@@ -414,7 +414,7 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 	// Log if render time was greater than 4ms
 	if (lastRenderTimeMs >= 4) {
-		CLogger::Log(CLogType::WARN, "TARGET render time was >= 4ms. Elapsed: " + to_string((int)round(lastRenderTimeMs)) + "ms.", target->GetCallsign());
+		CLogger::Log(CLogType::WARN, "TARGET render time was >= 4ms. Time elapsed: " + to_string((int)round(lastRenderTimeMs)) + "ms.", target->GetCallsign());
 	}
 }
 

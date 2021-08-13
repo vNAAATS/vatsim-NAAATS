@@ -112,7 +112,8 @@ const string PLUGIN_NAME = "vNAAATS";
 const string PLUGIN_VERSION = "v1.2.0";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
 const string PLUGIN_COPYRIGHT = "(C) 2021 Gander Oceanic vNAAATS";
-const bool IS_ALPHA = true;
+const bool IS_ALPHA = false;
+const bool DEBUG_MODE = true;
 
 // Sector file & geo constants
 const int SECTELEMENT_COORD_IDX = 7;

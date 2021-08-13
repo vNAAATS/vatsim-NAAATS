@@ -39,7 +39,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 			// Show user message
 			plugin->DisplayUserMessage("vNAAATS", "Error", "Track data download failed. Code: " + code, true, true, true, true, true);
 			// Clogger
-			CLogger::Log(CLogType::ERR, "Could not connect to tracks API. Code: " + code, "CDataHandler");
+			CLogger::Log(CLogType::ERR, "Could not connect to tracks API. Code: " + code, "CDataHandler::PopulateLatestTrackData");
 			return 1;
 		}
 		// Put data into buffer
@@ -55,7 +55,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		// Log to ES
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to load NAT Track data: " + string(e.what())).c_str(), true, true, true, true, true);
 		// Clogger
-		CLogger::Log(CLogType::EXC, "Failed to load NAT Track data: " + string(string(e.what())), "CDataHandler");
+		CLogger::Log(CLogType::EXC, "Failed to load NAT Track data: " + string(string(e.what())), "CDataHandler::PopulateLatestTrackData");
 		return 1;
 	}
 	
@@ -107,14 +107,14 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		// Everything succeeded, show to user
 		plugin->DisplayUserMessage("Message", "vNAAATS Plugin", string("Track data loaded successfully. TMI is " + CRoutesHelper::CurrentTMI + ".").c_str(), false, false, false, false, false);
 		// Clogger
-		CLogger::Log(CLogType::NORM, string("Track data loaded successfully. TMI is " + CRoutesHelper::CurrentTMI + "."), "CDataHandler");
+		CLogger::Log(CLogType::NORM, string("Track data loaded successfully. TMI is " + CRoutesHelper::CurrentTMI + "."), "CDataHandler::PopulateLatestTrackData");
 		return 0;
 	}
 	catch (exception & e) {
 		// User message
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse NAT track JSON return: " + string(e.what())).c_str(), true, true, true, true, true);
 		// Clogger
-		CLogger::Log(CLogType::EXC, "Failed to parse NAT track JSON return: " + string(e.what()), "CDataHandler");
+		CLogger::Log(CLogType::EXC, "Failed to parse NAT track JSON return: " + string(e.what()), "CDataHandler::PopulateLatestTrackData");
 		return 1;
 	}
 }
@@ -226,14 +226,14 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 		fDLog.append("\nDoF: " + CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth()) ? "East" : "West");
 		fDLog.append("\Equipped?: " + fp.IsEquipped ? "True" : "False");
 		fDLog.append("\TimeToExit: " + fp.ExitTime);
-		CLogger::Log(CLogType::NORM, "Flight data object for " + data->Callsign + " generated successfully.", "CDataHandler");
+		CLogger::Log(CLogType::NORM, "Flight data object for " + data->Callsign + " generated successfully.", "CDataHandler::CreateFlightData");
 
 		// Success
 		return 0;
 	}
 	catch (exception & ex) {
 		// Clogger
-		CLogger::Log(CLogType::EXC, "Flight data generation for " + callsign + " failed: " + string(ex.what()), "CDataHandler");
+		CLogger::Log(CLogType::EXC, "Flight data generation for " + callsign + " failed: " + string(ex.what()), "CDataHandler::CreateFlightData");
 
 		// Failed
 		return 1;
@@ -245,7 +245,7 @@ int CDataHandler::DeleteFlightData(string callsign) {
 		// Remove the flight if it exists
 		flights.erase(callsign);
 		// Clogger
-		CLogger::Log(CLogType::NORM, "Flight data object for " + callsign + " destroyed successfully.", "CDataHandler");
+		CLogger::Log(CLogType::NORM, "Flight data object for " + callsign + " destroyed successfully.", "CDataHandler::DeleteFlightData");
 		return 0;
 	}
 	else {
@@ -329,7 +329,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not download network data for aircraft " + callsign + ": " + string(e.what()), "NETWORK");
+		CLogger::Log(CLogType::EXC, "Could not download network data for aircraft " + callsign + ": " + string(e.what()), "CDataHandler::DownloadNetworkAircraft");
 		// Cleanup
 		delete args;
 		return;
@@ -402,7 +402,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse aircraft data for " + callsign +". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not parse downloaded JSON for network aircraft " + callsign + ": " + string(e.what()), "NETWORK");
+		CLogger::Log(CLogType::EXC, "Could not parse downloaded JSON for network aircraft " + callsign + ": " + string(e.what()), "CDataHandler::DownloadNetworkAircraft");
 		// Cleanup
 		delete args;
 		return;
@@ -448,7 +448,7 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 		if (FAILED(hr)) {
 			// We want to know about it
 			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". The server returned an error.").c_str(), true, true, true, true, true);
-			CLogger::Log(CLogType::ERR, "Could not post aircraft " + data->FP->Callsign + " to the network. A connection to the server could not be established.", "NETWORK");
+			CLogger::Log(CLogType::ERR, "Could not post aircraft " + data->FP->Callsign + " to the network. A connection to the server could not be established.", "CDataHandler::PostNetworkAircraft");
 			// Cleanup
 			delete data->FP;
 			delete args;
@@ -463,7 +463,7 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "NETWORK");
+		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "CDataHandler::PostNetworkAircraft");
 		// Cleanup
 		delete data->FP;
 		delete args;
@@ -503,7 +503,7 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 		if (FAILED(hr)) {
 			// We want to know about it
 			data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". The server returned an error.").c_str(), true, true, true, true, true);
-			CLogger::Log(CLogType::ERR, "Could not post update for aircraft " + data->FP->Callsign + ".  A connection to the server could not be established.", "NETWORK");
+			CLogger::Log(CLogType::ERR, "Could not post update for aircraft " + data->FP->Callsign + ".  A connection to the server could not be established.", "CDataHandler::UpdateNetworkAircraft");
 			// Cleanup
 			delete data->FP;
 			delete args;
@@ -518,7 +518,7 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "NETWORK");
+		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "CDataHandler::UpdateNetworkAircraft");
 		// Cleanup
 		delete data->FP;
 		delete args;

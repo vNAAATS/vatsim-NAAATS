@@ -5,23 +5,25 @@ string CLogger::logFilePath = "";
 bool CLogger::initialised = false;
 
 void CLogger::Log(CLogType type, string text, string invokedBy) {
-	// Prefix
-	string prefix = GeneratePrefix(type);
+	if (DEBUG_MODE) {
+		// Prefix
+		string prefix = GeneratePrefix(type);
 
-	// Format invokedBy if not an empty string
-	invokedBy = invokedBy != "" ? "[" + invokedBy + "] " : "";
-	
-	// Open, write then close
-	ofstream log;
-	if (!initialised) { // Overwrite first time
-		log.open(logFilePath.c_str());
-		initialised = true;
+		// Format invokedBy if not an empty string
+		invokedBy = invokedBy != "" ? "[" + invokedBy + "] " : "";
+
+		// Open, write then close
+		ofstream log;
+		if (!initialised) { // Overwrite first time
+			log.open(logFilePath.c_str());
+			initialised = true;
+		}
+		else { // Append thereafter
+			log.open(logFilePath.c_str(), std::ios_base::app | std::ios_base::out);
+		}
+		log << prefix.c_str() << invokedBy << text.c_str() << "\n";
+		log.close();
 	}
-	else { // Append thereafter
-		log.open(logFilePath.c_str(), std::ios_base::app | std::ios_base::out);
-	}
-	log << prefix.c_str() << invokedBy << text.c_str() << "\n";
-	log.close();
 }
 
 void CLogger::InstantiateLogFile() {

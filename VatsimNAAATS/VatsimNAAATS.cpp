@@ -46,7 +46,8 @@ EuroScopePlugInInit(EuroScopePlugIn::CPlugIn** ppPlugInInstance)
 	CUtils::DllPath.resize(CUtils::DllPath.size() - strlen("VatsimNAAATS.dll"));
 
 	// Instantiate logger as the very first thing we do
-	CLogger::InstantiateLogFile();
+	if (DEBUG_MODE)
+		CLogger::InstantiateLogFile();
 }
 
 // Plugin exit
