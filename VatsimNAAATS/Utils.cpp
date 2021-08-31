@@ -832,6 +832,30 @@ CRadarTargetMode CUtils::GetTargetMode(int radarFlags) {
 	}
 }
 
+// Get radar target mode
+int CUtils::GetTargetModeInt(int radarFlags)
+{
+	// Switch the flags
+	switch (radarFlags) {
+	case 0:
+		return 0;
+		break;
+	case 1:
+	case 7:
+		return 1;
+		break;
+	case 3:
+	case 2:
+		return 2;
+		break;
+	case 6:
+		return 3;
+		break;
+	default:
+		return 0;
+	}
+}
+
 CPosition CUtils::PositionFromLatLon(double lat, double lon) {
 	// Latitude
 	int degrees = (int)floor(lat);

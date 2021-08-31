@@ -297,6 +297,20 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			CAircraftFlightPlan aircraftFlightPlan;
 			CDataHandler::GetFlightData(cs.c_str(), aircraftFlightPlan);
 
+			// Flight plan
+			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(ac.GetCallsign());
+
+			// Route
+			CFlightPlanExtractedRoute rte = fp.GetExtractedRoute();
+
+			// Time and direction
+			entryMinutes = fp.GetSectorEntryMinutes();
+			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
+			
+			//string debug = string(ac.GetCallsign()) + ":" + to_string(entryMinutes) + ":" + to_string(direction) + ":" + to_string(aircraftFlightPlan.ExitTime) + ":" + to_string(CUtils::GetTargetModeInt(ac.GetPosition().GetRadarFlags())) + "\n";
+
+			//CLogger::LogAircraftDebugInfo(debug);
+
 			// Check if they are a selected aircraft
 			if (ac.GetCallsign() == CAcTargets::SearchedAircraft) {
 				if (((double)(clock() - CAcTargets::fiveSecondTimer) / ((double)CLOCKS_PER_SEC)) >= 5) {
@@ -307,8 +321,9 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					CAcTargets::RenderSelectionHalo(&g, this, &ac);
 				}
 			}
+
 			// If PSSR button not pressed
-			if (!menuBar->IsButtonPressed(CMenuBar::BTN_PSSR)) {
+			/*if (!menuBar->IsButtonPressed(CMenuBar::BTN_PSSR)) {
 				// Check their PSSR state to hide all non ADS-B aircraft
 				if (CUtils::GetTargetMode(ac.GetPosition().GetRadarFlags()) != CRadarTargetMode::ADS_B) {
 					// Select the next target
@@ -316,7 +331,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					if (aircraftOnScreen.find(ac.GetCallsign()) != aircraftOnScreen.end()) aircraftOnScreen.erase(ac.GetCallsign());
 					continue;
 				}
-			}
+			}*/
 
 			// Check their altitude, if they are outside the filter, skip them
 			if (altFiltEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {
@@ -327,16 +342,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					continue;
 				}
 			}
-
-			// Flight plan
-			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(ac.GetCallsign());
-
-			// Route
-			CFlightPlanExtractedRoute rte = fp.GetExtractedRoute();
-
-			// Time and direction
-			entryMinutes = fp.GetSectorEntryMinutes();
-			direction = CUtils::GetAircraftDirection(ac.GetPosition().GetReportedHeading());
 
 			// Check track filtering
 			if (menuBar->GetButtonState(menuBar->BTN_TCKCTRL) == CInputState::ACTIVE && !menuBar->IsButtonPressed(CMenuBar::BTN_ALL)) {

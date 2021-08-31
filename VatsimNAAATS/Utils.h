@@ -80,6 +80,9 @@ class CUtils { // TODO: refactor into namespace
 		// Get radar target mode
 		static CRadarTargetMode GetTargetMode(int radarFlags);
 
+		// Get radar target mode
+		static int GetTargetModeInt(int radarFlags);
+
 		// Pad zeroes
 		static string PadWithZeros(int width, int number);
 

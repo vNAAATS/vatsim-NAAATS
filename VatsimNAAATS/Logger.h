@@ -16,6 +16,8 @@ class CLogger
 		// Log a message
 		static void Log(CLogType type, string text, string invokedBy = "");
 
+		static void LogAircraftDebugInfo(string text);
+
 		// Generate the log file
 		static void InstantiateLogFile();
 		
@@ -28,5 +30,6 @@ class CLogger
 
 		// To append lines after initialisation instead of overwriting
 		static bool initialised;
+		static bool initialisedAc;
 };
 

@@ -3,6 +3,7 @@
 
 string CLogger::logFilePath = "";
 bool CLogger::initialised = false;
+bool CLogger::initialisedAc = false;
 
 void CLogger::Log(CLogType type, string text, string invokedBy) {
 	if (DEBUG_MODE) {
@@ -24,6 +25,21 @@ void CLogger::Log(CLogType type, string text, string invokedBy) {
 		log << prefix.c_str() << invokedBy << text.c_str() << "\n";
 		log.close();
 	}
+}
+
+void CLogger::LogAircraftDebugInfo(string text) // Debug logger for some raw AC data
+{
+	// Open, write then close
+	ofstream log;
+	if (!initialisedAc) { // Overwrite first time
+		log.open(CUtils::DllPath + "\\raw_ac_data.txt");
+		initialisedAc = true;
+	}
+	else { // Append thereafter
+		log.open(CUtils::DllPath + "\\raw_ac_data.txt", std::ios_base::app | std::ios_base::out);
+	}
+	log << text.c_str() << "\n";
+	log.close();
 }
 
 void CLogger::InstantiateLogFile() {
