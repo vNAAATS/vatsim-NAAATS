@@ -482,6 +482,12 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		else {
 			CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
 		}
+		
+		// Reverse it if it's westbound, they do it IRL
+		if (CUtils::GetAircraftDirection(!screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth()))
+		{
+			std::reverse(rte.begin(), rte.end());
+		}
 
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
@@ -493,23 +499,23 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 						// Write fix down
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
 						offsetY += 56;
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 						offsetY = 2;
-						offsetX += dc->GetTextExtent("2323").cx + 15;
+						offsetX += dc->GetTextExtent(rte[i].Fix.c_str()).cx + 15;
 					}
 					else {
 						// Write coordinate down
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
-						offsetY += 28;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
 						offsetY += 28;
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
+						offsetY += 28;						
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 						offsetY = 2;
 						offsetX += dc->GetTextExtent("2323").cx + 15;
 					}
 				}
 			}
-			contentoffsetX += dc->GetTextExtent("2323").cx + 15;
+			contentoffsetX += dc->GetTextExtent(rte[i].Fix.c_str()).cx + 15;
 		}
 	}
 
@@ -1044,25 +1050,32 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 		// Draw the route and estimates
 		vector<CRoutePosition> rte;
 		CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
+
+		// Reverse it if it's westbound, they do it IRL
+		if (CUtils::GetAircraftDirection(!screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth()))
+		{
+			std::reverse(rte.begin(), rte.end());
+		}
+
 		for (int i = 0; i < rte.size(); i++) {
 			// If a waypoint
 			if (CUtils::IsAllAlpha(rte[i].Fix)) {
 				// Write fix down
 				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
 				offsetY += 56;
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 				offsetY = 2;
-				offsetX += dc->GetTextExtent("2323").cx + 15;
+				offsetX += dc->GetTextExtent(rte[i].Fix.c_str()).cx + 15;
 			}
 			else {
 				// Write coordinate down
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
-				offsetY += 28;
 				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
 				offsetY += 28;
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate.c_str());
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
+				offsetY += 28;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 				offsetY = 2;
-				offsetX += dc->GetTextExtent("2323").cx + 15;
+				offsetX += dc->GetTextExtent(rte[i].Fix.c_str()).cx + 15;
 			}
 		}
 	}
@@ -2589,16 +2602,25 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					// Create network object
 					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
 					netFP->Callsign = primedPlan->Callsign;
+					netFP->Type = primedPlan->Type;
 					netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
 					netFP->AssignedMach = stoi(primedPlan->Mach);
 					netFP->Track = primedPlan->Track;
 					netFP->Departure = primedPlan->Depart;
 					netFP->Arrival = primedPlan->Dest;
+					netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+					netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
+					netFP->DatalinkConnected = false; // we can't tell from here so default
 					netFP->IsEquipped = primedPlan->IsEquipped;
+					netFP->State = primedPlan->State;
+					netFP->Etd = primedPlan->Etd;
+					netFP->Relevant = ((screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str())).IsValid() && screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorEntryMinutes() != -1) ? true : false;
+					netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
 					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
 					netFP->Route = ""; // Initialise
 					netFP->RouteEtas = ""; // Initialise
-
+					
 					// Get routes and estimates
 					vector<CRoutePosition> rte;
 					CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
@@ -2624,13 +2646,22 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					// Create network object
 					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
 					netFP->Callsign = copiedPlan.Callsign;
+					netFP->Type = copiedPlan.Type;
 					netFP->AssignedLevel = stoi(copiedPlan.FlightLevel);
 					netFP->AssignedMach = stoi(copiedPlan.Mach);
 					netFP->Track = copiedPlan.Track;
 					netFP->Departure = copiedPlan.Depart;
 					netFP->Arrival = copiedPlan.Dest;
+					netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+					netFP->Selcal = copiedPlan.SELCAL == "N/A" ? "" : copiedPlan.SELCAL;
+					netFP->DatalinkConnected = false; // we can't tell from here so default
 					netFP->IsEquipped = copiedPlan.IsEquipped;
-					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->State = copiedPlan.State;
+					netFP->Etd = copiedPlan.Etd;
+					netFP->Relevant = ((screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str())).IsValid() && screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetSectorEntryMinutes() != -1) ? true : false;
+					netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetRadarFlags());
+					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerId();
 					netFP->Route = ""; // Initialise
 					netFP->RouteEtas = ""; // Initialise
 

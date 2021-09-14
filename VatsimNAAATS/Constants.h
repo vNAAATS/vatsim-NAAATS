@@ -317,10 +317,10 @@ enum class CRestrictionType {
 };
 
 enum class CRadarTargetMode {
-    PRIMARY, // Asterisk
-    SECONDARY_S, // Diamond with line
-    SECONDARY_C, // Star
-    ADS_B, // Airplane icon (also for cleared aircraft)
+    PRIMARY, // Asterisk (0)
+    SECONDARY_S, // Diamond with line (1)
+    SECONDARY_C, // Star (2)
+    ADS_B, // Airplane icon (also for cleared aircraft) (3)
 };
 
 enum class CLogType {

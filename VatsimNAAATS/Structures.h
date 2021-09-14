@@ -273,6 +273,7 @@ struct CFlightRestriction {
 
 struct CNetworkFlightPlan {
 	string Callsign;
+	string Type;
 	int AssignedLevel;
 	int AssignedMach;
 	string Track;
@@ -280,8 +281,16 @@ struct CNetworkFlightPlan {
 	string RouteEtas;
 	string Departure;
 	string Arrival;
+	bool Direction;
+	string Etd;
+	string Selcal;
+	bool DatalinkConnected;
 	bool IsEquipped;
+	string State;
+	bool Relevant;
+	CRadarTargetMode TargetMode;
 	string TrackedBy;
+	string TrackedById;
 	string LastUpdated;
 };
 
@@ -356,6 +365,7 @@ struct CAircraftFlightPlan {
 	int ExitTime;
 	bool IsEquipped;
 	bool IsValid = false;
+	bool IsRelevant = true;
 	bool IsFirstUpdate = false; // So that we can disable flight plan window until the plan has been fetched from server at least once
 	CRadarTargetMode TargetMode = CRadarTargetMode::ADS_B;
 	bool IsCleared = false;

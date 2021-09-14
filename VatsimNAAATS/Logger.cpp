@@ -28,7 +28,7 @@ void CLogger::Log(CLogType type, string text, string invokedBy) {
 }
 
 void CLogger::DebugLog(CRadarScreen* screen, string text) {
-	screen->GetPlugIn()->DisplayUserMessage("vNAAATS Debug", "Log", text.c_str(), true, true, true, true, true);
+	screen->GetPlugIn()->DisplayUserMessage("vNAAATS", "Log", text.c_str(), true, true, true, true, true);
 }
 
 void CLogger::LogAircraftDebugInfo(string text) // Debug logger for some raw AC data

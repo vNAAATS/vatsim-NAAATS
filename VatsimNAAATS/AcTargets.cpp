@@ -39,7 +39,8 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	CFlightPlan fp = screen->GetPlugIn()->FlightPlanSelect(cs.c_str());
 	CAircraftFlightPlan* acFP = CDataHandler::GetFlightData(cs);
 
-	// Radar flags
+	// Radar flags	
+	acFP->TargetMode = CUtils::GetTargetMode(target->GetPosition().GetRadarFlags());
 	CRadarTargetMode targetMode = acFP->TargetMode;
 
 	// Check if there is an active handoff to client 

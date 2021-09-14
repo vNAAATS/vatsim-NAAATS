@@ -177,7 +177,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 		fp.Dest = fpData.GetFlightPlanData().GetDestination();
 		fp.Etd = CUtils::ParseZuluTime(false, atoi(fpData.GetFlightPlanData().GetEstimatedDepartureTime()));
 		fp.ExitTime = fpData.GetSectorExitMinutes();
-		fp.DLStatus = ""; // TEMPORARY
+		fp.DLStatus = "false"; // TEMPORARY
 		fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
 		fp.CurrentMessage = nullptr;
 		fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
@@ -345,6 +345,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 
 			// Fill properties
 			netFP.Callsign = jsonArray[i].at("callsign");
+			netFP.Type = jsonArray[i].at("type");
 			netFP.AssignedLevel = jsonArray[i].at("assignedLevel");
 			netFP.AssignedMach = jsonArray[i].at("assignedMach");
 			netFP.Track = jsonArray[i].at("track");
@@ -352,8 +353,16 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 			netFP.RouteEtas = jsonArray[i].at("routeEtas");
 			netFP.Departure = jsonArray[i].at("departure");
 			netFP.Arrival = jsonArray[i].at("arrival");
+			netFP.Direction = jsonArray[i].at("direction");
+			netFP.Etd = jsonArray[i].at("etd");
+			netFP.Selcal = jsonArray[i].at("selcal");
+			netFP.DatalinkConnected = jsonArray[i].at("datalinkConnected");
 			netFP.IsEquipped = jsonArray[i].at("isEquipped");
+			netFP.State = jsonArray[i].at("state");
+			netFP.Relevant = jsonArray[i].at("relevant");
 			netFP.TrackedBy = jsonArray[i].at("trackedBy");
+			netFP.TrackedById = jsonArray[i].at("trackedById");
+			netFP.TargetMode = jsonArray[i].at("targetMode");
 			netFP.LastUpdated = jsonArray[i].at("lastUpdated");
 
 			// Get flight plan
@@ -369,7 +378,10 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 				fp->Track = netFP.Track;
 				fp->Depart = netFP.Departure;
 				fp->Dest = netFP.Arrival;
+				fp->Etd = netFP.Etd;
+				fp->State = netFP.State;
 				fp->IsEquipped = netFP.IsEquipped;
+				fp->DLStatus = to_string(netFP.DatalinkConnected);
 				fp->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
 
 				// Routes
@@ -420,9 +432,30 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 	// Convert args
 	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
+	// Switch target mode
+	int mode = 0;
+	switch (data->FP->TargetMode) {
+		case CRadarTargetMode::PRIMARY:
+			mode = 0;
+			break;
+		case CRadarTargetMode::SECONDARY_S:
+			mode = 1;
+			break;
+		case CRadarTargetMode::SECONDARY_C:
+			mode = 2;
+			break;
+		case CRadarTargetMode::ADS_B:
+			mode = 3;
+			break;
+		default:
+			mode = 3;
+			break;
+	}
+
 	// Construct URL
 	string reqUrl = PostSingleAircraft;
 	reqUrl += "&callsign=" + data->FP->Callsign;
+	reqUrl += "&type=" + data->FP->Type;
 	reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
 	reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
 	reqUrl += "&track=" + data->FP->Track;
@@ -430,8 +463,16 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 	reqUrl += "&routeEtas=" + data->FP->RouteEtas;
 	reqUrl += "&departure=" + data->FP->Departure;
 	reqUrl += "&arrival=" + data->FP->Arrival;
+	reqUrl += "&direction=" + to_string(data->FP->Direction);
+	reqUrl += "&etd=" + data->FP->Etd;
+	reqUrl += "&selcal=" + data->FP->Selcal;
+	reqUrl += "&datalinkConnected=" + data->FP->DatalinkConnected;
 	reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
+	reqUrl += "&state=" + data->FP->State;
+	reqUrl += "&relevant=" + to_string(data->FP->Relevant);
+	reqUrl += "&targetMode=" + to_string(mode);
 	reqUrl += "&trackedBy=" + data->FP->TrackedBy;
+	reqUrl += "&trackedById=" + data->FP->TrackedById;
 
 	try {
 		// Convert URL to LPCSTR type
@@ -475,9 +516,30 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 	// Convert args
 	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
+	// Switch target mode
+	int mode = 0;
+	switch (data->FP->TargetMode) {
+	case CRadarTargetMode::PRIMARY:
+		mode = 0;
+		break;
+	case CRadarTargetMode::SECONDARY_S:
+		mode = 1;
+		break;
+	case CRadarTargetMode::SECONDARY_C:
+		mode = 2;
+		break;
+	case CRadarTargetMode::ADS_B:
+		mode = 3;
+		break;
+	default:
+		mode = 3;
+		break;
+	}
+
 	// Construct URL
 	string reqUrl = FlightDataUpdate;
 	reqUrl += "&callsign=" + data->FP->Callsign;
+	reqUrl += "&type=" + data->FP->Type;
 	reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
 	reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
 	reqUrl += "&track=" + data->FP->Track;
@@ -485,8 +547,16 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 	reqUrl += "&routeEtas=" + data->FP->RouteEtas;
 	reqUrl += "&departure=" + data->FP->Departure;
 	reqUrl += "&arrival=" + data->FP->Arrival;
+	reqUrl += "&direction=" + to_string(data->FP->Direction);
+	reqUrl += "&etd=" + data->FP->Etd;
+	reqUrl += "&selcal=" + data->FP->Selcal;
+	reqUrl += "&datalinkConnected=" + data->FP->DatalinkConnected;
 	reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
+	reqUrl += "&state=" + data->FP->State;
+	reqUrl += "&relevant=" + to_string(data->FP->Relevant);
+	reqUrl += "&targetMode=" + to_string(mode);
 	reqUrl += "&trackedBy=" + data->FP->TrackedBy;
+	reqUrl += "&trackedById=" + data->FP->TrackedById;
 
 	try {
 		// Convert URL to LPCSTR type

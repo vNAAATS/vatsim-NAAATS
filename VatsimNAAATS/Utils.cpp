@@ -702,10 +702,10 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 
 		// Check now to not display aircraft east/west of certain longitude based on area selection
-		if (areaSel == 802 && pos.m_Longitude < -32 && entryMinutes == 0) {
+		if (areaSel == 802 && pos.m_Longitude < -35 && entryMinutes == 0) {
 			valid = false;
 		}
-		if (areaSel == 801 && pos.m_Longitude > -28 && entryMinutes == 0) {
+		if (areaSel == 801 && pos.m_Longitude > -25 && entryMinutes == 0) {
 			valid = false;
 		}
 	}
@@ -852,7 +852,7 @@ int CUtils::GetTargetModeInt(int radarFlags)
 		return 3;
 		break;
 	default:
-		return 0;
+		return 3;
 	}
 }
 
