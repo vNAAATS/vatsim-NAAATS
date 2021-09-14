@@ -484,7 +484,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		}
 		
 		// Reverse it if it's westbound, they do it IRL
-		if (CUtils::GetAircraftDirection(!screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth()))
+		if (!CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth()))
 		{
 			std::reverse(rte.begin(), rte.end());
 		}

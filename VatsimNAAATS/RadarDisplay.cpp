@@ -727,7 +727,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 					newData->Screen = this;
 					newData->Callsign = fp->Callsign;
 					newData->FP = netFP;
-					_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)newData); // Async
+					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
 				}
 			}						
 		}
@@ -806,7 +806,7 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 			data->Screen = this;
 			data->Callsign = primedPlan->Callsign;
 			data->FP = netFP;
-			_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
+			_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
 		}
 	}
 }
