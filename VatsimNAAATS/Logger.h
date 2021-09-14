@@ -16,6 +16,9 @@ class CLogger
 		// Log a message
 		static void Log(CLogType type, string text, string invokedBy = "");
 
+		// Log to chat
+		static void DebugLog(CRadarScreen* screen, string text);
+
 		static void LogAircraftDebugInfo(string text);
 
 		// Generate the log file

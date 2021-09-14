@@ -219,6 +219,8 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 				if (!loopBreak) { // If for some reason the pilot's track doesn't exist, ignore it
 					trackReturned = "";
 				}
+				// Track id
+				fp->Track = trackReturned;
 			}
 		}
 
@@ -262,6 +264,9 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 			}			
 		} 
 		else {
+			// Track id
+			fp->Track = "RR";
+
 			// Find our entry and exit points
 			int entryPoint = -1;
 			int exitPoint = -1;

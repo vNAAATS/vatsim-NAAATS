@@ -55,14 +55,6 @@ class CRadarDisplay : public CRadarScreen
 			// Manually call save
 			OnAsrContentToBeSaved();
 			appCursor->isESClosed = true;
-
-			// Clean up
-			delete appCursor;
-			delete trackWindow;
-			delete fltPlnWindow;
-			delete msgWindow;
-			delete npWindow;
-			delete this;
 		}
 
 	private:

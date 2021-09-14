@@ -39,11 +39,17 @@ CRadarDisplay::CRadarDisplay()
 
 CRadarDisplay::~CRadarDisplay()
 {
-	delete inboundList;
-	delete otherList;
+	// Clean up
+	appCursor->isESClosed;
+	delete appCursor;
 	delete trackWindow;
 	delete fltPlnWindow;
+	delete trackWindow;
 	delete msgWindow;
+	delete npWindow;
+	delete inboundList;
+	delete otherList;
+	delete this;
 }
 
 void CRadarDisplay::PopulateProgramData() {
@@ -1238,10 +1244,10 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 	clock_t refreshTimer = clock();
 
 	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
-	HANDLE hnd = CUtils::GetESProcess();
 	DWORD activeCode;
-	GetExitCodeProcess(hnd, &activeCode);
-	while (1) {
+	while (!cursor->isESClosed) {
+		HANDLE hnd = CUtils::GetESProcess();
+		GetExitCodeProcess(hnd, &activeCode);
 		// Check if the app is still active
 		if (cursor->isESClosed || activeCode != STILL_ACTIVE) {
 			CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
@@ -1341,6 +1347,11 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 		}
 		
  	}
+
+	// Check if the app is still active
+	if (cursor->isESClosed) {
+		CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
+	}
 
 	// Clean up and return
 	delete args;

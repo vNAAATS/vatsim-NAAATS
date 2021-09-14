@@ -529,11 +529,6 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		if (acFP.GetTrackingControllerIsMe() && acFP.GetHandoffTargetControllerCallsign() != "")
 			dc->SetTextColor(TextWhite.ToCOLORREF());
 
-		// Callsign
-		text = acFP.GetCallsign();
-		dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
-		offsetY += 15;
-
 		// Check jurisdiction
 		if (!acFP.GetTrackingControllerIsMe()) {
 			textColour = TargetBlue.ToCOLORREF();
@@ -541,6 +536,13 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		else {
 			textColour = TargetOrange.ToCOLORREF();
 		}
+
+		dc->SetTextColor(textColour);
+
+		// Callsign
+		text = acFP.GetCallsign();
+		dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
+		offsetY += 15;
 
 		// Conflict
 		if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
