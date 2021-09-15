@@ -32,6 +32,7 @@ CRadarDisplay::CRadarDisplay()
 	asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 	fiveSecondTimer = clock();
 	tenSecondTimer = clock();
+	thirtySecondTimer = clock();
 
 	// Clogger
 	CLogger::Log(CLogType::NORM, "Finished initialisation.", "CRadarDisplay");
@@ -678,7 +679,11 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 			if (!fp->IsFirstUpdate) fp->IsFirstUpdate = true;
 			_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
 
-			if (fp->IsCleared) {
+			// Timer
+			double thirtySecT = (double)(clock() - thirtySecondTimer) / ((double)CLOCKS_PER_SEC);
+
+			// Update if aircraft is cleared
+			if (fp->IsCleared && fpData.GetTrackingControllerIsMe() && thirtySecT >= 30.0) {
 				// Set irrelevant			
 				CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
 				netFP->Callsign = fp->Callsign;
@@ -729,7 +734,10 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 					newData->FP = netFP;
 					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
 				}
-			}						
+
+				// Reset the clock
+				thirtySecondTimer = clock();
+			}				
 		}
 	}
 	else { // Not relevant

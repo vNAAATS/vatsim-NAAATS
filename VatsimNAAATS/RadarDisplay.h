@@ -73,6 +73,7 @@ class CRadarDisplay : public CRadarScreen
 		POINT mousePointer; // Updated on screen object actions only
 		clock_t fiveSecondTimer;
 		clock_t tenSecondTimer;
+		clock_t thirtySecondTimer;
 		bool aselDetailed;	
 		map<string, int> aircraftOnScreen;
 		map<int, string> menuFields;
