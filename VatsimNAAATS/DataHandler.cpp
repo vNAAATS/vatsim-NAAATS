@@ -16,6 +16,7 @@ const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.ca/data";
 const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.ca/resources/data/eventTracks.json";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
+const string CDataHandler::TrackSource = "https://vnaaats-net.ganderoceanic.ca/api/GetTrackSource";
 const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataSingleGet?callsign=";
 const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataNewPost?code=" + ApiKeys::FUNC_KEY;
 const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataUpdate?code=" + ApiKeys::FUNC_KEY;
@@ -25,7 +26,7 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	string responseString;
 	try {
 		// Convert URL to LPCSTR type
-		LPCSTR lpcURL = TrackURL.c_str();
+		LPCSTR lpcURL = GetTrackSource(plugin) == 0 ? TrackURL.c_str() : EventTrackUrl.c_str();
 
 		// Delete cache data
 		DeleteUrlCacheEntry(lpcURL);
@@ -115,6 +116,48 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse NAT track JSON return: " + string(e.what())).c_str(), true, true, true, true, true);
 		// Clogger
 		CLogger::Log(CLogType::EXC, "Failed to parse NAT track JSON return: " + string(e.what()), "CDataHandler::PopulateLatestTrackData");
+		return 1;
+	}
+}
+
+int CDataHandler::GetTrackSource(CPlugIn* plugin) {
+	// Try and get data and pass into string
+	string responseString;
+	try {
+		// Convert URL to LPCSTR type
+		LPCSTR lpcURL = TrackSource.c_str();
+
+		// Delete cache data
+		DeleteUrlCacheEntry(lpcURL);
+
+		// Download data
+		CComPtr<IStream> pStream;
+		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+		// If failed
+		if (FAILED(hr)) {
+			int code = (int)hr;
+			// Show user message
+			plugin->DisplayUserMessage("vNAAATS", "Error", "Track source retrieval failed. Code: " + code, true, true, true, true, true);
+			// Clogger
+			CLogger::Log(CLogType::ERR, "Could not connect to the vNAAATS network. Code: " + code, "CDataHandler::GetTrackSource");
+			return 1;
+		}
+		// Put data into buffer
+		char tempBuffer[16384];
+		DWORD bytesRead = 0;
+		hr = pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
+		// Put data into string
+		for (int i = 0; i < bytesRead; i++) {
+			responseString += tempBuffer[i];
+		}
+
+		return stoi(responseString);
+	}
+	catch (exception & e) {
+		// Log to ES
+		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to load track source data: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Clogger
+		CLogger::Log(CLogType::EXC, "Failed to load track source: " + string(string(e.what())), "CDataHandler::GetTrackSource");
 		return 1;
 	}
 }

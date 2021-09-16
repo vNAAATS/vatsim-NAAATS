@@ -734,19 +734,6 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 	}	
 
-	// Let's check if filtering disabled
-	if (filtersDisabled) { // ALL btn is pressed
-		// If not ever going to enter, or greater than 90 min out
-		if (entryMinutes < 0)
-			valid = false;
-		if (entryMinutes > 90) {
-			valid = false;
-		}
-		else {
-			valid = true;
-		}
-	}
-
 	/// However we should keep them on the screen if they aren't long out of the airspace
 	CAircraftFlightPlan* acFp = CDataHandler::GetFlightData(target->GetCallsign());
 	if (acFp->IsValid) {
@@ -777,6 +764,19 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 	// Lastly let's check if they are assumed
 	if (fp.GetTrackingControllerIsMe()) {
 		valid = true;
+	}
+
+	// Let's check if filtering disabled
+	if (filtersDisabled) { // ALL btn is pressed
+		// If not ever going to enter, or greater than 90 min out
+		if (entryMinutes < 0)
+			valid = false;
+		if (entryMinutes > 90) {
+			valid = false;
+		}
+		else {
+			valid = true;
+		}
 	}
 
 	return valid;

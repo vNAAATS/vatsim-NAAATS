@@ -99,7 +99,7 @@ void CRadarDisplay::PopulateProgramData() {
 
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
-
+	
 	// Start cursor update loop
 	appCursor->screen = this;
 	_beginthread(CursorStateUpdater, 0, (void*) appCursor);
@@ -173,7 +173,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		while(idx != aircraftOnScreen.end()) {
 			// Check if valid
 			CRadarTarget target = GetPlugIn()->RadarTargetSelect(idx->first.c_str());
-			if (!target.IsValid()) { // If not valid
+			bool isValid = CUtils::IsAircraftRelevant(this, &target, menuBar->IsButtonPressed(CMenuBar::BTN_ALL));
+			if (!target.IsValid() || !isValid) { // If not valid
 				// Erase aircraft selections if they are an asel
 				if (idx->first == aircraftSel1 || idx->first == aircraftSel2) { // We need to annul the selection and disable tool if activated
 					aircraftSel1 = "";
@@ -1373,11 +1374,34 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 			// Get the position and monitor in which the point lies
 			GetCursorPos(&cursor->position);
 
-			// Keep the coordinates down to one screen's worth
-			if (cursor->position.x > 3840) // Window is on 3rd screen
-				cursor->position.x -= 3840;
-			else if (cursor->position.x > 1920) // Window is on 2nd screen
-				cursor->position.x -= 1920;
+			// Monitor information for proper positioning
+			MONITORINFO monitorInfo;
+			monitorInfo.cbSize = sizeof(MONITORINFO);
+
+			// Get the monitor
+			HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
+			GetMonitorInfo(monitor, &monitorInfo);
+
+			// Get the monitor resolution
+			int monResX = abs(monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left);
+			int monResY = abs(monitorInfo.rcMonitor.top - monitorInfo.rcMonitor.bottom);
+
+			// Get the relative cursor position
+			if (cursor->position.x > monResX) { // greater than (x)
+				cursor->position.x = cursor->position.x % monResX;
+			}
+			if (cursor->position.y > monResY) { // greater than (y)
+				cursor->position.y = cursor->position.y % monResY;
+			}
+			if (cursor->position.x < 0) { // less than (x)
+				cursor->position.x = monResX - (abs(cursor->position.x) % monResX);
+			}
+			if (cursor->position.y < 0) { // less than (y)
+				cursor->position.y = monResY - (abs(cursor->position.y) % monResY);
+			}
+
+			CLogger::DebugLog(cursor->screen,  to_string(cursor->position.x) + " " + to_string(cursor->position.y));
+			CLogger::DebugLog(cursor->screen, to_string(monResX) + " " + to_string(monResY));
 
 			// Get button presses
 			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;

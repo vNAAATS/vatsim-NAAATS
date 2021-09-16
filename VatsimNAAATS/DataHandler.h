@@ -13,7 +13,6 @@ using namespace EuroScopePlugIn;
 class CDataHandler
 {
 	public:
-
 	// Download nat track data
 	static int PopulateLatestTrackData(CPlugIn* plugin);
 
@@ -47,12 +46,16 @@ class CDataHandler
 	static void UpdateNetworkAircraft(void* args);
 	
 	private:
+		// Methods
+		static int GetTrackSource(CPlugIn* plugin); // Event tracks or not
+
 		// NAT Track URL
 		static const string TrackURL;
 		static const string EventTrackUrl;
 		static map<string, CAircraftFlightPlan> flights;
 
 		// vNAAATS API Links
+		static const string TrackSource;
 		static const string GetSingleAircraft;
 		static const string FlightDataUpdate;
 		static const string PostSingleAircraft;
