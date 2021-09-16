@@ -1400,9 +1400,6 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 				cursor->position.y = monResY - (abs(cursor->position.y) % monResY);
 			}
 
-			CLogger::DebugLog(cursor->screen,  to_string(cursor->position.x) + " " + to_string(cursor->position.y));
-			CLogger::DebugLog(cursor->screen, to_string(monResX) + " " + to_string(monResY));
-
 			// Get button presses
 			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
 			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
