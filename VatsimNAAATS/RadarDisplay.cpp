@@ -712,20 +712,6 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 				netFP->Route = ""; // Initialise
 				netFP->RouteEtas = ""; // Initialise
 
-				// Get routes and estimates
-				vector<CRoutePosition> rte;
-				CRoutesHelper::GetRoute(this, &rte, fp->Callsign);
-				for (int i = 0; i < rte.size(); i++) {
-					if (i != rte.size() - 1) {
-						netFP->Route += rte[i].Fix + " ";
-						netFP->RouteEtas += rte[i].Estimate + " ";
-					}
-					else {
-						netFP->Route += rte[i].Fix;
-						netFP->RouteEtas += rte[i].Estimate;
-					}
-				}
-
 				// Post data to the database
 				DWORD activeCode;
 				HANDLE hnd = CUtils::GetESProcess();
@@ -806,6 +792,20 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 			netFP->TrackedById = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
 			netFP->Route = ""; // Initialise
 			netFP->RouteEtas = ""; // Initialise
+
+			// Get routes and estimates
+			vector<CRoutePosition> rte;
+			CRoutesHelper::GetRoute(this, &rte, primedPlan->Callsign);
+			for (int i = 0; i < rte.size(); i++) {
+				if (i != rte.size() - 1) {
+					netFP->Route += rte[i].Fix + " ";
+					netFP->RouteEtas += rte[i].Estimate + " ";
+				}
+				else {
+					netFP->Route += rte[i].Fix;
+					netFP->RouteEtas += rte[i].Estimate;
+				}
+			}
 
 			// Post data to the database
 			DWORD activeCode;

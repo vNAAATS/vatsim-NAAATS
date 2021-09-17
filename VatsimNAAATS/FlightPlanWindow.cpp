@@ -2614,7 +2614,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					netFP->IsEquipped = primedPlan->IsEquipped;
 					netFP->State = primedPlan->State;
 					netFP->Etd = primedPlan->Etd;
-					if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).IsValid() || screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorEntryMinutes() != -1) {
+					if (primedPlan->IsRelevant || (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
 						netFP->Relevant = false;
 					}
 					else {
@@ -2663,7 +2663,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					netFP->IsEquipped = copiedPlan.IsEquipped;
 					netFP->State = copiedPlan.State;
 					netFP->Etd = copiedPlan.Etd;
-					if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).IsValid() || screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorEntryMinutes() != -1) {
+					if (primedPlan->IsRelevant || (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
 						netFP->Relevant = true;
 					}
 					else {
