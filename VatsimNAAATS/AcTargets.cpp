@@ -480,7 +480,7 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		}
 
 		// Pick text colour
-		COLORREF textColour = TargetBlue.ToCOLORREF(); // Default colour
+		COLORREF textColour = TargetBlue.ToCOLORREF();; // Default colour
 		if (status->ConflictStatus == CConflictStatus::CRITICAL) {
 			// Critical conflict status, so flash callsign white and red
 			if (twoSecT >= 1.1) {
@@ -522,23 +522,16 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		dc->SetTextAlign(TA_LEFT);
 		string text;
 
+		
 		// Offsets
 		int offsetX = 0;
 		int offsetY = 0;
 
 		// Callsign handoff initiated
-		if (acFP.GetTrackingControllerIsMe() && acFP.GetHandoffTargetControllerCallsign() != "")
-			dc->SetTextColor(TextWhite.ToCOLORREF());
-
-		// Check jurisdiction
-		if (!acFP.GetTrackingControllerIsMe()) {
-			textColour = TargetBlue.ToCOLORREF();
+		if (string(acFP.GetHandoffTargetControllerCallsign()).length() != 0) {
+			if (acFP.GetTrackingControllerIsMe())				
+				dc->SetTextColor(TextWhite.ToCOLORREF());
 		}
-		else {
-			textColour = TargetOrange.ToCOLORREF();
-		}
-
-		dc->SetTextColor(textColour);
 
 		// Callsign
 		text = acFP.GetCallsign();

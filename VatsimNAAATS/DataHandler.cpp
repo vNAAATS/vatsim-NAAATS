@@ -223,6 +223,7 @@ int CDataHandler::CreateFlightData(CRadarScreen* screen, string callsign) {
 		fp.DLStatus = "false"; // TEMPORARY
 		fp.Sector = string(fpData.GetTrackingControllerId()) == "" ? "-1" : fpData.GetTrackingControllerId();
 		fp.CurrentMessage = nullptr;
+		fp.IsRelevant = fp.ExitTime != -1 ? true : false;
 		fp.IsEquipped = CUtils::IsAircraftEquipped(fpData.GetFlightPlanData().GetRemarks(), fpData.GetFlightPlanData().GetAircraftInfo(), fpData.GetFlightPlanData().GetCapibilities());
 		fp.TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
 
@@ -424,6 +425,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 				fp->Etd = netFP.Etd;
 				fp->State = netFP.State;
 				fp->IsEquipped = netFP.IsEquipped;
+				fp->IsRelevant = netFP.Relevant;
 				fp->DLStatus = to_string(netFP.DatalinkConnected);
 				fp->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetRadarFlags());
 

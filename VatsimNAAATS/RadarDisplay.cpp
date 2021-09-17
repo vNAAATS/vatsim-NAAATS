@@ -580,7 +580,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// RBL draw
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_RBL)) {
 			if (aircraftSel1 != "" && aircraftSel2 != "") {
-CConflictDetection::RBLTool(&dc, &g, this, aircraftSel1, aircraftSel2);
+				CConflictDetection::RBLTool(&dc, &g, this, aircraftSel1, aircraftSel2);
 			}
 		}
 
@@ -700,11 +700,11 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 				netFP->IsEquipped = fp->IsEquipped;
 				netFP->State = fp->State;
 				netFP->Etd = fp->Etd;
-				if (GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).IsValid() || GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetSectorEntryMinutes() != -1) {
-					netFP->Relevant = false;
+				if (fp->IsRelevant || (GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
+					netFP->Relevant = true;
 				}
 				else {
-					netFP->Relevant = true;
+					netFP->Relevant = false;
 				}
 				netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(fp->Callsign.c_str()).GetPosition().GetRadarFlags());
 				netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerCallsign();
@@ -727,13 +727,19 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 				}
 
 				// Post data to the database
-				if (netFP->Relevant != fp->IsRelevant) {
-					fp->IsRelevant = netFP->Relevant;
-					CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
-					newData->Screen = this;
-					newData->Callsign = fp->Callsign;
-					newData->FP = netFP;
-					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
+				DWORD activeCode;
+				HANDLE hnd = CUtils::GetESProcess();
+				GetExitCodeProcess(hnd, &activeCode);
+				// Check if the app is still active
+				if (activeCode == STILL_ACTIVE && GetPlugIn()->ControllerMyself().IsValid()) {
+					if (netFP->Relevant != fp->IsRelevant) {
+						fp->IsRelevant = netFP->Relevant;
+						CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
+						newData->Screen = this;
+						newData->Callsign = fp->Callsign;
+						newData->FP = netFP;
+						_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
+					}
 				}
 
 				// Reset the clock
@@ -789,33 +795,33 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 			netFP->IsEquipped = primedPlan->IsEquipped;
 			netFP->State = primedPlan->State;
 			netFP->Etd = primedPlan->Etd;
-			netFP->Relevant = false;
+			if (primedPlan->IsRelevant || (GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
+				netFP->Relevant = true;
+			}
+			else {
+				netFP->Relevant = false;
+			}
 			netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
 			netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 			netFP->TrackedById = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
 			netFP->Route = ""; // Initialise
 			netFP->RouteEtas = ""; // Initialise
 
-			// Get routes and estimates
-			vector<CRoutePosition> rte;
-			CRoutesHelper::GetRoute(this, &rte, primedPlan->Callsign);
-			for (int i = 0; i < rte.size(); i++) {
-				if (i != rte.size() - 1) {
-					netFP->Route += rte[i].Fix + " ";
-					netFP->RouteEtas += rte[i].Estimate + " ";
-				}
-				else {
-					netFP->Route += rte[i].Fix;
-					netFP->RouteEtas += rte[i].Estimate;
+			// Post data to the database
+			DWORD activeCode;
+			HANDLE hnd = CUtils::GetESProcess();
+			GetExitCodeProcess(hnd, &activeCode);
+			// Check if the app is still active
+			if (activeCode == STILL_ACTIVE && GetPlugIn()->ControllerMyself().IsValid()) {
+				if (netFP->Relevant != primedPlan->IsRelevant) {
+					primedPlan->IsRelevant = netFP->Relevant;
+					CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
+					newData->Screen = this;
+					newData->Callsign = primedPlan->Callsign;
+					newData->FP = netFP;
+					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
 				}
 			}
-
-			// Post data to the database
-			CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
-			data->Screen = this;
-			data->Callsign = primedPlan->Callsign;
-			data->FP = netFP;
-			_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
 		}
 	}
 }
@@ -1354,6 +1360,10 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 	clock_t hundredmsTimer = clock();
 	clock_t refreshTimer = clock();
 
+	// Monitor information for proper positioning
+	MONITORINFO monitorInfo;
+	monitorInfo.cbSize = sizeof(MONITORINFO);
+
 	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
 	DWORD activeCode;
 	while (!cursor->isESClosed) {
@@ -1373,10 +1383,6 @@ void CRadarDisplay::CursorStateUpdater(void* args) {
 
 			// Get the position and monitor in which the point lies
 			GetCursorPos(&cursor->position);
-
-			// Monitor information for proper positioning
-			MONITORINFO monitorInfo;
-			monitorInfo.cbSize = sizeof(MONITORINFO);
 
 			// Get the monitor
 			HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
