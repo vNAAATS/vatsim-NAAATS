@@ -700,12 +700,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 				netFP->IsEquipped = fp->IsEquipped;
 				netFP->State = fp->State;
 				netFP->Etd = fp->Etd;
-				if (fp->IsRelevant || (GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
-					netFP->Relevant = true;
-				}
-				else {
-					netFP->Relevant = false;
-				}
+				netFP->Relevant = true;
 				netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(fp->Callsign.c_str()).GetPosition().GetRadarFlags());
 				netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerCallsign();
 				netFP->TrackedById = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerId();
@@ -781,12 +776,7 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 			netFP->IsEquipped = primedPlan->IsEquipped;
 			netFP->State = primedPlan->State;
 			netFP->Etd = primedPlan->Etd;
-			if (primedPlan->IsRelevant || (GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
-				netFP->Relevant = true;
-			}
-			else {
-				netFP->Relevant = false;
-			}
+			netFP->Relevant = true;
 			netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
 			netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 			netFP->TrackedById = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();

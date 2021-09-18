@@ -2663,12 +2663,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					netFP->IsEquipped = copiedPlan.IsEquipped;
 					netFP->State = copiedPlan.State;
 					netFP->Etd = copiedPlan.Etd;
-					if (primedPlan->IsRelevant || (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
-						netFP->Relevant = true;
-					}
-					else {
-						netFP->Relevant = false;
-					}
+					netFP->Relevant = true;
 					netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetRadarFlags());
 					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerCallsign();
 					netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerId();
@@ -2732,12 +2727,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 						netFP->IsEquipped = primedPlan->IsEquipped;
 						netFP->State = primedPlan->State;
 						netFP->Etd = primedPlan->Etd;
-						if (primedPlan->IsRelevant || (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
-							netFP->Relevant = true;
-						}
-						else {
-							netFP->Relevant = false;
-						}
+						netFP->Relevant = true;
 						netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
 						netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 						netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
@@ -2794,12 +2784,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					netFP->IsEquipped = primedPlan->IsEquipped;
 					netFP->State = primedPlan->State;
 					netFP->Etd = primedPlan->Etd;
-					if (primedPlan->IsRelevant || (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
-						netFP->Relevant = true;
-					}
-					else {
-						netFP->Relevant = false;
-					}
+					netFP->Relevant = true;
 					netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
 					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 					netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
@@ -2850,12 +2835,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				netFP->IsEquipped = primedPlan->IsEquipped;
 				netFP->State = primedPlan->State;
 				netFP->Etd = primedPlan->Etd;
-				if (primedPlan->ExitTime != -1) {
-					netFP->Relevant = true;
-				}
-				else {
-					netFP->Relevant = false;
-				}
+				netFP->Relevant = true;
 				netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
 				netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 				netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
