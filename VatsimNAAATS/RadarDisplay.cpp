@@ -673,54 +673,64 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 			fp->SELCAL = selcal != "" ? selcal : "N/A";
 
 			// Download the vNAAATS network data on the plane
-			CLogger::Log(CLogType::NORM, "Polling vNAAATS network to update " + string(RadarTarget.GetCallsign()), "CRadarDisplay::OnRadarTargetPositionUpdate");
-			CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
-			data->Screen = this;
-			data->Callsign = fp->Callsign;
-			if (!fp->IsFirstUpdate) fp->IsFirstUpdate = true;
-			_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
+			try {
+				CLogger::Log(CLogType::NORM, "Polling vNAAATS network to update " + string(RadarTarget.GetCallsign()), "CRadarDisplay::OnRadarTargetPositionUpdate");
+				CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+				data->Screen = this;
+				data->Callsign = fp->Callsign;
+				if (!fp->IsFirstUpdate) fp->IsFirstUpdate = true;
+				_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
+			}
+			catch (std::exception & ex) {
+				CLogger::DebugLog(this, "An exception occurred. " + *ex.what());
+			}			
 
 			// Timer
 			double thirtySecT = (double)(clock() - thirtySecondTimer) / ((double)CLOCKS_PER_SEC);
 
 			// Update if aircraft is cleared
 			if (fp->IsCleared && fpData.GetTrackingControllerIsMe() && thirtySecT >= 30.0) {
-				// Set irrelevant			
-				CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
-				netFP->Callsign = fp->Callsign;
-				netFP->Type = fp->Type;
-				netFP->AssignedLevel = stoi(fp->FlightLevel);
-				netFP->AssignedMach = stoi(fp->Mach);
-				netFP->Track = fp->Track;
-				netFP->Departure = fp->Depart;
-				netFP->Arrival = fp->Dest;
-				netFP->Direction = CUtils::GetAircraftDirection(GetPlugIn()->RadarTargetSelect(fp->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
-				netFP->Selcal = fp->SELCAL == "N/A" ? "" : fp->SELCAL;
-				netFP->DatalinkConnected = fp->DLStatus == "true" ? true : false;
-				netFP->IsEquipped = fp->IsEquipped;
-				netFP->State = fp->State;
-				netFP->Etd = fp->Etd;
-				netFP->Relevant = true;
-				netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(fp->Callsign.c_str()).GetPosition().GetRadarFlags());
-				netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerCallsign();
-				netFP->TrackedById = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerId();
-				netFP->Route = ""; // Initialise
-				netFP->RouteEtas = ""; // Initialise
+				try {
+					// Set irrelevant			
+					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+					netFP->Callsign = fp->Callsign;
+					netFP->Type = fp->Type;
+					netFP->AssignedLevel = stoi(fp->FlightLevel);
+					netFP->AssignedMach = stoi(fp->Mach);
+					netFP->Track = fp->Track;
+					netFP->Departure = fp->Depart;
+					netFP->Arrival = fp->Dest;
+					netFP->Direction = CUtils::GetAircraftDirection(GetPlugIn()->RadarTargetSelect(fp->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+					netFP->Selcal = fp->SELCAL == "N/A" ? "" : fp->SELCAL;
+					netFP->DatalinkConnected = fp->DLStatus == "true" ? true : false;
+					netFP->IsEquipped = fp->IsEquipped;
+					netFP->State = fp->State;
+					netFP->Etd = fp->Etd;
+					netFP->Relevant = true;
+					netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(fp->Callsign.c_str()).GetPosition().GetRadarFlags());
+					netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerCallsign();
+					netFP->TrackedById = GetPlugIn()->FlightPlanSelect(fp->Callsign.c_str()).GetTrackingControllerId();
+					netFP->Route = ""; // Initialise
+					netFP->RouteEtas = ""; // Initialise
 
-				// Post data to the database
-				DWORD activeCode;
-				HANDLE hnd = CUtils::GetESProcess();
-				GetExitCodeProcess(hnd, &activeCode);
-				// Check if the app is still active
-				if (activeCode == STILL_ACTIVE && GetPlugIn()->ControllerMyself().IsValid()) {
-					if (netFP->Relevant != fp->IsRelevant) {
-						fp->IsRelevant = netFP->Relevant;
-						CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
-						newData->Screen = this;
-						newData->Callsign = fp->Callsign;
-						newData->FP = netFP;
-						_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
+					// Post data to the database
+					DWORD activeCode;
+					HANDLE hnd = CUtils::GetESProcess();
+					GetExitCodeProcess(hnd, &activeCode);
+					// Check if the app is still active
+					if (activeCode == STILL_ACTIVE && GetPlugIn()->ControllerMyself().IsValid()) {
+						if (netFP->Relevant != fp->IsRelevant) {
+							fp->IsRelevant = netFP->Relevant;
+							CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
+							newData->Screen = this;
+							newData->Callsign = fp->Callsign;
+							newData->FP = netFP;
+							_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
+						}
 					}
+				}
+				catch (std::exception & ex) {
+					CLogger::DebugLog(this, "An exception occurred. " + *ex.what());
 				}
 
 				// Reset the clock
@@ -760,58 +770,63 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 		// Set any vNAAATS network aircraft to irrelevant
 		// Create network object
 		
-		CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(FlightPlan.GetCallsign());
-		if (primedPlan->IsValid && primedPlan->IsCleared) {
-			CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
-			netFP->Callsign = primedPlan->Callsign;
-			netFP->Type = primedPlan->Type;
-			netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
-			netFP->AssignedMach = stoi(primedPlan->Mach);
-			netFP->Track = primedPlan->Track;
-			netFP->Departure = primedPlan->Depart;
-			netFP->Arrival = primedPlan->Dest;
-			netFP->Direction = CUtils::GetAircraftDirection(GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
-			netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
-			netFP->DatalinkConnected = primedPlan->DLStatus == "true" ? true : false;
-			netFP->IsEquipped = primedPlan->IsEquipped;
-			netFP->State = primedPlan->State;
-			netFP->Etd = primedPlan->Etd;
-			netFP->Relevant = true;
-			netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
-			netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
-			netFP->TrackedById = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
-			netFP->Route = ""; // Initialise
-			netFP->RouteEtas = ""; // Initialise
+		try {
+			CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(FlightPlan.GetCallsign());
+			if (primedPlan->IsValid && primedPlan->IsCleared) {
+				CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+				netFP->Callsign = primedPlan->Callsign;
+				netFP->Type = primedPlan->Type;
+				netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+				netFP->AssignedMach = stoi(primedPlan->Mach);
+				netFP->Track = primedPlan->Track;
+				netFP->Departure = primedPlan->Depart;
+				netFP->Arrival = primedPlan->Dest;
+				netFP->Direction = CUtils::GetAircraftDirection(GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+				netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
+				netFP->DatalinkConnected = primedPlan->DLStatus == "true" ? true : false;
+				netFP->IsEquipped = primedPlan->IsEquipped;
+				netFP->State = primedPlan->State;
+				netFP->Etd = primedPlan->Etd;
+				netFP->Relevant = true;
+				netFP->TargetMode = CUtils::GetTargetMode(GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
+				netFP->TrackedBy = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+				netFP->TrackedById = GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
+				netFP->Route = ""; // Initialise
+				netFP->RouteEtas = ""; // Initialise
 
-			// Get routes and estimates
-			vector<CRoutePosition> rte;
-			CRoutesHelper::GetRoute(this, &rte, primedPlan->Callsign);
-			for (int i = 0; i < rte.size(); i++) {
-				if (i != rte.size() - 1) {
-					netFP->Route += rte[i].Fix + " ";
-					netFP->RouteEtas += rte[i].Estimate + " ";
+				// Get routes and estimates
+				vector<CRoutePosition> rte;
+				CRoutesHelper::GetRoute(this, &rte, primedPlan->Callsign);
+				for (int i = 0; i < rte.size(); i++) {
+					if (i != rte.size() - 1) {
+						netFP->Route += rte[i].Fix + " ";
+						netFP->RouteEtas += rte[i].Estimate + " ";
+					}
+					else {
+						netFP->Route += rte[i].Fix;
+						netFP->RouteEtas += rte[i].Estimate;
+					}
 				}
-				else {
-					netFP->Route += rte[i].Fix;
-					netFP->RouteEtas += rte[i].Estimate;
+
+				// Post data to the database
+				DWORD activeCode;
+				HANDLE hnd = CUtils::GetESProcess();
+				GetExitCodeProcess(hnd, &activeCode);
+				// Check if the app is still active
+				if (activeCode == STILL_ACTIVE && GetPlugIn()->ControllerMyself().IsValid()) {
+					if (netFP->Relevant != primedPlan->IsRelevant) {
+						primedPlan->IsRelevant = netFP->Relevant;
+						CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
+						newData->Screen = this;
+						newData->Callsign = primedPlan->Callsign;
+						newData->FP = netFP;
+						_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
+					}
 				}
 			}
-
-			// Post data to the database
-			DWORD activeCode;
-			HANDLE hnd = CUtils::GetESProcess();
-			GetExitCodeProcess(hnd, &activeCode);
-			// Check if the app is still active
-			if (activeCode == STILL_ACTIVE && GetPlugIn()->ControllerMyself().IsValid()) {
-				if (netFP->Relevant != primedPlan->IsRelevant) {
-					primedPlan->IsRelevant = netFP->Relevant;
-					CUtils::CNetworkAsyncData* newData = new CUtils::CNetworkAsyncData();
-					newData->Screen = this;
-					newData->Callsign = primedPlan->Callsign;
-					newData->FP = netFP;
-					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)newData); // Async
-				}
-			}
+		}
+		catch (std::exception & ex) {
+			CLogger::DebugLog(this, "An exception occurred. " + *ex.what());
 		}
 	}
 }

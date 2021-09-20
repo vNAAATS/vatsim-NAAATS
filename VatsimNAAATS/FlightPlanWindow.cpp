@@ -4,8 +4,12 @@
 #include "Styles.h"
 #include "Utils.h"
 #include "MessageWindow.h"
+#include <iostream>
+#include <fstream>
+#include <json.hpp>
 
 using namespace Colours;
+using json = nlohmann::json;
 
 CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	// Make buttons
@@ -322,7 +326,7 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	CRect dataPanel;
 	if (IsData) {
 		dataPanel = RenderDataPanel(dc, g, screen, { windowRect.left, infoBarRect.bottom }, false);
-		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared && primedPlan->State == "") {
+		if (windowButtons[BTN_COPY].State == CInputState::DISABLED && !IsCopyMade && primedPlan->IsCleared) {
 			if (primedPlan->CurrentMessage != nullptr) {
 				if (primedPlan->CurrentMessage->Type != CMessageType::CLEARANCE_REQ) {
 					windowButtons[BTN_COPY].State = CInputState::INACTIVE;
@@ -332,6 +336,14 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 				windowButtons[BTN_COPY].State = CInputState::INACTIVE;
 			}
 		}
+	}
+
+	// Disable probe if mach and FL not inputted
+	if (primedPlan->Mach == "" || primedPlan->FlightLevel == "") {
+		windowButtons[BTN_PROBE].State = CInputState::DISABLED;
+	}
+	else if (IsCopyMade || !primedPlan->IsCleared) {
+		windowButtons[BTN_PROBE].State = CInputState::INACTIVE;
 	}
 
 	/*if (!IsData)
@@ -2241,10 +2253,10 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 
 		int status;
 		if (id == TXT_TCK_CPY) {
-			status = CRoutesHelper::ParseRoute(copiedPlan.Callsign, content, true, &copiedPlan);
+			status = CRoutesHelper::ParseRoute(screen, copiedPlan.Callsign, content, true, &copiedPlan);
 		}
 		else {
-			status = CRoutesHelper::ParseRoute(primedPlan->Callsign, content, true);
+			status = CRoutesHelper::ParseRoute(screen, primedPlan->Callsign, content, true);
 		}
 		if (status == 1) { // Validation failed
 			textInputs.find(id)->second.Error = true;
@@ -2288,10 +2300,10 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		// Parse the route
 		int status;
 		if (id == TXT_CPY_RTE) {
-			status = CRoutesHelper::ParseRoute(copiedPlan.Callsign, content, false, &copiedPlan);
+			status = CRoutesHelper::ParseRoute(screen, copiedPlan.Callsign, content, false, &copiedPlan);
 		}
 		else {
-			status = CRoutesHelper::ParseRoute(primedPlan->Callsign, content);
+			status = CRoutesHelper::ParseRoute(screen, primedPlan->Callsign, content);
 		}
 
 		if (status == 1) { // Validation failed
@@ -2599,104 +2611,111 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					textInputs[TXT_TCK].State = CInputState::DISABLED;
 					textInputs[TXT_RTE].State = CInputState::DISABLED;
 
-					// Create network object
-					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
-					netFP->Callsign = primedPlan->Callsign;
-					netFP->Type = primedPlan->Type;
-					netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
-					netFP->AssignedMach = stoi(primedPlan->Mach);
-					netFP->Track = primedPlan->Track;
-					netFP->Departure = primedPlan->Depart;
-					netFP->Arrival = primedPlan->Dest;
-					netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
-					netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
-					netFP->DatalinkConnected = false; // we can't tell from here so default
-					netFP->IsEquipped = primedPlan->IsEquipped;
-					netFP->State = primedPlan->State;
-					netFP->Etd = primedPlan->Etd;
-					if (primedPlan->IsRelevant || (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetSectorExitMinutes() != -1)) {
-						netFP->Relevant = false;
-					}
-					else {
+					try {
+						// Create network object
+						CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+						netFP->Callsign = primedPlan->Callsign;
+						netFP->Type = primedPlan->Type;
+						netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+						netFP->AssignedMach = stoi(primedPlan->Mach);
+						netFP->Track = primedPlan->Track;
+						netFP->Departure = primedPlan->Depart;
+						netFP->Arrival = primedPlan->Dest;
+						netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+						netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
+						netFP->DatalinkConnected = false; // we can't tell from here so default
+						netFP->IsEquipped = primedPlan->IsEquipped;
+						netFP->State = primedPlan->State;
+						netFP->Etd = primedPlan->Etd;
 						netFP->Relevant = true;
-					}
-					netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
-					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
-					netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
-					netFP->Route = ""; // Initialise
-					netFP->RouteEtas = ""; // Initialise
-					
-					// Get routes and estimates
-					vector<CRoutePosition> rte;
-					CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
-					for (int i = 0; i < rte.size(); i++) {
-						if (i != rte.size() - 1) {
-							netFP->Route += rte[i].Fix + " ";
-							netFP->RouteEtas += rte[i].Estimate + " ";
-						}
-						else {
-							netFP->Route += rte[i].Fix;
-							netFP->RouteEtas += rte[i].Estimate;
-						}							
-					}
+						netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
+						netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+						netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
+						netFP->Route = ""; // Initialise
+						netFP->RouteEtas = ""; // Initialise
 
-					// Post data to the database
-					CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
-					data->Screen = screen;
-					data->Callsign = primedPlan->Callsign;
-					data->FP = netFP;
-					_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
-				}
-				else { // Delete this duplicate code nonsense
-					// Create network object
-					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
-					netFP->Callsign = copiedPlan.Callsign;
-					netFP->Type = copiedPlan.Type;
-					netFP->AssignedLevel = stoi(copiedPlan.FlightLevel);
-					netFP->AssignedMach = stoi(copiedPlan.Mach);
-					netFP->Track = copiedPlan.Track;
-					netFP->Departure = copiedPlan.Depart;
-					netFP->Arrival = copiedPlan.Dest;
-					netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
-					netFP->Selcal = copiedPlan.SELCAL == "N/A" ? "" : copiedPlan.SELCAL;
-					netFP->DatalinkConnected = false; // we can't tell from here so default
-					netFP->IsEquipped = copiedPlan.IsEquipped;
-					netFP->State = copiedPlan.State;
-					netFP->Etd = copiedPlan.Etd;
-					netFP->Relevant = true;
-					netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetRadarFlags());
-					netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerCallsign();
-					netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerId();
-					netFP->Route = ""; // Initialise
-					netFP->RouteEtas = ""; // Initialise
-
-					// Get routes and estimates
-					vector<CRoutePosition> rte;
-					copiedPlan.IsValid = true;
-					CRoutesHelper::GetRoute(screen, &rte, copiedPlan.Callsign, &copiedPlan);
-					for (int i = 0; i < rte.size(); i++) {
-						if (i != rte.size() - 1) {
-							netFP->Route += rte[i].Fix + " ";
-							netFP->RouteEtas += rte[i].Estimate + " ";
+						// Get routes and estimates
+						vector<CRoutePosition> rte;
+						CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
+						for (int i = 0; i < rte.size(); i++) {
+							if (i != rte.size() - 1) {
+								netFP->Route += rte[i].Fix + " ";
+								netFP->RouteEtas += rte[i].Estimate + " ";
+							}
+							else {
+								netFP->Route += rte[i].Fix;
+								netFP->RouteEtas += rte[i].Estimate;
+							}
 						}
-						else {
-							netFP->Route += rte[i].Fix;
-							netFP->RouteEtas += rte[i].Estimate;
-						}
-					}
 
-					// Post data to the database
-					DWORD activeCode;
-					HANDLE hnd = CUtils::GetESProcess();
-					GetExitCodeProcess(hnd, &activeCode);
-					// Check if the app is still active
-					if (activeCode == STILL_ACTIVE) {
+						// Post data to the database
 						CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
 						data->Screen = screen;
 						data->Callsign = primedPlan->Callsign;
 						data->FP = netFP;
-						_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
+						_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
 					}
+					catch (std::exception & ex) {
+						CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+						
+					}					
+				}
+				else { // Delete this duplicate code nonsense
+					// Create network object
+					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+					try {						
+						netFP->Callsign = copiedPlan.Callsign;
+						netFP->Type = copiedPlan.Type;
+						netFP->AssignedLevel = stoi(copiedPlan.FlightLevel);
+						netFP->AssignedMach = stoi(copiedPlan.Mach);
+						netFP->Track = copiedPlan.Track;
+						netFP->Departure = copiedPlan.Depart;
+						netFP->Arrival = copiedPlan.Dest;
+						netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+						netFP->Selcal = copiedPlan.SELCAL == "N/A" ? "" : copiedPlan.SELCAL;
+						netFP->DatalinkConnected = false; // we can't tell from here so default
+						netFP->IsEquipped = copiedPlan.IsEquipped;
+						netFP->State = copiedPlan.State;
+						netFP->Etd = copiedPlan.Etd;
+						netFP->Relevant = true;
+						netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(copiedPlan.Callsign.c_str()).GetPosition().GetRadarFlags());
+						netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerCallsign();
+						netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(copiedPlan.Callsign.c_str()).GetTrackingControllerId();
+						netFP->Route = ""; // Initialise
+						netFP->RouteEtas = ""; // Initialise
+
+						// Get routes and estimates
+						vector<CRoutePosition> rte;
+						copiedPlan.IsValid = true;
+						CRoutesHelper::GetRoute(screen, &rte, copiedPlan.Callsign, &copiedPlan);
+						for (int i = 0; i < rte.size(); i++) {
+							if (i != rte.size() - 1) {
+								netFP->Route += rte[i].Fix + " ";
+								netFP->RouteEtas += rte[i].Estimate + " ";
+							}
+							else {
+								netFP->Route += rte[i].Fix;
+								netFP->RouteEtas += rte[i].Estimate;
+							}
+						}
+
+						// Post data to the database
+						DWORD activeCode;
+						HANDLE hnd = CUtils::GetESProcess();
+						GetExitCodeProcess(hnd, &activeCode);
+						// Check if the app is still active
+						if (activeCode == STILL_ACTIVE) {
+							CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+							data->Screen = screen;
+							data->Callsign = primedPlan->Callsign;
+							data->FP = netFP;
+							_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
+						}
+					}
+					catch (std::exception & ex) {
+						CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+						CLogger::Log(CLogType::ERR, "An error occurred whilst trying to update network data. Callsign: " + netFP->Callsign, "");
+					}					
 				}
 			}
 		}
@@ -2708,11 +2727,74 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
 				textInputs[TXT_XCHANGE_CURRENT].Content = "UNTRACKED";
 				if (!primedPlan->IsCleared) {
-					IsData = false;
-					SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
+					// do nothing
 				} else 
 				{
 					if (primedPlan->IsValid) {
+						CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+						try {							
+							netFP->Callsign = primedPlan->Callsign;
+							netFP->Type = primedPlan->Type;
+							netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+							netFP->AssignedMach = stoi(primedPlan->Mach);
+							netFP->Track = primedPlan->Track;
+							netFP->Departure = primedPlan->Depart;
+							netFP->Arrival = primedPlan->Dest;
+							netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+							netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
+							netFP->DatalinkConnected = primedPlan->DLStatus == "true" ? true : false;
+							netFP->IsEquipped = primedPlan->IsEquipped;
+							netFP->State = primedPlan->State;
+							netFP->Etd = primedPlan->Etd;
+							netFP->Relevant = true;
+							netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
+							netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+							netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
+							netFP->Route = ""; // Initialise
+							netFP->RouteEtas = ""; // Initialise
+
+							// Get routes and estimates
+							vector<CRoutePosition> rte;
+							CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
+							for (int i = 0; i < rte.size(); i++) {
+								if (i != rte.size() - 1) {
+									netFP->Route += rte[i].Fix + " ";
+									netFP->RouteEtas += rte[i].Estimate + " ";
+								}
+								else {
+									netFP->Route += rte[i].Fix;
+									netFP->RouteEtas += rte[i].Estimate;
+								}
+							}
+
+							// Post data to the database
+							DWORD activeCode;
+							HANDLE hnd = CUtils::GetESProcess();
+							GetExitCodeProcess(hnd, &activeCode);
+							// Check if the app is still active
+							if (activeCode == STILL_ACTIVE) {
+								CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+								data->Screen = screen;
+								data->Callsign = primedPlan->Callsign;
+								data->FP = netFP;
+								_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
+							}
+						}
+						catch (std::exception & ex) {
+							CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+							CLogger::Log(CLogType::ERR, "An error occurred whilst trying to update network data. Callsign: " + netFP->Callsign + "\nVerbose details: " + *ex.what(), "");
+						}
+					}
+				}
+				SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
+			}
+			else {
+				try {
+					CLogger::Log(CLogType::NORM, "Attempting to track aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
+					screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
+					windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
+					textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+					if (primedPlan->IsValid && primedPlan->IsCleared) {
 						CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
 						netFP->Callsign = primedPlan->Callsign;
 						netFP->Type = primedPlan->Type;
@@ -2749,27 +2831,26 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 						}
 
 						// Post data to the database
-						DWORD activeCode;
-						HANDLE hnd = CUtils::GetESProcess();
-						GetExitCodeProcess(hnd, &activeCode);
-						// Check if the app is still active
-						if (activeCode == STILL_ACTIVE) {
-							CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
-							data->Screen = screen;
-							data->Callsign = primedPlan->Callsign;
-							data->FP = netFP;
-							_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
-						}
+						CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+						data->Screen = screen;
+						data->Callsign = primedPlan->Callsign;
+						data->FP = netFP;
+						_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
 					}
 				}
-				SetButtonState(BTN_MANENTRY, CInputState::INACTIVE);
+				catch (std::exception & ex) {
+					CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+				}
 			}
-			else {
-				CLogger::Log(CLogType::NORM, "Attempting to track aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
-				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
-				windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
-				textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
-				if (primedPlan->IsValid&& primedPlan->IsCleared) {
+		}
+		if (id == BTN_XCHANGE_TRANSFER) {
+			try {
+				CLogger::Log(CLogType::NORM, "Initiating handoff of aircraft " + primedPlan->Callsign + " to station " + selectedAuthority + ".", "CRadarDisplay::OnRefresh");
+				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
+				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
+				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
+				selectedAuthority = "";
+				if (primedPlan->IsValid && primedPlan->IsCleared) {
 					CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
 					netFP->Callsign = primedPlan->Callsign;
 					netFP->Type = primedPlan->Type;
@@ -2813,55 +2894,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
 				}
 			}
-		}
-		if (id == BTN_XCHANGE_TRANSFER) {
-			CLogger::Log(CLogType::NORM, "Initiating handoff of aircraft " + primedPlan->Callsign + " to station " + selectedAuthority + ".", "CRadarDisplay::OnRefresh");
-			screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
-			SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
-			windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
-			selectedAuthority = "";
-			if (primedPlan->IsValid && primedPlan->IsCleared) {
-				CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
-				netFP->Callsign = primedPlan->Callsign;
-				netFP->Type = primedPlan->Type;
-				netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
-				netFP->AssignedMach = stoi(primedPlan->Mach);
-				netFP->Track = primedPlan->Track;
-				netFP->Departure = primedPlan->Depart;
-				netFP->Arrival = primedPlan->Dest;
-				netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
-				netFP->Selcal = primedPlan->SELCAL == "N/A" ? "" : primedPlan->SELCAL;
-				netFP->DatalinkConnected = primedPlan->DLStatus == "true" ? true : false;
-				netFP->IsEquipped = primedPlan->IsEquipped;
-				netFP->State = primedPlan->State;
-				netFP->Etd = primedPlan->Etd;
-				netFP->Relevant = true;
-				netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
-				netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
-				netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
-				netFP->Route = ""; // Initialise
-				netFP->RouteEtas = ""; // Initialise
-
-				// Get routes and estimates
-				vector<CRoutePosition> rte;
-				CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
-				for (int i = 0; i < rte.size(); i++) {
-					if (i != rte.size() - 1) {
-						netFP->Route += rte[i].Fix + " ";
-						netFP->RouteEtas += rte[i].Estimate + " ";
-					}
-					else {
-						netFP->Route += rte[i].Fix;
-						netFP->RouteEtas += rte[i].Estimate;
-					}
-				}
-
-				// Post data to the database
-				CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
-				data->Screen = screen;
-				data->Callsign = primedPlan->Callsign;
-				data->FP = netFP;
-				_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
+			catch (std::exception & ex) {
+				CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
 			}
 		}
 		if (id == BTN_UNCLEAR) {

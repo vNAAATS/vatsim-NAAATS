@@ -373,7 +373,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to download aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not download network data for aircraft " + callsign + ": " + string(e.what()), "CDataHandler::DownloadNetworkAircraft");
+		CLogger::Log(CLogType::EXC, "Could not download network data for aircraft " + callsign + ": " + string(e.what()) + "\nRequest URL: \n" + reqUrl, "CDataHandler::DownloadNetworkAircraft");
 		// Cleanup
 		delete args;
 		return;
@@ -459,7 +459,7 @@ void CDataHandler::DownloadNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to parse aircraft data for " + callsign +". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not parse downloaded JSON for network aircraft " + callsign + ": " + string(e.what()), "CDataHandler::DownloadNetworkAircraft");
+		CLogger::Log(CLogType::EXC, "Could not parse downloaded JSON for network aircraft " + callsign + ": " + string(e.what()) + "\nRequest URL: \n" + reqUrl, "CDataHandler::DownloadNetworkAircraft");
 		// Cleanup
 		delete args;
 		return;
@@ -477,49 +477,51 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 	// Convert args
 	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
-	// Switch target mode
-	int mode = 0;
-	switch (data->FP->TargetMode) {
-		case CRadarTargetMode::PRIMARY:
-			mode = 0;
-			break;
-		case CRadarTargetMode::SECONDARY_S:
-			mode = 1;
-			break;
-		case CRadarTargetMode::SECONDARY_C:
-			mode = 2;
-			break;
-		case CRadarTargetMode::ADS_B:
-			mode = 3;
-			break;
-		default:
-			mode = 3;
-			break;
-	}
-
-	// Construct URL
+	// Prefix
 	string reqUrl = PostSingleAircraft;
-	reqUrl += "&callsign=" + data->FP->Callsign;
-	reqUrl += "&type=" + data->FP->Type;
-	reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
-	reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
-	reqUrl += "&track=" + data->FP->Track;
-	reqUrl += "&route=" + data->FP->Route;
-	reqUrl += "&routeEtas=" + data->FP->RouteEtas;
-	reqUrl += "&departure=" + data->FP->Departure;
-	reqUrl += "&arrival=" + data->FP->Arrival;
-	reqUrl += "&direction=" + to_string(data->FP->Direction);
-	reqUrl += "&etd=" + data->FP->Etd;
-	reqUrl += "&selcal=" + data->FP->Selcal;
-	reqUrl += "&datalinkConnected=" + data->FP->DatalinkConnected;
-	reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
-	reqUrl += "&state=" + data->FP->State;
-	reqUrl += "&relevant=" + to_string(data->FP->Relevant);
-	reqUrl += "&targetMode=" + to_string(mode);
-	reqUrl += "&trackedBy=" + data->FP->TrackedBy;
-	reqUrl += "&trackedById=" + data->FP->TrackedById;
 
 	try {
+		// Switch target mode
+		int mode = 0;
+		switch (data->FP->TargetMode) {
+			case CRadarTargetMode::PRIMARY:
+				mode = 0;
+				break;
+			case CRadarTargetMode::SECONDARY_S:
+				mode = 1;
+				break;
+			case CRadarTargetMode::SECONDARY_C:
+				mode = 2;
+				break;
+			case CRadarTargetMode::ADS_B:
+				mode = 3;
+				break;
+			default:
+				mode = 3;
+				break;
+		}
+
+		// Construct URL
+		reqUrl += "&callsign=" + data->FP->Callsign;
+		reqUrl += "&type=" + data->FP->Type;
+		reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
+		reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
+		reqUrl += "&track=" + data->FP->Track;
+		reqUrl += "&route=" + data->FP->Route;
+		reqUrl += "&routeEtas=" + data->FP->RouteEtas;
+		reqUrl += "&departure=" + data->FP->Departure;
+		reqUrl += "&arrival=" + data->FP->Arrival;
+		reqUrl += "&direction=" + to_string(data->FP->Direction);
+		reqUrl += "&etd=" + data->FP->Etd;
+		reqUrl += "&selcal=" + data->FP->Selcal;
+		reqUrl += "&datalinkConnected=" + data->FP->DatalinkConnected;
+		reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
+		reqUrl += "&state=" + data->FP->State;
+		reqUrl += "&relevant=" + to_string(data->FP->Relevant);
+		reqUrl += "&targetMode=" + to_string(mode);
+		reqUrl += "&trackedBy=" + data->FP->TrackedBy;
+		reqUrl += "&trackedById=" + data->FP->TrackedById;
+	
 		// Convert URL to LPCSTR type
 		LPCSTR lpcURL = reqUrl.c_str();
 
@@ -549,7 +551,7 @@ void CDataHandler::PostNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to post aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "CDataHandler::PostNetworkAircraft");
+		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()) + "\nRequest URL: \n" + reqUrl, "CDataHandler::PostNetworkAircraft");
 		// Cleanup
 		delete data->FP;
 		delete args;
@@ -561,49 +563,51 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 	// Convert args
 	CUtils::CNetworkAsyncData* data = (CUtils::CNetworkAsyncData*) args;
 
-	// Switch target mode
-	int mode = 0;
-	switch (data->FP->TargetMode) {
-	case CRadarTargetMode::PRIMARY:
-		mode = 0;
-		break;
-	case CRadarTargetMode::SECONDARY_S:
-		mode = 1;
-		break;
-	case CRadarTargetMode::SECONDARY_C:
-		mode = 2;
-		break;
-	case CRadarTargetMode::ADS_B:
-		mode = 3;
-		break;
-	default:
-		mode = 3;
-		break;
-	}
-
-	// Construct URL
+	// Prefix
 	string reqUrl = FlightDataUpdate;
-	reqUrl += "&callsign=" + data->FP->Callsign;
-	reqUrl += "&type=" + data->FP->Type;
-	reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
-	reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
-	reqUrl += "&track=" + data->FP->Track;
-	reqUrl += "&route=" + data->FP->Route;
-	reqUrl += "&routeEtas=" + data->FP->RouteEtas;
-	reqUrl += "&departure=" + data->FP->Departure;
-	reqUrl += "&arrival=" + data->FP->Arrival;
-	reqUrl += "&direction=" + to_string(data->FP->Direction);
-	reqUrl += "&etd=" + data->FP->Etd;
-	reqUrl += "&selcal=" + data->FP->Selcal;
-	reqUrl += "&datalinkConnected=" + data->FP->DatalinkConnected;
-	reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
-	reqUrl += "&state=" + data->FP->State;
-	reqUrl += "&relevant=" + to_string(data->FP->Relevant);
-	reqUrl += "&targetMode=" + to_string(mode);
-	reqUrl += "&trackedBy=" + data->FP->TrackedBy;
-	reqUrl += "&trackedById=" + data->FP->TrackedById;
 
 	try {
+		// Switch target mode
+		int mode = 0;
+		switch (data->FP->TargetMode) {
+		case CRadarTargetMode::PRIMARY:
+			mode = 0;
+			break;
+		case CRadarTargetMode::SECONDARY_S:
+			mode = 1;
+			break;
+		case CRadarTargetMode::SECONDARY_C:
+			mode = 2;
+			break;
+		case CRadarTargetMode::ADS_B:
+			mode = 3;
+			break;
+		default:
+			mode = 3;
+			break;
+		}
+
+		// Construct URL		
+		reqUrl += "&callsign=" + data->FP->Callsign;
+		reqUrl += "&type=" + data->FP->Type;
+		reqUrl += "&level=" + to_string(data->FP->AssignedLevel);
+		reqUrl += "&mach=" + to_string(data->FP->AssignedMach);
+		reqUrl += "&track=" + data->FP->Track;
+		reqUrl += "&route=" + data->FP->Route;
+		reqUrl += "&routeEtas=" + data->FP->RouteEtas;
+		reqUrl += "&departure=" + data->FP->Departure;
+		reqUrl += "&arrival=" + data->FP->Arrival;
+		reqUrl += "&direction=" + to_string(data->FP->Direction);
+		reqUrl += "&etd=" + data->FP->Etd;
+		reqUrl += "&selcal=" + data->FP->Selcal;
+		reqUrl += "&datalinkConnected=" + data->FP->DatalinkConnected;
+		reqUrl += "&isEquipped=" + to_string(data->FP->IsEquipped);
+		reqUrl += "&state=" + data->FP->State;
+		reqUrl += "&relevant=" + to_string(data->FP->Relevant);
+		reqUrl += "&targetMode=" + to_string(mode);
+		reqUrl += "&trackedBy=" + data->FP->TrackedBy;
+		reqUrl += "&trackedById=" + data->FP->TrackedById;
+	
 		// Convert URL to LPCSTR type
 		LPCSTR lpcURL = reqUrl.c_str();
 
@@ -633,7 +637,7 @@ void CDataHandler::UpdateNetworkAircraft(void* args) {
 	}
 	catch (exception & e) {
 		data->plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to update aircraft data for " + data->Callsign + ". Error: " + string(e.what())).c_str(), true, true, true, true, true);
-		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()), "CDataHandler::UpdateNetworkAircraft");
+		CLogger::Log(CLogType::EXC, "Could not post aircraft " + data->FP->Callsign + " to the network: " + string(e.what()) + "\nRequest URL: \n" + reqUrl, "CDataHandler::UpdateNetworkAircraft");
 		// Cleanup
 		delete data->FP;
 		delete args;

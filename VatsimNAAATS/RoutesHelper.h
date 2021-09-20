@@ -26,7 +26,7 @@ class CRoutesHelper
 		static void InitialiseRoute(void* args);
 
 		// Parse a raw route
-		static int ParseRoute(string callsign, string rawInput, bool isTrack = false, CAircraftFlightPlan* copy = nullptr);
+		static int ParseRoute(CRadarScreen* screen, string callsign, string rawInput, bool isTrack = false, CAircraftFlightPlan* copy = nullptr);
 
 		// Is on a NAT track
 		static string OnNatTrack(CRadarScreen* screen, string callsign);
