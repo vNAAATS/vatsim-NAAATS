@@ -194,10 +194,6 @@ void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen)
 	// Save device context
 	int iDC = dc->SaveDC();
 
-	// If not open, set the state to open
-	IsOpen = true;
-	IsClosed = false;
-
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
 	CBrush lighterBrush(WindowBorder.ToCOLORREF());
@@ -471,7 +467,7 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 		screen->AddScreenObject(route->Type, to_string(route->Id).c_str(), rteBox, false, "");
 
 	// Text align
-	FontSelector::SelectATCFont(16, dc);
+	FontSelector::SelectATCFont(18, dc);
 	dc->SetTextAlign(TA_LEFT);
 
 	// Parse the route text
@@ -510,17 +506,17 @@ CRect CFlightPlanWindow::RenderDataPanel(CDC* dc, Graphics* g, CRadarScreen* scr
 					if (CUtils::IsAllAlpha(rte[i].Fix)) {
 						// Write fix down
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Fix.c_str());
-						offsetY += 56;
+						offsetY += 54;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 						offsetY = 2;
 						offsetX += dc->GetTextExtent(rte[i].Fix.c_str()).cx + 15;
 					}
 					else {
 						// Write coordinate down
-						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
-						offsetY += 28;
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
-						offsetY += 28;						
+						offsetY += 27;
+						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
+						offsetY += 27;						
 						dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 						offsetY = 2;
 						offsetX += dc->GetTextExtent("2323").cx + 15;
@@ -1081,9 +1077,9 @@ void CFlightPlanWindow::RenderManEntryWindow(CDC* dc, Graphics* g, CRadarScreen*
 			}
 			else {
 				// Write coordinate down
-				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
-				offsetY += 28;
 				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Latitude)) + "N").c_str());
+				offsetY += 28;
+				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, (to_string((int)abs(rte[i].PositionRaw.m_Longitude)) + "W").c_str());
 				offsetY += 28;
 				dc->TextOutA(rteBox.left + offsetX, rteBox.top + offsetY, rte[i].Estimate == "--" ? "\xa0\xa0" : rte[i].Estimate.c_str());
 				offsetY = 2;
@@ -2026,7 +2022,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 	textInputs[TXT_COMMS].Content = primedPlan->Communications;
 	textInputs[TXT_OWNERSHIP].Content = primedPlan->Sector;
 	textInputs[TXT_SELCAL].Content = primedPlan->SELCAL;
-	textInputs[TXT_DATALINK].Content = primedPlan->DLStatus == "" ? "OFFLINE" : "ONLINE";
+	textInputs[TXT_DATALINK].Content = primedPlan->DLStatus == "true" ? "ONLINE" : "OFFLINE";
 
 
 	// If tracked by other controller
@@ -2363,7 +2359,6 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 	if (id == CFlightPlanWindow::BTN_CLOSE) { // Close button
 		// If the close button close window
 		IsClosed = true;
-		IsOpen = false;
 	}
 
 	// Failsafe
@@ -2723,6 +2718,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			if (screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerIsMe()) {
 				CLogger::Log(CLogType::NORM, "Attempting to drop aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).EndTracking();
+				primedPlan->Sector = "-1";
+				textInputs[TXT_OWNERSHIP].Content = "-1";
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
 				textInputs[TXT_XCHANGE_CURRENT].Content = "UNTRACKED";
@@ -2792,6 +2789,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				try {
 					CLogger::Log(CLogType::NORM, "Attempting to track aircraft " + primedPlan->Callsign + ".", "CRadarDisplay::OnRefresh");
 					screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).StartTracking();
+					primedPlan->Sector = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
+					textInputs[TXT_OWNERSHIP].Content = string(screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId());
 					windowButtons[BTN_XCHANGE_TRACK].Label = "Release";
 					textInputs[TXT_XCHANGE_CURRENT].Content = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
 					if (primedPlan->IsValid && primedPlan->IsCleared) {

@@ -359,7 +359,6 @@ void CCommonRenders::RenderTracks(CDC* dc, Graphics* g, CRadarScreen* screen, CO
 			continue;
 		}
 		
-
 		// Show selected overlays
 		if (type == COverlayType::TCKS_SEL) {
 			vector<string> tracks;

@@ -458,6 +458,9 @@ int CRoutesHelper::ParseRoute(CRadarScreen* screen, string callsign, string rawI
 			copy->Track = track;
 			copy->RouteRaw.clear();
 			for (int i = 0; i < route.size(); i++) {
+				if (route[i] == "AIRCRAFT")
+					route.at(i).erase();
+					continue;
 				copy->RouteRaw.push_back(route[i]);
 			}
 		}
@@ -465,6 +468,11 @@ int CRoutesHelper::ParseRoute(CRadarScreen* screen, string callsign, string rawI
 			CDataHandler::GetFlightData(callsign)->Track = track;
 			CDataHandler::GetFlightData(callsign)->RouteRaw.clear();
 			for (int i = 0; i < route.size(); i++) {
+				if (route[i] == "AIRCRAFT") {
+					route.at(i).erase();
+					continue;
+				}
+					
 				CDataHandler::GetFlightData(callsign)->RouteRaw.push_back(route[i]);
 			}
 		}

@@ -13,6 +13,9 @@ using namespace EuroScopePlugIn;
 class CDataHandler
 {
 	public:
+	// Check plugin version number
+	static int CheckPluginVersion(CPlugIn* plugin);
+
 	// Download nat track data
 	static int PopulateLatestTrackData(CPlugIn* plugin);
 
@@ -48,6 +51,9 @@ class CDataHandler
 	private:
 		// Methods
 		static int GetTrackSource(CPlugIn* plugin); // Event tracks or not
+
+		// Version URL
+		static const string PluginVersion;
 
 		// NAT Track URL
 		static const string TrackURL;

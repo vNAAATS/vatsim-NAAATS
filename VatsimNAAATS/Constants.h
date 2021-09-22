@@ -109,7 +109,7 @@ const vector<string> pointsShanwick = { "RATSU",
 /// VALUES
 // Plugin info
 const string PLUGIN_NAME = "vNAAATS";
-const string PLUGIN_VERSION = "v1.3a";
+const string PLUGIN_VERSION = "1.3b";
 const string PLUGIN_AUTHOR = "Andrew Ogden github.com/andrewogden1678";
 const string PLUGIN_COPYRIGHT = "(C) 2021 Andrew Ogden vNAAATS";
 const bool IS_ALPHA = true;
@@ -147,8 +147,8 @@ const int RECT8_WIDTH = 190;
 
 // Window sizes
 const int WINSZ_TITLEBAR_HEIGHT = 20;
-const int WINSZ_TCKINFO_WIDTH = 500;
-const int WINSZ_TCKINFO_HEIGHT = 250;
+const int WINSZ_TCKINFO_WIDTH = 600;
+const int WINSZ_TCKINFO_HEIGHT = 300;
 const int WINSZ_FLTPLN_WIDTH = 540;
 const int WINSZ_FLTPLN_HEIGHT_INIT = 175;
 const int WINSZ_FLTPLN_HEIGHT_DATA = 190;

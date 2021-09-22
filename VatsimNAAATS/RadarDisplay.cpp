@@ -99,11 +99,14 @@ void CRadarDisplay::PopulateProgramData() {
 
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
-	
+
 	// Start cursor update loop
 	appCursor->screen = this;
-	_beginthread(CursorStateUpdater, 0, (void*) appCursor);
+	_beginthread(CursorStateUpdater, 0, (void*)appCursor);
 	CLogger::Log(CLogType::NORM, "Firing cursor update sequence thread.", "CRadarDisplay::PopulateProgramData");
+
+	// Check plugin version
+	CDataHandler::CheckPluginVersion(GetPlugIn());
 }
 
 // On radar screen refresh (modified to occur 4 times a second)
@@ -161,7 +164,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::DISABLED);
 	}
 	else {
-		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) == CInputState::DISABLED)
+		if (menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) == CInputState::DISABLED && menuBar->GetButtonState(CMenuBar::BTN_FLIGHTPLAN) != CInputState::ACTIVE)
 			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
 	}
 
@@ -232,7 +235,6 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 
 				// Erase flight plan window
 				menuBar->SetButtonState(menuBar->BTN_FLIGHTPLAN, CInputState::DISABLED);
-				fltPlnWindow->IsOpen = false;
 
 				// Finally erase the on screen reference
 				CLogger::Log(CLogType::NORM, "Erasing reference for " + idx->first + ".", "CRadarDisplay");
@@ -528,7 +530,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					auto kv = tagStatuses.find(fp.GetCallsign());
 					kv->second.first = detailedEnabled; // Set detailed on
 					CAcTargets::RenderTarget(&g, &dc, this, &ac, true, &menuBar->GetToggleButtons(), halo, ptl, &stcaStatus);
-					POINT tagPosition = CAcTargets::RenderTag(&dc, this, &ac, &kv->second, direction, &stcaStatus);
+					POINT tagPosition = CAcTargets::RenderTag(&g, &dc, this, &ac, &kv->second, direction, &stcaStatus, asel);
 
 					// If tracking dialog open
 					if (CAcTargets::OpenTrackingDialog != "" && CAcTargets::OpenTrackingDialog == ac.GetCallsign()) {
@@ -613,14 +615,11 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// Draw flight plan window if button pressed
-		if (fltPlnWindow->IsOpen && !menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
-			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::ACTIVE);
-		}
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
 			fltPlnWindow->RenderWindow(&dc, &g, this);
 		}
 
-		// Draw flight plan window if button pressed
+		// Draw notepad window if button pressed
 		if (menuBar->IsButtonPressed(CMenuBar::BTN_NOTEPAD)) {
 			npWindow->RenderWindow(&dc, &g, this);
 		}
@@ -688,6 +687,35 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 			// Timer
 			double thirtySecT = (double)(clock() - thirtySecondTimer) / ((double)CLOCKS_PER_SEC);
 
+			// Send mach and FL to FSD from vNAAATS if it is not there
+			try {
+				if (fp->IsCleared) {
+					if (fpData.GetTrackingControllerIsMe()) {
+						if (fpData.GetControllerAssignedData().GetAssignedMach() / 10 != stoi(fp->Mach)) {
+							// Assign
+							fpData.GetControllerAssignedData().SetAssignedMach(stoi(fp->Mach) * 10);
+						}
+						if (fpData.GetControllerAssignedData().GetFinalAltitude() / 100 != stoi(fp->FlightLevel)) {
+							// Assign
+							fpData.GetControllerAssignedData().SetFinalAltitude(stoi(fp->FlightLevel) * 100);
+						}
+					}
+					else { // Back the other way, FSD to vNAAATS
+						if (fpData.GetControllerAssignedData().GetAssignedMach() / 10 != stoi(fp->Mach)) {
+							// Assign
+							fp->Mach = to_string(fpData.GetControllerAssignedData().GetAssignedMach() / 10);
+						}
+						if (fpData.GetControllerAssignedData().GetFinalAltitude() / 100 != stoi(fp->FlightLevel)) {
+							// Assign
+							fp->FlightLevel = to_string(fpData.GetControllerAssignedData().GetFinalAltitude() / 100);
+						}
+					}
+				}				
+			}
+			catch (exception & ex) {
+				CLogger::DebugLog(this, "An exception occurred when attempting to update FSD: " + string(ex.what()));
+			}
+
 			// Update if aircraft is cleared
 			if (fp->IsCleared && fpData.GetTrackingControllerIsMe() && thirtySecT >= 30.0) {
 				try {
@@ -750,6 +778,11 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 }
 
 void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
+	// Close the flight plan window immediately and cancel the ASEL so that we don't get a crash
+	if (FlightPlan.GetCallsign() == asel) {
+		menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
+		asel = "";
+	}
 	// Erase any route drawing
 	if (CRoutesHelper::ActiveRoutes.size() != 0 || CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty()) {
 		int found = -1; // Found flag so we can remove if needed
@@ -769,7 +802,6 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 
 		// Set any vNAAATS network aircraft to irrelevant
 		// Create network object
-		
 		try {
 			CAircraftFlightPlan* primedPlan = CDataHandler::GetFlightData(FlightPlan.GetCallsign());
 			if (primedPlan->IsValid && primedPlan->IsCleared) {
@@ -981,14 +1013,20 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 	if (Button == BUTTON_LEFT) {
 		// If screen object is a tag
 		if (ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) {
+			// Set FPW to re-instantiate if the aircraft is not the currently ASELed one
+			bool newFP = false;
+			if (asel != sObjectId && !fltPlnWindow->IsClosed) {
+				newFP = true;
+			}
+
 			// Set the ASEL
 			asel = sObjectId;
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
 			CLogger::Log(CLogType::NORM, "Selected aircraft changed to " + asel + ".", "CRadarDisplay::OnClickScreenObject");
-
-			// Re-instantiate flight plan window if the aircraft is not the currently ASELed one
-			if (asel != sObjectId && fltPlnWindow->IsOpen) {
+			
+			// Re-instantiate FPW if needed
+			if (newFP) {
 				fltPlnWindow->Instantiate(this, asel);
 			}
 
@@ -1016,7 +1054,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 		}
 
 		if (!menuBar->IsButtonPressed(CMenuBar::BTN_FLIGHTPLAN)) {
-			fltPlnWindow->IsOpen = false;
+			fltPlnWindow->IsClosed = true;
 		}
 
 		// Qck Look button
@@ -1260,6 +1298,9 @@ void CRadarDisplay::OnButtonUpScreenObject(int ObjectType, const char* sObjectId
 		if (atoi(sObjectId) == CMenuBar::BTN_RTEDEL) {
 			CRoutesHelper::ActiveRoutes.clear();
 		}
+		if (atoi(sObjectId) == CMenuBar::BTN_AUTOTAG) {
+			tagStatuses.clear();
+		}
 		menuBar->ButtonDown(atoi(sObjectId));
 	}
 
@@ -1357,145 +1398,156 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 }
 
 // TODO: Break into individual methods or create ScreenFunctions class/namespace
-void CRadarDisplay::CursorStateUpdater(void* args) {
+void CRadarDisplay::CursorStateUpdater(void* args)
+{
 	// Pointer to cursor
 	CAppCursor* cursor = (CAppCursor*)args;
 
-	// Timer
-	clock_t hundredmsTimer = clock();
-	clock_t refreshTimer = clock();
+	try {
+		// Timer
+		clock_t hundredmsTimer = clock();
+		clock_t refreshTimer = clock();
 
-	// Monitor information for proper positioning
-	MONITORINFO monitorInfo;
-	monitorInfo.cbSize = sizeof(MONITORINFO);
+		// Monitor information for proper positioning
+		MONITORINFO monitorInfo;
+		monitorInfo.cbSize = sizeof(MONITORINFO);
 
-	// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
-	DWORD activeCode;
-	while (!cursor->isESClosed) {
-		HANDLE hnd = CUtils::GetESProcess();
-		GetExitCodeProcess(hnd, &activeCode);
-		// Check if the app is still active
-		if (cursor->isESClosed || activeCode != STILL_ACTIVE) {
-			CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
-			break; // Break if not
-		}
-
-		// Ok so the app is still active let's get the cursor data
-		if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 40ms
-			// Get cursor position (only if previous cursor position is inside the radar area)
-			bool isCursorInsideRadarArea = false;
-			CRect radarArea = cursor->screen->GetRadarArea();
-
-			// Get the position and monitor in which the point lies
-			GetCursorPos(&cursor->position);
-
-			// Get the monitor
-			HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
-			GetMonitorInfo(monitor, &monitorInfo);
-
-			// Get the monitor resolution
-			int monResX = abs(monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left);
-			int monResY = abs(monitorInfo.rcMonitor.top - monitorInfo.rcMonitor.bottom);
-
-			// Get the relative cursor position
-			if (cursor->position.x > monResX) { // greater than (x)
-				cursor->position.x = cursor->position.x % monResX;
-			}
-			if (cursor->position.y > monResY) { // greater than (y)
-				cursor->position.y = cursor->position.y % monResY;
-			}
-			if (cursor->position.x < 0) { // less than (x)
-				cursor->position.x = monResX - (abs(cursor->position.x) % monResX);
-			}
-			if (cursor->position.y < 0) { // less than (y)
-				cursor->position.y = monResY - (abs(cursor->position.y) % monResY);
+		// Get the process information - infinite loop in separate thread = bad unless you manually break the loop on application close
+		DWORD activeCode;
+		while (!cursor->isESClosed) {
+			HANDLE hnd = CUtils::GetESProcess();
+			GetExitCodeProcess(hnd, &activeCode);
+			// Check if the app is still active
+			if (cursor->isESClosed || activeCode != STILL_ACTIVE) {
+				CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
+				break; // Break if not
 			}
 
-			// Get button presses
-			bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
-			bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
-			
-			// Check if cursor inside radar area
-			if (cursor->position.x > radarArea.left &&
-				cursor->position.x < radarArea.right &&
-				cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
-				cursor->position.y < radarArea.bottom) {
-				isCursorInsideRadarArea = true;
-			}
+			// Ok so the app is still active let's get the cursor data
+			if (((double)(clock() - hundredmsTimer) / ((double)CLOCKS_PER_SEC)) >= 0.04) { // Greater than or equal to 40ms
+				// Get cursor position (only if previous cursor position is inside the radar area)
+				bool isCursorInsideRadarArea = false;
+				CRect radarArea = cursor->screen->GetRadarArea();
 
-			// Lat/lon position
-			cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
+				// Get the position and monitor in which the point lies
+				GetCursorPos(&cursor->position);
 
-			// Check button presses
-			if ((!leftBtnPressed && !rightBtnPressed) || !isCursorInsideRadarArea) {
-				cursor->button = 0;
-			}
+				// Get the monitor
+				HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
+				GetMonitorInfo(monitor, &monitorInfo);
 
-			/// Events!
-			// On left click
-			if (leftBtnPressed && cursor->button == 0) {
-				// QDM button
-				if (cursor->screen->menuBar->IsButtonPressed(CMenuBar::BTN_QDM) && isCursorInsideRadarArea) {
-					bool pointSet = false;
-					// Activate QDM, first check if first ruler point already filled
-					if (cursor->screen->RulerPoint1.m_Latitude == 0.0 && cursor->screen->RulerPoint1.m_Longitude == 0.0) {
-						// It isn't filled so set it
-						cursor->screen->RulerPoint1.m_Latitude = cursor->latLonPosition.m_Latitude;
-						cursor->screen->RulerPoint1.m_Longitude = cursor->latLonPosition.m_Longitude;
+				// Get the monitor resolution
+				int monResX = abs(monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left);
+				int monResY = abs(monitorInfo.rcMonitor.top - monitorInfo.rcMonitor.bottom);
 
-						// So that we don't accidently set the 2nd point at the same time
-						pointSet = true;
-					}
-					// Check the 2nd point
-					if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude == 0.0 && cursor->screen->RulerPoint2.m_Longitude == 0.0)) {
-						// It isn't filled so set it
-						cursor->screen->RulerPoint2.m_Latitude = cursor->latLonPosition.m_Latitude;
-						cursor->screen->RulerPoint2.m_Longitude = cursor->latLonPosition.m_Longitude;
-
-						// So we dont cancel the QDM automatically
-						pointSet = true;
-					}
-
-					// Both points are down so we need to reset
-					if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude != 0.0 && cursor->screen->RulerPoint2.m_Longitude != 0.0)) {
-						cursor->screen->RulerPoint1.m_Latitude = 0.0;
-						cursor->screen->RulerPoint1.m_Longitude = 0.0;
-						cursor->screen->RulerPoint2.m_Latitude = 0.0;
-						cursor->screen->RulerPoint2.m_Longitude = 0.0;
-					}
+				// Get the relative cursor position
+				if (cursor->position.x > monResX) { // greater than (x)
+					cursor->position.x = cursor->position.x % monResX;
+				}
+				if (cursor->position.y > monResY) { // greater than (y)
+					cursor->position.y = cursor->position.y % monResY;
+				}
+				if (cursor->position.x < 0) { // less than (x)
+					cursor->position.x = monResX - (abs(cursor->position.x) % monResX);
+				}
+				if (cursor->position.y < 0) { // less than (y)
+					cursor->position.y = monResY - (abs(cursor->position.y) % monResY);
 				}
 
-				// Set the button so the event doesn't fire again
-				cursor->button = 2;
+				// Get button presses
+				bool leftBtnPressed = (GetAsyncKeyState(VK_LBUTTON) & (1 << 15)) != 0;
+				bool rightBtnPressed = (GetAsyncKeyState(VK_RBUTTON) & (1 << 15)) != 0;
+
+				// Check if cursor inside radar area
+				if (cursor->position.x > radarArea.left&&
+					cursor->position.x < radarArea.right &&
+					cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
+					cursor->position.y < radarArea.bottom) {
+					isCursorInsideRadarArea = true;
+				}
+
+				// Lat/lon position
+				cursor->latLonPosition = cursor->screen->ConvertCoordFromPixelToPosition(cursor->position);
+
+				// Check button presses
+				if ((!leftBtnPressed && !rightBtnPressed) || !isCursorInsideRadarArea) {
+					cursor->button = 0;
+				}
+
+				/// Events!
+				// On left click
+				if (leftBtnPressed && cursor->button == 0) {
+					// QDM button
+					if (cursor->screen->menuBar->IsButtonPressed(CMenuBar::BTN_QDM) && isCursorInsideRadarArea) {
+						bool pointSet = false;
+						// Activate QDM, first check if first ruler point already filled
+						if (cursor->screen->RulerPoint1.m_Latitude == 0.0 && cursor->screen->RulerPoint1.m_Longitude == 0.0) {
+							// It isn't filled so set it
+							cursor->screen->RulerPoint1.m_Latitude = cursor->latLonPosition.m_Latitude;
+							cursor->screen->RulerPoint1.m_Longitude = cursor->latLonPosition.m_Longitude;
+
+							// So that we don't accidently set the 2nd point at the same time
+							pointSet = true;
+						}
+						// Check the 2nd point
+						if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude == 0.0 && cursor->screen->RulerPoint2.m_Longitude == 0.0)) {
+							// It isn't filled so set it
+							cursor->screen->RulerPoint2.m_Latitude = cursor->latLonPosition.m_Latitude;
+							cursor->screen->RulerPoint2.m_Longitude = cursor->latLonPosition.m_Longitude;
+
+							// So we dont cancel the QDM automatically
+							pointSet = true;
+						}
+
+						// Both points are down so we need to reset
+						if (!pointSet && (cursor->screen->RulerPoint2.m_Latitude != 0.0 && cursor->screen->RulerPoint2.m_Longitude != 0.0)) {
+							cursor->screen->RulerPoint1.m_Latitude = 0.0;
+							cursor->screen->RulerPoint1.m_Longitude = 0.0;
+							cursor->screen->RulerPoint2.m_Latitude = 0.0;
+							cursor->screen->RulerPoint2.m_Longitude = 0.0;
+						}
+					}
+
+					// Set the button so the event doesn't fire again
+					cursor->button = 2;
+				}
+				// On right click
+				if (rightBtnPressed && cursor->button == 0) {
+
+					// Set the button so the event doesn't fire again
+					cursor->button = 1;
+				}
+
+				// Reset clock
+				hundredmsTimer = clock();
 			}
-			// On right click
-			if (rightBtnPressed && cursor->button == 0) {
 
-				// Set the button so the event doesn't fire again
-				cursor->button = 1;
+			// Call refresh sequence more often
+			if (((double)(clock() - refreshTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) {
+				// Refresh the radar screen
+				cursor->screen->RequestRefresh();
+
+				// Reset clock
+				refreshTimer = clock();
 			}
 
-			// Reset clock
-			hundredmsTimer = clock();
 		}
-		
-		// Call refresh sequence more often
-		if (((double)(clock() - refreshTimer) / ((double)CLOCKS_PER_SEC)) >= cursor->screen->RefreshResolution) {
-			// Refresh the radar screen
-			cursor->screen->RequestRefresh();
 
-			// Reset clock
-			refreshTimer = clock();
+		// Check if the app is still active
+		if (cursor->isESClosed) {
+			CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
 		}
-		
- 	}
 
-	// Check if the app is still active
-	if (cursor->isESClosed) {
-		CLogger::Log(CLogType::NORM, "ES quitting. Thread destroyed.");
+		
+	}
+	catch (exception & ex) {
+		CLogger::DebugLog(cursor->screen, "An exception occurred in the CursorStateUpdater. " + *ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. \nCursor position: " + to_string(cursor->latLonPosition.m_Latitude) + "," + to_string(cursor->latLonPosition.m_Longitude)
+			+ "\nRefresh Resolution: " + to_string(cursor->screen->RefreshResolution) + "\nVerbose details: " + *ex.what(), "CRadarDisplay::CursorStateUpdater");
 	}
 
 	// Clean up and return
 	delete args;
+
 	return;
 }

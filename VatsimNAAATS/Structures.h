@@ -14,6 +14,8 @@ struct CTrack {
 	vector<CPosition> RouteRaw;
 	vector<int> FlightLevels;
 	CTrackDirection Direction;
+	string validTo;
+	string validFrom;
 };
 
 // Describes a point along an aircraft's route

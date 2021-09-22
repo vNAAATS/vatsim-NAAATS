@@ -16,10 +16,68 @@ const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.ca/data";
 const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.ca/resources/data/eventTracks.json";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
+const string CDataHandler::PluginVersion = "https://raw.githubusercontent.com/vNAAATS/vatsim-NAAATS/v1.3/pluginversion.txt";
 const string CDataHandler::TrackSource = "https://vnaaats-net.ganderoceanic.ca/api/GetTrackSource";
 const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataSingleGet?callsign=";
 const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataNewPost?code=" + ApiKeys::FUNC_KEY;
 const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataUpdate?code=" + ApiKeys::FUNC_KEY;
+
+int CDataHandler::CheckPluginVersion(CPlugIn* plugin)
+{
+	// Try and get data and pass into string
+	string responseString = "";
+	try {
+		// Convert URL to LPCSTR type
+		LPCSTR lpcURL = CDataHandler::PluginVersion.c_str();
+
+		// Delete cache data
+		DeleteUrlCacheEntry(lpcURL);
+
+		// Download data
+		CComPtr<IStream> pStream;
+		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+		// If failed
+		if (FAILED(hr)) {
+			int code = (int)hr;
+			// Show user message
+			plugin->DisplayUserMessage("vNAAATS", "Error", "Failed to fetch version info. Code: " + code, true, true, true, true, true);
+			// Clogger
+			CLogger::Log(CLogType::ERR, "Could not fetch version info. Code: " + code, "CDataHandler::CheckPluginVersion");
+			return -1;
+		}
+		// Put data into buffer
+		char tempBuffer[16384];
+		DWORD bytesRead = 0;
+		hr = pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
+		// Put data into string
+		for (int i = 0; i < bytesRead; i++) {
+			responseString += tempBuffer[i];
+		}
+	}
+	catch (exception & e) {
+		// Log to ES
+		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to fetch version info: " + string(e.what())).c_str(), true, true, true, true, true);
+		// Clogger
+		CLogger::Log(CLogType::EXC, "Could not fetch version info: " + string(string(e.what())), "CDataHandler::CheckPluginVersion");
+		return -1;
+	}
+
+	// Check version
+	if (responseString != PLUGIN_VERSION) {
+		// Display dialog if update available
+		int msgBox = MessageBox(NULL, (LPCSTR)("A new version of vNAAATS (" + responseString + ") is now available. Your version: " + PLUGIN_VERSION +
+			"\nPlease update as soon as possible to avoid possible compatibility issues.\nFind the new version at vNAAATS.net.").c_str(),
+			(LPCSTR)"vNAAATS Version Notification", MB_ICONWARNING | MB_OK);
+
+		if (msgBox == IDOK) {
+			// Open the website
+			ShellExecute(NULL, "open", "https://vnaaats.net/", NULL, NULL, SW_SHOWNORMAL);
+		}
+		return msgBox;
+	}
+
+	return -1;
+}
 
 int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	// Try and get data and pass into string
@@ -94,13 +152,36 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 			// Route
 			for (int j = 0; j < jsonArray[i].at("route").size(); j++) {
 				track.Route.push_back(jsonArray[i].at("route")[j].at("name"));
-				track.RouteRaw.push_back(CUtils::PositionFromLatLon(jsonArray[i].at("route")[j].at("latitude"), jsonArray[i].at("route")[j].at("longitude")));
+
+				// Get lat and lon vars
+				double lat = jsonArray[i].at("route")[j].at("latitude");
+				double lon = jsonArray[i].at("route")[j].at("longitude");
+
+				// Split the name string to determine whether half waypoints (i.e. xxxx/xx not xx/xx)
+				vector<string> splitString;
+				int successCode = CUtils::StringSplit(jsonArray[i].at("route")[j].at("name"), '/', &splitString);
+				
+				// If they are weird half waypoints then divide by 100 to get the decimal
+				if (successCode == 0 && splitString.size() == 2) {
+					if (splitString[0].size() > 2)
+						lat /= 100.0;
+					
+					if (splitString[1].size() > 2)
+						lon /= 100.0;
+				}
+
+				// Finally, append
+				track.RouteRaw.push_back(CUtils::PositionFromLatLon(lat, lon));				
 			}
 
 			// Flight levels
 			for (int j = 0; j < jsonArray[i].at("flightLevels").size(); j++) {
 				track.FlightLevels.push_back((int)jsonArray[i].at("flightLevels")[j]);
 			}
+
+			// Validity
+			track.validFrom = string(jsonArray[i].at("validFrom"));
+			track.validTo = string(jsonArray[i].at("validTo"));
 
 			// Push track to tracks array
 			CRoutesHelper::CurrentTracks.insert(make_pair(track.Identifier, track));

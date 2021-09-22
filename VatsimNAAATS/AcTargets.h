@@ -24,7 +24,7 @@ class CAcTargets
 		static void RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status);
 
 		// Render tags
-		static POINT RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status);
+		static POINT RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status, string asel);
 
 		// Coordination tag item
 		static void RenderCoordTagItem(CDC* dc, CRadarScreen* screen, string callsign, POINT tagPosition);

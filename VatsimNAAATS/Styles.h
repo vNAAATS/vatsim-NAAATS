@@ -31,6 +31,7 @@ namespace Colours {
 	const Color WarningYellow(240, 231, 76);
 	const Color CriticalRed(195, 67, 67);
 	const Color CriticalRedLight(225, 96, 96);
+	const Color NoClearance(198, 74, 255);
 }
 
 // Fonts
@@ -76,8 +77,8 @@ public:
 		monoFont15.CreateFontIndirect(&lFont);
 
 		// Get for ATC font
-		AddFontResourceEx("9x15B.bdf", FR_PRIVATE, 0);
-		strcpy_s(lFont.lfFaceName, _T("FixedBold"));
+		AddFontResource((LPCSTR)(CUtils::DllPath + "\\vNAAATS.ttf").c_str());
+		strcpy_s(lFont.lfFaceName, _T("vNAAATS"));
 		// Normal weight
 		lFont.lfWeight = FW_REGULAR;
 		// Size 14

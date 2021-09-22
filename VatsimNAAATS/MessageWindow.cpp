@@ -259,7 +259,7 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 	}
 	if (msg->Type == CMessageType::LOG_ON || msg->Type == CMessageType::TRANSFER) {
 		fltPlnWin->Instantiate(screen, msg->From, msg);
-		fltPlnWin->IsOpen = true;
+		fltPlnWin->IsClosed = false;
 		fltPlnWin->IsTransferOpen = true;
 		screen->GetPlugIn()->SetASELAircraft(screen->GetPlugIn()->FlightPlanSelect(msg->From.c_str()));
 		OngoingMessages[msg->Id] = msg;
@@ -295,7 +295,6 @@ void CMessageWindow::ButtonDoubleClick(CRadarScreen* screen, int id, CFlightPlan
 		speed = tokens[8];
 		// Instantiate flight plan window
 		fltPlnWin->Instantiate(screen, msg->From, msg);
-		fltPlnWin->IsOpen = true;
 		fltPlnWin->IsData = true;
 		fltPlnWin->SetButtonState(CFlightPlanWindow::BTN_PROBE, CInputState::INACTIVE);
 		fltPlnWin->primedPlan->Mach = speed;

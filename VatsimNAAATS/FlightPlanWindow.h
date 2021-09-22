@@ -69,7 +69,6 @@ class CFlightPlanWindow : public CBaseWindow
 		bool IsHistoryOpen = false;
 		bool IsATCRestrictionsOpen = false;
 		bool IsTransferOpen = false;
-		bool IsOpen = false;
 		int RestrictionSubModalType = -1;
 
 		// Subwindow definitions

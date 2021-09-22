@@ -488,48 +488,50 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 	// Set on screen aircraft
 	aircraftOnScreen = onScreenAircraft;
 
-	// Status for target
-	CAircraftStatus targetAc(target->GetCallsign(), target->GetPosition().GetPressureAltitude(), 
-		target->GetPosition().GetReportedGS(), target->GetPosition().GetReportedHeadingTrueNorth(), target->GetPosition().GetPosition());
+	try {
+		// Status for target
+		CAircraftStatus targetAc(target->GetCallsign(), target->GetPosition().GetPressureAltitude(),
+			target->GetPosition().GetReportedGS(), target->GetPosition().GetReportedHeadingTrueNorth(), target->GetPosition().GetPosition());
 
-	// Detect the status
-	for (auto i = onScreenAircraft->begin(); i != onScreenAircraft->end(); i++) {
-		if (i->first == targetAc.Callsign)
-			continue;
-		CRadarTarget ac = screen->GetPlugIn()->RadarTargetSelect(i->first.c_str());
 
-		// Status for this aircraft
-		CAircraftStatus acTest(ac.GetCallsign(), ac.GetPosition().GetPressureAltitude(),
-			ac.GetPosition().GetReportedGS(), ac.GetPosition().GetReportedHeadingTrueNorth(), ac.GetPosition().GetPosition());
+		// Detect the status
+		for (auto i = onScreenAircraft->begin(); i != onScreenAircraft->end(); i++) {
+			if (i->first == targetAc.Callsign)
+				continue;
+			CRadarTarget ac = screen->GetPlugIn()->RadarTargetSelect(i->first.c_str());
 
-		// Get the separation status
-		CSepStatus status = DetectStatus(screen, &targetAc, &acTest);
+			// Status for this aircraft
+			CAircraftStatus acTest(ac.GetCallsign(), ac.GetPosition().GetPressureAltitude(),
+				ac.GetPosition().GetReportedGS(), ac.GetPosition().GetReportedHeadingTrueNorth(), ac.GetPosition().GetPosition());
 
-		if (status.DistanceAsTime < 0)
-			continue;
+			// Get the separation status
+			CSepStatus status = DetectStatus(screen, &targetAc, &acTest);
 
-		// Work out whether they already exist in the map
-		bool alreadyExist = false;
-		auto idx = CurrentSTCA.begin();
-		for (idx = CurrentSTCA.begin(); idx != CurrentSTCA.end(); idx++) {
-			if ((targetAc.Callsign == idx->CallsignB && acTest.Callsign == idx->CallsignA) || (targetAc.Callsign == idx->CallsignA && acTest.Callsign == idx->CallsignB)) {
-				alreadyExist = true;
-				break;
+			if (status.DistanceAsTime < 0)
+				continue;
+
+			// Work out whether they already exist in the map
+			bool alreadyExist = false;
+			auto idx = CurrentSTCA.begin();
+			for (idx = CurrentSTCA.begin(); idx != CurrentSTCA.end(); idx++) {
+				if ((targetAc.Callsign == idx->CallsignB && acTest.Callsign == idx->CallsignA) || (targetAc.Callsign == idx->CallsignA && acTest.Callsign == idx->CallsignB)) {
+					alreadyExist = true;
+					break;
+				}
 			}
-		}
 
-		// Check validity of aircraft and delete if 1 aircraft becomes irrelevant
-		if (alreadyExist) {
-			// Check relevance
-			if (!CUtils::IsAircraftRelevant(screen, target)) {
-				// Not relevant so remove from map and return
-				CurrentSTCA.erase(idx);
-				return;
+			// Check validity of aircraft and delete if 1 aircraft becomes irrelevant
+			if (alreadyExist) {
+				// Check relevance
+				if (!CUtils::IsAircraftRelevant(screen, target)) {
+					// Not relevant so remove from map and return
+					CurrentSTCA.erase(idx);
+					return;
+				}
 			}
-		}
 
-		// Now we switch the status
-		switch (status.ConflictStatus) {
+			// Now we switch the status
+			switch (status.ConflictStatus) {
 			case CConflictStatus::CRITICAL:
 				// Check if they already exist
 				if (alreadyExist) {
@@ -561,309 +563,328 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 					CurrentSTCA.erase(idx);
 				}
 				break;
+			}
 		}
+	}
+	catch (exception & ex) {
+		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Target: " + string(target->GetCallsign()) + "\nVerbose details: " + *ex.what(), "CConflictDetection::CheckSTCA");
 	}
 }
 
 CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatus* aircraftA, CAircraftStatus* aircraftB) {
-	// Get aircraft headings, altitudes and speeds
-	double hdgA = aircraftA->Heading;
-	double hdgB = aircraftB->Heading;
-	int altA = aircraftA->Altitude;
-	int altB = aircraftB->Altitude;
-	int gsA = aircraftA->GroundSpeed;
-	int gsB = aircraftB->GroundSpeed;
+	// Default status obj
+	CSepStatus status;
+	CTrackStatus trackStatus = CTrackStatus::NA;
+	CAircraftFlightPlan fp1;
+	CAircraftFlightPlan fp2;
 
 	// Targets
 	CRadarTarget targetA = screen->GetPlugIn()->RadarTargetSelect(aircraftA->Callsign.c_str());
 	CRadarTarget targetB = screen->GetPlugIn()->RadarTargetSelect(aircraftB->Callsign.c_str());
+	try {	
+		// Get aircraft headings, altitudes and speeds
+		double hdgA = aircraftA->Heading;
+		double hdgB = aircraftB->Heading;
+		int altA = aircraftA->Altitude;
+		int altB = aircraftB->Altitude;
+		int gsA = aircraftA->GroundSpeed;
+		int gsB = aircraftB->GroundSpeed;
 
-	// vNAAATS flight plans
-	CAircraftFlightPlan fp1;
-	CAircraftFlightPlan fp2;
-	CDataHandler::GetFlightData(targetA.GetCallsign(), fp1);
-	CDataHandler::GetFlightData(targetB.GetCallsign(), fp2);
+		// vNAAATS flight plans
+		CDataHandler::GetFlightData(targetA.GetCallsign(), fp1);
+		CDataHandler::GetFlightData(targetB.GetCallsign(), fp2);
 
-	// Default status obj
-	CSepStatus status;
-	status.AltDifference = altA > altB ? altA - altB : altB - altA;
-	status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
-	status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(status.DistanceAsNM, aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(status.DistanceAsNM, aircraftB->GroundSpeed);
-	CTrackStatus trackStatus = CTrackStatus::NA;
-	status.AircraftLocations = make_pair(aircraftA->Position, aircraftB->Position);
-
-	// TODO run check to make sure that they are, in fact, on same tracks
-	// First check if aircraft are on same tracks
-	if (!(hdgB > hdgA + 4) && !(hdgB < hdgA - 4)) {
-		// They are on same tracks so check the direction
-		CAircraftStatus acA;
-		CAircraftStatus acB;
-		bool direction = CUtils::GetAircraftDirection(hdgA);
-		bool isAcAInFront = false;
-		if (direction) { // Switch the direction to get the aircraft in front
-			if (aircraftA->Position.m_Longitude > aircraftB->Position.m_Longitude) isAcAInFront = true;
-		}
-		else {
-			if (aircraftA->Position.m_Longitude < aircraftB->Position.m_Longitude) isAcAInFront = true;
-		}
-
-		// Check if on a suitable line of latitude
-		double latA = aircraftA->Position.m_Latitude;
-		double latB = aircraftB->Position.m_Latitude;
-
-		// Assign values
-		acA.Callsign = isAcAInFront ? aircraftA->Callsign : aircraftB->Callsign;
-		acB.Callsign = isAcAInFront ? aircraftB->Callsign : aircraftA->Callsign;;
-		acA.Altitude = isAcAInFront ? aircraftA->Altitude : aircraftB->Altitude;
-		acB.Altitude = isAcAInFront ? aircraftB->Altitude : aircraftA->Altitude;
-		acA.Heading = isAcAInFront ? aircraftA->Heading : aircraftB->Heading;
-		acB.Heading = isAcAInFront ? aircraftB->Heading : aircraftA->Heading;
-		acA.GroundSpeed = isAcAInFront ? aircraftA->GroundSpeed : aircraftB->GroundSpeed;
-		acB.GroundSpeed = isAcAInFront ? aircraftB->GroundSpeed : aircraftA->GroundSpeed;
-		acA.Position = isAcAInFront ? aircraftA->Position : aircraftB->Position;
-		acB.Position = isAcAInFront ? aircraftB->Position : aircraftA->Position;
-
-		// Fill the status object
-		status.AltDifference = acA.Altitude > acB.Altitude ? acA.Altitude - acB.Altitude : acB.Altitude - acA.Altitude;
-		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed);	
-		status.DistanceAsNM = acA.Position.DistanceTo(acB.Position);
-		trackStatus = CTrackStatus::SAME;
-		status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acA.GroundSpeed)
-			- CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
-	}
-	else if (!(abs(hdgA - hdgB) > (180 + 4)) && !(abs(hdgA - hdgB) < (180 - 4))) { // Check if on opposite tracks
-		// Opposite direction, we don't care about direction so just assign to status
-		CSepStatus status;
 		status.AltDifference = altA > altB ? altA - altB : altB - altA;
-		status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA + gsB);
 		status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
-		status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA + gsB) < 0 ? true : false;
-		trackStatus = CTrackStatus::OPPOSITE;
-	}
-	else { // The paths are intersecting, check whether the intercept is behind either aircraft (i.e. they will never meet)
-		// Screen coordinates and direction of aircraft
-		POINT p1 = screen->ConvertCoordFromPositionToPixel(aircraftA->Position);
-		POINT p2 = screen->ConvertCoordFromPositionToPixel(aircraftB->Position);
-		bool dir1 = CUtils::GetAircraftDirection(aircraftA->Heading);
-		bool dir2 = CUtils::GetAircraftDirection(aircraftB->Heading);
-
-		// Get intercept
-		CPosition intercept = screen->ConvertCoordFromPixelToPosition(CUtils::GetIntersectionFromPointBearing(p1, p2, aircraftA->Heading, aircraftB->Heading));
-
-		// Store result of check
-		bool isValidIntercept = true;
-
-		// Now check the coordinates against each aircraft, if point is behind the aircraft then there is no upcoming intersect
-		if (dir1) {
-			if (aircraftA->Position.m_Longitude > intercept.m_Longitude) {
-				isValidIntercept = false;
+		status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(status.DistanceAsNM, aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(status.DistanceAsNM, aircraftB->GroundSpeed);
+		status.AircraftLocations = make_pair(aircraftA->Position, aircraftB->Position);
+	
+		// TODO run check to make sure that they are, in fact, on same tracks
+		// First check if aircraft are on same tracks
+		if (!(hdgB > hdgA + 4) && !(hdgB < hdgA - 4)) {
+			// They are on same tracks so check the direction
+			CAircraftStatus acA;
+			CAircraftStatus acB;
+			bool direction = CUtils::GetAircraftDirection(hdgA);
+			bool isAcAInFront = false;
+			if (direction) { // Switch the direction to get the aircraft in front
+				if (aircraftA->Position.m_Longitude > aircraftB->Position.m_Longitude) isAcAInFront = true;
 			}
-		}
-		else {
-			if (aircraftA->Position.m_Longitude < intercept.m_Longitude) {
-				isValidIntercept = false;
+			else {
+				if (aircraftA->Position.m_Longitude < aircraftB->Position.m_Longitude) isAcAInFront = true;
 			}
-		}
-		if (dir2) {
-			if (aircraftB->Position.m_Longitude > intercept.m_Longitude) {
-				isValidIntercept = false;
-			}
-		}
-		else {
-			if (aircraftB->Position.m_Longitude < intercept.m_Longitude) {
-				isValidIntercept = false;
-			}
-		}
 
-		// Fill the status if valid intercept
-		if (isValidIntercept) {
+			// Check if on a suitable line of latitude
+			double latA = aircraftA->Position.m_Latitude;
+			double latB = aircraftB->Position.m_Latitude;
+
+			// Assign values
+			acA.Callsign = isAcAInFront ? aircraftA->Callsign : aircraftB->Callsign;
+			acB.Callsign = isAcAInFront ? aircraftB->Callsign : aircraftA->Callsign;;
+			acA.Altitude = isAcAInFront ? aircraftA->Altitude : aircraftB->Altitude;
+			acB.Altitude = isAcAInFront ? aircraftB->Altitude : aircraftA->Altitude;
+			acA.Heading = isAcAInFront ? aircraftA->Heading : aircraftB->Heading;
+			acB.Heading = isAcAInFront ? aircraftB->Heading : aircraftA->Heading;
+			acA.GroundSpeed = isAcAInFront ? aircraftA->GroundSpeed : aircraftB->GroundSpeed;
+			acB.GroundSpeed = isAcAInFront ? aircraftB->GroundSpeed : aircraftA->GroundSpeed;
+			acA.Position = isAcAInFront ? aircraftA->Position : aircraftB->Position;
+			acB.Position = isAcAInFront ? aircraftB->Position : aircraftA->Position;
+
+			// Fill the status object
+			status.AltDifference = acA.Altitude > acB.Altitude ? acA.Altitude - acB.Altitude : acB.Altitude - acA.Altitude;
+			status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed);	
+			status.DistanceAsNM = acA.Position.DistanceTo(acB.Position);
+			trackStatus = CTrackStatus::SAME;
+			status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acA.GroundSpeed)
+				- CUtils::GetTimeDistanceSpeed(acA.Position.DistanceTo(acB.Position), acB.GroundSpeed) < 0 ? true : false;
+		}
+		else if (!(abs(hdgA - hdgB) > (180 + 4)) && !(abs(hdgA - hdgB) < (180 - 4))) { // Check if on opposite tracks
+			// Opposite direction, we don't care about direction so just assign to status
+			CSepStatus status;
 			status.AltDifference = altA > altB ? altA - altB : altB - altA;
-			status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftB->GroundSpeed);
+			status.DistanceAsTime = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA + gsB);
 			status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
-			trackStatus = CUtils::GetPathAngle(hdgA, hdgB) < 45 ? CTrackStatus::RECIPROCAL : CTrackStatus::CROSSING;
-			status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA > gsB ? gsA : gsB) < 0 ? true : false;
+			status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA + gsB) < 0 ? true : false;
+			trackStatus = CTrackStatus::OPPOSITE;
 		}
-	}
+		else { // The paths are intersecting, check whether the intercept is behind either aircraft (i.e. they will never meet)
+			// Screen coordinates and direction of aircraft
+			POINT p1 = screen->ConvertCoordFromPositionToPixel(aircraftA->Position);
+			POINT p2 = screen->ConvertCoordFromPositionToPixel(aircraftB->Position);
+			bool dir1 = CUtils::GetAircraftDirection(aircraftA->Heading);
+			bool dir2 = CUtils::GetAircraftDirection(aircraftB->Heading);
 
-	// Set track status
-	status.TrackStatus = trackStatus;
+			// Get intercept
+			CPosition intercept = screen->ConvertCoordFromPixelToPosition(CUtils::GetIntersectionFromPointBearing(p1, p2, aircraftA->Heading, aircraftB->Heading));
 
-	/// Conflict status detection
-	// Are RVSM
-	bool rvsm = aircraftA->Altitude <= 41000 || aircraftB->Altitude <= 41000;
+			// Store result of check
+			bool isValidIntercept = true;
 
-	// Check altitude
-	bool verticallySeparated = true;
-	if (rvsm) {
-		if (status.AltDifference < SEPV_LOW) {
-			verticallySeparated = false;
-		}
-	}
-	else {
-		if (status.AltDifference < SEPV_HIGH) {
-			verticallySeparated = false;
-		}
-	}
-	// If either are supersonic & concorde
-	if (CUtils::GetMach(aircraftA->GroundSpeed, 573) >= 100 || CUtils::GetMach(aircraftB->GroundSpeed, 573) >= 100) {
-		// Vertical sep needs to be greater than 4000 and either type needs to be concorde
-		if (status.AltDifference < SEPV_SUPERSONIC 
-			&& (screen->GetPlugIn()->FlightPlanSelect(aircraftA->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC"
-				|| screen->GetPlugIn()->FlightPlanSelect(aircraftB->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC")) { 
-			verticallySeparated = false;
-		}
-	}
+			// Now check the coordinates against each aircraft, if point is behind the aircraft then there is no upcoming intersect
+			if (dir1) {
+				if (aircraftA->Position.m_Longitude > intercept.m_Longitude) {
+					isValidIntercept = false;
+				}
+			}
+			else {
+				if (aircraftA->Position.m_Longitude < intercept.m_Longitude) {
+					isValidIntercept = false;
+				}
+			}
+			if (dir2) {
+				if (aircraftB->Position.m_Longitude > intercept.m_Longitude) {
+					isValidIntercept = false;
+				}
+			}
+			else {
+				if (aircraftB->Position.m_Longitude < intercept.m_Longitude) {
+					isValidIntercept = false;
+				}
+			}
 
-	// Conflict flag (OK default)
-	CConflictStatus conflictStatus = CConflictStatus::OK;
+			// Fill the status if valid intercept
+			if (isValidIntercept) {
+				status.AltDifference = altA > altB ? altA - altB : altB - altA;
+				status.DistanceAsTime = gsA > gsB ? CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftA->GroundSpeed) : CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), aircraftB->GroundSpeed);
+				status.DistanceAsNM = aircraftA->Position.DistanceTo(aircraftB->Position);
+				trackStatus = CUtils::GetPathAngle(hdgA, hdgB) < 45 ? CTrackStatus::RECIPROCAL : CTrackStatus::CROSSING;
+				status.IsDistanceClosing = CUtils::GetTimeDistanceSpeed(aircraftA->Position.DistanceTo(aircraftB->Position), gsA > gsB ? gsA : gsB) < 0 ? true : false;
+			}
+		}
 
-	/// Check separation using equipment code reference
-	if (fp1.IsEquipped && fp2.IsEquipped) { // if both aircraft are AGCS Equipped
-		// Use reduced minima
-		if (status.TrackStatus == CTrackStatus::SAME || status.TrackStatus == CTrackStatus::RECIPROCAL || status.TrackStatus == CTrackStatus::OPPOSITE) {
-			if (status.DistanceAsNM <= SEPLON_REDUCEDWARN && status.DistanceAsNM >= SEPLON_REDUCED) { // Same tracks
-			// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::WARNING;
-				}
-			}
-			else if (status.DistanceAsNM < SEPLON_REDUCED) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::CRITICAL;
-				}
-			}
-		}
-		else if (status.TrackStatus == CTrackStatus::CROSSING) {
-			if (status.DistanceAsTime <= SEPLON_NONRED_X_WARN && status.DistanceAsTime >= SEPLON_NONRED_X) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::WARNING;
-				}
-			}
-			else if (status.DistanceAsTime < SEPLON_NONRED_X) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::CRITICAL;
-				}
-			}
-		}
-		
-	}
-	else {
-		// Use non-reduced minima
-		if (status.TrackStatus == CTrackStatus::SAME || status.TrackStatus == CTrackStatus::RECIPROCAL || status.TrackStatus == CTrackStatus::OPPOSITE) { // Same tracks
-			if (status.DistanceAsTime <= SEPLON_NONRED_SAME_WARN && status.DistanceAsTime >= SEPLON_NONRED_SAME) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::WARNING;
-				}
-			}
-			else if (status.DistanceAsTime < SEPLON_NONRED_SAME) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::CRITICAL;
-				}
-			}
-		}
-		else if (status.TrackStatus == CTrackStatus::CROSSING) { // Crossing tracks
-			if (status.DistanceAsTime <= SEPLON_NONRED_X_WARN && status.DistanceAsTime >= SEPLON_NONRED_X) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::WARNING;
-				}
-			}
-			else if (status.DistanceAsTime < SEPLON_NONRED_X) {
-				// Distance not met, so check altitude
-				if (!verticallySeparated) {
-					conflictStatus = CConflictStatus::CRITICAL;
-				}
-			}
-		}
-	}
 	
 
-	// Last positions
-	CPosition targetALast = targetA.GetPreviousPosition(targetA.GetPosition()).GetPosition();
-	CPosition targetBLast = targetB.GetPreviousPosition(targetB.GetPosition()).GetPosition();
+		// Set track status
+		status.TrackStatus = trackStatus;
 
-	// If last position distance closer than the current position distance they are heading away from each other and no conflict
-	if (targetALast.DistanceTo(targetBLast) < targetA.GetPosition().GetPosition().DistanceTo(targetB.GetPosition().GetPosition()) 
-		&& targetALast.DistanceTo(targetBLast) > 5 && status.TrackStatus != CTrackStatus::OPPOSITE) { // Greater than 5 miles away to remove the conflict
-		// No conflict
-		conflictStatus = CConflictStatus::OK;
+		/// Conflict status detection
+		// Are RVSM
+		bool rvsm = aircraftA->Altitude <= 41000 || aircraftB->Altitude <= 41000;
+
+		// Check altitude
+		bool verticallySeparated = true;
+		if (rvsm) {
+			if (status.AltDifference < SEPV_LOW) {
+				verticallySeparated = false;
+			}
+		}
+		else {
+			if (status.AltDifference < SEPV_HIGH) {
+				verticallySeparated = false;
+			}
+		}
+		// If either are supersonic & concorde
+		if (CUtils::GetMach(aircraftA->GroundSpeed, 573) >= 100 || CUtils::GetMach(aircraftB->GroundSpeed, 573) >= 100) {
+			// Vertical sep needs to be greater than 4000 and either type needs to be concorde
+			if (status.AltDifference < SEPV_SUPERSONIC 
+				&& (screen->GetPlugIn()->FlightPlanSelect(aircraftA->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC"
+					|| screen->GetPlugIn()->FlightPlanSelect(aircraftB->Callsign.c_str()).GetFlightPlanData().GetAircraftFPType() == "CONC")) { 
+				verticallySeparated = false;
+			}
+		}
+
+		// Conflict flag (OK default)
+		CConflictStatus conflictStatus = CConflictStatus::OK;
+
+		/// Check separation using equipment code reference
+		if (fp1.IsEquipped && fp2.IsEquipped) { // if both aircraft are AGCS Equipped
+			// Use reduced minima
+			if (status.TrackStatus == CTrackStatus::SAME || status.TrackStatus == CTrackStatus::RECIPROCAL || status.TrackStatus == CTrackStatus::OPPOSITE) {
+				if (status.DistanceAsNM <= SEPLON_REDUCEDWARN && status.DistanceAsNM >= SEPLON_REDUCED) { // Same tracks
+				// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::WARNING;
+					}
+				}
+				else if (status.DistanceAsNM < SEPLON_REDUCED) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::CRITICAL;
+					}
+				}
+			}
+			else if (status.TrackStatus == CTrackStatus::CROSSING) {
+				if (status.DistanceAsTime <= SEPLON_NONRED_X_WARN && status.DistanceAsTime >= SEPLON_NONRED_X) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::WARNING;
+					}
+				}
+				else if (status.DistanceAsTime < SEPLON_NONRED_X) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::CRITICAL;
+					}
+				}
+			}
+		
+		}
+		else {
+			// Use non-reduced minima
+			if (status.TrackStatus == CTrackStatus::SAME || status.TrackStatus == CTrackStatus::RECIPROCAL || status.TrackStatus == CTrackStatus::OPPOSITE) { // Same tracks
+				if (status.DistanceAsTime <= SEPLON_NONRED_SAME_WARN && status.DistanceAsTime >= SEPLON_NONRED_SAME) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::WARNING;
+					}
+				}
+				else if (status.DistanceAsTime < SEPLON_NONRED_SAME) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::CRITICAL;
+					}
+				}
+			}
+			else if (status.TrackStatus == CTrackStatus::CROSSING) { // Crossing tracks
+				if (status.DistanceAsTime <= SEPLON_NONRED_X_WARN && status.DistanceAsTime >= SEPLON_NONRED_X) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::WARNING;
+					}
+				}
+				else if (status.DistanceAsTime < SEPLON_NONRED_X) {
+					// Distance not met, so check altitude
+					if (!verticallySeparated) {
+						conflictStatus = CConflictStatus::CRITICAL;
+					}
+				}
+			}
+		}
+	
+
+		// Last positions
+		CPosition targetALast = targetA.GetPreviousPosition(targetA.GetPosition()).GetPosition();
+		CPosition targetBLast = targetB.GetPreviousPosition(targetB.GetPosition()).GetPosition();
+
+		// If last position distance closer than the current position distance they are heading away from each other and no conflict
+		if (targetALast.DistanceTo(targetBLast) < targetA.GetPosition().GetPosition().DistanceTo(targetB.GetPosition().GetPosition()) 
+			&& targetALast.DistanceTo(targetBLast) > 5 && status.TrackStatus != CTrackStatus::OPPOSITE) { // Greater than 5 miles away to remove the conflict
+			// No conflict
+			conflictStatus = CConflictStatus::OK;
+		}
+
+		// Assign conflict status
+		status.ConflictStatus = conflictStatus;
+
 	}
-
-	// Assign conflict status
-	status.ConflictStatus = conflictStatus;
+	catch (exception & ex) {
+		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Acft A: " + aircraftA->Callsign + ". Acft B: " + aircraftB->Callsign + "\nVerbose details: " + *ex.what(), "CConflictDetection::DetectStatus");
+	}
 
 	// Return the status
 	return status;
 }
 
 vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* screen, string callsign, int groundSpeed, int altitude, int pivID) {
-	// Get the route
-	vector<CRoutePosition> route;
-	CRoutesHelper::GetRoute(screen, &route, callsign);
-
-	if (pivID == 1) {
-		PIVRoute1 = route;
-	}
-	else {
-		PIVRoute2 = route;
-	}
-
 	// Status vector
 	vector<CAircraftStatus> statuses;
+	try {
+		// Get the route
+		vector<CRoutePosition> route;
+		CRoutesHelper::GetRoute(screen, &route, callsign);
 
-	// Aircraft position
-	CPosition acPos = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetPosition();
-
-	// Iterate
-	int counter = 0; // Counter to check if not first pass
-	CPosition prevPos; // Previous position
-	int totalTime = 0;
-	for (int i = 0; i < route.size(); i++) {
-		if (route.at(i).Estimate == "--") { // If fix has been passed then continue
-			continue;
-		}
-
-		// Get the time
-		int time = CUtils::GetTimeDistanceSpeed(route.at(i).DistanceFromLastPoint, groundSpeed);
-
-		// Get the heading
-		int heading;
-		if (counter == 0) { // If the position is the aircraft's location then get that direction
-			heading = acPos.DirectionTo(route.at(i).PositionRaw);
-			prevPos = acPos;
-			counter++;
+		if (pivID == 1) {
+			PIVRoute1 = route;
 		}
 		else {
-			// Get the direction from point to point
-			heading = prevPos.DirectionTo(route.at(i).PositionRaw);
+			PIVRoute2 = route;
 		}
 
-		// Iterate through the times and get the points
-		for (int j = 0; j < time; j++) {
-			totalTime++;
-			CAircraftStatus status;
-			status.Callsign = callsign;
-			status.Altitude = altitude;
-			status.GroundSpeed = groundSpeed;
-			status.Heading = heading;
-			status.Estimate = totalTime;
-			if (statuses.empty()) {
-				status.Position = acPos;
+		// Aircraft position
+		CPosition acPos = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetPosition();
+
+		// Iterate
+		int counter = 0; // Counter to check if not first pass
+		CPosition prevPos; // Previous position
+		int totalTime = 0;
+		for (int i = 0; i < route.size(); i++) {
+			if (route.at(i).Estimate == "--") { // If fix has been passed then continue
+				continue;
+			}
+
+			// Get the time
+			int time = CUtils::GetTimeDistanceSpeed(route.at(i).DistanceFromLastPoint, groundSpeed);
+
+			// Get the heading
+			int heading;
+			if (counter == 0) { // If the position is the aircraft's location then get that direction
+				heading = acPos.DirectionTo(route.at(i).PositionRaw);
+				prevPos = acPos;
+				counter++;
 			}
 			else {
-				status.Position = CUtils::GetPointDistanceBearing(prevPos, ((route.at(i).DistanceFromLastPoint * 1852) / time) * j, heading);
+				// Get the direction from point to point
+				heading = prevPos.DirectionTo(route.at(i).PositionRaw);
 			}
-			// Add status
-			statuses.push_back(status);
-		}
 
-		// Reassign previous position variable
-		prevPos = route.at(i).PositionRaw;
+			// Iterate through the times and get the points
+			for (int j = 0; j < time; j++) {
+				totalTime++;
+				CAircraftStatus status;
+				status.Callsign = callsign;
+				status.Altitude = altitude;
+				status.GroundSpeed = groundSpeed;
+				status.Heading = heading;
+				status.Estimate = totalTime;
+				if (statuses.empty()) {
+					status.Position = acPos;
+				}
+				else {
+					status.Position = CUtils::GetPointDistanceBearing(prevPos, ((route.at(i).DistanceFromLastPoint * 1852) / time) * j, heading);
+				}
+				// Add status
+				statuses.push_back(status);
+			}
+
+			// Reassign previous position variable
+			prevPos = route.at(i).PositionRaw;
+		}
+	}
+	catch (exception & ex) {
+		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CConflictDetection::GetStatusesAlongRoute");
 	}
 
 	// Return
@@ -871,12 +892,13 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* 
 }
 
 vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoutePoints(CRadarScreen* screen, string callsign, int groundSpeed, int altitude) {
+	// Status vector
+	vector<CAircraftStatus> statuses;
+
+	try {
 	// Get the route
 	vector<CRoutePosition> route;
 	CRoutesHelper::GetRoute(screen, &route, callsign);
-
-	// Status vector
-	vector<CAircraftStatus> statuses;
 
 	// Aircraft position
 	CPosition acPos = screen->GetPlugIn()->RadarTargetSelect(callsign.c_str()).GetPosition().GetPosition();
@@ -923,6 +945,11 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoutePoints(CRadarSc
 
 		// Reassign previous position variable
 		prevPos = route.at(i).PositionRaw;
+	}
+	}
+	catch (exception & ex) {
+		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CConflictDetection::GetStatusesAlongRoutePoints");
 	}
 
 	// Return

@@ -13,15 +13,15 @@ CMenuBar::CMenuBar() {
 	// Button defaults
 	buttons[BTN_SETUP] = CWinButton(BTN_SETUP, MENBAR, "Setup", CInputState::DISABLED, 46);
 	buttons[BTN_NOTEPAD] = CWinButton(BTN_NOTEPAD, MENBAR, "NotePad", CInputState::DISABLED, 78);
-	buttons[BTN_ADSC] = CWinButton(BTN_ADSC, MENBAR, "Contracts", CInputState::DISABLED, 73);
+	buttons[BTN_ADSC] = CWinButton(BTN_ADSC, MENBAR, "Flight Data", CInputState::INACTIVE, 80);
 	buttons[BTN_TCKINFO] = CWinButton(BTN_TCKINFO, MENBAR, "Track Info", CInputState::INACTIVE, 78);
 	buttons[BTN_MISC] = CWinButton(BTN_MISC, MENBAR, "Misc", CInputState::DISABLED, 41);
-	buttons[BTN_MESSAGE] = CWinButton(BTN_MESSAGE, MENBAR, "Message", CInputState::DISABLED, 73);
+	buttons[BTN_MESSAGE] = CWinButton(BTN_MESSAGE, MENBAR, "Message", CInputState::DISABLED, 75);
 	buttons[BTN_TAGS] = CWinButton(BTN_TAGS, MENBAR, "Tags", CInputState::ACTIVE, 46);
 	buttons[BTN_FLIGHTPLAN] = CWinButton(BTN_FLIGHTPLAN, MENBAR, "Flight Plan", CInputState::DISABLED, 78);
-	buttons[BTN_DETAILED] = CWinButton(BTN_DETAILED, MENBAR, "Detailed", CInputState::INACTIVE, 73);
+	buttons[BTN_DETAILED] = CWinButton(BTN_DETAILED, MENBAR, "ASEL Dtld", CInputState::INACTIVE, 80);
 	buttons[BTN_AREASEL] = CWinButton(BTN_AREASEL, MENBAR, "Area Sel", CInputState::DISABLED, 83);
-	buttons[BTN_TCKCTRL] = CWinButton(BTN_TCKCTRL, MENBAR, "Tck Control", CInputState::INACTIVE, 88);
+	buttons[BTN_TCKCTRL] = CWinButton(BTN_TCKCTRL, MENBAR, "Tck Control", CInputState::DISABLED, 88);
 	buttons[BTN_OVERLAYS] = CWinButton(BTN_OVERLAYS, MENBAR, "Overlays", CInputState::INACTIVE, 73);
 	buttons[BTN_TYPESEL] = CWinButton(BTN_TYPESEL, MENBAR, "Select", CInputState::DISABLED, 68);
 	buttons[BTN_ALTFILT] = CWinButton(BTN_ALTFILT, MENBAR, "Alt Filter", CInputState::INACTIVE, 86);
@@ -36,8 +36,8 @@ CMenuBar::CMenuBar() {
 	buttons[BTN_QCKLOOK] = CWinButton(BTN_QCKLOOK, MENBAR, "Qck Look", CInputState::DISABLED, 86);
 	buttons[BTN_PSSR] = CWinButton(BTN_PSSR, MENBAR, "PSR_SYMBOL", CInputState::DISABLED, 40);
 	buttons[BTN_EXT] = CWinButton(BTN_EXT, MENBAR, "Ext", CInputState::INACTIVE, 40);
-	buttons[BTN_AUTOTAG] = CWinButton(BTN_AUTOTAG, MENBAR, "Auto Tag", CInputState::DISABLED, 75);
-	buttons[BTN_ALL] = CWinButton(BTN_ALL, MENBAR, "ALL", CInputState::INACTIVE, 40);
+	buttons[BTN_AUTOTAG] = CWinButton(BTN_AUTOTAG, MENBAR, "Auto Tag", CInputState::INACTIVE, 75);
+	buttons[BTN_ALL] = CWinButton(BTN_ALL, MENBAR, "ALL", CInputState::DISABLED, 40);
 	buttons[BTN_RTEDEL] = CWinButton(BTN_RTEDEL, MENBAR, "Rte Del", CInputState::INACTIVE, 75);
 
 	// Text inputs
@@ -56,7 +56,6 @@ CMenuBar::CMenuBar() {
 	map.insert(make_pair("TCKS_EAST", false));
 	map.insert(make_pair("TCKS_WEST", false));
 	map.insert(make_pair("TCKS_SEL", false));
-	map.insert(make_pair("TCKS_ACTV", false));
 	dropDowns[DRP_OVERLAYS] = CDropDown(DRP_OVERLAYS, MENBAR, "ALL_TCKS", &map, CInputState::INACTIVE, 113);
 	map.clear();
 	map.insert(make_pair("Delivery", false));
@@ -141,6 +140,9 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 			case BTN_TCKCTRL:
 				offsetIsItemSize = false;
 				break;
+			case BTN_RINGS:
+				offsetIsItemSize = true;
+				break;
 			case BTN_OVERLAYS:
 				offsetX += 164;
 				break;
@@ -182,7 +184,7 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 		}
 
 		// Button rendering
-		if (kv.first != BTN_AREASEL)
+		if (kv.first != BTN_AREASEL && kv.first != BTN_TYPESEL && kv.first != BTN_RINGS)
 			CCommonRenders::RenderButton(dc, screen, { offsetX, offsetY }, kv.second.Width, 30, &kv.second);
 
 		// Text alignment
@@ -190,7 +192,7 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 
 		// Text rendering
 		if (kv.first == BTN_DETAILED) {
-			text = "ASEL: " + (asel == "" ? "None" : asel);
+			text = "Selected: " + (asel == "" ? "None" : asel);
 			dc->TextOutA(offsetX + kv.second.Width + 4, offsetY + 7, text.c_str());
 		}
 		else if (kv.first == BTN_OVERLAYS) {
@@ -230,6 +232,9 @@ void CMenuBar::RenderBar(CDC* dc, Graphics* g, CRadarScreen* screen, string asel
 			case DRP_TYPESEL:
 				offsetX = RECT1_WIDTH + RECT2_WIDTH + 10;
 				offsetIsItemSize = false;
+				break;
+			case DRP_AREASEL:
+				offsetX = RECT1_WIDTH + 10;
 				break;
 		}
 
@@ -378,10 +383,22 @@ void CMenuBar::SetDropDownValue(int id, int value) {
 void CMenuBar::ButtonDown(int id) {
 	if (id == BTN_RTEDEL)
 		SetButtonState(id, CInputState::ACTIVE);
+
+	if (id == BTN_ADSC) 
+		SetButtonState(id, CInputState::ACTIVE);
+
+	if (id == BTN_AUTOTAG)
+		SetButtonState(id, CInputState::ACTIVE);
 }
 
 void CMenuBar::ButtonUp(int id) {
 	if (id == BTN_RTEDEL)
+		SetButtonState(id, CInputState::INACTIVE);
+
+	if (id == BTN_ADSC)
+		SetButtonState(id, CInputState::INACTIVE);
+
+	if (id == BTN_AUTOTAG)
 		SetButtonState(id, CInputState::INACTIVE);
 }
 
@@ -412,16 +429,13 @@ void CMenuBar::ButtonPress(int id, int button, CRadarScreen* screen = nullptr) {
 					case 800: // ALL_TCKS
 						COverlays::CurrentType = COverlayType::TCKS_ALL;
 						break;
-					case 801: // TCKS_ACTV
-						COverlays::CurrentType = COverlayType::TCKS_ACTV;
-						break;
-					case 802: // TCKS_EAST
+					case 801: // TCKS_EAST
 						COverlays::CurrentType = COverlayType::TCKS_EAST;
 						break;
-					case 803: // TCKS_SEL
+					case 802: // TCKS_SEL
 						COverlays::CurrentType = COverlayType::TCKS_SEL;
 						break;
-					case 804: // TCKS_WEST
+					case 803: // TCKS_WEST
 						COverlays::CurrentType = COverlayType::TCKS_WEST;
 						break;
 				}
@@ -562,6 +576,12 @@ void CMenuBar::ButtonUnpress(int id, int button, CRadarScreen* screen) {
 	// Grid
 	if (id == BTN_GRID) {
 		COverlays::ShowHideGridReference(screen, false);
+	}
+
+	// Flight data display
+	if (id == BTN_ADSC) {
+		// Open the FDD
+		ShellExecute(NULL, "open", "https://vnaaats.net/fdd/", NULL, NULL, SW_SHOWNORMAL);
 	}
 }
 

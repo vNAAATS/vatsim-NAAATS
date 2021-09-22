@@ -128,7 +128,7 @@ void CTrackInfoWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen, 
 	int offsetX = 25;
 	int offsetY = 25;
 	int contentOffsetY = 25;
-	string spacer = "SPACE"; // To use GetTextExtent() for a consistent sized spacer
+	string spacer = "SPACER"; // To use GetTextExtent() for a consistent sized spacer
 	// Draw lines
 	for (auto kv : CRoutesHelper::CurrentTracks) {
 		int content = (int)scrollContent.top + contentOffsetY;

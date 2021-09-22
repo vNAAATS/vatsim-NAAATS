@@ -419,7 +419,7 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	}
 }
 
-POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status) {	
+POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status, string asel) {	
 	// 2 second timer
 	double twoSecT = (double)(clock() - twoSecondTimer) / ((double)CLOCKS_PER_SEC);
 
@@ -429,7 +429,6 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 	// Get the aircraft's position and flight plan
 	POINT acPoint = screen->ConvertCoordFromPositionToPixel(target->GetPosition().GetPosition());
 	CFlightPlan acFP = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
-
 	CAircraftFlightPlan fp;
 	CDataHandler::GetFlightData(acFP.GetCallsign(), fp);
 
@@ -452,30 +451,30 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 				// Detailed
 
 				if (direction) {
-					tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 66);
+					tagRect = CRect(acPoint.x - 112, acPoint.y + 10, acPoint.x - 25, acPoint.y + 42);
 				}
 				else {
-					tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 10);
+					tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 127, acPoint.y + 8);
 				}
 			}
 			else {
 				// Not detailed
 				if (direction) {
-					tagRect = CRect(acPoint.x - 110, acPoint.y + 10, acPoint.x - 25, acPoint.y + 40);
+					tagRect = CRect(acPoint.x - 112, acPoint.y + 10, acPoint.x - 25, acPoint.y + 42);
 				}
 				else {
-					tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 125, acPoint.y + 5);
+					tagRect = CRect(acPoint.x + 40, acPoint.y - 25, acPoint.x + 127, acPoint.y + 8);
 				}
 			}
 		}
 		else {
 			if (tagPosition->first == true) {
 				// Detailed
-				tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 56);
+				tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 88, (acPoint.y + tagOffsetY) + 33);
 			}
 			else {
 				// Not Detailed
-				tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 85, (acPoint.y + tagOffsetY) + 30);
+				tagRect = CRect(acPoint.x + tagOffsetX, acPoint.y + tagOffsetY, (acPoint.x + tagOffsetX) + 88, (acPoint.y + tagOffsetY) + 33);
 			}
 		}
 
@@ -522,9 +521,8 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		dc->SetTextAlign(TA_LEFT);
 		string text;
 
-		
 		// Offsets
-		int offsetX = 0;
+		int offsetX = 2;
 		int offsetY = 0;
 
 		// Callsign handoff initiated
@@ -533,10 +531,23 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 				dc->SetTextColor(TextWhite.ToCOLORREF());
 		}
 
+		// Draw purple callsign if not cleared yet and 15 minutes out or already in airspace
+		if (!fp.IsCleared && acFP.GetSectorEntryMinutes() < 15 && acFP.GetSectorEntryMinutes() > -1) {
+			dc->SetTextColor(NoClearance.ToCOLORREF());
+		}
+
 		// Callsign
 		text = acFP.GetCallsign();
 		dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
 		offsetY += 15;
+
+		// Orange if observer
+		if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
+			if (position.m_Longitude > -70 && position.m_Longitude < -5)
+				textColour = TargetOrange.ToCOLORREF();
+			if (position.m_Latitude < 80 && position.m_Longitude < -35)
+				textColour = TargetOrange.ToCOLORREF();
+		}
 
 		// Conflict
 		if (status->ConflictStatus == CConflictStatus::CRITICAL) { // Deselect white
@@ -547,15 +558,8 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		// Handoff
 		if (isHandoffToMe) {
 			textColour = TextWhite.ToCOLORREF();
-		}
+		}		
 
-		// Orange if observer
-		if (!screen->GetPlugIn()->ControllerMyself().IsController()) {
-			if (position.m_Longitude > -70 && position.m_Longitude < -5)
-				textColour = TargetOrange.ToCOLORREF();
-			if (position.m_Latitude < 80 && position.m_Longitude < -35)
-				textColour = TargetOrange.ToCOLORREF();
-		}
 		FontSelector::SelectMonoFont(12, dc);
 		dc->SetTextColor(textColour);
 		text = to_string(target->GetPosition().GetFlightLevel() / 100);
@@ -564,14 +568,10 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 
 		// Mach
 		int gs = target->GetPosition().GetReportedGS();
-		if (atoi(text.c_str()) > 460) {
-			text = "M" + to_string(CUtils::GetMach(gs, 573));
-		}
-		else {
-			text = "M" + to_string(acFP.GetFlightPlanData().PerformanceGetMach(target->GetPosition().GetPressureAltitude(), target->GetVerticalSpeed()));
-		}
+		text = "N" + to_string(gs);
+
 		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
-		offsetX = 0;
+		offsetX = 2;
 
 		// Handoff initiated
 		if (isHandoffToMe) {
@@ -590,7 +590,7 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 			offsetY -= 15;
 			text = "*";
 			dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
-			offsetY += 15;
+			offsetY += 13;
 		}
 
 		if (tagPosition->first == true) {
@@ -602,24 +602,49 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 			// Destination
 			text = acFP.GetFlightPlanData().GetDestination();
 			dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
+
+			tagRect.bottom += 25;
 		}
 
+		// Draw box if they are the asel
+		if (acFP.GetCallsign() == asel) {
+			// Draw purple box if not cleared yet and 15 minutes out or already in airspace
+			if (!fp.IsCleared && (acFP.GetSectorEntryMinutes() < 15 && acFP.GetSectorEntryMinutes() > -1)) {
+				dc->Draw3dRect(tagRect, NoClearance.ToCOLORREF(), NoClearance.ToCOLORREF());
+			} else {
+				dc->Draw3dRect(tagRect, textColour, textColour);
+			}	
+		}
+				
 		/// Tag line
 		CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
 
 		// Pen
 		CPen pen(PS_SOLID, 1, textColour);
+		SolidBrush white(TextWhite);
 		dc->SelectObject(pen);
 		int tagMiddle = tagRect.left + ((tagRect.right - tagRect.left) / 2);
 
 		// Dog leg
 		if ((tagRect.left + txtExtent.cx + 5) < acPoint.x) {
 			dc->MoveTo({ tagRect.left + txtExtent.cx + 2, tagRect.top + 8 });
+
+			// Position
 			if ((tagRect.right - (tagRect.right - acPoint.x)) > (tagRect.left + txtExtent.cx + 5)) {
 				if ((tagRect.right - (tagRect.right - acPoint.x)) < tagRect.right + 5) {
 					dc->LineTo({ tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 8 });
+					// Draw cleared dot TODO enhance this
+					/*Rect temp(tagRect.right - (tagRect.right - acPoint.x), tagRect.top + 8, 
+						tagRect.right - (tagRect.right - acPoint.x) + 1, tagRect.top + 9);
+					if (!fp.IsCleared && !(acFP.GetSectorExitMinutes() > 15 || acFP.GetSectorExitMinutes() == -1))
+						g->FillEllipse(&white, temp);*/
 				}
 				else {
+					// Draw cleared dot TODO enhance this
+					/*Rect temp(tagRect.right + 5, tagRect.top + 8,
+						tagRect.right + 6, tagRect.top + 9);
+					if (!fp.IsCleared && !(acFP.GetSectorExitMinutes() > 15 || acFP.GetSectorExitMinutes() == -1))
+						g->FillEllipse(&white, temp);*/
 					dc->LineTo({ tagRect.right + 5, tagRect.top + 8 });
 				}
 				dc->LineTo({ acPoint.x, acPoint.y });
@@ -628,11 +653,21 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 		else { // Line to target
 			dc->MoveTo({ tagRect.left - 2, tagRect.top + 8 });
 
-
+			// Position
 			if (tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2) > tagRect.left - 10) {
 				dc->LineTo({ tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2), tagRect.top + 8 });
+				// Draw cleared dot TODO enhance this
+				/*Rect temp(tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2), tagRect.top + 8, 
+					tagRect.left - (tagRect.left - acPoint.x) - (txtExtent.cx + 2) + 1, tagRect.top + 9);
+				if (!fp.IsCleared && !(acFP.GetSectorExitMinutes() > 15 || acFP.GetSectorExitMinutes() == -1))
+					g->FillEllipse(&white, temp);*/
 			}
 			else {
+				// Draw cleared dot TODO enhance this
+				/*Rect temp(tagRect.left - 10, tagRect.top + 8,
+					tagRect.left - 9, tagRect.top + 9);
+				if (!fp.IsCleared && !(acFP.GetSectorExitMinutes() > 15 || acFP.GetSectorExitMinutes() == -1))
+					g->FillEllipse(&white, temp);*/
 				dc->LineTo({ tagRect.left - 10, tagRect.top + 8 });
 			}
 			dc->LineTo(acPoint);
@@ -643,13 +678,14 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 
 		// Now create screen object for callsign
 		CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(acFP.GetCallsign()).cx, tagRect.top + dc->GetTextExtent(acFP.GetCallsign()).cy);
-		screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, "Callsign clicked");
+		screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
 
 		// Restore context
 		dc->RestoreDC(sDC);
 
 		// Clean up
 		DeleteObject(pen);
+		DeleteObject(&white);
 		DeleteObject(&textColour);
 
 		// Compute render time and store it
@@ -663,7 +699,7 @@ POINT CAcTargets::RenderTag(CDC* dc, CRadarScreen* screen, CRadarTarget* target,
 
 		return { tagRect.left, tagRect.top };		
 	}
-	catch (exception & e) {
+	catch (exception &e) {
 		// Log inside EuroScope
 		screen->GetPlugIn()->DisplayUserMessage("vNAAATS", "Error", string(string(e.what())).c_str(), true, true, true, true, true);
 
