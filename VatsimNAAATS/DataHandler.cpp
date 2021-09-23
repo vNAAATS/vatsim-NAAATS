@@ -12,15 +12,14 @@
 using json = nlohmann::json;
 using namespace ApiKeys;
 
-const string CDataHandler::TrackURL = "https://tracks.ganderoceanic.ca/data";
-const string CDataHandler::EventTrackUrl = "https://cdn.ganderoceanic.ca/resources/data/eventTracks.json";
+const string CDataHandler::TrackURL = "https://api.vnaaats.net/GetAllNatTracks";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
-const string CDataHandler::PluginVersion = "https://raw.githubusercontent.com/vNAAATS/vatsim-NAAATS/v1.3/pluginversion.txt";
-const string CDataHandler::TrackSource = "https://vnaaats-net.ganderoceanic.ca/api/GetTrackSource";
-const string CDataHandler::GetSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataSingleGet?callsign=";
-const string CDataHandler::PostSingleAircraft = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataNewPost?code=" + ApiKeys::FUNC_KEY;
-const string CDataHandler::FlightDataUpdate = "https://vnaaats-net.ganderoceanic.ca/api/FlightDataUpdate?code=" + ApiKeys::FUNC_KEY;
+const string CDataHandler::PluginVersion = "https://raw.githubusercontent.com/vNAAATS/vatsim-NAAATS/master/pluginversion.txt";
+const string CDataHandler::TrackSource = "https://api.vnaaats.net/GetTrackSource";
+const string CDataHandler::GetSingleAircraft = "https://api.vnaaats.net/GetSingleFlightData?callsign=";
+const string CDataHandler::PostSingleAircraft = "https://api.vnaaats.net/PostFlightData?code=" + ApiKeys::FUNC_KEY;
+const string CDataHandler::FlightDataUpdate = "https://api.vnaaats.net/UpdateFlightData?code=" + ApiKeys::FUNC_KEY;
 
 int CDataHandler::CheckPluginVersion(CPlugIn* plugin)
 {
@@ -84,7 +83,8 @@ int CDataHandler::PopulateLatestTrackData(CPlugIn* plugin) {
 	string responseString;
 	try {
 		// Convert URL to LPCSTR type
-		LPCSTR lpcURL = GetTrackSource(plugin) == 0 ? TrackURL.c_str() : EventTrackUrl.c_str();
+		string eventTracks = TrackURL + "?event=true";
+		LPCSTR lpcURL = GetTrackSource(plugin) == 0 ? TrackURL.c_str() : eventTracks.c_str();
 
 		// Delete cache data
 		DeleteUrlCacheEntry(lpcURL);
