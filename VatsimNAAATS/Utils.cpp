@@ -90,7 +90,7 @@ bool CUtils::WrapText(CDC* dc, string textToWrap, char wrapChar, int contentWidt
 
 bool CUtils::StringSplit(string str, char splitBy, vector<string>* ptrTokens) {
 	// Error if token does not exist
-	if (str.find('/') == string::npos) {
+	if (str.find(splitBy) == string::npos) {
 		return 1;
 	}
 

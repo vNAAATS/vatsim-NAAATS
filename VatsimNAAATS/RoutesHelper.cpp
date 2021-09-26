@@ -107,8 +107,8 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 		// First we check if they have a route string
 		if (fp != nullptr && !fp->RouteRaw.empty() && fp->RouteRaw.size() > 0) { // Get their route as per the route string
 			// We check now if they have a track
-			if (fp->Track != "RR") {
-				if (fp->Track.size() < 2) {
+			if (fp->Track != "RR" && CurrentTracks.find(fp->Track) != CurrentTracks.end()) {
+				if (fp->Track.size() < 2 ) {
 					for (int i = 0; i < CurrentTracks.find(fp->Track)->second.RouteRaw.size(); i++) {
 						CWaypoint point;
 						point.Name = CurrentTracks.find(fp->Track)->second.Route[i];
