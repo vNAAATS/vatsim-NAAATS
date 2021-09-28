@@ -1913,7 +1913,10 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 		for (int i = 0; i < fp->RouteRaw.size(); i++) {
 			route += fp->RouteRaw[i] + " ";
 		}
-		route.pop_back(); // Get rid of extra space
+
+		// Get rid of extra space
+		if (route.size() != 0)
+			route.pop_back(); 
 
 		// Set input states to disabled
 		SetButtonState(BTN_ATCR, CInputState::DISABLED);
