@@ -285,3 +285,53 @@ class ConfirmTests(Base):
         self.assertEqual(r.entry_info("A B C", "1230 1300 1330", 12 * 60), (30, "A", "1230"))
         self.assertEqual(r.entry_info("A B C", "-- 1300 1330", 12 * 60), (60, "B", "1300"))
         self.assertEqual(r.entry_info("A B", "-- --", 0), (None, "", ""))
+
+
+class StuckTests(Base):
+    """The 'Sending reminder' box must never stay up once nothing is being typed."""
+    def setUp(self):
+        Base.setUp(self)
+        self.rcl.confirm = True
+
+    def release(self):
+        self.poll()
+        self.rcl.tick()
+        self.rcl.send_now()
+        self.assertGreater(self.rcl.status()["sending"], 0)
+
+    def test_switching_off_clears_sending(self):
+        self.release()
+        self.rcl.set_enabled(False)
+        st = self.rcl.status()
+        self.assertEqual((st["sending"], st["inflight"], st["batch"]["total"]), (0, 0, 0))
+
+    def test_sender_leaving_clears_sending(self):
+        self.release()
+        self.t[0] += r.POLLER_FRESH_SECONDS + 5                         # plugin stopped polling
+        self.assertEqual(self.rcl.status()["sending"], 0)
+
+    def test_stalled_batch_is_abandoned(self):
+        self.release()
+        self.t[0] += r.STALL_SECONDS + 1
+        self.poll()
+        self.assertEqual(self.rcl.status()["sending"], 0)
+
+    def test_unanswered_command_expires_and_is_marked_failed(self):
+        self.release()
+        self.poll()
+        self.assertEqual(self.rcl.tick(), "BAW1")
+        self.assertEqual(self.rcl.status()["inflight"], 1)
+        self.t[0] += r.INFLIGHT_SECONDS + 1
+        self.poll()
+        st = self.rcl.status()
+        self.assertEqual((st["inflight"], st["sending"]), (0, 0))
+        self.assertEqual(st["batch"]["failed"], ["BAW1"])
+
+    def test_stop_cancels_an_uncollected_command(self):
+        self.release()
+        self.poll()
+        self.rcl.tick()
+        self.rcl.stop()
+        self.assertEqual(self.q.pending_for("CZQO_CTR"), [])           # never handed to the plugin
+        self.assertEqual(self.rcl.status()["sending"], 0)
+

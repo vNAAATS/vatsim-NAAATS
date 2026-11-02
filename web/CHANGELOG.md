@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Fix: the Auto RCL "Sending reminder" box could get stuck (after switching Auto RCL off, or if EuroScope never answered) and its Close button did nothing. Released reminders now expire if nothing is typed, switching off cancels them, Close always works, and there is a Stop sending button.
 - Auto RCL now asks first (switchable): flights en route to oceanic airspace that need the RCL REQ reminder wait in a list. At most every 5 minutes (and not until 5 minutes after the oceanic controller's session starts) the sending controller gets a box listing them with their entry time and fix, and Send now / Not now / Skip these. While sending, a box says "keep EuroScope in the front and do not change windows". The Auto RCL button flashes and shows how many are waiting. Plugin 2.6.0 also stops typing at once if you switch to another window.
 - New "What's new" box: shown once per announced release after sign-in (and any time from Settings > What's new). Notes live in src/typescript/fdd/whatsnew.ts; add an entry at the top for a release worth announcing. Display version 2.6.0.
 - VACS call alert: the app setup now explains how to switch on Remote Control in VACS (Advanced Settings, address 127.0.0.1:9600 recommended) and shows a green tick when connected; added to the install guide and troubleshooting.
