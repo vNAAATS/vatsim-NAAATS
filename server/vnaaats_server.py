@@ -1713,6 +1713,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                             rcl.later()
                         elif act == "skip":
                             rcl.skip()
+                        elif act == "stop":
+                            rcl.stop()
                         else:
                             return self._send(400, {"error": "unknown action"})
                         log.info("Auto RCL REQ: %s answered %s", sess["position"], act)

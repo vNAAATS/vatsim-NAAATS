@@ -11,18 +11,20 @@
   $: b = $rclAuto.batch;
   $: sending = $rclAuto.sending > 0 || $rclAuto.inflight > 0;             // typing in progress on the sender's EuroScope
   $: finished = !sending && b.total > 0 && (b.done + b.failed.length) >= b.total;
-  $: show = ask || sending && amSender || $rclPanelOpen;
+  let hidden: boolean = false;                                           // Close always works, even while "sending"
+  $: if (!ask && !(sending && amSender)) hidden = false;
+  $: show = ((ask || (sending && amSender)) && !hidden) || $rclPanelOpen;
 
   function when(w: sess.RclWaiting): string {
     if (w.minutes === null) return "no entry time yet";
     return (w.time ? "entry " + w.time + "Z" : "entry") + (w.fix ? " at " + w.fix : "") + ", in " + w.minutes + " min";
   }
-  async function answer(a: "send" | "later" | "skip"): Promise<void> {
+  async function answer(a: "send" | "later" | "skip" | "stop"): Promise<void> {
     busy = true; msg = await sess.rclAnswer(a); busy = false;
   }
   async function toggleOn(): Promise<void> { msg = await sess.setRclAuto(!$rclAuto.on); }
   async function toggleConfirm(): Promise<void> { msg = await sess.setRclConfirm(!$rclAuto.confirm); }
-  function close(): void { rclPanelOpen.set(false); msg = ""; }
+  function close(): void { rclPanelOpen.set(false); hidden = true; msg = ""; }
 </script>
 
 {#if show}
@@ -36,6 +38,8 @@
       {#if sending && amSender}
         <div class="font-bold text-base text-yellow-300">Sending reminder {Math.min(b.done + b.failed.length + 1, b.total)} of {b.total}...</div>
         <div class="mt-1">Please keep EuroScope in the front and <b>do not change windows</b> until they have all been sent.</div>
+        <div class="mt-2 text-xs opacity-80">Nothing happening? Press Stop. It cancels the rest and this box goes away.</div>
+        <button class="mt-2 px-3 py-1 border border-yellow-300" disabled={busy} on:click={() => answer("stop")}>Stop sending</button>
       {:else if ask}
         <div class="font-bold text-base">{$rclAuto.waiting.length} aircraft {$rclAuto.waiting.length === 1 ? "is" : "are"} en route to oceanic airspace and {$rclAuto.waiting.length === 1 ? "needs" : "need"} an RCL REQ reminder</div>
         <ul class="my-2 max-h-48 overflow-y-auto">

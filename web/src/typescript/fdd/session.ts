@@ -137,7 +137,7 @@ export async function setRclConfirm(confirm: boolean): Promise<string> {
 }
 
 // The answer to "send the reminders now?": send | later | skip
-export async function rclAnswer(action: "send" | "later" | "skip"): Promise<string> {
+export async function rclAnswer(action: "send" | "later" | "skip" | "stop"): Promise<string> {
   const r = await post("/rcl/auto", { action });
   if (r.ok) { rclAuto.update((old) => ({ ...old, ...r.data })); return ""; }
   return r.data.error ?? "could not send the answer";

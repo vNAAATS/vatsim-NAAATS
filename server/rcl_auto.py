@@ -44,6 +44,7 @@ RETRY_SECONDS = 300
 MAX_TRIES = 3
 INFLIGHT_SECONDS = 90          # the command is given this long to come back before we may queue it again
 PROMPT_EVERY_SECONDS = 300    # the FDD asks about the waiting flights at most this often
+STALL_SECONDS = 60            # released flights with nothing in flight and no progress for this long: the batch is abandoned
 BY = "AUTO"
 
 
@@ -125,6 +126,7 @@ class RclAuto:
         self.skipped = set()       # the controller chose not to remind these (this session)
         self.next_prompt = 0.0     # the FDD may ask again from this time
         self.batch = {"total": 0, "done": 0, "failed": []}
+        self.activity = 0.0        # last time a batch started, a reminder was queued, or the plugin reported back
         with self.store.lock:
             self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_confirm (id INTEGER PRIMARY KEY CHECK (id = 1), v INTEGER NOT NULL)")
             crow = self.store.db.execute("SELECT v FROM rcl_confirm WHERE id=1").fetchone()
@@ -142,6 +144,8 @@ class RclAuto:
     # --- settings
     def set_enabled(self, on):
         self.enabled = bool(on)
+        if not on:
+            self.stop()
         with self.store.lock:
             self.store.db.execute("INSERT OR REPLACE INTO rcl_setting VALUES (1, ?)", (1 if on else 0,))
             self.store.db.commit()
@@ -158,8 +162,39 @@ class RclAuto:
             self.approved |= set(self.pending)
             self.batch = {"total": len(self.approved), "done": 0, "failed": []}
             self.pending = {}
+        self.activity = self.now()
         self.next_prompt = self.now() + PROMPT_EVERY_SECONDS
         log.info("Auto RCL: controller released %d reminders", self.batch["total"])
+
+    def stop(self):
+        """Abandon whatever is being sent: nothing more is typed, and a command the plugin has not collected is cancelled."""
+        with self.lock:
+            cids = [v["cid"] for v in self.inflight.values()]
+            self.inflight, self.approved, self.pending = {}, set(), {}
+            self.batch = {"total": 0, "done": 0, "failed": []}
+        for cid in cids:
+            try:
+                self.queue.done(cid, False, "cancelled")
+            except Exception:
+                log.exception("could not cancel RCL command %s", cid)
+        self.next_prompt = self.now() + PROMPT_EVERY_SECONDS
+        log.info("Auto RCL: sending stopped (%d in flight cancelled)", len(cids))
+
+    def housekeeping(self):
+        """Runs every tick and before every status, whatever the settings: nothing may stay 'sending' for ever."""
+        t = self.now()
+        no_sender = self.sender() is None                   # (takes the lock itself)
+        with self.lock:
+            for cs in [c for c, v in self.inflight.items() if t - v["ts"] > INFLIGHT_SECONDS]:
+                del self.inflight[cs]                       # never came back; it may be tried again later
+                self.approved.discard(cs)
+                self.batch["failed"].append(cs)
+                self.last_error = "%s: no answer from EuroScope" % cs
+            gone = (not self.enabled) or (not self.confirm) or no_sender
+            if self.approved and not self.inflight and (gone or t - self.activity > STALL_SECONDS):
+                self.approved = set()                       # released flights that will never be typed (sender left, switched off, stalled)
+            if not self.approved and not self.inflight and self.batch["total"] and t - self.activity > 600:
+                self.batch = {"total": 0, "done": 0, "failed": []}
 
     def later(self):
         self.next_prompt = self.now() + PROMPT_EVERY_SECONDS
@@ -185,6 +220,7 @@ class RclAuto:
         return live[0] if live else None
 
     def status(self):
+        self.housekeeping()
         with self.lock:
             n = len(self.inflight)
             waiting = sorted(self.pending.values(), key=lambda w: (w["minutes"] is None, w["minutes"] if w["minutes"] is not None else 0, w["callsign"]))
@@ -271,6 +307,7 @@ class RclAuto:
 
     def tick(self):
         """Queue at most one reminder. Returns the callsign queued, or None."""
+        self.housekeeping()
         if not self.enabled:
             return None
         sender = self.sender()
@@ -286,9 +323,6 @@ class RclAuto:
             return None                                              # let the session settle first
         if not self.baselined:
             self.take_baseline()
-        with self.lock:
-            for cs in [c for c, v in self.inflight.items() if t - v["ts"] > INFLIGHT_SECONDS]:
-                del self.inflight[cs]                       # never came back; it may be tried again later
         hidden = self.store.dismissed_set()
         now_min = datetime.fromtimestamp(t, timezone.utc)
         now_min = now_min.hour * 60 + now_min.minute
@@ -329,6 +363,7 @@ class RclAuto:
             if err:
                 continue
             cid = self.queue.add(sender, typ, cs, args, by=BY)
+            self.activity = t
             with self.lock:
                 self.inflight[cs] = {"cid": cid, "ts": t, "base": rec, "sender": sender}
                 self.tries[cs] = {"n": tr["n"] + 1, "next": t + RETRY_SECONDS}
@@ -339,6 +374,7 @@ class RclAuto:
     def done(self, cmd, ok, msg=""):
         """Called when the plugin reports back on one of our commands (cmd is the finished queue item)."""
         cs = str(cmd.get("callsign", "")).upper()
+        self.activity = self.now()
         with self.lock:
             info = self.inflight.pop(cs, None)
             self.approved.discard(cs)
