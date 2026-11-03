@@ -38,6 +38,7 @@ export type CpdlcStatus = {
   unread: Record<string, number>;
   lastPoll?: number | null;
   error?: string;
+  rclSend?: boolean;               // the server has the send buttons switched on
   rclRequests?: RclRequest[];      // oceanic clearance requests that arrived by CPDLC and are still open
 };
 

@@ -28,6 +28,12 @@ class ClxTests(unittest.TestCase):
         m = clx.build("clx", dict(self.REC, track="RR"), None, "CZQO_CTR", self.NOW)
         self.assertIn("RANDOM ROUTE", m[0])
 
+    def test_send_switch_is_off_by_default(self):
+        import cpdlc
+        hop, st = tc.make()
+        self.assertFalse(cpdlc.RCL_SEND)
+        self.assertIn("rclSend", st.status())
+
     def test_sent_state_and_limits(self):
         hop, st = tc.make()
         hop.queue = [("KLM695", "/data2/1//Y/REQUEST LOGON")]
