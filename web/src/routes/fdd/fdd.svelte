@@ -15,6 +15,7 @@
   import * as esSel from "../../typescript/fdd/esselect";
   import { espicked } from "../../typescript/fdd/esselect";
   import VacsChip from "./vacs_chip.svelte";
+  import AudioChip from "./audio_chip.svelte";
   import RclPanel from "./rcl_panel.svelte";
 
   const { session } = sess;
@@ -329,6 +330,7 @@
     </div>
     <div class="flex-1"></div>
     <VacsChip />
+    <AudioChip />
     <RclPanel />
     {#if $cpdlcStatus.enabled}
       <button class="px-2 py-0.5 border border-blue-6 {(cpdlcUnread > 0 || $cpdlcAttention.size > 0) && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : 'bg-blue-3'}"

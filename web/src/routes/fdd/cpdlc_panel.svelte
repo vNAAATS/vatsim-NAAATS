@@ -3,7 +3,10 @@
   import * as cp from "../../typescript/fdd/cpdlc";
   import * as dataHandler from "../../typescript/fdd/data";
   import * as sess from "../../typescript/fdd/session";
+  import { popOut } from "../../typescript/fdd/popout";
+  import * as app from "../../typescript/fdd/app";
 
+  export let popout: boolean = false;                  // shown as a whole window of its own (the pop-out page)
   const { cpdlcStatus, cpdlcOpen, cpdlcPick, cpdlcFreetexts, cpdlcAttention } = cp;
   const { session } = sess;
 
@@ -107,6 +110,33 @@
   onDestroy(() => clearInterval(timer));
   $: if ($cpdlcOpen && shown) { messages = []; totalMsgs = 0; replyTo = null; lvlVerb = null; lvlPick = 0; refresh(); }
 
+  // --- clearance requests: prepare in natTrak, then send the answer to the pilot (always previewed, never automatic)
+  let dlg: { r: cp.RclRequest; kind: "clx" | "processed"; msgs: string[]; err: string; busy: boolean } | null = null;
+  let fillFor: number = 0;
+  let fillNote: string = "";
+  let copied: string = "";
+  async function openPreview(r: cp.RclRequest, kind: "clx" | "processed"): Promise<void> {
+    dlg = { r, kind, msgs: [], err: "", busy: true };
+    const p = await cp.rclPreview(r.id, kind);
+    if (dlg) { dlg.msgs = p.messages; dlg.err = p.error; dlg.busy = false; dlg = dlg; }
+  }
+  async function confirmSend(): Promise<void> {
+    if (!dlg) return;
+    dlg.busy = true; dlg = dlg;
+    const err = await cp.rclSend(dlg.r.id, dlg.kind, dlg.msgs.filter((m) => m.trim()));
+    if (err && dlg) { dlg.err = err; dlg.busy = false; dlg = dlg; } else dlg = null;
+  }
+  async function prepare(r: cp.RclRequest): Promise<void> {
+    const res = await app.openNatTrak(cp.natTrakFields(r));
+    fillFor = r.id;
+    fillNote = res === "filled" ? "natTrak is open in its own window with the fields filled in. Check them and press Create there." : "natTrak is open in your browser. Copy these values into the form, then press Create.";
+  }
+  async function copy(v: string): Promise<void> { try { await navigator.clipboard.writeText(v); copied = v; setTimeout(() => (copied = ""), 1200); } catch (e) { /* copy blocked */ } }
+  function sentText(r: cp.RclRequest): string { return r.sent ? "sent " + hhmm(r.sent.ts) + (r.sent.by ? " by " + r.sent.by.replace(/^.*\((.*)\)$/, "$1") : "") : ""; }
+  async function doPop(): Promise<void> {
+    const err = await popOut("cpdlc");
+    if (err) { sendOk = false; sendMsg = err; setTimeout(() => (sendMsg = ""), 8000); } else cpdlcOpen.set(false);
+  }
   function pick(callsign: string): void { cpdlcPick.set(callsign); cp.clearAttention(callsign); }
   function useTemplate(t: { text: string; ra: string }): void { text = t.text; ra = t.ra; lvlVerb = null; }
   // Level messages: pick the verb (climb / descend / maintain / expect climb), then the flight level; the message is filled in for you.
@@ -187,17 +217,45 @@
 </script>
 
 <!-- Pull-out CPDLC panel: slides in from the right edge. Aircraft list on the left, messages on the right. -->
-<div class="fixed z-40 top-0 bottom-0 right-0 flex flex-row font-regular text-white" style="transform: translateX({$cpdlcOpen ? '0' : '100%'}); opacity: {$cpdlcOpen ? 1 : 0}; transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease; pointer-events: {$cpdlcOpen ? 'auto' : 'none'};">
+<div class="fixed z-40 top-0 bottom-0 {popout ? 'left-0' : ''} right-0 flex flex-row font-regular text-white" style={popout ? "" : "transform: translateX(" + ($cpdlcOpen ? "0" : "100%") + "); opacity: " + ($cpdlcOpen ? 1 : 0) + "; transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease; pointer-events: " + ($cpdlcOpen ? "auto" : "none") + ";"}>
+  {#if dlg}
+    <div class="absolute inset-0 z-30 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.6);">
+      <div class="w-full max-w-xl bg-blue-1 border-2 border-blue-10 shadow-5xl">
+        <div class="px-3 py-2 bg-blue-3 font-bold select-none flex flex-row justify-between"><span>{dlg.kind === "clx" ? "Send reclearance" : "RCL processed"} to {dlg.r.callsign}</span><button on:click={() => (dlg = null)} title="Cancel">&#10005;</button></div>
+        <div class="p-3 text-sm">
+          {#if dlg.busy && dlg.msgs.length === 0}
+            <div class="opacity-70">Preparing...</div>
+          {:else}
+            <div class="text-xs opacity-80 mb-2">Check the text and change it if needed. Nothing is sent until you press Send. Clear a box to leave that message out.</div>
+            {#each dlg.msgs as _m, i}
+              <textarea class="w-full mb-2 px-2 py-1 text-xs font-mono text-black bg-white" rows={i === 0 && dlg.kind === "clx" ? 4 : 2} maxlength="240" bind:value={dlg.msgs[i]}></textarea>
+            {/each}
+            {#if dlg.err}<div class="mb-2 text-yellow-300">{dlg.err}</div>{/if}
+            <div class="flex flex-row justify-between items-center">
+              <span class="text-xs opacity-70">Sent from {$cpdlcStatus.station ?? "your station"}, logged with your name</span>
+              <span class="flex flex-row gap-2">
+                <button class="px-3 py-1 border border-blue-6 hover:bg-blue-4" on:click={() => (dlg = null)}>Cancel</button>
+                <button class="px-3 py-1 font-bold bg-green-700 border border-green-300 disabled:opacity-40" disabled={dlg.busy || !dlg.msgs.some((m) => m.trim())} on:click={confirmSend}>{dlg.busy ? "Sending..." : "Send " + dlg.msgs.filter((m) => m.trim()).length + " message" + (dlg.msgs.filter((m) => m.trim()).length === 1 ? "" : "s")}</button>
+              </span>
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
+  {#if !popout}
   <button class="self-center -mr-px w-7 py-6 flex items-center justify-center font-bold text-sm bg-blue-4 border-2 border-r-0 border-blue-10 hover:bg-blue-10 hover:text-black select-none" style="writing-mode: vertical-rl; transform: rotate(180deg);" title="Close the CPDLC window" on:click={() => cpdlcOpen.set(false)}>Close ✕</button>
   <!-- drag this edge to make the window wider or narrower -->
   <div class="w-1.5 h-full cursor-col-resize bg-blue-10 opacity-40 hover:opacity-100 select-none touch-none" title="Drag to resize" on:pointerdown={dragStart} on:pointermove={dragMove} on:pointerup={dragEnd} on:pointercancel={dragEnd}></div>
-  <div class="max-w-screen h-full flex flex-col bg-blue-2 border-l-2 border-blue-10 shadow-5xl" style="width: {panelW}px;">
+  {/if}
+  <div class="max-w-screen h-full flex flex-col bg-blue-2 border-l-2 border-blue-10 shadow-5xl" style="width: {popout ? '100%' : panelW + 'px'};">
     <div class="relative flex flex-row justify-between items-center px-3 py-2 bg-blue-3 font-bold select-none">
       <span>CPDLC {$cpdlcStatus.active && $cpdlcStatus.station ? "- station " + $cpdlcStatus.station : ""}</span>
       <span class="flex flex-row gap-2 shrink-0">
         {#if $cpdlcStatus.active}<button class="px-3 py-0.5 text-sm font-bold border-2 border-blue-10 bg-blue-4 hover:bg-blue-10 hover:text-black whitespace-nowrap" on:click={signOut}>Sign out of CPDLC</button>{/if}
         {#if canUse}<button class="px-3 py-0.5 text-sm font-bold border-2 border-blue-10 bg-blue-4 hover:bg-blue-10 hover:text-black" on:click={() => (moreOpen = !moreOpen)}>More ▾</button>{/if}
-        <button class="px-3 py-0.5 text-sm font-bold border-2 border-blue-10 bg-blue-4 hover:bg-blue-10 hover:text-black" on:click={() => cpdlcOpen.set(false)}>Close</button>
+        {#if !popout}<button class="px-3 py-0.5 text-sm font-bold border-2 border-blue-10 bg-blue-4 hover:bg-blue-10 hover:text-black" title="Open in its own window, for another screen" on:click={doPop}>Pop out</button>{/if}
+        {#if !popout}<button class="px-3 py-0.5 text-sm font-bold border-2 border-blue-10 bg-blue-4 hover:bg-blue-10 hover:text-black" on:click={() => cpdlcOpen.set(false)}>Close</button>{/if}
       </span>
       {#if moreOpen}
         <div class="absolute right-12 top-full z-10 mt-1 w-72 bg-blue-3 border-2 border-blue-10 shadow-5xl font-regular font-normal text-sm">
@@ -262,7 +320,7 @@
       {/if}
       {#if canUse && $cpdlcStatus.active && ($cpdlcStatus.rclRequests ?? []).length > 0}
         <!-- oceanic clearance requests that came in by CPDLC: they are not on natTrak until a controller enters them there -->
-        <div class="border-b-2 border-yellow-300 bg-blue-1 max-h-56 overflow-y-auto">
+        <div class="border-b-2 border-yellow-300 bg-blue-1 max-h-80 overflow-y-auto">
           <div class="px-3 py-1 text-xs font-bold tracking-widest text-yellow-300 select-none">CLEARANCE REQUESTS BY CPDLC ({($cpdlcStatus.rclRequests ?? []).length})</div>
           {#each $cpdlcStatus.rclRequests ?? [] as r (r.id)}
             <div class="px-3 py-1.5 border-t border-blue-4 text-sm">
@@ -283,6 +341,24 @@
                 </span>
               </div>
               <div class="mt-0.5 text-xs opacity-80 break-words">{r.text}</div>
+              <div class="mt-1 flex flex-row flex-wrap items-center gap-1.5">
+                <button class="px-2 py-0.5 text-xs font-bold {r.natTrak ? 'border border-blue-6 hover:bg-blue-4' : 'bg-blue-10 text-black'}" title="Open natTrak with this flight's details ready" on:click={() => prepare(r)}>Prepare in natTrak</button>
+                <button class="px-2 py-0.5 text-xs font-bold {r.natTrak || r.ntDown ? 'bg-blue-10 text-black' : 'border border-blue-6 opacity-40'}" disabled={!(r.natTrak || r.ntDown)} title="Tell the pilot: RCL processed, fly the flight plan route" on:click={() => openPreview(r, "processed")}>RCL processed</button>
+                <button class="px-2 py-0.5 text-xs font-bold {r.natTrak || r.ntDown ? 'bg-blue-10 text-black' : 'border border-blue-6 opacity-40'}" disabled={!(r.natTrak || r.ntDown)} title="Send the pilot their reclearance" on:click={() => openPreview(r, "clx")}>Send reclearance</button>
+                {#if r.sent}<span class="px-1.5 text-xs border border-blue-10 text-blue-10" title="Sent to the pilot">&#10003; {sentText(r)}</span>{/if}
+                {#if !r.natTrak && !r.ntDown}<span class="text-xs opacity-70">Enter it in natTrak first. The send buttons unlock when it appears there.</span>{/if}
+              </div>
+              {#if fillFor === r.id}
+                <div class="mt-1.5 p-2 bg-blue-0 border border-blue-4 text-xs">
+                  <div class="mb-1 text-yellow-300">{fillNote}</div>
+                  <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                    {#each cp.natTrakFields(r).filter((f) => f.value) as f}
+                      <div class="flex flex-row items-center justify-between gap-2"><span class="opacity-70">{f.label}</span><button class="font-mono px-1 border border-blue-6 hover:bg-blue-4" title="Copy" on:click={() => copy(f.value)}>{copied === f.value ? "copied" : f.value}</button></div>
+                    {/each}
+                  </div>
+                  <button class="mt-1 px-2 py-0.5 border border-blue-6 hover:bg-blue-4" on:click={() => (fillFor = 0)}>Hide</button>
+                </div>
+              {/if}
               {#if r.route || r.level}
                 <div class="mt-0.5 text-xs opacity-60 break-words">Flight plan: {r.route || "no route"}{r.level ? " - FL" + r.level : ""}</div>
               {/if}
