@@ -343,10 +343,12 @@
               <div class="mt-0.5 text-xs opacity-80 break-words">{r.text}</div>
               <div class="mt-1 flex flex-row flex-wrap items-center gap-1.5">
                 <button class="px-2 py-0.5 text-xs font-bold {r.natTrak ? 'border border-blue-6 hover:bg-blue-4' : 'bg-blue-10 text-black'}" title="Open natTrak with this flight's details ready" on:click={() => prepare(r)}>Prepare in natTrak</button>
+                {#if $cpdlcStatus.rclSend}
                 <button class="px-2 py-0.5 text-xs font-bold {r.natTrak || r.ntDown ? 'bg-blue-10 text-black' : 'border border-blue-6 opacity-40'}" disabled={!(r.natTrak || r.ntDown)} title="Tell the pilot: RCL processed, fly the flight plan route" on:click={() => openPreview(r, "processed")}>RCL processed</button>
                 <button class="px-2 py-0.5 text-xs font-bold {r.natTrak || r.ntDown ? 'bg-blue-10 text-black' : 'border border-blue-6 opacity-40'}" disabled={!(r.natTrak || r.ntDown)} title="Send the pilot their reclearance" on:click={() => openPreview(r, "clx")}>Send reclearance</button>
+                {/if}
                 {#if r.sent}<span class="px-1.5 text-xs border border-blue-10 text-blue-10" title="Sent to the pilot">&#10003; {sentText(r)}</span>{/if}
-                {#if !r.natTrak && !r.ntDown}<span class="text-xs opacity-70">Enter it in natTrak first. The send buttons unlock when it appears there.</span>{/if}
+                {#if $cpdlcStatus.rclSend && !r.natTrak && !r.ntDown}<span class="text-xs opacity-70">Enter it in natTrak first. The send buttons unlock when it appears there.</span>{/if}
               </div>
               {#if fillFor === r.id}
                 <div class="mt-1.5 p-2 bg-blue-0 border border-blue-4 text-xs">

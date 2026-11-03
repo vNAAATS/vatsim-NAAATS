@@ -27,7 +27,7 @@ VNAAATS_FEED_SECONDS (60), VNAAATS_NATTRAK_PLUGIN_URL (natTrak clearance API; 'o
 Login (editing from the web): VNAAATS_FDD_PASSWORD (shared password), VNAAATS_POSITIONS (comma list shown on the position screen),
 VNAAATS_CONNECT_CLIENT_ID / VNAAATS_CONNECT_CLIENT_SECRET / VNAAATS_PUBLIC_URL (e.g. https://fdd.example.com) for VATSIM Connect,
 VNAAATS_CPDLC=off (CPDLC is on by default; each controller types their own Hoppie code on the FDD), VNAAATS_CPDLC_STATIONS (position=station list,
-default CZQO_*=CZQX, EGGX_*=EGGX, NAT_*=NATX), VNAAATS_HOPPIE_URL, VNAAATS_CPDLC_AUTOACCEPT (1 = accept pilots' logon requests automatically, 0 = off).
+default CZQO_*=CZQX, EGGX_*=EGGX, NAT_*=NATX), VNAAATS_HOPPIE_URL, VNAAATS_CPDLC_RCL_SEND (on = show the RCL processed / Send reclearance buttons; off by default), VNAAATS_CPDLC_AUTOACCEPT (1 = accept pilots' logon requests automatically, 0 = off).
 VNAAATS_CONNECT_BASE (https://auth.vatsim.net, sandbox: https://auth-dev.vatsim.net), VNAAATS_ALLOWED_CIDS (comma list; if empty
 any VATSIM member rated VNAAATS_MIN_RATING or higher, default 2 = S1, may log in).
 """
@@ -1649,6 +1649,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                             return self._send(400, {"error": "bad request id"})
                         return self._send(200, {"ok": ok})
                     if p in ("/cpdlc/rcl-preview", "/cpdlc/rcl-send"):
+                        if not cpdlc_mod.RCL_SEND:
+                            return self._send(403, {"error": "sending clearances from the display is not switched on yet"})
                         kind = str(body.get("kind", ""))
                         if kind not in ("clx", "processed"):
                             return self._send(400, {"error": "kind must be clx or processed"})

@@ -43,6 +43,7 @@ OCA_REQUEST_RE = re.compile(r"\bOCEANIC\s+CLEARANCE\b|\bOCEANIC\s+CLX\b|\bOCA\s+
 MSG_OCA_UNABLE = "UNABLE TO PROVIDE OCEANIC CLEARANCES VIA CPDLC. PLEASE VISIT NATTRAK.VATSIM.NET AND SUBMIT YOUR REQUEST THERE"
 MSG_RCL_RECEIVED = "RCL RECEIVED - STANDBY FOR CLEARANCE"
 RCL_INTAKE = os.environ.get("VNAAATS_CPDLC_RCL", "on").lower() != "off"      # off = the old behaviour (refuse and point to natTrak)
+RCL_SEND = os.environ.get("VNAAATS_CPDLC_RCL_SEND", "off").lower() == "on"      # the "RCL processed" / "Send reclearance" buttons: off until switched on (staged roll-out)
 RCL_KEEP_SECONDS = 6 * 3600        # a request stays in the list this long unless dismissed
 RCL_REPEAT_SECONDS = 1800          # a second request from the same aircraft inside this time updates the first
 MSG_TOO_FAR = "UNABLE. CONTACT CONTROLLER ON VOICE 20 MILES BEFORE OCEANIC ENTRY POINT"
@@ -293,7 +294,7 @@ class CpdlcStation:
             unread = self.unread()
             conn = [{"callsign": c, "since": v["since"], "unread": unread.get(c, 0)} for c, v in sorted(self.connected.items())]
             return {"enabled": True, "station": self.client.station, "autoAccept": self.auto_accept, "connected": conn,
-                    "unread": unread, "lastPoll": self.last_poll, "error": self.error, "rclRequests": self.rcl_requests()}
+                    "unread": unread, "lastPoll": self.last_poll, "error": self.error, "rclRequests": self.rcl_requests(), "rclSend": RCL_SEND}
 
     # --- oceanic clearance requests received by CPDLC (to be entered on natTrak by a controller)
     def rcl_requests(self):
