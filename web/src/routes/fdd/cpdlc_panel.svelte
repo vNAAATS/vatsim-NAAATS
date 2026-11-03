@@ -51,7 +51,7 @@
   function useFree(e: Event): void {
     const sel = e.target as HTMLSelectElement;
     const f = $cpdlcFreetexts[parseInt(sel.value)];
-    if (f) { text = f.text; ra = f.ra === "NE" ? "NE" : "R"; replyTo = null; }
+    if (f) { text = f.text; ra = f.ra === "NE" ? "NE" : "R"; replyTo = null; lvlVerb = null; }
     sel.value = "";
   }
   async function doUnicom(): Promise<void> {
@@ -105,10 +105,25 @@
 
   onMount(() => { timer = setInterval(refresh, 3000); });
   onDestroy(() => clearInterval(timer));
-  $: if ($cpdlcOpen && shown) { messages = []; totalMsgs = 0; replyTo = null; refresh(); }
+  $: if ($cpdlcOpen && shown) { messages = []; totalMsgs = 0; replyTo = null; lvlVerb = null; lvlPick = 0; refresh(); }
 
   function pick(callsign: string): void { cpdlcPick.set(callsign); cp.clearAttention(callsign); }
-  function useTemplate(t: { text: string; ra: string }): void { text = t.text; ra = t.ra; }
+  function useTemplate(t: { text: string; ra: string }): void { text = t.text; ra = t.ra; lvlVerb = null; }
+  // Level messages: pick the verb (climb / descend / maintain / expect climb), then the flight level; the message is filled in for you.
+  const LEVELS: number[] = [300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410];
+  let lvlVerb: { label: string; text: string; ra: string } | null = null;
+  let lvlPick: number = 0;
+  const LEVEL_LABELS = ["Climb and maintain", "Descend and maintain", "Maintain level", "Expect climb"];
+  const LEVEL_SHORT: Record<string, string> = { "Climb and maintain": "Climb", "Descend and maintain": "Descend", "Maintain level": "Maintain", "Expect climb": "Expect climb" };
+  function pickVerb(t: { label: string; text: string; ra: string }): void {
+    lvlVerb = t; ra = t.ra; replyTo = null;
+    text = lvlPick ? t.text.replace(/@FL\d+@/, "@FL" + lvlPick + "@") : t.text.replace(/@FL\d+@/, "").trimEnd() + " ";
+  }
+  function pickLevel(fl: number): void {
+    if (!lvlVerb) return;
+    lvlPick = fl;
+    text = lvlVerb.text.replace(/@FL\d+@/, "@FL" + fl + "@");
+  }
   function answer(m: cp.CpdlcMessage, t: { text: string; ra: string }): void { replyTo = m; text = t.text; ra = t.ra; }
   function since(ts: number): string {
     const m = Math.max(0, Math.floor((Date.now() / 1000 - ts) / 60));
@@ -126,7 +141,7 @@
     busy = false;
     sendOk = err === "";
     sendMsg = err === "" ? "Sent" : err;
-    if (err === "") { text = ""; replyTo = null; refresh(); }
+    if (err === "") { text = ""; replyTo = null; lvlVerb = null; lvlPick = 0; refresh(); }
     setTimeout(() => (sendMsg = ""), 5000);
   }
   function key(e: KeyboardEvent): void { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }
@@ -305,15 +320,30 @@
                 {#each groupedTemplates as g}
                   <div class="flex flex-row flex-wrap items-center gap-1">
                     <span class="w-24 shrink-0 text-xs opacity-70 select-none">{g.name}</span>
-                    {#each g.items as t}
-                      <button class="px-2 py-0.5 text-xs bg-blue-3 border border-blue-6 hover:bg-blue-4" on:click={() => useTemplate(t)}>{t.label}</button>
-                    {/each}
+                    {#if g.name === "Level"}
+                      {#each g.items as t}
+                        <button class="px-2 py-0.5 text-xs border {lvlVerb?.label === t.label ? 'bg-blue-10 text-black font-bold border-blue-10' : 'bg-blue-3 border-blue-6 hover:bg-blue-4'}" on:click={() => pickVerb(t)}>{LEVEL_SHORT[t.label] ?? t.label}</button>
+                      {/each}
+                    {:else}
+                      {#each g.items as t}
+                        <button class="px-2 py-0.5 text-xs bg-blue-3 border border-blue-6 hover:bg-blue-4" on:click={() => useTemplate(t)}>{t.label}</button>
+                      {/each}
+                    {/if}
                   </div>
+                  {#if g.name === "Level"}
+                    <div class="flex flex-row flex-wrap items-center gap-1 pl-24">
+                      {#each LEVELS as fl}
+                        <button class="w-11 py-0.5 text-xs font-bold border {lvlPick === fl && lvlVerb ? 'bg-yellow-300 text-black border-yellow-300' : 'bg-blue-2 border-blue-6 hover:bg-blue-4'} disabled:opacity-40 disabled:hover:bg-blue-2" disabled={!lvlVerb}
+                          title={lvlVerb ? "FL" + fl : "Pick Climb, Descend, Maintain or Expect climb first"} on:click={() => pickLevel(fl)}>{fl}</button>
+                      {/each}
+                      {#if !lvlVerb}<span class="text-xs opacity-60 ml-1">Pick a message first, then a flight level</span>{/if}
+                    </div>
+                  {/if}
                 {/each}
               </div>
               <div class="flex flex-row items-center gap-2 mb-1">
-                <select class="text-black text-xs flex-1 min-w-0" on:change={useFree}>
-                  <option value="">Standard messages...</option>
+                <select class="text-black text-xs flex-1 min-w-0" title="Other standard messages" on:change={useFree}>
+                  <option value="">More standard messages...</option>
                   {#each $cpdlcFreetexts as f, i}<option value={i}>{f.text.length > 60 ? f.text.slice(0, 58) + "..." : f.text}</option>{/each}
                 </select>
                 {#if !unicomAsk}

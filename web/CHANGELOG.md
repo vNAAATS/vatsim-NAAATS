@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- CPDLC: flight-level quick buttons (FL300 to FL410). Pick Climb, Descend, Maintain or Expect climb, then a level, and the message is filled in. The long list of standard messages is now a small "More standard messages" drop-down.
 - CPDLC window redesign: the connected list now shows 10 aircraft before the scroll bar (it was stuck at about two) with a count badge, an auto-accept tag and how long each has been connected; only the latest 10 messages are shown; tidier message cards and header.
 - Fix: the Auto RCL "Sending reminder" box could get stuck (after switching Auto RCL off, or if EuroScope never answered) and its Close button did nothing. Released reminders now expire if nothing is typed, switching off cancels them, Close always works, and there is a Stop sending button.
 - Auto RCL now asks first (switchable): flights en route to oceanic airspace that need the RCL REQ reminder wait in a list. At most every 5 minutes (and not until 5 minutes after the oceanic controller's session starts) the sending controller gets a box listing them with their entry time and fix, and Send now / Not now / Skip these. While sending, a box says "keep EuroScope in the front and do not change windows". The Auto RCL button flashes and shows how many are waiting. Plugin 2.6.0 also stops typing at once if you switch to another window.
