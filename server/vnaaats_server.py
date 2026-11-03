@@ -28,6 +28,7 @@ Login (editing from the web): VNAAATS_FDD_PASSWORD (shared password), VNAAATS_PO
 VNAAATS_CONNECT_CLIENT_ID / VNAAATS_CONNECT_CLIENT_SECRET / VNAAATS_PUBLIC_URL (e.g. https://fdd.example.com) for VATSIM Connect,
 VNAAATS_CPDLC=off (CPDLC is on by default; each controller types their own Hoppie code on the FDD), VNAAATS_CPDLC_STATIONS (position=station list,
 default CZQO_*=CZQX, EGGX_*=EGGX, NAT_*=NATX), VNAAATS_HOPPIE_URL, VNAAATS_CPDLC_RCL_SEND (on = show the RCL processed / Send reclearance buttons; off by default), VNAAATS_CPDLC_AUTOACCEPT (1 = accept pilots' logon requests automatically, 0 = off).
+VNAAATS_INSTRUCTOR_PASSWORD (10+ characters; switches on the hidden /trainee-key page where an instructor issues a 2-hour key for a student),
 VNAAATS_CONNECT_BASE (https://auth.vatsim.net, sandbox: https://auth-dev.vatsim.net), VNAAATS_ALLOWED_CIDS (comma list; if empty
 any VATSIM member rated VNAAATS_MIN_RATING or higher, default 2 = S1, may log in).
 """
@@ -62,6 +63,7 @@ import pluginfiles as pluginfiles_mod
 import adminlog as adminlog_mod
 log = logging.getLogger("vnaaats")
 
+TRAINEE_KEY_HOURS = 2            # how long an instructor-issued trainee key lasts
 NATTRAK_URL = os.environ.get("VNAAATS_NATTRAK_URL", "https://nattrak.vatsim.net/api/tracks")
 REFRESH = int(os.environ.get("VNAAATS_REFRESH_SECONDS", "600"))
 STALE_FLIGHT_SECONDS = 24 * 3600
@@ -1597,6 +1599,28 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=7, manual=True)
                     log.info("Temporary 7-day key issued for CID %s from %s", cid, ip)
                     return self._send(200, {"key": out["key"], "password": out["password"], "expires": out["expires"], "cid": out["cid"]})
+                if p == "/auth/trainee-key":                   # a trusted instructor issues a 2-hour key + FDD password for a student. Off unless VNAAATS_INSTRUCTOR_PASSWORD is set (10+ characters).
+                    inst_pass = os.environ.get("VNAAATS_INSTRUCTOR_PASSWORD", "")
+                    if len(inst_pass) < 10 or not members:
+                        return self._send(404, {"error": "not switched on"})
+                    ip = self._client_ip()
+                    if auth.throttled(ip):
+                        return self._send(429, {"error": "too many wrong tries - wait 5 minutes"})
+                    if not hmac.compare_digest(str(body.get("passphrase", "")).encode(), inst_pass.encode()):
+                        auth.record_failure(ip)
+                        return self._send(401, {"error": "wrong password"})
+                    instructor = str(body.get("instructor", "")).strip()[:60]
+                    if not instructor:
+                        return self._send(400, {"error": "enter your own name or CID, so we know who issued the key"})
+                    cid = re.sub(r"\D", "", str(body.get("cid", "")))
+                    if not 6 <= len(cid) <= 9:
+                        return self._send(400, {"error": "enter the student's VATSIM CID (numbers only)"})
+                    cur = members.info(cid)
+                    if cur.get("exists") and not cur.get("revoked") and cur.get("expires", 0) > time.time() + TRAINEE_KEY_HOURS * 3600 + 60:
+                        return self._send(409, {"error": "that CID already has a longer-lived key: the student can use it, and a trainee key would replace it"})
+                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=TRAINEE_KEY_HOURS / 24.0, manual=True)
+                    log.info("Trainee %d-hour key issued for CID %s by %s from %s", TRAINEE_KEY_HOURS, cid, instructor, ip)
+                    return self._send(200, {"key": out["key"], "password": out["password"], "expires": out["expires"], "cid": out["cid"], "hours": TRAINEE_KEY_HOURS})
                 if p == "/auth/logout":
                     if cpdlc:
                         cpdlc.stop(self._token())
