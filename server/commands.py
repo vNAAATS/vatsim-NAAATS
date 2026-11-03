@@ -21,8 +21,8 @@ CALLSIGN_OK = re.compile(r"[A-Z0-9_\-]{2,12}")
 
 RELIEF_CPDLC_TEXT = "THERE IS A CONTROLLER CHANGE IN PROGRESS WHICH REQUIRES YOU TO RE LOG INTO THE CPDLC STATIONS ONCE YOU RECEIVE A LOG OFF MESSAGE"
 
-NATMSG = ("Hello, you will soon be entering oceanic airspace. Please request oceanic clearance via nattrak.vatsim.net "
-          "no later than 20 minutes before your oceanic entry point. Clearance via CPDLC is unavailable.")
+NATMSG = ("Hello, you will soon be entering oceanic airspace. Please request your oceanic clearance by CPDLC, or via nattrak.vatsim.net, "
+          "no later than 20 minutes before your oceanic entry point. Squawk 2000 upon entering the OCA.")
 
 
 PLAN_ICAO = re.compile(r"[A-Z0-9]{3,4}")
