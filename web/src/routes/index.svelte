@@ -3,6 +3,18 @@ import { onMount } from "svelte";
  
 import * as site from "../typescript/site";
 
+let pagesOpen: boolean = false;
+const pages: { href: string; label: string }[] = [
+    { href: "/fdd", label: "Flight Data Display" },
+    { href: "/windows", label: "FDD for Windows" },
+    { href: "/download", label: "Downloads" },
+    { href: "/guide", label: "Install guide" },
+    { href: "/manual", label: "User manual" },
+    { href: "/training", label: "Oceanic training" },
+    { href: "/code-signing", label: "Code signing" },
+    { href: "/privacy", label: "Privacy" },
+];
+
 onMount(async () => {
     site.setTitle("Homepage");
     document.body.style.opacity = "0%";
@@ -48,6 +60,19 @@ onMount(async () => {
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
                     Downloads
                 </a>
+                <div class="relative ml-4">
+                    <button type="button" aria-haspopup="true" aria-expanded={pagesOpen} on:click={() => (pagesOpen = !pagesOpen)} on:keydown={(e) => { if (e.key === "Escape") pagesOpen = false; }}
+                    class="border-2 rounded px-4 py-2 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
+                        Pages &#9662;
+                    </button>
+                    {#if pagesOpen}
+                        <div class="absolute right-0 mt-2 w-56 z-50 text-left bg-blue-1 border-2 rounded shadow-5xl font-bitmap text-lg">
+                            {#each pages as pg}
+                                <a href={pg.href} class="block px-4 py-2 hover:bg-blue-5">{pg.label}</a>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
         <div class="flex flex-col justify-end items-center h-1/3 font-bitmap font-normal text-2xl">
@@ -132,6 +157,13 @@ onMount(async () => {
                     <div class="2xl:text-3xl xl:text-2xl">Dedicated Network &amp; API</div>
                     <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="90" height="90" viewBox="0 0 24 24" class="py-4 fill-current text-white" aria-hidden="true"><path d="M10,2C8.89,2 8,2.89 8,4V7C8,8.11 8.89,9 10,9H11V11H2V13H6V15H5C3.89,15 3,15.89 3,17V20C3,21.11 3.89,22 5,22H9C10.11,22 11,21.11 11,20V17C11,15.89 10.11,15 9,15H8V13H16V15H15C13.89,15 13,15.89 13,17V20C13,21.11 13.89,22 15,22H19C20.11,22 21,21.11 21,20V17C21,15.89 20.11,15 19,15H18V13H22V11H13V9H14C15.11,9 16,8.11 16,7V4C16,2.89 15.11,2 14,2H10M10,4H14V7H10V4M5,17H9V20H5V17M15,17H19V20H15V17Z" /></svg>
                     <div class="font-normal text-base opacity-80">Our own server keeps every controller on the same data.</div>
+                </div>
+            </a>
+            <a href="/training" class="flex justify-center items-stretch scale-100 transition duration-500 hover:scale-105">
+                <div class="flex flex-col justify-center items-center w-full p-5 min-h-56 text-center shadow-5xl bg-blue-1 border-2 border-blue-1 rounded">
+                    <div class="2xl:text-3xl xl:text-2xl">Oceanic Training</div>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="90" height="90" viewBox="0 0 24 24" class="py-4 fill-current text-white" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                    <div class="font-normal text-base opacity-80">Trainee video, how-to videos and a checklist for your first session.</div>
                 </div>
             </a>
             <a href="/manual" class="flex justify-center items-stretch scale-100 transition duration-500 hover:scale-105">
