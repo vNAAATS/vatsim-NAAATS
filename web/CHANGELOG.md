@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Hidden instructor page /trainee-key (not linked, not indexed): a trusted instructor enters the instructor password (server setting VNAAATS_INSTRUCTOR_PASSWORD, 10+ characters; page is off until it is set), their own name and the student's CID, and gets a plugin key + FDD password for the student that works for 2 hours. It never replaces a longer-lived key for the same CID, and who issued each key is written to the server log. Server deploy needed.
 - Homepage: a "Pages" drop-down next to the buttons lists the other pages of the site.
 - New /training page for oceanic trainees: the trainee introduction video (area, callsigns, vNAAATS, FDD, CPDLC, natTrak), a before-your-session checklist, how to work a clearance request, and the three how-to videos. Server deploy needed (web files).
 - Staged roll-out: the "RCL processed" / "Send reclearance" buttons are OFF until the server setting VNAAATS_CPDLC_RCL_SEND=on is added to /etc/vnaaats.env (then restart). "Prepare in natTrak", the clearance-request list, TrackAudio (off until switched on) and pop-outs are unaffected.

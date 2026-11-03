@@ -1,4 +1,4 @@
-import json, os, sys, tempfile, threading, unittest, urllib.error, urllib.request
+import json, os, sys, tempfile, threading, time, unittest, urllib.error, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import members as mb
 import vnaaats_server as s
@@ -208,3 +208,47 @@ class ManualKeyTest(unittest.TestCase):
         self.assertEqual(m.sync(["1"]), [])                      # roster sync leaves it alone
         self.assertEqual(m.check_key(out["key"])[0], "1017951")
         self.assertTrue(m.listing()[0]["manual"])
+
+
+class TraineeKeyTest(unittest.TestCase):
+    """The hidden instructor page: a 2-hour key for a student, behind its own password, and it never replaces a longer key."""
+    @classmethod
+    def setUpClass(cls):
+        store = s.FlightStore(os.path.join(tempfile.mkdtemp(), "t.db"))
+        cls.members = mb.MemberKeys(store)
+        auth = s.Auth({"VNAAATS_FDD_PASSWORD": "pw"})
+        cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(s.TrackCache(s.load_fixes()), store, SHARED, None, None, None, auth, None, None, None, cls.members, SECRET))
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+        cls.url = "http://127.0.0.1:%d" % cls.srv.server_address[1]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+        os.environ.pop("VNAAATS_INSTRUCTOR_PASSWORD", None)
+
+    def call(self, body):
+        req = urllib.request.Request(self.url + "/auth/trainee-key", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read() or b"{}")
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b"{}")
+
+    def test_flow(self):
+        good = {"passphrase": "instructor-pass-1", "instructor": "Gary", "cid": "1400001", "name": "Student One"}
+        os.environ.pop("VNAAATS_INSTRUCTOR_PASSWORD", None)
+        self.assertEqual(self.call(good)[0], 404)                                  # off until the password is set
+        os.environ["VNAAATS_INSTRUCTOR_PASSWORD"] = "instructor-pass-1"
+        self.assertEqual(self.call(dict(good, passphrase="nope-nope-nope"))[0], 401)
+        self.assertEqual(self.call(dict(good, instructor=""))[0], 400)
+        self.assertEqual(self.call(dict(good, cid="12"))[0], 400)
+        code, out = self.call(good)
+        self.assertEqual(code, 200)
+        self.assertEqual(out["hours"], 2)
+        self.assertAlmostEqual(out["expires"] - time.time(), 7200, delta=30)
+        self.assertEqual(self.members.check_key(out["key"])[0], "1400001")        # the key works, and the password signs in to the FDD
+        self.assertEqual(self.members.check_login("1400001", out["password"])["cid"], "1400001")
+        self.assertEqual(self.call(good)[0], 200)                                  # re-issuing a trainee key is fine
+        full = self.members.issue("1400002", "Real Member")                        # a normal long-lived key must not be replaced
+        self.assertEqual(self.call(dict(good, cid="1400002"))[0], 409)
+        self.assertEqual(self.members.check_key(full["key"])[0], "1400002")
