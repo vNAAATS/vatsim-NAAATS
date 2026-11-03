@@ -7,7 +7,9 @@
   const { cpdlcStatus, cpdlcOpen, cpdlcPick, cpdlcFreetexts, cpdlcAttention } = cp;
   const { session } = sess;
 
+  const KEEP = 10;                                    // only the latest messages are shown
   let messages: cp.CpdlcMessage[] = [];
+  let totalMsgs: number = 0;
   let loadError: string = "";
   let text: string = "";
   let ra: string = "WU";
@@ -91,8 +93,9 @@
     const r = await cp.loadMessages(shown);
     if (typeof r === "string") { loadError = r; return; }
     loadError = "";
-    const grew = r.length !== messages.length || r[r.length - 1]?.id !== messages[messages.length - 1]?.id;
-    messages = r;
+    const grew = r.length !== totalMsgs || r[r.length - 1]?.id !== messages[messages.length - 1]?.id;
+    totalMsgs = r.length;
+    messages = r.slice(-KEEP);
     if (grew && thread) setTimeout(() => (thread.scrollTop = thread.scrollHeight), 30);
     if (messages.some((m) => m.dir === "DOWN" && !m.seen) && lastSeenFor !== shown + messages[messages.length - 1].id) {
       lastSeenFor = shown + messages[messages.length - 1].id;
@@ -102,11 +105,15 @@
 
   onMount(() => { timer = setInterval(refresh, 3000); });
   onDestroy(() => clearInterval(timer));
-  $: if ($cpdlcOpen && shown) { messages = []; replyTo = null; refresh(); }
+  $: if ($cpdlcOpen && shown) { messages = []; totalMsgs = 0; replyTo = null; refresh(); }
 
   function pick(callsign: string): void { cpdlcPick.set(callsign); cp.clearAttention(callsign); }
   function useTemplate(t: { text: string; ra: string }): void { text = t.text; ra = t.ra; }
   function answer(m: cp.CpdlcMessage, t: { text: string; ra: string }): void { replyTo = m; text = t.text; ra = t.ra; }
+  function since(ts: number): string {
+    const m = Math.max(0, Math.floor((Date.now() / 1000 - ts) / 60));
+    return m < 1 ? "just now" : m < 60 ? m + " min" : Math.floor(m / 60) + " h " + (m % 60) + " min";
+  }
   function hhmm(ts: number): string {
     const d = new Date(ts * 1000);
     return String(d.getUTCHours()).padStart(2, "0") + String(d.getUTCMinutes()).padStart(2, "0") + "z";
@@ -233,14 +240,23 @@
         <div class="px-3 py-1 text-xs text-yellow-300">Hoppie: {$cpdlcStatus.error}</div>
       {/if}
       <div class="flex-1 min-h-0 flex flex-col sm:flex-row">
-        <!-- connected aircraft: one row each, flashing when something new has come in -->
-        <div class="sm:w-40 shrink-0 flex flex-col border-b sm:border-b-0 sm:border-r border-blue-4 max-h-32 sm:max-h-none">
-          <div class="px-3 py-1 text-xs opacity-70 select-none">Connected ({connected.length}){$cpdlcStatus.autoAccept ? " - auto accept" : ""}</div>
-          <div class="flex-1 min-h-0 overflow-y-auto flex flex-row sm:flex-col flex-wrap sm:flex-nowrap gap-1 px-2 pb-2">
+        <!-- connected aircraft: up to 10 rows before the scroll bar; flashing when something new has come in -->
+        <div class="sm:w-48 shrink-0 flex flex-col bg-blue-1 border-b sm:border-b-0 sm:border-r border-blue-4 csidebar">
+          <div class="px-3 pt-3 pb-2 select-none border-b border-blue-4">
+            <div class="flex flex-row items-center justify-between">
+              <span class="text-xs font-bold tracking-widest opacity-80">CONNECTED</span>
+              <span class="min-w-6 text-center px-1.5 text-xs font-bold bg-blue-10 text-black rounded-full">{connected.length}</span>
+            </div>
+            {#if $cpdlcStatus.autoAccept}<div class="mt-1.5 inline-block px-2 py-0.5 text-xs border border-green-300 text-green-300 rounded-sm" title="Logon requests are accepted automatically">&#10003; Auto accept</div>{/if}
+          </div>
+          <div class="clist overflow-y-auto flex flex-row sm:flex-col flex-wrap sm:flex-nowrap gap-1 p-2">
             {#each connected as c}
-              <button class="flex flex-row items-center justify-between gap-2 px-2 py-1.5 text-sm text-left border border-blue-6 {c.callsign === shown ? 'bg-blue-10 text-black font-bold' : 'bg-blue-3 hover:bg-blue-4'} {(c.unread > 0 || $cpdlcAttention.has(c.callsign)) && !($cpdlcOpen && c.callsign === shown) ? 'nt-flash text-black' : ''}"
-                on:click={() => pick(c.callsign)}>
-                <span>{c.callsign}</span>
+              <button class="flex flex-row items-center justify-between gap-2 pl-2 pr-2 py-1.5 text-left border-l-4 border-y border-r {c.callsign === shown ? 'bg-blue-3 border-blue-10 border-y-blue-6 border-r-blue-6' : 'bg-blue-2 border-l-blue-5 border-y-blue-3 border-r-blue-3 hover:bg-blue-3'} {(c.unread > 0 || $cpdlcAttention.has(c.callsign)) && !($cpdlcOpen && c.callsign === shown) ? 'nt-flash text-black' : ''}"
+                title="Connected {since(c.since)}" on:click={() => pick(c.callsign)}>
+                <span class="flex flex-col min-w-0">
+                  <span class="text-sm font-bold leading-tight {c.callsign === shown ? 'text-blue-10' : ''}">{c.callsign}</span>
+                  <span class="text-xs opacity-60 leading-tight">{since(c.since)}</span>
+                </span>
                 {#if c.unread > 0}<span class="px-1.5 text-xs font-bold bg-yellow-300 text-black rounded-full">{c.unread}</span>{/if}
               </button>
             {/each}
@@ -248,6 +264,8 @@
               <span class="text-sm opacity-70 px-1">Nobody is connected.{$cpdlcStatus.station ? " Pilots send a logon request to " + $cpdlcStatus.station + "." : ""}</span>
             {/if}
           </div>
+          {#if connected.length > 10}<div class="hidden sm:block px-3 py-1 text-xs opacity-60 select-none">Scroll for {connected.length - 10} more</div>{/if}
+          <div class="hidden sm:block mt-auto px-3 py-2 text-xs opacity-60 border-t border-blue-4 select-none">A flashing aircraft has a new message or has just logged on.</div>
         </div>
         <div class="flex-1 min-w-0 min-h-0 flex flex-col">
           {#if !canUse}
@@ -256,7 +274,7 @@
             <!-- sign-in form is shown above -->
           {:else if shown}
             <div class="flex flex-row items-center justify-between px-3 py-1 font-bold border-b border-blue-4 select-none">
-              <span>[{shown}]</span>
+              <span class="flex flex-col"><span class="text-base">{shown}</span>{#if connected.find((c) => c.callsign === shown)}<span class="text-xs font-normal opacity-70">connected {since(connected.find((c) => c.callsign === shown)?.since ?? 0)}{totalMsgs > KEEP ? " \u00b7 last " + KEEP + " of " + totalMsgs + " messages" : ""}</span>{/if}</span>
               <button class="px-2 py-0.5 text-xs font-bold border border-red-400 text-red-300 hover:bg-red-700 hover:text-white"
                 title="Log this pilot off CPDLC from your station. The pilot can log on again."
                 on:click={() => { if (confirm("Log " + shown + " off CPDLC from your station?")) { cp.disconnectPilot(shown).then((e) => { if (e) loadError = e; }); } }}>Log off pilot</button>
@@ -264,8 +282,8 @@
             <div class="flex-1 min-h-0 overflow-y-auto px-2 py-1 text-sm" bind:this={thread}>
               {#if loadError}<div class="text-yellow-300">{loadError}</div>{/if}
               {#each messages as m}
-                <div class="my-1 px-2 py-1 border-l-4 {m.dir === 'UP' ? 'border-blue-10 bg-blue-3' : 'border-yellow-300 bg-blue-4'}">
-                  <div class="flex flex-row justify-between text-xs opacity-80">
+                <div class="my-1.5 px-3 py-1.5 border-l-4 rounded-sm shadow-sm {m.dir === 'UP' ? 'border-blue-10 bg-blue-3' : 'border-yellow-300 bg-blue-4'}">
+                  <div class="flex flex-row justify-between text-xs opacity-80 tracking-wide">
                     <span>{m.dir === "UP" ? "▲ UPLINK" : "▼ DOWNLINK"} {hhmm(m.ts)}{m.by && m.by !== "auto" ? " " + m.by : ""}</span>
                     <span class={stateColour[m.state] ?? ""}>{m.state === "LOGON" ? "" : m.state}{m.dir === "DOWN" && !m.seen ? " NEW" : ""}</span>
                   </div>
@@ -329,3 +347,10 @@
     {/if}
   </div>
 </div>
+
+<style>
+  /* about ten aircraft show before the scroll bar (each row is roughly 3.1rem with its gap) */
+  .csidebar { max-height: 10rem; }
+  .clist { max-height: 6.5rem; }
+  @media (min-width: 640px) { .csidebar { max-height: none; } .clist { max-height: 30.7rem; } }
+</style>
