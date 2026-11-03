@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- TrackAudio: the aircraft that is transmitting gets a green box around its row in the flight list while it talks, and the box fades out when it stops. On by default; the tick-box "Highlight the aircraft that is transmitting" in the TrackAudio (headphones) window switches it off and on (kept on this computer). Needs TrackAudio switched on in the FDD. Server deploy needed (web files only).
 - RCL reminder message (RCL REQ Send, Auto RCL, Copy natTrak message) no longer says CPDLC clearance is unavailable: it now asks the pilot to request their oceanic clearance by CPDLC, or via nattrak.vatsim.net, no later than 20 minutes before the oceanic entry point, then "Squawk 2000 upon entering the OCA." Server deploy needed.
 - Hidden instructor page /trainee-key (not linked, not indexed): a trusted instructor enters the instructor password (server setting VNAAATS_INSTRUCTOR_PASSWORD, 10+ characters; page is off until it is set), their own name and the student's CID, and gets a plugin key + FDD password for the student that works for 2 hours. It never replaces a longer-lived key for the same CID, and who issued each key is written to the server log. Server deploy needed.
 - Homepage: a "Pages" drop-down next to the buttons lists the other pages of the site.

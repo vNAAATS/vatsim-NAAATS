@@ -3,7 +3,7 @@
   import * as t from "../../typescript/fdd/trackaudio";
   import * as dataHandler from "../../typescript/fdd/data";
   import { popOut } from "../../typescript/fdd/popout";
-  const { ta } = t;
+  const { ta, highlightOn } = t;
 
   export let standalone: boolean = false;      // shown as a whole window (pop-out) instead of a chip
   let open: boolean = false;
@@ -63,6 +63,10 @@
       {#if $ta.history.length === 0}<div class="px-3 py-3 opacity-70">Nothing heard yet.</div>{/if}
     </div>
     {#if $ta.enabled}
+      <label class="px-3 py-2 flex flex-row items-center gap-2 border-t border-blue-4 text-xs select-none" title="Draws a green box around the aircraft's row in the flight list while it is transmitting, then fades it out">
+        <input type="checkbox" checked={$highlightOn} on:change={(e) => t.setHighlight(e.currentTarget.checked)} />
+        Highlight the aircraft that is transmitting
+      </label>
       <div class="px-3 py-2 flex flex-row gap-2 border-t border-blue-4">
         <button class="px-3 py-0.5 text-xs border border-blue-6 hover:bg-blue-4" on:click={t.clearHistory}>Clear history</button>
         <button class="px-3 py-0.5 text-xs border border-blue-6 hover:bg-blue-4" on:click={() => t.setEnabled(false)}>Switch off</button>
