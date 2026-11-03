@@ -7,6 +7,20 @@ import * as dataHandler from "./data";
 
 const apiBase: string = (import.meta as any).env?.VITE_API_BASE ?? "";
 
+export type RclRequest = {
+  id: number;
+  ts: number;
+  callsign: string;
+  text: string;                    // what the pilot sent
+  dest: string;
+  route: string;
+  etas: string;
+  level: number | null;
+  mach: number | null;
+  track: string;
+  natTrak: { status: string; level: string | null; mach: string | null; nat: string | null; fix: string | null; issued: number | null } | null;
+};
+
 export type CpdlcStatus = {
   enabled: boolean;
   station?: string;
@@ -20,6 +34,7 @@ export type CpdlcStatus = {
   unread: Record<string, number>;
   lastPoll?: number | null;
   error?: string;
+  rclRequests?: RclRequest[];      // oceanic clearance requests that arrived by CPDLC and are still open
 };
 
 export type CpdlcMessage = {
@@ -159,6 +174,12 @@ export async function forceLogout(callsign: string, understand: string): Promise
 }
 
 // Log one pilot off CPDLC from your station (stuck or unwanted connection). Returns an error message, or "" on success.
+export async function dismissRcl(id: number): Promise<string> {
+  const r = await post("/cpdlc/rcl-dismiss", { id });
+  refreshCpdlc();
+  return r.ok ? "" : (r.data.error ?? "could not remove the request");
+}
+
 export async function disconnectPilot(callsign: string): Promise<string> {
   const r = await post("/cpdlc/disconnect", { callsign });
   refreshCpdlc();

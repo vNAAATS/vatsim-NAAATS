@@ -172,7 +172,9 @@ class AutomationTests(unittest.TestCase):
     def uplinks(self, hop):
         return [x["packet"] for x in hop.sent if x["type"] == "cpdlc"]
 
-    def test_oceanic_clearance_request_is_refused_automatically(self):
+    def test_oceanic_clearance_request_is_refused_when_intake_is_off(self):
+        old, c.RCL_INTAKE = c.RCL_INTAKE, False
+        self.addCleanup(setattr, c, "RCL_INTAKE", old)
         hop, st = make()
         hop.queue = [("BAW9", "/data2/1//Y/REQUEST LOGON")]
         st.poll_once()
@@ -184,6 +186,48 @@ class AutomationTests(unittest.TestCase):
         self.assertTrue(last.startswith("/data2/") and "/2/R/" in last)          # answers message 2, reply wanted (roger)
         m = [x for x in st.messages("BAW9") if x["dir"] == "DOWN" and "OCEANIC" in x["text"]][0]
         self.assertEqual((m["state"], m["seen"]), ("ANSWERED", True))            # no alert for the controller
+
+    def test_oceanic_clearance_request_is_kept_and_acknowledged(self):
+        hop, st = make()
+        hop.queue = [("BAW9", "/data2/1//Y/REQUEST LOGON")]
+        st.poll_once()
+        hop.queue = [("BAW9", "/data2/2//Y/REQUEST OCEANIC CLEARANCE NAT A FL350 M84")]
+        st.poll_once()
+        last = self.uplinks(hop)[-1]
+        self.assertIn("RCL RECEIVED - STANDBY FOR CLEARANCE", last)
+        self.assertTrue("/2/NE/" in last)                                        # answers message 2, no reply wanted
+        reqs = st.status()["rclRequests"]
+        self.assertEqual([(r["callsign"], r["text"]) for r in reqs], [("BAW9", "REQUEST OCEANIC CLEARANCE NAT A FL350 M84")])
+        m = [x for x in st.messages("BAW9") if x["dir"] == "DOWN" and "OCEANIC" in x["text"]][0]
+        self.assertFalse(m["seen"])                                              # the controller is alerted
+
+    def test_repeated_request_updates_the_same_entry_and_dismiss_removes_it(self):
+        hop, st = make()
+        hop.queue = [("BAW9", "/data2/1//Y/REQUEST LOGON")]
+        st.poll_once()
+        for n, txt in ((2, "REQUEST OCEANIC CLEARANCE NAT A"), (3, "REQUEST OCEANIC CLEARANCE NAT B")):
+            hop.queue = [("BAW9", "/data2/%d//Y/%s" % (n, txt))]
+            st.poll_once()
+        reqs = st.status()["rclRequests"]
+        self.assertEqual(len(reqs), 1)
+        self.assertEqual(reqs[0]["text"], "REQUEST OCEANIC CLEARANCE NAT B")
+        self.assertTrue(st.rcl_dismiss(reqs[0]["id"]))
+        self.assertEqual(st.status()["rclRequests"], [])
+        self.assertFalse(st.rcl_dismiss(reqs[0]["id"]))
+
+    def test_rcl_enrich_adds_flight_data_and_natrak_state(self):
+        class Nat:
+            def by_callsign(self_):
+                return {"BAW9": {"status": "CLEARED", "level": "350", "mach": "0.84", "nat": "A", "fix": "PIKIL", "clearance_issued": "2026-11-03T15:32:59.000000Z"}}
+        class Store:
+            def get(self_, cs):
+                return {"arrival": "KJFK", "route": "PIKIL 57/20", "routeEtas": "1507", "assignedLevel": 350, "assignedMach": 84, "track": "A"} if cs == "BAW9" else None
+        out = s.rcl_enrich([{"id": 1, "ts": 1.0, "callsign": "BAW9", "text": "X"}, {"id": 2, "ts": 2.0, "callsign": "DLH1", "text": "Y"}], Nat(), Store(), None)
+        self.assertEqual(out[0]["dest"], "KJFK")
+        self.assertEqual(out[0]["natTrak"]["status"], "CLEARED")
+        self.assertGreater(out[0]["natTrak"]["issued"], 1.7e9)
+        self.assertIsNone(out[1]["natTrak"])
+        self.assertEqual(out[1]["dest"], "")
 
     def test_logon_distance_rule(self):
         for answer, connected in ((True, True), (None, True), (False, False)):
