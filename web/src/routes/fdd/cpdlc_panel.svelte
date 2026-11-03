@@ -130,6 +130,7 @@
     if (sendOnClick) send();
   }
   function answer(m: cp.CpdlcMessage, t: { text: string; ra: string }): void { replyTo = m; text = t.text; ra = t.ra; }
+  function ageMin(ts: number): number { return Math.max(0, Math.floor((Date.now() / 1000 - ts) / 60)); }
   function since(ts: number): string {
     const m = Math.max(0, Math.floor((Date.now() / 1000 - ts) / 60));
     return m < 1 ? "just now" : m < 60 ? m + " min" : Math.floor(m / 60) + " h " + (m % 60) + " min";
@@ -258,6 +259,36 @@
       {/if}
       {#if $cpdlcStatus.error}
         <div class="px-3 py-1 text-xs text-yellow-300">Hoppie: {$cpdlcStatus.error}</div>
+      {/if}
+      {#if canUse && $cpdlcStatus.active && ($cpdlcStatus.rclRequests ?? []).length > 0}
+        <!-- oceanic clearance requests that came in by CPDLC: they are not on natTrak until a controller enters them there -->
+        <div class="border-b-2 border-yellow-300 bg-blue-1 max-h-56 overflow-y-auto">
+          <div class="px-3 py-1 text-xs font-bold tracking-widest text-yellow-300 select-none">CLEARANCE REQUESTS BY CPDLC ({($cpdlcStatus.rclRequests ?? []).length})</div>
+          {#each $cpdlcStatus.rclRequests ?? [] as r (r.id)}
+            <div class="px-3 py-1.5 border-t border-blue-4 text-sm">
+              <div class="flex flex-row items-center justify-between gap-2">
+                <span class="flex flex-row items-baseline gap-2 min-w-0">
+                  <button class="font-bold underline {r.callsign === shown ? 'text-blue-10' : ''}" title="Show this aircraft's messages" on:click={() => pick(r.callsign)}>{r.callsign}</button>
+                  <span class="text-xs opacity-70">{hhmm(r.ts)}{r.dest ? " to " + r.dest : ""}</span>
+                </span>
+                <span class="flex flex-row items-center gap-2 shrink-0">
+                  {#if r.natTrak && r.natTrak.status === "CLEARED"}
+                    <span class="px-1.5 text-xs font-bold bg-green-700 border border-green-300" title="natTrak has issued a clearance">natTrak: cleared {r.natTrak.level ? "FL" + r.natTrak.level : ""} {r.natTrak.nat ?? ""}</span>
+                  {:else if r.natTrak}
+                    <span class="px-1.5 text-xs font-bold bg-blue-3 border border-blue-10" title="It is on natTrak, waiting for a controller">natTrak: pending</span>
+                  {:else}
+                    <span class="px-1.5 text-xs font-bold {ageMin(r.ts) >= 5 ? 'bg-red-700 border border-red-300' : 'bg-yellow-300 text-black'}" title="Not on natTrak yet. A controller has to enter it there.">not in natTrak{ageMin(r.ts) >= 1 ? " - " + ageMin(r.ts) + " min" : ""}</span>
+                  {/if}
+                  <button class="px-2 py-0.5 text-xs border border-blue-6 hover:bg-blue-4" title="Remove from this list" on:click={() => cp.dismissRcl(r.id)}>Dismiss</button>
+                </span>
+              </div>
+              <div class="mt-0.5 text-xs opacity-80 break-words">{r.text}</div>
+              {#if r.route || r.level}
+                <div class="mt-0.5 text-xs opacity-60 break-words">Flight plan: {r.route || "no route"}{r.level ? " - FL" + r.level : ""}</div>
+              {/if}
+            </div>
+          {/each}
+        </div>
       {/if}
       <div class="flex-1 min-h-0 flex flex-col sm:flex-row">
         <!-- connected aircraft: up to 10 rows before the scroll bar; flashing when something new has come in -->

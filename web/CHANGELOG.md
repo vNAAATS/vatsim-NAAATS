@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- CPDLC oceanic clearance requests: a pilot who asks for an oceanic clearance over CPDLC is now told "RCL RECEIVED - STANDBY FOR CLEARANCE" (instead of "UNABLE ... use natTrak") and the request appears in a new list at the top of the CPDLC window, marked "not in natTrak" (red after 5 minutes), "natTrak: pending" or "natTrak: cleared". Server switch VNAAATS_CPDLC_RCL=off restores the old refusal. Server deploy needed.
 - CPDLC: clicking a flight level now sends the level message straight away (tick-box "Send on click" under the level buttons switches this off, so the button only fills the message box).
 - CPDLC: flight-level quick buttons (FL300 to FL410). Pick Climb, Descend, Maintain or Expect climb, then a level, and the message is filled in. The long list of standard messages is now a small "More standard messages" drop-down.
 - CPDLC window redesign: the connected list now shows 10 aircraft before the scroll bar (it was stuck at about two) with a count badge, an auto-accept tag and how long each has been connected; only the latest 10 messages are shown; tidier message cards and header.

@@ -41,6 +41,10 @@ REPLY_STATES = (("WILCO", "WILCO"), ("UNABLE", "UNABLE"), ("ROGER", "ROGER"), ("
 
 OCA_REQUEST_RE = re.compile(r"\bOCEANIC\s+CLEARANCE\b|\bOCEANIC\s+CLX\b|\bOCA\s+CLEARANCE\b|\bREQUEST\s+CLEARANCE\b")
 MSG_OCA_UNABLE = "UNABLE TO PROVIDE OCEANIC CLEARANCES VIA CPDLC. PLEASE VISIT NATTRAK.VATSIM.NET AND SUBMIT YOUR REQUEST THERE"
+MSG_RCL_RECEIVED = "RCL RECEIVED - STANDBY FOR CLEARANCE"
+RCL_INTAKE = os.environ.get("VNAAATS_CPDLC_RCL", "on").lower() != "off"      # off = the old behaviour (refuse and point to natTrak)
+RCL_KEEP_SECONDS = 6 * 3600        # a request stays in the list this long unless dismissed
+RCL_REPEAT_SECONDS = 1800          # a second request from the same aircraft inside this time updates the first
 MSG_TOO_FAR = "UNABLE. CONTACT CONTROLLER ON VOICE 20 MILES BEFORE OCEANIC ENTRY POINT"
 MSG_UNICOM = "THERE IS NO FURTHER ATC AVAILABLE. SERVICE TERMINATED. MONITOR ADVISORY ON 122.800"
 LOGOFF_TEXT = "LOGOFF"          # UNVERIFIED against the live Hoppie network: what the ground sends to log a pilot off
@@ -200,6 +204,8 @@ class CpdlcStation:
             self.db.execute("ALTER TABLE cpdlc_messages ADD COLUMN station TEXT NOT NULL DEFAULT ''")
         except sqlite3.OperationalError:
             pass                                              # column already there
+        self.db.execute("""CREATE TABLE IF NOT EXISTS cpdlc_rcl (id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, station TEXT NOT NULL,
+            callsign TEXT NOT NULL, text TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'open')""")
         self.db.execute("CREATE TABLE IF NOT EXISTS cpdlc_conn2 (station TEXT NOT NULL, callsign TEXT NOT NULL, since REAL NOT NULL, PRIMARY KEY (station, callsign))")
         self.db.commit()
         self.stop_flag = False
@@ -282,7 +288,35 @@ class CpdlcStation:
             unread = self.unread()
             conn = [{"callsign": c, "since": v["since"], "unread": unread.get(c, 0)} for c, v in sorted(self.connected.items())]
             return {"enabled": True, "station": self.client.station, "autoAccept": self.auto_accept, "connected": conn,
-                    "unread": unread, "lastPoll": self.last_poll, "error": self.error}
+                    "unread": unread, "lastPoll": self.last_poll, "error": self.error, "rclRequests": self.rcl_requests()}
+
+    # --- oceanic clearance requests received by CPDLC (to be entered on natTrak by a controller)
+    def rcl_requests(self):
+        with self.lock:
+            rows = self.db.execute("SELECT id, ts, callsign, text FROM cpdlc_rcl WHERE station=? AND state='open' AND ts > ? ORDER BY ts",
+                                   (self.client.station, self.now() - RCL_KEEP_SECONDS)).fetchall()
+        return [{"id": r[0], "ts": r[1], "callsign": r[2], "text": readable(r[3])} for r in rows]
+
+    def rcl_dismiss(self, rid):
+        with self.lock:
+            cur = self.db.execute("UPDATE cpdlc_rcl SET state='dismissed' WHERE id=? AND station=? AND state='open'", (int(rid), self.client.station))
+            self.db.commit()
+            return cur.rowcount > 0
+
+    def _rcl_request(self, sender, pkt):
+        """A pilot asked for an oceanic clearance over CPDLC: keep it for the controllers, and tell the pilot it arrived."""
+        cs = sender.upper()
+        with self.lock:
+            now = self.now()
+            row = self.db.execute("SELECT id FROM cpdlc_rcl WHERE station=? AND callsign=? AND state='open' AND ts > ?",
+                                  (self.client.station, cs, now - RCL_REPEAT_SECONDS)).fetchone()
+            if row:
+                self.db.execute("UPDATE cpdlc_rcl SET ts=?, text=? WHERE id=?", (now, pkt["text"], row[0]))
+            else:
+                self.db.execute("INSERT INTO cpdlc_rcl (ts, station, callsign, text) VALUES (?,?,?,?)", (now, self.client.station, cs, pkt["text"]))
+            self.db.commit()
+        self._store("DOWN", sender, pkt["min"], pkt["mrn"], pkt["ra"], pkt["text"], state="", seen=0)
+        self._auto_reply(sender, MSG_RCL_RECEIVED, pkt["min"], "NE")
 
     # --- sending
     def _alloc_min(self):
@@ -342,7 +376,10 @@ class CpdlcStation:
             self._store("DOWN", sender, pkt["min"], pkt["mrn"], pkt["ra"], pkt["text"], state="", seen=1)
             self._set_connected(sender, False)
             return
-        if OCA_REQUEST_RE.search(text):                       # oceanic clearances are not available by CPDLC on VATSIM
+        if OCA_REQUEST_RE.search(text):
+            if RCL_INTAKE:                                    # keep it for a controller to enter on natTrak, and say it arrived
+                self._rcl_request(sender, pkt)
+                return
             self._store("DOWN", sender, pkt["min"], pkt["mrn"], pkt["ra"], pkt["text"], state="ANSWERED", seen=1)
             self._auto_reply(sender, MSG_OCA_UNABLE, pkt["min"], "R")
             return
@@ -686,4 +723,4 @@ class CpdlcHub:
             was_kicked = self.kicked.get(token) if token else None
         return {"enabled": True, "active": False, "station": station or "", "stationForPosition": station or "", "inUse": taken,
                 "lockedSeconds": self.lockout_seconds(station), "kickedFrom": was_kicked or "",
-                "connected": [{"callsign": c, "since": 0, "unread": 0} for c in others], "unread": {}, "lastPoll": None, "error": ""}
+                "connected": [{"callsign": c, "since": 0, "unread": 0} for c in others], "unread": {}, "lastPoll": None, "error": "", "rclRequests": []}

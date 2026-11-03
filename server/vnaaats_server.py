@@ -1355,6 +1355,31 @@ MIME = {".html": "text/html", ".js": "application/javascript", ".css": "text/css
         ".webmanifest": "application/manifest+json", ".woff": "font/woff", ".ttf": "font/ttf", ".woff2": "font/woff2", ".txt": "text/plain", ".map": "application/json", ".mp4": "video/mp4", ".pdf": "application/pdf", ".zip": "application/zip"}
 
 
+def rcl_enrich(reqs, natrak, store, network):
+    """Adds to each CPDLC clearance request what the controller needs to enter it on natTrak: the flight's plan data and whether natTrak has it."""
+    out = []
+    nt = natrak.by_callsign() if natrak else {}
+    for r in reqs or []:
+        cs = r["callsign"].upper()
+        rec = (store.get(cs) if store else None) or {}
+        if not rec and network:
+            rec = next((f for f in network.all() if str(f.get("callsign", "")).upper() == cs), {}) or {}
+        n = nt.get(cs)
+        issued = None
+        if n and n.get("clearance_issued"):
+            try:
+                issued = datetime.fromisoformat(str(n["clearance_issued"]).replace("Z", "+00:00")).timestamp()
+            except ValueError:
+                issued = None
+        item = dict(r)
+        item.update({"dest": rec.get("arrival", ""), "route": rec.get("route", ""), "etas": rec.get("routeEtas", ""),
+                     "level": rec.get("assignedLevel"), "mach": rec.get("assignedMach"), "track": rec.get("track", ""),
+                     "natTrak": ({"status": n.get("status", ""), "level": n.get("level"), "mach": n.get("mach"), "nat": n.get("nat"),
+                                  "fix": n.get("fix"), "issued": issued} if n else None)})
+        out.append(item)
+    return out
+
+
 def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None, auth=None, cpdlc=None, queue=None, rcl=None, members=None, issuer_secret="", roster=None, logs=None):
     logs = logs if logs is not None else adminlog_mod.LogHub()
     queue = queue if queue is not None else commands_mod.CommandQueue()
@@ -1583,7 +1608,7 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     if cpdlc:
                         cpdlc.stop(self._token())                  # a new position means a different CPDLC station
                     return self._send(200, self._status(self._session()))
-                if p in ("/cpdlc/send", "/cpdlc/seen", "/cpdlc/logon", "/cpdlc/logoff", "/cpdlc/unicom", "/cpdlc/force-logout", "/cpdlc/disconnect"):
+                if p in ("/cpdlc/send", "/cpdlc/seen", "/cpdlc/logon", "/cpdlc/logoff", "/cpdlc/unicom", "/cpdlc/force-logout", "/cpdlc/disconnect", "/cpdlc/rcl-dismiss"):
                     if not cpdlc:
                         return self._send(404, {"error": "CPDLC is not switched on"})
                     sess = self._session()
@@ -1615,6 +1640,12 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     if p == "/cpdlc/seen":
                         st.mark_seen(str(body.get("callsign", "")))
                         return self._send(200, {"ok": True})
+                    if p == "/cpdlc/rcl-dismiss":
+                        try:
+                            ok = st.rcl_dismiss(int(body.get("id", 0)))
+                        except (TypeError, ValueError):
+                            return self._send(400, {"error": "bad request id"})
+                        return self._send(200, {"ok": ok})
                     if p == "/cpdlc/disconnect":
                         # log one pilot off CPDLC from this station (they stay connected on VATSIM; they can log on again)
                         try:
@@ -2066,7 +2097,10 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     if not cpdlc:
                         return self._send(200, {"enabled": False, "connected": [], "unread": {}})
                     sess = self._session()
-                    return self._send(200, cpdlc.status(self._token() if sess else None, sess["position"] if sess else ""))
+                    st = cpdlc.status(self._token() if sess else None, sess["position"] if sess else "")
+                    if st.get("rclRequests"):
+                        st["rclRequests"] = rcl_enrich(st["rclRequests"], natrak, store, network)
+                    return self._send(200, st)
                 if p == "/cpdlc/messages":
                     if not cpdlc:
                         return self._send(404, {"error": "CPDLC is not switched on"})
