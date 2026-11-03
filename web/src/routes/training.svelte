@@ -29,6 +29,7 @@
       <li>A <b>Hoppie ACARS code</b>, so that you can use CPDLC. It is free from <a class="underline" rel="external" href="https://www.hoppie.nl/acars/">hoppie.nl/acars</a>. Each controller uses their own code, and the server never stores it.</li>
       <li>Your VATSIM login for the <a class="underline" rel="external" href="https://nattrak.vatsim.net/">natTrak website</a>.</li>
       <li>Your vNAAATS key, as described in the install guide.</li>
+      <li><b>On the day of your live training session</b>, your instructor will issue you a temporary key and password in order to access the FDD and control the ocean.</li>
     </ul>
 
     <h2 class="text-2xl font-bold mb-2">Callsigns</h2>
