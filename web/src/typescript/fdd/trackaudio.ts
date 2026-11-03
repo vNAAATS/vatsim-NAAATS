@@ -32,6 +32,15 @@ export function setHighlight(on: boolean): void {
   highlightOn.set(on);
 }
 try { window.addEventListener("storage", (e) => { if (e.key === HL_KEY) highlightOn.set(loadHl()); }); } catch (e) { /* no window */ }
+// Scroll the flight list to the aircraft that starts transmitting (only if its row is not already on screen). On unless switched off.
+const SC_KEY = "vnaaats.taScroll";
+function loadSc(): boolean { try { return localStorage.getItem(SC_KEY) !== "0"; } catch (e) { return true; } }
+export const scrollOn = writable<boolean>(loadSc());
+export function setScroll(on: boolean): void {
+  try { localStorage.setItem(SC_KEY, on ? "1" : "0"); } catch (e) { /* not kept */ }
+  scrollOn.set(on);
+}
+try { window.addEventListener("storage", (e) => { if (e.key === SC_KEY) scrollOn.set(loadSc()); }); } catch (e) { /* no window */ }
 // Who is on the air right now (live) or just was (live = false, so the box can fade out)
 export const talker = writable<{ who: string; live: boolean }>({ who: "", live: false });
 

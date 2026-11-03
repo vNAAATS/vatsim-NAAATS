@@ -4,7 +4,7 @@
   import * as utils from "../../typescript/fdd/utils";
   import * as dataHandler from "../../typescript/fdd/data";
   import { openMenu } from "../../typescript/fdd/acmenu";
-  import { talker, highlightOn } from "../../typescript/fdd/trackaudio";
+  import { talker, highlightOn, scrollOn } from "../../typescript/fdd/trackaudio";
 
   // Elements for spread prop
   export let callsign: string;
@@ -80,14 +80,18 @@
     isActive = true;
   }
   // TrackAudio: this aircraft is transmitting (solid green box) or just stopped (the box fades out)
-  $: isTalker = $highlightOn && $talker.who !== "" && $talker.who === callsign.toUpperCase();
+  $: sameTalker = $talker.who !== "" && $talker.who === callsign.toUpperCase();
+  $: isTalker = $highlightOn && sameTalker;
   $: talking = isTalker && $talker.live;
+  let stripEl: HTMLElement;
+  // bring the row into view when this aircraft starts transmitting (nearest: does nothing if it is already visible)
+  $: if (sameTalker && $talker.live && $scrollOn && stripEl) stripEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   function stripMouseUp(): void {
     isActive = false;
   }
 </script>
 
-<div id={"strip-" + callsign} style={faded ? "opacity: 0.45;" : ""} class={"hover:border-green-500 hover:border-2" + (isTalker ? " ta-box" : "") + (talking ? " ta-live" : "") + ($espicked === callsign ? ($espickN % 2 ? " es-pick-a" : " es-pick-b") : "")} title={tip}
+<div bind:this={stripEl} id={"strip-" + callsign} style={faded ? "opacity: 0.45;" : ""} class={"hover:border-green-500 hover:border-2" + (isTalker ? " ta-box" : "") + (talking ? " ta-live" : "") + ($espicked === callsign ? ($espickN % 2 ? " es-pick-a" : " es-pick-b") : "")} title={tip}
   on:click={() => {
     if (dataHandler.isNatTrakAlert(callsign)) dataHandler.openNatTrakFor(callsign); // flashing request: open natTrak
     dataHandler.ackNatTrak(callsign);
