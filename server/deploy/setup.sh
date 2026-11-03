@@ -15,7 +15,7 @@ apt-get install -y python3 ufw caddy openssl
 echo "== Creating service user and copying files"
 id vnaaats >/dev/null 2>&1 || useradd --system --home "$APP" --shell /usr/sbin/nologin vnaaats
 mkdir -p "$APP" /var/lib/vnaaats
-cp "$SRC/vnaaats_server.py" "$SRC/cpdlc.py" "$SRC/commands.py" "$SRC/rcl_auto.py" "$SRC/members.py" "$SRC/adminlog.py" "$SRC/usersettings.py" "$SRC/pluginfiles.py" "$SRC/topsky_cpdlc.txt" "$SRC/fixes.json" "$APP/"
+cp "$SRC/vnaaats_server.py" "$SRC/cpdlc.py" "$SRC/clx.py" "$SRC/commands.py" "$SRC/rcl_auto.py" "$SRC/members.py" "$SRC/adminlog.py" "$SRC/usersettings.py" "$SRC/pluginfiles.py" "$SRC/topsky_cpdlc.txt" "$SRC/fixes.json" "$APP/"
 [ -f "$APP/extra_fixes.json" ] || cp "$SRC/extra_fixes.json" "$APP/"      # never overwrite your own additions
 if [ -d "$SRC/web" ]; then rm -rf "$APP/web"; cp -r "$SRC/web" "$APP/web"; fi   # built flight data display
 chown -R vnaaats:vnaaats "$APP" /var/lib/vnaaats

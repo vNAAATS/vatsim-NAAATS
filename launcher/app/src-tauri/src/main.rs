@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tauri::{Manager, WebviewWindow};
+use tauri::{Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
 
 const SITE: &str = "https://vnaaats.com";
@@ -279,6 +279,68 @@ async fn open_url(window: WebviewWindow, url: String) -> Result<(), String> {
     }
 }
 
+/// Open natTrak's "new clearance" page in its own window with the given fields filled in. It NEVER presses Create: the controller checks and does that.
+/// fields = (id of the form field on natTrak, value). Only known field ids are used, and values are passed as data (JSON), never as code.
+#[tauri::command]
+async fn open_nattrak(window: WebviewWindow, app: tauri::AppHandle, fields: Vec<(String, String)>) -> Result<(), String> {
+    check_origin(&window)?;
+    const ALLOWED: [&str; 8] = ["callsign", "destination", "flight_level", "mach", "track_id", "entry_fix", "entry_time", "random_routeing"];
+    let clean: Vec<(String, String)> = fields
+        .into_iter()
+        .filter(|(k, v)| ALLOWED.contains(&k.as_str()) && !v.is_empty() && v.len() <= 200)
+        .collect();
+    let data = serde_json::to_string(&clean).map_err(|e| e.to_string())?;
+    let script = format!(
+        r#"(function(){{
+  var F={data};
+  function note(){{ if(document.getElementById('vnaaats-note')||!document.body) return; var d=document.createElement('div'); d.id='vnaaats-note';
+    d.style.cssText='position:fixed;z-index:99999;left:0;right:0;top:0;background:#fef3c7;color:#78350f;border-bottom:2px solid #f59e0b;padding:6px 12px;font:13px Arial,sans-serif';
+    d.textContent='vNAAATS filled in the highlighted fields. Check them, then press Create yourself.'; document.body.appendChild(d); }}
+  function fill(){{
+    F.forEach(function(p){{ var el=document.getElementById(p[0]); if(!el) return; var v=p[1];
+      if(el.tagName==='SELECT'){{ var o=Array.prototype.find.call(el.options,function(x){{ var t=(x.text||'').trim().toUpperCase(); return t===v.toUpperCase()||t.indexOf('TRACK '+v.toUpperCase())===0||t.indexOf(v.toUpperCase()+' ')===0; }}); if(!o) return; el.value=o.value; }}
+      else {{ el.value=v; }}
+      el.dispatchEvent(new Event('input',{{bubbles:true}})); el.dispatchEvent(new Event('change',{{bubbles:true}})); el.dispatchEvent(new Event('blur',{{bubbles:true}}));
+      el.style.background='#fef9c3'; el.style.outline='2px solid #eab308'; }});
+    note(); }}
+  [800,2000,4000,7000].forEach(function(t){{ setTimeout(fill,t); }});
+}})();"#,
+        data = data
+    );
+    if let Some(old) = app.get_webview_window("nattrak") {
+        let _ = old.close();
+    }
+    let url = tauri::Url::parse("https://nattrak.vatsim.net/controllers/clx/create").map_err(|e| e.to_string())?;
+    WebviewWindowBuilder::new(&app, "nattrak", WebviewUrl::External(url))
+        .title("natTrak - new clearance (vNAAATS)")
+        .inner_size(1000.0, 800.0)
+        .initialization_script(&script)
+        .build()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+/// Open one of our own pages (a part of the display) in a separate window that can be dragged to another screen.
+#[tauri::command]
+async fn open_popout(window: WebviewWindow, app: tauri::AppHandle, which: String, width: f64, height: f64) -> Result<(), String> {
+    check_origin(&window)?;
+    if !["cpdlc", "audio"].contains(&which.as_str()) {
+        return Err("unknown window".into());
+    }
+    let label = format!("pop-{}", which);
+    if let Some(w) = app.get_webview_window(&label) {
+        let _ = w.set_focus();
+        return Ok(());
+    }
+    let url = tauri::Url::parse(&format!("{}/fdd/popout?w={}", SITE, which)).map_err(|e| e.to_string())?;
+    WebviewWindowBuilder::new(&app, &label, WebviewUrl::External(url))
+        .title("vNAAATS")
+        .inner_size(width.clamp(300.0, 1600.0), height.clamp(300.0, 1400.0))
+        .build()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 // The saved sign-in lives in the Windows Credential Manager (where Windows keeps its own saved passwords), never in a plain file.
 #[derive(Serialize, Deserialize)]
 struct Login {
@@ -322,7 +384,7 @@ async fn cred_forget(window: WebviewWindow) -> Result<(), String> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget])
+        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, open_popout])
         .run(tauri::generate_context!())
         .expect("the vNAAATS app could not start");
 }

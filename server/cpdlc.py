@@ -206,6 +206,11 @@ class CpdlcStation:
             pass                                              # column already there
         self.db.execute("""CREATE TABLE IF NOT EXISTS cpdlc_rcl (id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, station TEXT NOT NULL,
             callsign TEXT NOT NULL, text TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'open')""")
+        for col in ("sent_ts REAL", "sent_by TEXT", "sent_kind TEXT"):
+            try:
+                self.db.execute("ALTER TABLE cpdlc_rcl ADD COLUMN " + col)
+            except sqlite3.OperationalError:
+                pass                                          # column already there
         self.db.execute("CREATE TABLE IF NOT EXISTS cpdlc_conn2 (station TEXT NOT NULL, callsign TEXT NOT NULL, since REAL NOT NULL, PRIMARY KEY (station, callsign))")
         self.db.commit()
         self.stop_flag = False
@@ -293,9 +298,22 @@ class CpdlcStation:
     # --- oceanic clearance requests received by CPDLC (to be entered on natTrak by a controller)
     def rcl_requests(self):
         with self.lock:
-            rows = self.db.execute("SELECT id, ts, callsign, text FROM cpdlc_rcl WHERE station=? AND state='open' AND ts > ? ORDER BY ts",
+            rows = self.db.execute("SELECT id, ts, callsign, text, sent_ts, sent_by, sent_kind FROM cpdlc_rcl WHERE station=? AND state='open' AND ts > ? ORDER BY ts",
                                    (self.client.station, self.now() - RCL_KEEP_SECONDS)).fetchall()
-        return [{"id": r[0], "ts": r[1], "callsign": r[2], "text": readable(r[3])} for r in rows]
+        return [{"id": r[0], "ts": r[1], "callsign": r[2], "text": readable(r[3]),
+                 "sent": ({"ts": r[4], "by": r[5] or "", "kind": r[6] or ""} if r[4] else None)} for r in rows]
+
+    def rcl_get(self, rid):
+        for r in self.rcl_requests():
+            if r["id"] == int(rid):
+                return r
+        return None
+
+    def rcl_mark_sent(self, rid, by, kind):
+        with self.lock:
+            self.db.execute("UPDATE cpdlc_rcl SET sent_ts=?, sent_by=?, sent_kind=? WHERE id=? AND station=?",
+                            (self.now(), by, kind, int(rid), self.client.station))
+            self.db.commit()
 
     def rcl_dismiss(self, rid):
         with self.lock:

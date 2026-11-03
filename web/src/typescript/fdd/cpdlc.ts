@@ -18,6 +18,10 @@ export type RclRequest = {
   level: number | null;
   mach: number | null;
   track: string;
+  ntDown?: boolean;
+  entryFix?: string;
+  entryTime?: string;
+  sent?: { ts: number; by: string; kind: string } | null;
   natTrak: { status: string; level: string | null; mach: string | null; nat: string | null; fix: string | null; issued: number | null } | null;
 };
 
@@ -210,3 +214,33 @@ export const templates: { label: string; text: string; ra: string }[] = [
   { label: "Affirm", text: "AFFIRM", ra: "NE" },
   { label: "Negative", text: "NEGATIVE", ra: "NE" },
 ];
+
+
+// Messages that would go to the pilot for a clearance request: kind "clx" (reclearance) or "processed" (no change). Nothing is sent.
+export async function rclPreview(id: number, kind: "clx" | "processed"): Promise<{ messages: string[]; error: string }> {
+  const r = await post("/cpdlc/rcl-preview", { id, kind });
+  return r.ok ? { messages: r.data.messages ?? [], error: "" } : { messages: [], error: r.data.error ?? "could not prepare the message" };
+}
+
+// Send the (possibly edited) messages. Returns an error message, or "" on success.
+export async function rclSend(id: number, kind: "clx" | "processed", messages: string[]): Promise<string> {
+  const r = await post("/cpdlc/rcl-send", { id, kind, messages });
+  refreshCpdlc();
+  return r.ok ? "" : (r.data.error ?? "could not send");
+}
+
+// What goes into natTrak's "new clearance" form for a request (field ids of the natTrak page)
+export function natTrakFields(r: RclRequest): { label: string; id: string; value: string }[] {
+  const lvl = r.level ? String(r.level) : "";
+  const mach = r.mach ? (r.mach >= 10 ? (r.mach / 100).toFixed(2) : String(r.mach)) : "";
+  return [
+    { label: "Callsign", id: "callsign", value: r.callsign },
+    { label: "Destination", id: "destination", value: r.dest || "" },
+    { label: "Flight level", id: "flight_level", value: lvl },
+    { label: "Mach", id: "mach", value: mach },
+    { label: "Track", id: "track_id", value: r.track || "" },
+    { label: "Entry fix", id: "entry_fix", value: r.entryFix || "" },
+    { label: "Entry time", id: "entry_time", value: r.entryTime || "" },
+    { label: "Route (random routeing)", id: "random_routeing", value: r.track && r.track !== "RR" ? "" : (r.route || "") },
+  ];
+}

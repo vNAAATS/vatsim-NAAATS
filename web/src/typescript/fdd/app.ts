@@ -81,3 +81,13 @@ export const credSave = (name: string, password: string): Promise<void> => call(
 export const credForget = (): Promise<void> => call("cred_forget");
 
 export function errText(e: unknown): string { return typeof e === "string" ? e : (e as any)?.message ?? "something went wrong"; }
+
+// Open natTrak's "new clearance" page with fields filled in. It never presses Create. In the app this is its own window that fills the form;
+// in a browser it opens natTrak and the caller shows the values to copy.
+export async function openNatTrak(fields: { id: string; value: string }[]): Promise<"filled" | "opened"> {
+  if (inApp()) {
+    try { await call("open_nattrak", { fields: fields.filter((f) => f.value).map((f) => [f.id, f.value]) }); return "filled"; } catch (e) { /* older app: just open it */ }
+  }
+  window.open("https://nattrak.vatsim.net/controllers/clx/create", "_blank");
+  return "opened";
+}

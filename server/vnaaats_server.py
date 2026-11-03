@@ -53,6 +53,7 @@ from urllib.parse import parse_qs, urlparse
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cpdlc as cpdlc_mod
+import clx as clx_mod
 import commands as commands_mod
 import rcl_auto as rcl_auto_mod
 import members as members_mod
@@ -1372,7 +1373,8 @@ def rcl_enrich(reqs, natrak, store, network):
             except ValueError:
                 issued = None
         item = dict(r)
-        item.update({"dest": rec.get("arrival", ""), "route": rec.get("route", ""), "etas": rec.get("routeEtas", ""),
+        _fx, _tm, _rt = clx_mod._entry(rec.get("route", ""), rec.get("routeEtas", ""), str((n or {}).get("fix") or "").upper())
+        item.update({"ntDown": bool(natrak and getattr(natrak, "error", None)), "entryFix": _fx, "entryTime": _tm, "dest": rec.get("arrival", ""), "route": rec.get("route", ""), "etas": rec.get("routeEtas", ""),
                      "level": rec.get("assignedLevel"), "mach": rec.get("assignedMach"), "track": rec.get("track", ""),
                      "natTrak": ({"status": n.get("status", ""), "level": n.get("level"), "mach": n.get("mach"), "nat": n.get("nat"),
                                   "fix": n.get("fix"), "issued": issued} if n else None)})
@@ -1608,7 +1610,7 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     if cpdlc:
                         cpdlc.stop(self._token())                  # a new position means a different CPDLC station
                     return self._send(200, self._status(self._session()))
-                if p in ("/cpdlc/send", "/cpdlc/seen", "/cpdlc/logon", "/cpdlc/logoff", "/cpdlc/unicom", "/cpdlc/force-logout", "/cpdlc/disconnect", "/cpdlc/rcl-dismiss"):
+                if p in ("/cpdlc/send", "/cpdlc/seen", "/cpdlc/logon", "/cpdlc/logoff", "/cpdlc/unicom", "/cpdlc/force-logout", "/cpdlc/disconnect", "/cpdlc/rcl-dismiss", "/cpdlc/rcl-preview", "/cpdlc/rcl-send"):
                     if not cpdlc:
                         return self._send(404, {"error": "CPDLC is not switched on"})
                     sess = self._session()
@@ -1646,6 +1648,38 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         except (TypeError, ValueError):
                             return self._send(400, {"error": "bad request id"})
                         return self._send(200, {"ok": ok})
+                    if p in ("/cpdlc/rcl-preview", "/cpdlc/rcl-send"):
+                        kind = str(body.get("kind", ""))
+                        if kind not in ("clx", "processed"):
+                            return self._send(400, {"error": "kind must be clx or processed"})
+                        try:
+                            req = st.rcl_get(int(body.get("id", 0)))
+                        except (TypeError, ValueError):
+                            req = None
+                        if not req:
+                            return self._send(404, {"error": "that request is no longer in the list"})
+                        cs = req["callsign"].upper()
+                        nt = (natrak.by_callsign() if natrak else {}).get(cs)
+                        if natrak and not nt and not getattr(natrak, "error", None):
+                            return self._send(409, {"error": "%s is not on natTrak yet. Enter and check it there first." % cs})
+                        rec = (store.get(cs) if store else None) or {}
+                        rec = dict(rec, callsign=cs)
+                        msgs = clx_mod.build(kind, rec, nt, sess["position"])
+                        if p == "/cpdlc/rcl-preview":
+                            return self._send(200, {"messages": msgs, "callsign": cs, "natTrak": bool(nt)})
+                        given = body.get("messages")
+                        if isinstance(given, list):
+                            msgs = [str(m).strip() for m in given if str(m).strip()]
+                        if not msgs:
+                            return self._send(400, {"error": "nothing to send"})
+                        by = "%s (%s)" % (sess["position"], sess["name"])
+                        try:
+                            for m in msgs:
+                                st.send(cs, m, "NE", None, by=by)
+                        except (ValueError, RuntimeError) as e:
+                            return self._send(400, {"error": str(e)})
+                        st.rcl_mark_sent(req["id"], by, kind)
+                        return self._send(200, {"ok": True, "sent": len(msgs)})
                     if p == "/cpdlc/disconnect":
                         # log one pilot off CPDLC from this station (they stay connected on VATSIM; they can log on again)
                         try:
