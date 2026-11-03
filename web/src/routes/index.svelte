@@ -134,6 +134,13 @@ onMount(async () => {
                     <div class="font-normal text-base opacity-80">Our own server keeps every controller on the same data.</div>
                 </div>
             </a>
+            <a href="/training" class="flex justify-center items-stretch scale-100 transition duration-500 hover:scale-105">
+                <div class="flex flex-col justify-center items-center w-full p-5 min-h-56 text-center shadow-5xl bg-blue-1 border-2 border-blue-1 rounded">
+                    <div class="2xl:text-3xl xl:text-2xl">Oceanic Training</div>
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="90" height="90" viewBox="0 0 24 24" class="py-4 fill-current text-white" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                    <div class="font-normal text-base opacity-80">Trainee video, how-to videos and a checklist for your first session.</div>
+                </div>
+            </a>
             <a href="/manual" class="flex justify-center items-stretch scale-100 transition duration-500 hover:scale-105">
                 <div class="flex flex-col justify-center items-center w-full p-5 min-h-56 text-center shadow-5xl bg-blue-1 border-2 border-blue-1 rounded">
                     <div class="2xl:text-3xl xl:text-2xl">Dedicated CPDLC Interaction</div>
