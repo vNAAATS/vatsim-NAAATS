@@ -21,7 +21,7 @@
 
     <h2 class="text-2xl font-bold mb-2">Trainee introduction</h2>
     <video class="w-full bg-black mb-2" controls preload="metadata" playsinline src="/training/vNAAATS-trainee-intro.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-trainee-intro.mp4">Download it</a>.</video>
-    <p class="text-sm opacity-80 mb-6">About 6 minutes. It uses sample flights and is not a live display. It covers what you need, the oceanic area, vNAAATS and the Flight Data Display, CPDLC, and natTrak.</p>
+    <p class="text-sm opacity-80 mb-6">About 5 minutes. It uses sample flights and is not a live display. It covers what you need, the oceanic area, vNAAATS and the Flight Data Display, CPDLC, and natTrak.</p>
 
     <h2 class="text-2xl font-bold mb-2">Before your session</h2>
     <ul class="list-disc ml-6 space-y-1 mb-6">

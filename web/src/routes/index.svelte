@@ -3,6 +3,18 @@ import { onMount } from "svelte";
  
 import * as site from "../typescript/site";
 
+let pagesOpen: boolean = false;
+const pages: { href: string; label: string }[] = [
+    { href: "/fdd", label: "Flight Data Display" },
+    { href: "/windows", label: "FDD for Windows" },
+    { href: "/download", label: "Downloads" },
+    { href: "/guide", label: "Install guide" },
+    { href: "/manual", label: "User manual" },
+    { href: "/training", label: "Oceanic training" },
+    { href: "/code-signing", label: "Code signing" },
+    { href: "/privacy", label: "Privacy" },
+];
+
 onMount(async () => {
     site.setTitle("Homepage");
     document.body.style.opacity = "0%";
@@ -48,6 +60,19 @@ onMount(async () => {
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
                     Downloads
                 </a>
+                <div class="relative ml-4">
+                    <button type="button" aria-haspopup="true" aria-expanded={pagesOpen} on:click={() => (pagesOpen = !pagesOpen)} on:keydown={(e) => { if (e.key === "Escape") pagesOpen = false; }}
+                    class="border-2 rounded px-4 py-2 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
+                        Pages &#9662;
+                    </button>
+                    {#if pagesOpen}
+                        <div class="absolute right-0 mt-2 w-56 z-50 text-left bg-blue-1 border-2 rounded shadow-5xl font-bitmap text-lg">
+                            {#each pages as pg}
+                                <a href={pg.href} class="block px-4 py-2 hover:bg-blue-5">{pg.label}</a>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
         <div class="flex flex-col justify-end items-center h-1/3 font-bitmap font-normal text-2xl">
