@@ -119,10 +119,15 @@
     lvlVerb = t; ra = t.ra; replyTo = null;
     text = lvlPick ? t.text.replace(/@FL\d+@/, "@FL" + lvlPick + "@") : t.text.replace(/@FL\d+@/, "").trimEnd() + " ";
   }
+  const AKEY = "vnaaats.cpdlcSendOnClick";
+  let sendOnClick: boolean = true;                                       // a level button sends straight away (switch off to check first)
+  try { sendOnClick = localStorage.getItem(AKEY) !== "0"; } catch (e) { /* default on */ }
+  function setSendOnClick(): void { try { localStorage.setItem(AKEY, sendOnClick ? "1" : "0"); } catch (e) { /* not kept */ } }
   function pickLevel(fl: number): void {
-    if (!lvlVerb) return;
+    if (!lvlVerb || busy) return;
     lvlPick = fl;
     text = lvlVerb.text.replace(/@FL\d+@/, "@FL" + fl + "@");
+    if (sendOnClick) send();
   }
   function answer(m: cp.CpdlcMessage, t: { text: string; ra: string }): void { replyTo = m; text = t.text; ra = t.ra; }
   function since(ts: number): string {
@@ -337,6 +342,7 @@
                           title={lvlVerb ? "FL" + fl : "Pick Climb, Descend, Maintain or Expect climb first"} on:click={() => pickLevel(fl)}>{fl}</button>
                       {/each}
                       {#if !lvlVerb}<span class="text-xs opacity-60 ml-1">Pick a message first, then a flight level</span>{/if}
+                      <label class="ml-auto text-xs opacity-80 select-none" title="On: clicking a flight level sends the message at once. Off: it only fills the box so you can check it and press Send."><input type="checkbox" bind:checked={sendOnClick} on:change={setSendOnClick} /> Send on click</label>
                     </div>
                   {/if}
                 {/each}
