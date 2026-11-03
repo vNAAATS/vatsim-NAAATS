@@ -110,7 +110,7 @@ export async function commandState(id: number): Promise<{ state: string; msg: st
 }
 
 export function natTrakCommand(callsign: string): string {
-  return ".msg " + callsign + " Hello, you will soon be entering oceanic airspace. Please request oceanic clearance via nattrak.vatsim.net no later than 20 minutes before your oceanic entry point. Clearance via CPDLC is unavailable.";
+  return ".msg " + callsign + " Hello, you will soon be entering oceanic airspace. Please request your oceanic clearance by CPDLC, or via nattrak.vatsim.net, no later than 20 minutes before your oceanic entry point. Squawk 2000 upon entering the OCA.";
 }
 
 // Remember (sent = true) or forget (false) that the natTrak reminder was sent. Returns an error message or "".

@@ -211,7 +211,7 @@
             <button class="px-2 py-1 border-2 border-red-500 bg-red-700 font-bold hover:cursor-pointer" disabled={!wallopText.trim()} on:click={copyWallop}>Copy .wallop</button>
           </div>
         {:else if tab === "nt"}
-          <div class="text-sm mb-2 opacity-90">"Send" types it into EuroScope for you (needs autotype=1 in vnaaats.cfg and plugin 1.5b13). Reminds the pilot to request oceanic clearance on natTrak (CPDLC clearance is unavailable).</div>
+          <div class="text-sm mb-2 opacity-90">"Send" types it into EuroScope for you (needs autotype=1 in vnaaats.cfg and plugin 1.5b13). Reminds the pilot to request oceanic clearance by CPDLC or on natTrak.</div>
           <div class="flex flex-row flex-wrap">
             <button class="px-2 py-1 mr-2 mb-1 {BTN}" disabled={busy || !canEdit} on:click={() => typeIn({ type: "natmsg" }, m.natTrakCommand(callsign))}>Send</button>
             <button class="px-2 py-1 mr-2 mb-1 {BTN}" on:click={() => copy(m.natTrakCommand(callsign))}>Copy natTrak message</button>
