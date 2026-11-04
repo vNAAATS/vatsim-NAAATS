@@ -303,7 +303,16 @@ async fn open_nattrak(window: WebviewWindow, app: tauri::AppHandle, fields: Vec<
       el.dispatchEvent(new Event('input',{{bubbles:true}})); el.dispatchEvent(new Event('change',{{bubbles:true}})); el.dispatchEvent(new Event('blur',{{bubbles:true}}));
       el.style.background='#fef9c3'; el.style.outline='2px solid #eab308'; }});
     note(); }}
-  [800,2000,4000,7000].forEach(function(t){{ setTimeout(fill,t); }});
+  function denied(){{
+    if(document.getElementById('vnaaats-denied')||!document.body) return false;
+    var t=(document.body.innerText||'').toUpperCase();
+    if(t.indexOf('THIS ACTION IS UNAUTHORIZED')<0&&t.indexOf('403')<0) return false;
+    if(t.length>400) return false;
+    var d=document.createElement('div'); d.id='vnaaats-denied';
+    d.style.cssText='position:fixed;z-index:99999;left:0;right:0;top:0;background:#fee2e2;color:#7f1d1d;border-bottom:2px solid #dc2626;padding:8px 12px;font:13px Arial,sans-serif';
+    d.textContent='natTrak refused this page (403). It means the account signed in here is not an active oceanic controller on natTrak: you must be online on VATSIM on an oceanic position, and signed in here with your own VATSIM login. Sign in again in this window (log out of natTrak first if needed), wait a minute after connecting, then try Prepare in natTrak again.';
+    document.body.appendChild(d); return true; }}
+  [800,2000,4000,7000].forEach(function(t){{ setTimeout(function(){{ if(!denied()) fill(); }},t); }});
 }})();"#,
         data = data
     );

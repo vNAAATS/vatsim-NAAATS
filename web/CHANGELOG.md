@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- FDD for Windows: if natTrak answers 403 in the "Prepare in natTrak" window, a red banner now explains that the signed-in account is not an active oceanic controller on natTrak and what to do. Needs a new installer build (launcher change).
 - Send reclearance / RCL processed: if the pilot is not logged on to CPDLC (for example they asked for their clearance by telex), the messages are now sent to them as a plain telex instead of failing with "not connected to CPDLC". The window says so before you press Send. Server deploy needed.
 - CPDLC: a new oceanic clearance request plays its own rising three-note chime (once per request) instead of the normal message sound. A "chime" tick-box in the clearance requests list switches it off and on (kept on this computer). Clearance requests sent by pilots as a plain Hoppie telex now reach the same list (server), and CPDLC logon is accepted up to 1000 nm from the tracks. Server deploy needed.
 - /training: fourth how-to video, VACS and TrackAudio in FDD for Windows. Server deploy needed (web files).
