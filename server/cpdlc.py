@@ -39,7 +39,7 @@ REPLY_STATES = (("WILCO", "WILCO"), ("UNABLE", "UNABLE"), ("ROGER", "ROGER"), ("
                 ("NEGATIVE", "NEGATIVE"), ("STANDBY", "STANDBY"))
 
 
-OCA_REQUEST_RE = re.compile(r"\bOCEANIC\s+CLEARANCE\b|\bOCEANIC\s+CLX\b|\bOCA\s+CLEARANCE\b|\bREQUEST\s+CLEARANCE\b")
+OCA_REQUEST_RE = re.compile(r"\bOCEANIC\s+CLEARANCE\b|\bOCEANIC\s+CLX\b|\bOCA\s+CLEARANCE\b|\bREQUEST\s+CLEARANCE\b|\bOCEAN\s+REQUEST\b|\bOCEAN\s+CLEARANCE\b|\bOCEANIC\s+REQUEST\b|\bRCL\b|\bENTRY\s+POINT\b")
 MSG_OCA_UNABLE = "UNABLE TO PROVIDE OCEANIC CLEARANCES VIA CPDLC. PLEASE VISIT NATTRAK.VATSIM.NET AND SUBMIT YOUR REQUEST THERE"
 MSG_RCL_RECEIVED = "RCL RECEIVED - STANDBY FOR CLEARANCE"
 RCL_INTAKE = os.environ.get("VNAAATS_CPDLC_RCL", "on").lower() != "off"      # off = the old behaviour (refuse and point to natTrak)
@@ -49,7 +49,7 @@ RCL_REPEAT_SECONDS = 1800          # a second request from the same aircraft ins
 MSG_TOO_FAR = "UNABLE. CONTACT CONTROLLER ON VOICE 20 MILES BEFORE OCEANIC ENTRY POINT"
 MSG_UNICOM = "THERE IS NO FURTHER ATC AVAILABLE. SERVICE TERMINATED. MONITOR ADVISORY ON 122.800"
 LOGOFF_TEXT = "LOGOFF"          # UNVERIFIED against the live Hoppie network: what the ground sends to log a pilot off
-NEAR_OCEANIC_NM = 250            # pilots further than this from the oceanic airspace are refused a CPDLC logon
+NEAR_OCEANIC_NM = 1000           # pilots further than this from the oceanic airspace are refused a CPDLC logon
 RELEASE_SECONDS = 180            # how long a "release the tag" request stays visible to the plugin
 PENDING_SECONDS = 1800           # a handoff/UNICOM waiting for the pilot's WILCO is forgotten after this
 
@@ -419,6 +419,29 @@ class CpdlcStation:
                 elif text.startswith("UNABLE"):
                     self.pending.pop(sender.upper(), None)
 
+    def handle_telex(self, sender, packet):
+        """A pilot sent a plain telex (not CPDLC). An oceanic clearance request is kept like a CPDLC one; anything else is logged and alerted."""
+        text = (packet or "").strip()
+        pkt = {"min": None, "mrn": None, "ra": "", "text": text}
+        if OCA_REQUEST_RE.search(text.upper()) and RCL_INTAKE:
+            cs = sender.upper()
+            with self.lock:
+                now = self.now()
+                row = self.db.execute("SELECT id FROM cpdlc_rcl WHERE station=? AND callsign=? AND state='open' AND ts > ?",
+                                      (self.client.station, cs, now - RCL_REPEAT_SECONDS)).fetchone()
+                if row:
+                    self.db.execute("UPDATE cpdlc_rcl SET ts=?, text=? WHERE id=?", (now, text, row[0]))
+                else:
+                    self.db.execute("INSERT INTO cpdlc_rcl (ts, station, callsign, text) VALUES (?,?,?,?)", (now, self.client.station, cs, text))
+                self.db.commit()
+            self._store("DOWN", sender, None, None, "", "TELEX: " + text, state="", seen=0)
+            try:
+                self.client.request(sender, "telex", MSG_RCL_RECEIVED)
+            except Exception as e:
+                log.warning("telex reply to %s failed: %s", sender, e)
+            return
+        self._store("DOWN", sender, None, None, "", "TELEX: " + text, state="", seen=0)
+
     def _auto_reply(self, callsign, text, their_min, ra):
         """Answer a pilot straight away (the message is logged as sent by 'auto')."""
         cs = callsign.upper()
@@ -516,6 +539,12 @@ class CpdlcStation:
                     self.handle_cpdlc(sender, packet)
                 except Exception:
                     log.exception("could not handle a CPDLC message from %s", sender)
+                n += 1
+            elif type_ == "telex":
+                try:
+                    self.handle_telex(sender, packet)
+                except Exception:
+                    log.exception("could not handle a telex from %s", sender)
                 n += 1
         if n:
             self.fast_until = self.now() + FAST_POLL_SECONDS

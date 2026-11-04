@@ -901,7 +901,7 @@ class NetworkTraffic:
         self.cache, self.url, self.natrak = cache, url, natrak
         self.lock = threading.Lock()
         self.flights, self.updated, self.error = [], None, None
-        self.positions = {}      # callsign -> (lat, lon) for every pilot on the network (used by the CPDLC 250 nm logon rule)
+        self.positions = {}      # callsign -> (lat, lon) for every pilot on the network (used by the CPDLC 1000 nm logon rule)
         self.controllers = []    # online ATC that aircraft can be transferred to: [{callsign, frequency, name, facility}]
         self.atc_freq = {}       # "133.500" -> callsign of every online controller (any position)
         self.pilots = {}         # callsign -> the pilot as in the VATSIM feed (for adding a flight by hand)
@@ -2275,7 +2275,7 @@ def main():
     cpdlc = None
     auth = Auth()
     if os.environ.get("VNAAATS_CPDLC", "on").lower() != "off":
-        def locate(callsign):                              # is this pilot within 250 nm of the oceanic airspace?
+        def locate(callsign):                              # is this pilot within 1000 nm of the oceanic airspace?
             pos = network.position(callsign) if network else None
             if not pos:
                 return None                                # not seen on the feed (yet): do not block

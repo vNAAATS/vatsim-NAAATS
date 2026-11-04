@@ -16,7 +16,7 @@ class FakeHoppie:
             return "error {callsign already in use}"
         if f["type"] == "poll":
             out, self.queue = self.queue, []
-            return "ok " + " ".join("{%s cpdlc {%s}}" % (frm, pkt) for frm, pkt in out)
+            return "ok " + " ".join("{%s %s {%s}}" % ((q[0], q[2] if len(q) > 2 else "cpdlc", q[1])) for q in out)
         if f["type"] == "ping":
             return "ok {%s}" % " ".join(x for x in f["packet"].split() if x in self.online)
         return "ok"
@@ -53,6 +53,22 @@ class StationTests(unittest.TestCase):
         acc = [x for x in hop.sent if x["type"] == "cpdlc"][0]
         self.assertEqual((acc["to"], acc["from"], acc["packet"]), ("BAW123", "CZQO", "/data2/1/5/NE/LOGON ACCEPTED"))
         self.assertEqual(st.status()["connected"][0]["callsign"], "BAW123")
+
+    def test_telex_clearance_request_reaches_the_list(self):
+        hop, st = make()
+        hop.queue = [("BAW2606", "OCEAN REQUEST ENTRY POINT: VENER AT: 0812Z REQ: M0.85 FL370", "telex")]
+        st.poll_once()
+        reqs = st.status()["rclRequests"]
+        self.assertEqual([r["callsign"] for r in reqs], ["BAW2606"])
+        rep = [x for x in hop.sent if x["type"] == "telex"]
+        self.assertEqual(rep[0]["to"], "BAW2606")
+        self.assertIn("RCL RECEIVED", rep[0]["packet"])
+
+    def test_other_telex_is_logged_and_unseen(self):
+        hop, st = make()
+        hop.queue = [("BAW2606", "HELLO CAN YOU HELP", "telex")]
+        st.poll_once()
+        self.assertEqual(st.status()["rclRequests"], [])
 
     def test_old_messages_are_not_shown(self):
         clock = [1_000_000.0]
@@ -242,7 +258,8 @@ class AutomationTests(unittest.TestCase):
     def test_near_oceanic(self):
         tracks = [{"route": [{"latitude": 52, "longitude": -15}, {"latitude": 52, "longitude": -30}]}]
         self.assertTrue(c.near_oceanic(52, -10, tracks))            # about 185 nm from the entry
-        self.assertFalse(c.near_oceanic(51.5, -0.1, tracks))        # London
+        self.assertTrue(c.near_oceanic(51.5, -0.1, tracks))         # London, about 550 nm
+        self.assertFalse(c.near_oceanic(55.7, 37.6, tracks))        # Moscow
         self.assertIsNone(c.near_oceanic(52, -10, []))
 
     def connect(self, **kw):
