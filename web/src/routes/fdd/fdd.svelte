@@ -410,7 +410,7 @@
         <span class="underline text-yellow-300 hover:cursor-pointer font-bold" on:click={natClick}>{natApp && !natSigned ? "LOGIN" : "Open natTrak"}</span>
       </div>
       {#if natApp && !natSigned}
-        <div class="px-2 py-1 bg-yellow-900 text-yellow-100 border-b border-yellow-500 text-xs">To use natTrak within the FDD you must log in to natTrak with your VATSIM details <b>once you have connected to the network through EuroScope</b>. Please click the natTrak <b>LOGIN</b> button.</div>
+        <div class="px-2 py-1 bg-yellow-900 text-yellow-100 border-b border-yellow-500 text-xs">To use natTrak within the FDD you must log in to natTrak with your VATSIM details <b>once you have connected to the network through EuroScope</b>. You must be connected to EuroScope / the VATSIM network first, before connecting to natTrak. Please click the natTrak <b>LOGIN</b> button.</div>
       {/if}
       <div class="flex-1 min-h-0 overflow-y-auto">
         {#if pendingList.length == 0}

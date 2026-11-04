@@ -44,13 +44,20 @@
     if (logonErr === "") { if (remember) { storeSaved(code); hasSaved = true; } hoppieCode = ""; }
   }
   function forgetSaved(): void { storeSaved(""); hasSaved = false; remember = false; autoTried = "x"; }
-  // Sign in by itself with the saved code, once per page visit and station
-  $: if (canUse && $cpdlcStatus.enabled && !$cpdlcStatus.active && $cpdlcStatus.stationForPosition && !$cpdlcStatus.inUse
+  // With a saved Hoppie code: ask once per page visit and station whether to connect to CPDLC now (nothing happens until the controller says yes).
+  let askConnect: boolean = false;
+  let askErr: string = "";
+  $: if (!popout && canUse && $cpdlcStatus.enabled && !$cpdlcStatus.active && $cpdlcStatus.stationForPosition
         && !($cpdlcStatus.lockedSeconds ?? 0) && autoTried !== $cpdlcStatus.stationForPosition && $session.cid) {
     autoTried = $cpdlcStatus.stationForPosition;
-    const saved = loadSaved();
-    hasSaved = saved !== "";
-    if (saved) { logonBusy = true; cp.logonCpdlc(saved).then((e) => { logonBusy = false; if (e) logonErr = "Saved code did not work: " + e; }); }
+    hasSaved = loadSaved() !== "";
+    if (hasSaved) { askErr = ""; askConnect = true; }
+  }
+  async function connectYes(): Promise<void> {
+    logonBusy = true; askErr = "";
+    const e = await cp.logonCpdlc(loadSaved());
+    logonBusy = false;
+    if (e) askErr = "Could not connect: " + e; else askConnect = false;
   }
   function useFree(e: Event): void {
     const sel = e.target as HTMLSelectElement;
@@ -216,6 +223,19 @@
     return out.filter((g) => g.items.length > 0);
   })();
 </script>
+
+{#if askConnect}
+  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-60">
+    <div class="w-[28rem] max-w-full bg-blue-3 border-2 border-blue-10 text-white font-regular p-4">
+      <div class="text-xl font-bold mb-2">Connect to CPDLC now?</div>
+      <div class="text-sm mb-2">You have a saved Hoppie code, so the FDD can sign you in to CPDLC{$cpdlcStatus.stationForPosition ? " as " + $cpdlcStatus.stationForPosition : ""}. Do you want to connect now?</div>
+      <div class="text-sm mb-3 p-2 border border-yellow-300 text-yellow-300">Please note: if another user is already logged in to CPDLC, they will need to log off first.</div>
+      {#if askErr}<div class="mb-2 text-sm text-yellow-300">{askErr}</div>{/if}
+      <button class="w-full mb-2 py-2 font-bold bg-blue-10 text-black disabled:opacity-50" disabled={logonBusy} on:click={connectYes}>{logonBusy ? "Connecting..." : "Yes, connect to CPDLC"}</button>
+      <button class="w-full py-1 text-sm border border-blue-6 bg-blue-4" on:click={() => (askConnect = false)}>Not now</button>
+    </div>
+  </div>
+{/if}
 
 <!-- Pull-out CPDLC panel: slides in from the right edge. Aircraft list on the left, messages on the right. -->
 <div class="fixed z-40 top-0 bottom-0 {popout ? 'left-0' : ''} right-0 flex flex-row font-regular text-white" style={popout ? "" : "transform: translateX(" + ($cpdlcOpen ? "0" : "100%") + "); opacity: " + ($cpdlcOpen ? 1 : 0) + "; transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease; pointer-events: " + ($cpdlcOpen ? "auto" : "none") + ";"}>
