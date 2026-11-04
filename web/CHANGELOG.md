@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- CPDLC: a new oceanic clearance request plays its own rising three-note chime (once per request) instead of the normal message sound. A "chime" tick-box in the clearance requests list switches it off and on (kept on this computer). Clearance requests sent by pilots as a plain Hoppie telex now reach the same list (server), and CPDLC logon is accepted up to 1000 nm from the tracks. Server deploy needed.
 - /training: fourth how-to video, VACS and TrackAudio in FDD for Windows. Server deploy needed (web files).
 - TrackAudio: the aircraft that is transmitting gets a green box around its row in the flight list while it talks, and the box fades out when it stops. On by default; the tick-box "Highlight the aircraft that is transmitting" in the TrackAudio (headphones) window switches it off and on (kept on this computer). The list also scrolls to the aircraft that starts transmitting if its row is off screen (second tick-box, "Scroll the list to the aircraft that is transmitting", on by default). Needs TrackAudio switched on in the FDD. Server deploy needed (web files only).
 - RCL reminder message (RCL REQ Send, Auto RCL, Copy natTrak message) no longer says CPDLC clearance is unavailable: it now asks the pilot to request their oceanic clearance by CPDLC, or via nattrak.vatsim.net, no later than 20 minutes before the oceanic entry point, then "Squawk 2000 upon entering the OCA." Server deploy needed.

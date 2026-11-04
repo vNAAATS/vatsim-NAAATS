@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import * as cp from "../../typescript/fdd/cpdlc";
+  import { rclSoundOn } from "../../typescript/fdd/cpdlc";
   import * as dataHandler from "../../typescript/fdd/data";
   import * as sess from "../../typescript/fdd/session";
   import { popOut } from "../../typescript/fdd/popout";
@@ -321,7 +322,8 @@
       {#if canUse && $cpdlcStatus.active && ($cpdlcStatus.rclRequests ?? []).length > 0}
         <!-- oceanic clearance requests that came in by CPDLC: they are not on natTrak until a controller enters them there -->
         <div class="border-b-2 border-yellow-300 bg-blue-1 max-h-80 overflow-y-auto">
-          <div class="px-3 py-1 text-xs font-bold tracking-widest text-yellow-300 select-none">CLEARANCE REQUESTS BY CPDLC ({($cpdlcStatus.rclRequests ?? []).length})</div>
+          <div class="px-3 py-1 text-xs font-bold tracking-widest text-yellow-300 select-none">CLEARANCE REQUESTS BY CPDLC ({($cpdlcStatus.rclRequests ?? []).length})
+            <label class="ml-3 font-normal tracking-normal text-white cursor-pointer"><input type="checkbox" checked={$rclSoundOn} on:change={(e) => cp.setRclSound(e.currentTarget.checked)} /> chime</label></div>
           {#each $cpdlcStatus.rclRequests ?? [] as r (r.id)}
             <div class="px-3 py-1.5 border-t border-blue-4 text-sm">
               <div class="flex flex-row items-center justify-between gap-2">

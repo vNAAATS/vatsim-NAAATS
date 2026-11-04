@@ -75,6 +75,24 @@ export function playCpdlcSound(): void {
   } catch (e) { /* no audio */ }
 }
 
+// A different sound for an oceanic clearance request (static/cpdlc-rcl.wav), once per new request. Has its own switch, on by default.
+let rclAudio: HTMLAudioElement | null = null;
+export const rclSoundOn = writable<boolean>((() => { try { return localStorage.getItem("fdd.rclSound") !== "off"; } catch (e) { return true; } })());
+export function setRclSound(on: boolean): void {
+  rclSoundOn.set(on);
+  try { localStorage.setItem("fdd.rclSound", on ? "on" : "off"); } catch (e) { /* not saved */ }
+}
+export function playRclSound(): void {
+  if (!dataHandler.soundOn || !get(rclSoundOn)) return;
+  try {
+    rclAudio = rclAudio ?? new Audio("/cpdlc-rcl.wav");
+    rclAudio.currentTime = 0;
+    const p = rclAudio.play();
+    if (p && p.catch) p.catch(() => dataHandler.playPing());
+  } catch (e) { /* no audio */ }
+}
+let knownRcl: Set<number> | null = null;      // null until the first answer, so requests already waiting do not ping on page load
+
 export async function loadFreetexts(): Promise<void> {
   try {
     const r = await fetch(apiBase + "/cpdlc/templates", { credentials: "same-origin" });
@@ -109,7 +127,11 @@ export async function refreshCpdlc(): Promise<void> {
     const s: CpdlcStatus = await r.json();
     cpdlcStatus.set(s);
     const total = unreadTotal(s);
-    if (prevUnread >= 0 && total > prevUnread) playCpdlcSound();
+    const rclIds = new Set<number>((s.rclRequests ?? []).map((r) => r.id));
+    const newRcl = knownRcl !== null && [...rclIds].some((id) => !knownRcl!.has(id));
+    knownRcl = rclIds;
+    if (newRcl) playRclSound();                                            // a clearance request has its own sound
+    else if (prevUnread >= 0 && total > prevUnread) playCpdlcSound();
     prevUnread = total;
     // A pilot just logging on does NOT flash or ping: only a request or a reply (an unread message) does.
     const nowConnected = new Set(s.connected.map((c) => c.callsign));
