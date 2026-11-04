@@ -4,6 +4,7 @@
   import * as sess from "../../typescript/fdd/session";
   import * as app from "../../typescript/fdd/app";
   import { whatsNewOpen } from "../../typescript/fdd/whatsnew";
+  let setupAgain = app.inApp() && app.setupAgainGet();
 
   const { settingsOpen } = st;
   const { session } = sess;
@@ -55,6 +56,18 @@
         <b>EuroScope must be closed and opened again for any change to take effect.</b>
         Your EuroScope saves the new choices into vnaaats.cfg within about 2 minutes of you pressing Save (it must be running with the plugin loaded).
       </div>
+      {#if app.inApp()}
+        <div class="mx-3 mb-3 p-2 border border-blue-6 bg-blue-3 text-sm">
+          <div class="font-bold">Audio client: {app.audioGet() === "afv" ? "Audio for VATSIM" : app.audioGet() === "trackaudio" ? "TrackAudio" : "none chosen"}</div>
+          <div class="text-xs opacity-80 mb-2">To switch between Audio for VATSIM and TrackAudio, have the setup screen shown again the next time FDD for Windows starts, and choose there.</div>
+          {#if setupAgain}
+            <span class="text-green-300">The setup screen will open the next time you start FDD for Windows.</span>
+            <button class="ml-2 underline" on:click={() => { app.setupAgainSet(false); setupAgain = app.setupAgainGet(); }}>Cancel</button>
+          {:else}
+            <button class="px-3 py-1 font-bold bg-blue-10 text-black" on:click={() => { app.setupAgainSet(true); setupAgain = app.setupAgainGet(); }}>Change audio client at next start</button>
+          {/if}
+        </div>
+      {/if}
       {#if error}<div class="mx-3 mb-2 text-yellow-300">{error}</div>{/if}
       {#if !$session.loggedIn}
         <div class="m-3 opacity-80">Sign in first.</div>

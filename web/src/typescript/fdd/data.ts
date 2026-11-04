@@ -9,7 +9,7 @@
 import { CronJob } from "cron";
 import type { Aircraft, NatTrack, NatTrakData } from "./objects";
 import { formatWaypoint } from "./waypoint";
-import { inApp as appInApp, openExternal as appOpenExternal } from "./app";
+import { inApp as appInApp, openExternal as appOpenExternal, natTrakOpen as appNatTrakOpen } from "./app";
 
 /*
  *  Definitions
@@ -488,7 +488,7 @@ export function cycleTone(): void {
 export function openNatTrak(track?: string): void {
   let url: string = "https://nattrak.vatsim.net/controllers/clx/pending";
   if (track) url += "?display[]=" + encodeURIComponent(track);
-  if (appInApp()) { void appOpenExternal(url); return; }
+  if (appInApp()) { appNatTrakOpen().catch(() => void appOpenExternal(url)); return; }
   window.open(url, "natTrakWindow", "popup=yes,width=1000,height=900");
 }
 

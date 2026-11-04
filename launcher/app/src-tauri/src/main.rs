@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
 
@@ -324,6 +325,60 @@ async fn open_nattrak(window: WebviewWindow, app: tauri::AppHandle, fields: Vec<
         .title("natTrak - new clearance (vNAAATS)")
         .inner_size(1000.0, 800.0)
         .initialization_script(&script)
+        .on_page_load(|_w, payload| {
+            nat_mark(payload.url());
+        })
+        .build()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+/// Set once a natTrak window has reached natTrak's controller area, which it only does after the controller has signed in.
+static NAT_SIGNED_IN: AtomicBool = AtomicBool::new(false);
+
+fn nat_mark(url: &tauri::Url) {
+    if url.host_str() == Some("nattrak.vatsim.net") && url.path().starts_with("/controllers") {
+        NAT_SIGNED_IN.store(true, Ordering::Relaxed);
+    }
+}
+
+/// Has the controller signed in to natTrak (in the app's own natTrak window) during this run of the app?
+#[tauri::command]
+async fn nattrak_signed_in(window: WebviewWindow) -> Result<bool, String> {
+    check_origin(&window)?;
+    Ok(NAT_SIGNED_IN.load(Ordering::Relaxed))
+}
+
+/// Open natTrak in the app's own window. With login=true it opens the natTrak home page for the VATSIM sign-in; once the controller is
+/// signed in the page moves on by itself to the pending list. Otherwise it opens the pending list. The window keeps its sign-in.
+#[tauri::command]
+async fn nattrak_open(window: WebviewWindow, app: tauri::AppHandle, login: bool) -> Result<(), String> {
+    check_origin(&window)?;
+    let target = if login { "https://nattrak.vatsim.net/" } else { "https://nattrak.vatsim.net/controllers/clx/pending" };
+    if let Some(w) = app.get_webview_window("nattrak-site") {
+        let url = tauri::Url::parse(target).map_err(|e| e.to_string())?;
+        let _ = w.navigate(url);
+        let _ = w.show();
+        let _ = w.set_focus();
+        return Ok(());
+    }
+    let script = r#"(function(){
+  function go(){
+    if(location.hostname!=='nattrak.vatsim.net') return;
+    var p=location.pathname.replace(/\/+$/,'')||'/';
+    if((p==='/'||p==='/home')&&document.querySelector('a[href*="deauthenticate"],form[action*="deauthenticate"]')){ location.href='/controllers/clx/pending'; }
+  }
+  [800,2000,4000].forEach(function(t){ setTimeout(go,t); });
+})();"#;
+    let url = tauri::Url::parse(target).map_err(|e| e.to_string())?;
+    WebviewWindowBuilder::new(&app, "nattrak-site", WebviewUrl::External(url))
+        .title("natTrak (vNAAATS)")
+        .inner_size(1100.0, 850.0)
+        .initialization_script(script)
+        .on_page_load(|w, payload| {
+            let _ = w;
+            nat_mark(payload.url());
+        })
         .build()
         .map(|_| ())
         .map_err(|e| e.to_string())
@@ -393,7 +448,7 @@ async fn cred_forget(window: WebviewWindow) -> Result<(), String> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, open_popout])
+        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout])
         .run(tauri::generate_context!())
         .expect("the vNAAATS app could not start");
 }

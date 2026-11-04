@@ -12,6 +12,7 @@
   import * as sess from "../../typescript/fdd/session";
   import { hidden, unhideStrip } from "../../typescript/fdd/hide";
   import * as cp from "../../typescript/fdd/cpdlc";
+  import * as app from "../../typescript/fdd/app";
   import * as esSel from "../../typescript/fdd/esselect";
   import { espicked } from "../../typescript/fdd/esselect";
   import VacsChip from "./vacs_chip.svelte";
@@ -27,7 +28,17 @@
   // Initialisation of data
   let isLoading: boolean = true;
   let noData: boolean = true;
+  // natTrak sign-in (FDD for Windows): done from here once the controller is online on VATSIM, so natTrak sees them on the network first.
+  const natApp = app.inApp();
+  let natSigned = false;
+  let natTimer: any = null;
+  async function natCheck(): Promise<void> { if (!natSigned) natSigned = await app.natTrakSignedIn(); }
+  function natClick(): void {
+    if (natApp) app.natTrakWindow(!natSigned).catch(() => dataHandler.openNatTrak());
+    else dataHandler.openNatTrak();
+  }
   onMount(async () => {
+    if (natApp) { void natCheck(); natTimer = setInterval(natCheck, 2000); }
     // Bye bye homepage
     site.setSiteSection(2);
 
@@ -51,6 +62,7 @@
     if (rclMsg) setTimeout(() => (rclMsg = ""), 6000);
   }
   onDestroy(async () => {
+    if (natTimer) clearInterval(natTimer);
     if (rclTimer) clearInterval(rclTimer);
     esSel.stopEsSelect();
     // Hello homepage
@@ -395,8 +407,11 @@
     <div class="flex flex-col w-1/2 border-r-2 border-blue-10">
       <div class="flex flex-row justify-between px-2 py-0.5 bg-blue-3 font-bold select-none">
         <span>natTrak PENDING ({pendingList.length}) - needs action</span>
-        <span class="underline text-yellow-300 hover:cursor-pointer" on:click={() => dataHandler.openNatTrak()}>Open natTrak</span>
+        <span class="underline text-yellow-300 hover:cursor-pointer font-bold" on:click={natClick}>{natApp && !natSigned ? "LOGIN" : "Open natTrak"}</span>
       </div>
+      {#if natApp && !natSigned}
+        <div class="px-2 py-1 bg-yellow-900 text-yellow-100 border-b border-yellow-500 text-xs">To use natTrak within the FDD you must log in to natTrak with your VATSIM details <b>once you have connected to the network through EuroScope</b>. Please click the natTrak <b>LOGIN</b> button.</div>
+      {/if}
       <div class="flex-1 min-h-0 overflow-y-auto">
         {#if pendingList.length == 0}
           <div class="px-2 py-1 opacity-70 select-none">No pending requests</div>

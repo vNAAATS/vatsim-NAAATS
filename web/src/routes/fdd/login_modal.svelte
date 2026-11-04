@@ -62,21 +62,8 @@
     password = "";
     busy = false;
   }
-  // Every time a position is chosen (a new controlling session), ask about the natTrak sign-in: it has to be done again each session.
-  let askNat: string = "";                       // the position waiting for the answer
-  function pick(p: string): void {
-    askNat = p;
-  }
-  async function natYes(): Promise<void> {
-    const p = askNat;
-    void app.openExternal("https://nattrak.vatsim.net/");        // the controller signs in there by hand
-    askNat = "";
-    error = await sess.choosePosition(p);
-    if (!error && p !== "") void app.autoLaunch();
-  }
-  async function natLater(): Promise<void> {
-    const p = askNat;
-    askNat = "";
+  // A position is chosen straight away. natTrak is signed in to later, from the natTrak box on the display, once the controller is online on VATSIM.
+  async function pick(p: string): Promise<void> {
     error = await sess.choosePosition(p);
     if (!error && p !== "") void app.autoLaunch();
   }
@@ -110,12 +97,6 @@
             <button class="w-full py-2 font-bold bg-blue-10 text-black" disabled={busy || !name || !password}>Sign in</button>
           </form>
         {/if}
-      {:else if askNat}
-        <div class="mb-2 font-bold">natTrak sign-in</div>
-        <div class="mb-3 text-sm">To control natTrak from the FDD you need to be signed in to your natTrak account through VATSIM for this controlling session. Are you ready to proceed? This opens natTrak in a new tab, where you press <b>Sign in</b> yourself.</div>
-        <button class="w-full mb-2 py-2 font-bold bg-blue-10 text-black" on:click={natYes}>Yes, open natTrak</button>
-        <button class="w-full mb-2 py-1 text-sm border border-blue-6 bg-blue-4" on:click={natLater}>I am already signed in to natTrak</button>
-        <button class="w-full py-1 text-sm underline opacity-80" on:click={natLater}>Skip for now</button>
       {:else}
         <div class="mb-3 text-sm opacity-80">Hello {$session.name}. Which position are you working?</div>
         <div class="grid grid-cols-2 gap-2 mb-3">
