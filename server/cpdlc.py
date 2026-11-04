@@ -375,6 +375,19 @@ class CpdlcStation:
                 self.db.commit()
         return self.messages(cs, after=mid - 1, limit=1)[0]
 
+    def send_telex(self, callsign, text, by=""):
+        """Send a plain telex to a pilot who is not connected by CPDLC (for example one who asked for a clearance by telex)."""
+        cs = (callsign or "").strip().upper()
+        text = re.sub(r"[^A-Z0-9 @./,:+\-]", "", (text or "").upper()).strip()
+        if not re.fullmatch(r"[A-Z0-9]{2,8}", cs):
+            raise ValueError("bad callsign")
+        if not text or len(text) > MAX_TEXT * 2:
+            raise ValueError("message must be 1-%d characters" % (MAX_TEXT * 2))
+        answer = self.client.request(cs, "telex", text)
+        if parse_blocks(answer)[0] != "ok":
+            raise RuntimeError("Hoppie refused the telex: " + (answer or "").strip()[:120])
+        self._store("UP", cs, None, None, "", "TELEX: " + text, state="", by=by)
+
     # --- receiving
     def handle_cpdlc(self, sender, packet):
         pkt = parse_cpdlc_packet(packet)

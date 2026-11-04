@@ -240,9 +240,9 @@ export const templates: { label: string; text: string; ra: string }[] = [
 
 
 // Messages that would go to the pilot for a clearance request: kind "clx" (reclearance) or "processed" (no change). Nothing is sent.
-export async function rclPreview(id: number, kind: "clx" | "processed"): Promise<{ messages: string[]; error: string }> {
+export async function rclPreview(id: number, kind: "clx" | "processed"): Promise<{ messages: string[]; error: string; telex?: boolean }> {
   const r = await post("/cpdlc/rcl-preview", { id, kind });
-  return r.ok ? { messages: r.data.messages ?? [], error: "" } : { messages: [], error: r.data.error ?? "could not prepare the message" };
+  return r.ok ? { messages: r.data.messages ?? [], error: "", telex: !!r.data.telex } : { messages: [], error: r.data.error ?? "could not prepare the message" };
 }
 
 // Send the (possibly edited) messages. Returns an error message, or "" on success.

@@ -112,14 +112,14 @@
   $: if ($cpdlcOpen && shown) { messages = []; totalMsgs = 0; replyTo = null; lvlVerb = null; lvlPick = 0; refresh(); }
 
   // --- clearance requests: prepare in natTrak, then send the answer to the pilot (always previewed, never automatic)
-  let dlg: { r: cp.RclRequest; kind: "clx" | "processed"; msgs: string[]; err: string; busy: boolean } | null = null;
+  let dlg: { r: cp.RclRequest; kind: "clx" | "processed"; msgs: string[]; err: string; busy: boolean; telex?: boolean } | null = null;
   let fillFor: number = 0;
   let fillNote: string = "";
   let copied: string = "";
   async function openPreview(r: cp.RclRequest, kind: "clx" | "processed"): Promise<void> {
     dlg = { r, kind, msgs: [], err: "", busy: true };
     const p = await cp.rclPreview(r.id, kind);
-    if (dlg) { dlg.msgs = p.messages; dlg.err = p.error; dlg.busy = false; dlg = dlg; }
+    if (dlg) { dlg.msgs = p.messages; dlg.err = p.error; dlg.telex = p.telex; dlg.busy = false; dlg = dlg; }
   }
   async function confirmSend(): Promise<void> {
     if (!dlg) return;
@@ -231,6 +231,7 @@
             {#each dlg.msgs as _m, i}
               <textarea class="w-full mb-2 px-2 py-1 text-xs font-mono text-black bg-white" rows={i === 0 && dlg.kind === "clx" ? 4 : 2} maxlength="240" bind:value={dlg.msgs[i]}></textarea>
             {/each}
+            {#if dlg.telex}<div class="mb-2 text-xs text-yellow-300">{dlg.r.callsign} is not logged on to CPDLC, so this will be sent to them as a plain telex.</div>{/if}
             {#if dlg.err}<div class="mb-2 text-yellow-300">{dlg.err}</div>{/if}
             <div class="flex flex-row justify-between items-center">
               <span class="text-xs opacity-70">Sent from {$cpdlcStatus.station ?? "your station"}, logged with your name</span>

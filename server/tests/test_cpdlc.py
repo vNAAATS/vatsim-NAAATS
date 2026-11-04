@@ -64,6 +64,12 @@ class StationTests(unittest.TestCase):
         self.assertEqual(rep[0]["to"], "BAW2606")
         self.assertIn("RCL RECEIVED", rep[0]["packet"])
 
+    def test_send_telex_to_pilot_not_on_cpdlc(self):
+        hop, st = make()
+        st.send_telex("BAW2606", "CLX 1103 CLRD TO KMIA", by="NAT_FSS (A)")
+        t = [x for x in hop.sent if x["type"] == "telex"][0]
+        self.assertEqual((t["to"], t["packet"]), ("BAW2606", "CLX 1103 CLRD TO KMIA"))
+
     def test_other_telex_is_logged_and_unseen(self):
         hop, st = make()
         hop.queue = [("BAW2606", "HELLO CAN YOU HELP", "telex")]

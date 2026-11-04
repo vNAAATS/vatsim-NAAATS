@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Send reclearance / RCL processed: if the pilot is not logged on to CPDLC (for example they asked for their clearance by telex), the messages are now sent to them as a plain telex instead of failing with "not connected to CPDLC". The window says so before you press Send. Server deploy needed.
 - CPDLC: a new oceanic clearance request plays its own rising three-note chime (once per request) instead of the normal message sound. A "chime" tick-box in the clearance requests list switches it off and on (kept on this computer). Clearance requests sent by pilots as a plain Hoppie telex now reach the same list (server), and CPDLC logon is accepted up to 1000 nm from the tracks. Server deploy needed.
 - /training: fourth how-to video, VACS and TrackAudio in FDD for Windows. Server deploy needed (web files).
 - TrackAudio: the aircraft that is transmitting gets a green box around its row in the flight list while it talks, and the box fades out when it stops. On by default; the tick-box "Highlight the aircraft that is transmitting" in the TrackAudio (headphones) window switches it off and on (kept on this computer). The list also scrolls to the aircraft that starts transmitting if its row is off screen (second tick-box, "Scroll the list to the aircraft that is transmitting", on by default). Needs TrackAudio switched on in the FDD. Server deploy needed (web files only).

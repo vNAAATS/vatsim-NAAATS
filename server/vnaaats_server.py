@@ -1692,7 +1692,7 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         rec = dict(rec, callsign=cs)
                         msgs = clx_mod.build(kind, rec, nt, sess["position"])
                         if p == "/cpdlc/rcl-preview":
-                            return self._send(200, {"messages": msgs, "callsign": cs, "natTrak": bool(nt)})
+                            return self._send(200, {"messages": msgs, "callsign": cs, "natTrak": bool(nt), "telex": not st.is_connected(cs)})
                         given = body.get("messages")
                         if isinstance(given, list):
                             msgs = [str(m).strip() for m in given if str(m).strip()]
@@ -1700,12 +1700,16 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                             return self._send(400, {"error": "nothing to send"})
                         by = "%s (%s)" % (sess["position"], sess["name"])
                         try:
+                            viatelex = not st.is_connected(cs)      # e.g. the pilot asked by telex: answer the same way
                             for m in msgs:
-                                st.send(cs, m, "NE", None, by=by)
+                                if viatelex:
+                                    st.send_telex(cs, m, by=by)
+                                else:
+                                    st.send(cs, m, "NE", None, by=by)
                         except (ValueError, RuntimeError) as e:
                             return self._send(400, {"error": str(e)})
                         st.rcl_mark_sent(req["id"], by, kind)
-                        return self._send(200, {"ok": True, "sent": len(msgs)})
+                        return self._send(200, {"ok": True, "sent": len(msgs), "telex": viatelex})
                     if p == "/cpdlc/disconnect":
                         # log one pilot off CPDLC from this station (they stay connected on VATSIM; they can log on again)
                         try:
