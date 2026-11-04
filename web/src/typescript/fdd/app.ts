@@ -39,6 +39,11 @@ export async function openExternal(url: string, strict: boolean = false): Promis
 // which moves on to the pending list by itself once signed in; login=false opens the pending list.
 export const natTrakWindow = (login: boolean): Promise<void> => call("nattrak_open", { login });
 export const natTrakSignedIn = async (): Promise<boolean> => { try { return !!(await call<boolean>("nattrak_signed_in")); } catch (e) { return false; } };
+/** "yes" signed in, "no" not yet, "old" this copy of the app is too old to have the natTrak window (it must be reinstalled). */
+export async function natTrakState(): Promise<"yes" | "no" | "old"> {
+  try { return (await call<boolean>("nattrak_signed_in")) ? "yes" : "no"; } catch (e) { return "old"; }
+}
+export const APP_DOWNLOAD = "https://github.com/garythms/vatsim-NAAATS-v2/releases/download/fdd-windows/FDD-for-Windows-Setup.exe";
 
 /** Opens natTrak in the app window: the sign-in page if the controller has not signed in yet, else the pending list. */
 export async function natTrakOpen(): Promise<void> { await natTrakWindow(!(await natTrakSignedIn())); }

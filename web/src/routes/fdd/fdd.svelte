@@ -31,10 +31,15 @@
   // natTrak sign-in (FDD for Windows): done from here once the controller is online on VATSIM, so natTrak sees them on the network first.
   const natApp = app.inApp();
   let natSigned = false;
+  let natOld = false;                 // this copy of FDD for Windows is too old to show natTrak in its own window
   let natTimer: any = null;
-  async function natCheck(): Promise<void> { if (!natSigned) natSigned = await app.natTrakSignedIn(); }
+  async function natCheck(): Promise<void> {
+    if (natSigned || natOld) return;
+    const st = await app.natTrakState();
+    if (st === "old") { natOld = true; if (natTimer) clearInterval(natTimer); } else natSigned = st === "yes";
+  }
   function natClick(): void {
-    if (natApp) app.natTrakWindow(!natSigned).catch(() => dataHandler.openNatTrak());
+    if (natApp && !natOld) app.natTrakWindow(!natSigned).catch(() => { natOld = true; dataHandler.openNatTrak(); });
     else dataHandler.openNatTrak();
   }
   onMount(async () => {
@@ -407,9 +412,11 @@
     <div class="flex flex-col w-1/2 border-r-2 border-blue-10">
       <div class="flex flex-row justify-between px-2 py-0.5 bg-blue-3 font-bold select-none">
         <span>natTrak PENDING ({pendingList.length}) - needs action</span>
-        <span class="underline text-yellow-300 hover:cursor-pointer font-bold" on:click={natClick}>{natApp && !natSigned ? "LOGIN" : "Open natTrak"}</span>
+        <span class="underline text-yellow-300 hover:cursor-pointer font-bold" on:click={natClick}>{natApp && !natOld && !natSigned ? "LOGIN" : "Open natTrak"}</span>
       </div>
-      {#if natApp && !natSigned}
+      {#if natApp && natOld}
+        <div class="px-2 py-1 bg-red-900 text-red-100 border-b border-red-400 text-xs">This copy of FDD for Windows is out of date, so natTrak opens in your web browser. Install the new version to open natTrak inside the FDD: <a class="underline font-bold" href={app.APP_DOWNLOAD} on:click|preventDefault={() => app.openExternal(app.APP_DOWNLOAD)}>download FDD for Windows</a>, run it, then start the app again.</div>
+      {:else if natApp && !natSigned}
         <div class="px-2 py-1 bg-yellow-900 text-yellow-100 border-b border-yellow-500 text-xs">To use natTrak within the FDD you must log in to natTrak with your VATSIM details <b>once you have connected to the network through EuroScope</b>. You must be connected to EuroScope / the VATSIM network first, before connecting to natTrak. Please click the natTrak <b>LOGIN</b> button.</div>
       {/if}
       <div class="flex-1 min-h-0 overflow-y-auto">
