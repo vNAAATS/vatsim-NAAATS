@@ -5,6 +5,7 @@
   import NatTrakData from "./nattrak_data.svelte";
   import LoginModal from "./login_modal.svelte";
   import AppSetup from "./app_setup.svelte";
+  import AppUpdate from "./app_update.svelte";
   import Welcome from "./welcome.svelte";
   import CpdlcPanel from "./cpdlc_panel.svelte";
   import SettingsPanel from "./settings_panel.svelte";
@@ -31,6 +32,7 @@
 
 <Welcome />
 <AppSetup />
+<AppUpdate />
 <LoginModal />
 <WhatsNew />
 <CpdlcPanel />

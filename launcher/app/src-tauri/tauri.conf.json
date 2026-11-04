@@ -3,19 +3,53 @@
   "productName": "vNAAATS",
   "version": "0.1.0",
   "identifier": "net.vnaaats.app",
-  "build": { "frontendDist": "../ui" },
+  "build": {
+    "frontendDist": "../ui"
+  },
   "app": {
     "withGlobalTauri": true,
     "windows": [
-      { "label": "main", "title": "FDD for Windows", "url": "https://vnaaats.com/fdd", "width": 1280, "height": 800,
-        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required" }
+      {
+        "label": "main",
+        "title": "FDD for Windows",
+        "url": "https://vnaaats.com/fdd",
+        "width": 1280,
+        "height": 800,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
+      }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png", "icons/icon.ico"],
-    "windows": { "nsis": { "installMode": "currentUser" } }
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZGMTU5NUYzNURDOTBCRkQKUldUOUM4bGQ4NVVWYnlQV1NSR1Z3ZVVuRjF0dncyUHVTd2FLaWg4YzgzMjdWdjZ5a0xueVJXSEUK",
+      "endpoints": [
+        "https://github.com/garythms/vatsim-NAAATS-v2/releases/download/fdd-windows/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

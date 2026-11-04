@@ -384,6 +384,31 @@ async fn nattrak_open(window: WebviewWindow, app: tauri::AppHandle, login: bool)
         .map_err(|e| e.to_string())
 }
 
+#[derive(Serialize)]
+struct AppUpdate {
+    version: String,
+    notes: String,
+}
+
+/// Is there a newer version of this app? (Signed update files from the project's own release; the signature is checked against the key built in.)
+#[tauri::command]
+async fn app_update_check(window: WebviewWindow, app: tauri::AppHandle) -> Result<Option<AppUpdate>, String> {
+    check_origin(&window)?;
+    use tauri_plugin_updater::UpdaterExt;
+    let up = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+    Ok(up.map(|u| AppUpdate { version: u.version.clone(), notes: u.body.clone().unwrap_or_default() }))
+}
+
+/// Download and install the newer version, then start the app again. Only runs when the controller pressed Update.
+#[tauri::command]
+async fn app_update_install(window: WebviewWindow, app: tauri::AppHandle) -> Result<(), String> {
+    check_origin(&window)?;
+    use tauri_plugin_updater::UpdaterExt;
+    let up = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?.ok_or("there is no newer version")?;
+    up.download_and_install(|_, _| {}, || {}).await.map_err(|e| e.to_string())?;
+    app.restart();
+}
+
 /// Open one of our own pages (a part of the display) in a separate window that can be dragged to another screen.
 #[tauri::command]
 async fn open_popout(window: WebviewWindow, app: tauri::AppHandle, which: String, width: f64, height: f64) -> Result<(), String> {
@@ -448,7 +473,8 @@ async fn cred_forget(window: WebviewWindow) -> Result<(), String> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout])
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout, app_update_check, app_update_install])
         .run(tauri::generate_context!())
         .expect("the vNAAATS app could not start");
 }

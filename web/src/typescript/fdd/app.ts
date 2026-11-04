@@ -43,6 +43,12 @@ export const natTrakSignedIn = async (): Promise<boolean> => { try { return !!(a
 export async function natTrakState(): Promise<"yes" | "no" | "old"> {
   try { return (await call<boolean>("nattrak_signed_in")) ? "yes" : "no"; } catch (e) { return "old"; }
 }
+/** A newer version of FDD for Windows, or null. Needs an app that has the updater (older copies answer with an error, treated as none). */
+export async function updateCheck(): Promise<{ version: string; notes: string } | null> {
+  try { return await call<{ version: string; notes: string } | null>("app_update_check"); } catch (e) { return null; }
+}
+/** Downloads and installs the newer version; the app then restarts by itself. */
+export const updateInstall = (): Promise<void> => call("app_update_install");
 export const APP_DOWNLOAD = "https://github.com/garythms/vatsim-NAAATS-v2/releases/download/fdd-windows/FDD-for-Windows-Setup.exe";
 
 /** Opens natTrak in the app window: the sign-in page if the controller has not signed in yet, else the pending list. */

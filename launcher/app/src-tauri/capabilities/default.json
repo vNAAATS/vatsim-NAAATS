@@ -17,6 +17,10 @@
     "allow-cred-save",
     "allow-cred-forget",
     "allow-open-nattrak",
+    "allow-nattrak-open",
+    "allow-nattrak-signed-in",
+    "allow-app-update-check",
+    "allow-app-update-install",
     "allow-open-popout"
   ]
 }
