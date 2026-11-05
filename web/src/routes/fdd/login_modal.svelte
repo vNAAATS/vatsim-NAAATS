@@ -51,7 +51,7 @@
     if (!launched) { launched = true; void app.autoLaunch(); }       // start EuroScope, VACS and the audio client so you can connect
     const r = await sess.loginKey(savedKeyText);
     if (r.state === "in") { waiting = false; keyError = ""; return; }
-    if (r.state === "error") { keyError = r.msg; if (/not valid/.test(r.msg)) { waiting = false; stopKey(); } return; }
+    if (r.state === "error") { keyError = r.msg; if (/not valid|expired/.test(r.msg)) { waiting = false; stopKey(); } return; }
     keyError = "";
   }
   function startKey(): void { stopKey(); void tryKey(); keyTimer = setInterval(tryKey, 5000); }

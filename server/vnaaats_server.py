@@ -1181,11 +1181,11 @@ class Auth:
                 return c
         return ""
 
-    def create_session(self, cid, name, via):
+    def create_session(self, cid, name, via, key_expires=0):
         token = secrets.token_urlsafe(32)
         with self.lock:
             self._clean()
-            self.sessions[token] = {"cid": cid, "name": name, "via": via, "position": "", "expires": time.time() + SESSION_SECONDS}
+            self.sessions[token] = {"cid": cid, "name": name, "via": via, "position": "", "expires": time.time() + SESSION_SECONDS, "keyExpires": key_expires}
         return token
 
     def get(self, token):
@@ -1561,6 +1561,7 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
         def _status(self, session):
             return {"editing": auth.enabled or bool(members and members.any()), "password": bool(auth.password) or bool(members and members.any()), "vatsim": auth.connect_enabled,
                     "loggedIn": bool(session), "name": session["name"] if session else "", "cid": session["cid"] if session else "",
+                    "keyExpires": int(session.get("keyExpires", 0)) if session else 0,
                     "position": session["position"] if session else "", "positions": [x for x in auth.positions if x != "OBSERVER"]}
 
         def do_POST(self):
@@ -1629,14 +1630,17 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     cid, why = members.check_key(str(body.get("key", "")).strip())
                     if not cid:
                         auth.record_failure(ip)
-                        return self._send(401, {"error": "that key is not valid (" + why + "). Check the key in Settings > App setup, or get a new one at vnaaats.com/temp-key"})
+                        if why == "expired":
+                            return self._send(401, {"error": "your API key has expired and access is restricted. Request a new one at vnaaats.com/get-key"})
+                        return self._send(401, {"error": "that key is not valid (" + why + "). Check the key in Settings > App setup, or get a new one at vnaaats.com/get-key"})
                     calls = network.controller_positions(cid)
                     if calls is None:
                         return self._send(503, {"error": "the VATSIM connection list cannot be read right now - trying again"})
                     pos = auth.position_for(calls)
                     if not pos:
                         return self._send(202, {"waiting": True, "cid": cid})
-                    token = auth.create_session(cid, members.info(cid).get("name") or cid, "key")
+                    info = members.info(cid)
+                    token = auth.create_session(cid, info.get("name") or cid, "key", key_expires=info.get("expires", 0))
                     auth.set_position(token, pos)
                     log.info("Key sign-in: CID %s as %s", cid, pos)
                     return self._send_cookie(200, self._status(auth.get(token)), token)

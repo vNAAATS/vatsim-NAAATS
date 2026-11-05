@@ -15,6 +15,7 @@ export type Session = {
   cid: string;
   position: string;
   positions: string[];
+  keyExpires?: number;   // when the API key used to sign in runs out (unix seconds; 0 = not signed in with a key)
 };
 
 export const emptySession: Session = { editing: false, password: false, vatsim: false, loggedIn: false, name: "", cid: "", position: "", positions: [] };
