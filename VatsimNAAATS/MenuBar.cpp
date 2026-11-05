@@ -46,10 +46,9 @@ CMenuBar::CMenuBar() {
 
 	/// Dropdown defaults
 	map<string, bool> map;
-	map.insert(make_pair("CZQX", false));
-	map.insert(make_pair("EGGX", false));
-	map.insert(make_pair("BDBX", false));
-	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "CZQX", &map, CInputState::INACTIVE, 83);
+	// One locked area: the whole oceanic area (what used to be BDBX). CZQX / EGGX were too small a visibility range.
+	map.insert(make_pair("OCA", false));
+	dropDowns[DRP_AREASEL] = CDropDown(DRP_AREASEL, MENBAR, "OCA", &map, CInputState::DISABLED, 83);
 	map.clear();
 	dropDowns[DRP_TCKCTRL] = CDropDown(DRP_TCKCTRL, MENBAR, "None", &map, CInputState::INACTIVE, 88);
 	map.clear();
@@ -62,7 +61,7 @@ CMenuBar::CMenuBar() {
 	map.insert(make_pair("Delivery", false));
 	map.insert(make_pair("OCA Enroute", false));
 	map.insert(make_pair("Multi-role", false));
-	dropDowns[DRP_TYPESEL] = CDropDown(DRP_TYPESEL, MENBAR, "Multi-role", &map, CInputState::INACTIVE, 143);
+	dropDowns[DRP_TYPESEL] = CDropDown(DRP_TYPESEL, MENBAR, "Multi-role", &map, CInputState::DISABLED, 143);
 
 	// Clogger
 	CLogger::Log(CLogType::NORM, "Finished instantiation.", "MENUBAR");

@@ -22,9 +22,9 @@
 
 {#if !standalone}
 <div class="relative inline-block">
-  <button class="inline-flex items-center gap-1 px-2 py-0.5 border {$ta.rx ? 'bg-green-700 border-green-300 font-bold' : $ta.tx ? 'bg-yellow-300 text-black border-yellow-300 font-bold' : $ta.link === 'up' ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-blue-6 opacity-60'}"
+  <button class="inline-flex items-center gap-1 px-2 py-0.5 border w-56 overflow-hidden whitespace-nowrap {$ta.rx ? 'bg-green-700 border-green-300 font-bold' : $ta.tx ? 'bg-yellow-300 text-black border-yellow-300 font-bold' : $ta.link === 'up' ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-blue-6 opacity-60'}"
     title="Who spoke last on your frequencies (TrackAudio). Click for the list." on:click={() => (open = !open)}>
-    <span class="inline-block w-2 h-2 rounded-full {$ta.link === 'up' ? 'bg-green-300' : 'bg-gray-400'}"></span>{text}
+    <span class="inline-block shrink-0 w-2 h-2 rounded-full {$ta.link === 'up' ? 'bg-green-300' : 'bg-gray-400'}"></span><span class="truncate">{text}</span>
   </button>
   {#if open}
     <div class="absolute right-0 top-full mt-1 z-50 w-80 border-2 border-blue-10 bg-blue-2 text-white shadow-lg font-regular text-sm">

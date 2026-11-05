@@ -14,7 +14,6 @@ OPTIONS = {
     "autoclick": {"values": ("0", "1"), "default": "1"},
     "highlight": {"values": ("0", "1"), "default": "1"},
     "retrack":   {"values": ("0", "1"), "default": "1"},
-    "squawk":    {"values": ("0", "1"), "default": "1"},
     "remotelog": {"values": ("0", "1", "2"), "default": "1"},
 }
 

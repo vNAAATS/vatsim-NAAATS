@@ -26,6 +26,10 @@
   let wallopText: string = "";
   let ac: any = null;
 
+  // The Mach number natTrak holds for this flight, shown as faint text in the Mach box (natTrak gives 0.86 or 86; the box uses hundredths, e.g. 086)
+  $: ntMach = (() => { ac; const d: any = dataHandler.natTrakData.get((callsign ?? "").toUpperCase()); const v = d && Number(d.mach); if (!v || v <= 0) return ""; return String(Math.round(v < 10 ? v * 100 : v)).padStart(3, "0"); })();
+  $: ntLevel = (() => { const d: any = dataHandler.natTrakData.get((callsign ?? "").toUpperCase()); const v = d && Number(d.level); return v && v > 0 ? String(Math.round(v)) : ""; })();
+  $: machToUse = mach.trim() || ntMach;           // left blank: the natTrak Mach is used
   $: selcalWarn = /[^A-Za-z\-\s]/.test(selcal) ? "SELCAL is letters only" : "";   // any four letters are allowed; only warn about things that are not letters
   $: canEdit = sess.canEdit($session);
   openFor(callsign);
@@ -44,8 +48,8 @@
 
   async function waitFor(id: number): Promise<void> {
     note = "Sent to EuroScope...";
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 1000));
+    for (let i = 0; i < 80; i++) {
+      await new Promise((r) => setTimeout(r, 500));
       const s = await m.commandState(id);
       if (s.state === "ok") {
         note = "✔ " + (s.msg || "Done");
@@ -87,7 +91,8 @@
 
   function track(): void {
     if (selcal && !m.validSelcal(selcal)) { note = "✖ " + m.selcalProblem(selcal); return; }
-    send({ type: "track", level, mach, selcal: selcal.toUpperCase() });
+    if (!machToUse) { note = "✖ Enter the Mach number"; return; }
+    send({ type: "track", level: level.trim() || ntLevel, mach: machToUse, selcal: selcal.toUpperCase() });
   }
   function untrack(): void {
     if (!confirm("Release tag for " + callsign + "?")) return;
@@ -161,9 +166,9 @@
 
         {#if tab === "track"}
           <div class="flex flex-row flex-wrap items-start gap-x-4 gap-y-3">
-            <button class="px-2 py-1 {BTN}" disabled={busy || !canEdit} on:click={track}>{trackedByMe ? "Update aircraft" : "Track aircraft"}</button>
-            <label class="text-sm">FL <input class="w-16 px-1 text-black" bind:value={level} placeholder="optional" /></label>
-            <label class="text-sm">Mach <input class="w-16 px-1 text-black" bind:value={mach} placeholder="optional" /></label>
+            <button class="px-2 py-1 {BTN}" disabled={busy || !canEdit || !machToUse} title={machToUse ? "" : "Enter the Mach number first"} on:click={track}>{trackedByMe ? "Update aircraft" : "Track aircraft"}</button>
+            <label class="text-sm">FL <input class="w-16 px-1 text-black" bind:value={level} placeholder={ntLevel || "optional"} /></label>
+            <label class="text-sm">Mach <input class="w-16 px-1 text-black placeholder:text-gray-400" bind:value={mach} placeholder={ntMach || "required"} title="Required. The faint number is the Mach on natTrak and is used if you leave the box blank." /></label>
             <div class="flex flex-col items-start">
               <label class="text-sm">SELCAL <input class="w-20 px-1 text-black uppercase" maxlength="4" bind:value={selcal} /></label>
               <button class="px-2 py-1 mt-2 {BTN}" disabled={busy || !canEdit || !m.validSelcal(selcal)} title="Types .selcal into EuroScope for this aircraft" on:click={() => typeIn({ type: "selcal", selcal: selcal.toUpperCase() }, m.selcalCommand(selcal))}>SELCAL Check</button>

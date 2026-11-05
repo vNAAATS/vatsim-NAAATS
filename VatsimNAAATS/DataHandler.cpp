@@ -43,7 +43,7 @@ std::map<string, CDataHandler::CPendingNet> CDataHandler::pending;
 vector<CDataHandler::CRemoteCommand> CDataHandler::remoteQueue;
 std::atomic<bool> CDataHandler::RemotePollBusy(false);
 clock_t CDataHandler::RemoteLastPoll = 0;
-bool CDataHandler::SquawkOnClearance = true;
+bool CDataHandler::SquawkOnClearance = false;   // removed: the server now tells pilots to squawk 2000 over CPDLC; the cfg key is ignored
 bool CDataHandler::AutoType = false;
 string CDataHandler::SettingsUrl = "";
 long long CDataHandler::SettingsStamp = 0;
@@ -79,7 +79,6 @@ void CDataHandler::LoadSettings() {
 		while (!v.empty() && v.front() == ' ') v.erase(v.begin());
 		if (k == "server") server = v;
 		else if (k == "key") key = v;
-		else if (k == "squawk") SquawkOnClearance = (v != "0");
 		else if (k == "autotype") AutoType = (v == "1");
 		else if (k == "retrack") Retrack = (v != "0");
 		else if (k == "autoclick") AutoClick = (v != "0");

@@ -147,17 +147,17 @@
       [...byEntry.keys()].sort().forEach((k) => out.push({ key: k, label: k, track: "", rows: byEntry.get(k)!.sort(cmp) }));
       return out;
     }
-    // NAT tracks (and Concorde tracks) first, then ONE group for all the Shanwick Tango routes, then RANDOM
-    let tangoRows: any[] = [];
+    // NAT tracks and Concorde tracks first, then each Shanwick Tango route (T9, T13, T16, T213, T290) as its own group, then RANDOM
+    const tangoGroups: Group[] = [];
     let rrGroup: Group | null = null;
     dataHandler.networkAircraft.forEach((m, track) => {
       const rows = [...m.values()].filter((ac) => isPicked(ac) || (matches(ac, track, f, mine, eb, wb, rr, tg) && searchMatch(ac, s))).sort(cmp);
       if (rows.length === 0) return;
-      if (dataHandler.isTangoTrack(track)) { tangoRows = tangoRows.concat(rows); return; }
       const grp: Group = { key: track, label: track != "RR" ? track : "RANDOM", track, rows };
-      if (track === "RR") rrGroup = grp; else out.push(grp);
+      if (track === "RR") rrGroup = grp; else if (dataHandler.isTangoTrack(track)) tangoGroups.push(grp); else out.push(grp);
     });
-    if (tangoRows.length > 0) out.push({ key: "TANGO", label: "TANGO ROUTES", track: "TANGO", rows: tangoRows.sort(cmp) });
+    tangoGroups.sort((a, b) => (parseInt(a.track.replace(/\D/g, "")) || 0) - (parseInt(b.track.replace(/\D/g, "")) || 0));
+    out.push(...tangoGroups);
     if (rrGroup) out.push(rrGroup);
     return out;
   }

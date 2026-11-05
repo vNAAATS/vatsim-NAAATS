@@ -1375,9 +1375,10 @@ def rcl_enrich(reqs, natrak, store, network):
             except ValueError:
                 issued = None
         item = dict(r)
+        asked = cpdlc_mod.parse_rcl_text(r.get("text", ""))          # the level and Mach the pilot asked for in the request itself
         _fx, _tm, _rt = clx_mod._entry(rec.get("route", ""), rec.get("routeEtas", ""), str((n or {}).get("fix") or "").upper())
         item.update({"ntDown": bool(natrak and getattr(natrak, "error", None)), "entryFix": _fx, "entryTime": _tm, "dest": rec.get("arrival", ""), "route": rec.get("route", ""), "etas": rec.get("routeEtas", ""),
-                     "level": rec.get("assignedLevel"), "mach": rec.get("assignedMach"), "track": rec.get("track", ""),
+                     "level": asked["level"] or rec.get("assignedLevel"), "mach": asked["mach"] or rec.get("assignedMach"), "track": rec.get("track", ""),
                      "natTrak": ({"status": n.get("status", ""), "level": n.get("level"), "mach": n.get("mach"), "nat": n.get("nat"),
                                   "fix": n.get("fix"), "issued": issued} if n else None)})
         out.append(item)
@@ -1436,6 +1437,13 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
         return bool(issuer_secret) and len(issuer_secret) >= 24 and hmac.compare_digest(sec.encode(), issuer_secret.encode())
 
     class Handler(BaseHTTPRequestHandler):
+        def handle_one_request(self):
+            t0 = time.time()
+            super().handle_one_request()
+            d = time.time() - t0
+            if d > 0.5 and getattr(self, "command", None):                 # slow requests are logged (path only, never the query with the key)
+                log.warning("slow request %.2fs %s %s", d, self.command, (self.path or "").split("?")[0][:80])
+
         server_version = "vnaaats-server"
 
         def log_message(self, fmt, *args):
