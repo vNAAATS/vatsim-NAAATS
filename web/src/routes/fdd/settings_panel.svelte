@@ -16,7 +16,6 @@
     { key: "autoclick", label: "Click the aircraft after Contact Me", help: "After typing .contactme, the plugin also clicks the aircraft so the message is sent.", choices: yesNo },
     { key: "highlight", label: "Circle the aircraft when clicked here", help: "Clicking an aircraft on the FDD circles it in white in EuroScope for 3 seconds.", choices: yesNo },
     { key: "retrack", label: "Re-track aircraft automatically", help: "After a crash, a lost connection or a pilot reconnecting within 5 minutes, track the aircraft again.", choices: yesNo },
-    { key: "squawk", label: "Assign squawk 2000 on tracking", help: "Code 2000 is given as soon as you start tracking an aircraft; domestic reassign it later.", choices: yesNo },
     { key: "remotelog", label: "Send problems to the vNAAATS server", help: "Warnings and errors go to the server so faults can be found quickly (never your key).", choices: [{ v: "1", t: "Warnings and errors" }, { v: "2", t: "Everything" }, { v: "0", t: "Off" }] },
   ];
 

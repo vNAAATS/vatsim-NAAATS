@@ -387,7 +387,7 @@ void CRadarDisplay::RunRemoteCommands()
 	CLogger::MaybeFlushRemote();
 
 	// Ask the server for new commands about every 2 seconds
-	if (!CDataHandler::RemotePollBusy && (double)(clock() - CDataHandler::RemoteLastPoll) / (double)CLOCKS_PER_SEC >= 2.0) {
+	if (!CDataHandler::RemotePollBusy && (double)(clock() - CDataHandler::RemoteLastPoll) / (double)CLOCKS_PER_SEC >= 1.0) {
 		CDataHandler::RemoteLastPoll = clock();
 		CDataHandler::RemotePollBusy = true;
 		_beginthread(CDataHandler::PollRemoteCommands, 0, nullptr);

@@ -3,6 +3,11 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Squawk 2000 is no longer set by the plugin when you track an aircraft (it upset adjacent domestic positions): the plugin setting and its cfg key are gone. Instead every pilot accepted onto CPDLC is automatically sent "SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA" (VNAAATS_CPDLC_SQUAWK_MSG=off turns it off). Plugin 2.7.0.
+- Aircraft menu, Track tab: the Mach box is now required. The faint text in it is the Mach on natTrak, which is used if you leave the box blank; the FL box shows the natTrak level the same way.
+- Prepare in natTrak (CPDLC clearance requests): the Mach and level the pilot asked for in the request text (REQ: M0.86 FL400) now fill the natTrak form; Mach was left empty before.
+- The TrackAudio chip keeps a fixed width so it no longer moves between RX and TX with long callsigns.
+- Quicker response to FDD commands: the plugin checks for FDD commands every second (was 2) and the display checks the result twice a second (was once). The server now logs any request slower than half a second. Server deploy and plugin 2.7.0 needed.
 - FDD for Windows now updates itself: at start-up it checks for a newer version of the app, and if there is one asks "Update now / Later"; Update downloads the signed installer, installs it and restarts the app. Also fixes the natTrak window commands (nattrak_open, nattrak_signed_in) not being allowed through the app permissions, which made natTrak open in the browser even in the new app. Everyone needs to install the app once more to get this; after that it updates itself. Server deploy needed (web files).
 - FDD for Windows: the app itself does not update by itself, so a copy installed before the in-app natTrak window existed still opened natTrak in the web browser. The natTrak box now notices this, says the app is out of date and offers the download of the new FDD for Windows installer. Server deploy needed (web files).
 - CPDLC: if you have a saved Hoppie code, a box now asks "Connect to CPDLC now?" once per visit instead of signing you in by itself, with the note that if another user is already logged in to CPDLC they must log off first. The natTrak notice also says you must be connected to EuroScope / the VATSIM network before connecting to natTrak. Server deploy needed (web files).

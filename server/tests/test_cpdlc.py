@@ -76,6 +76,29 @@ class StationTests(unittest.TestCase):
         st.poll_once()
         self.assertEqual(st.status()["rclRequests"], [])
 
+    def test_logon_accept_sends_the_squawk_message(self):
+        hop, st = make()
+        hop.queue = [("BAW123", "/data2/5//Y/REQUEST LOGON")]
+        st.poll_once()
+        sent = [x["packet"] for x in hop.sent if x["type"] == "cpdlc"]
+        self.assertEqual(sent[0], "/data2/1/5/NE/LOGON ACCEPTED")
+        self.assertEqual(sent[1], "/data2/2//NE/SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA")
+
+    def test_request_text_gives_mach_and_level(self):
+        f = c.parse_rcl_text
+        self.assertEqual(f("OCEAN REQUEST ENTRY POINT: VENER AT: 0812Z REQ: M0.85 FL370"), {"mach": 85, "level": 370})
+        self.assertEqual(f("REQUEST CLEARANCE M086 F400"), {"mach": 86, "level": 400})
+        self.assertEqual(f("OCEANIC CLEARANCE REQUEST"), {"mach": None, "level": None})
+
+    def test_rcl_enrich_uses_the_asked_mach(self):
+        class Nat:
+            error = None
+            def by_callsign(self): return {}
+        class Store:
+            def get(self, cs): return {"assignedLevel": 380, "assignedMach": 0, "route": "", "routeEtas": ""}
+        out = s.rcl_enrich([{"id": 1, "ts": 1.0, "callsign": "BAW9", "text": "OCEAN REQUEST ENTRY POINT: DOGAL AT: 1138Z REQ: M0.86 FL400"}], Nat(), Store(), None)
+        self.assertEqual((out[0]["mach"], out[0]["level"]), (86, 400))
+
     def test_old_messages_are_not_shown(self):
         clock = [1_000_000.0]
         hop, st = make(now=lambda: clock[0])
@@ -121,7 +144,7 @@ class StationTests(unittest.TestCase):
             st.send("BAW123", "CLIMB", ra="XX")
         m = st.send("BAW123", "climb to and maintain @fl350@", "WU", by="CZQO_CTR (Gary)")
         self.assertEqual((m["dir"], m["text"], m["state"], m["by"]), ("UP", "CLIMB TO AND MAINTAIN @FL350@", "SENT", "CZQO_CTR (Gary)"))
-        self.assertEqual(hop.sent[-1]["packet"], "/data2/2//WU/CLIMB TO AND MAINTAIN @FL350@")
+        self.assertEqual(hop.sent[-1]["packet"], "/data2/3//WU/CLIMB TO AND MAINTAIN @FL350@")
         hop.queue = [("BAW123", "/data2/6/%d/N/WILCO" % m["min"])]
         st.poll_once()
         self.assertEqual([x for x in st.messages("BAW123") if x["dir"] == "UP" and x["min"] == m["min"]][0]["state"], "WILCO")
@@ -139,7 +162,7 @@ class StationTests(unittest.TestCase):
         self.assertEqual((req["state"], req["seen"]), ("OPEN", False))
         st.send("BAW123", "UNABLE", "NE", mrn=req["min"])
         self.assertEqual([x for x in st.messages("BAW123") if x["id"] == req["id"]][0]["state"], "ANSWERED")
-        self.assertEqual(hop.sent[-1]["packet"], "/data2/2/7/NE/UNABLE")
+        self.assertEqual(hop.sent[-1]["packet"], "/data2/3/7/NE/UNABLE")
 
     def test_logoff_and_ping_drop(self):
         hop, st = make()

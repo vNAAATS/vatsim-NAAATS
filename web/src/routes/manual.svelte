@@ -204,7 +204,7 @@
       <li><b>Note under the tag</b> - the scratchpad. You can type it in EuroScope or on the FDD.</li>
       <li><b>Conflict alerts</b> flash for aircraft that are too close. A one-level difference is allowed 200 ft of tolerance, so aircraft exactly one level apart do not flash.</li>
       <li><b>Flight plan window:</b> the track, level, Mach and SELCAL boxes are the same data as the FDD. The Datalink box shows <i>CPDLC ON</i> or <i>CPDLC OFF</i>. The SELCAL box accepts four letters such as ASCM or AS-CM; clear it to go back to the code in the remarks. The <b>FDD</b> button in the menu bar opens the display.</li>
-      <li><b>Clear / Unclear</b> - tracking an aircraft sets transponder code <b>2000</b> automatically, and domestic reassign it when it is back in radar service (switch it off with <b>squawk=0</b>).</li>
+      <li><b>Clear / Unclear</b> - tracking an aircraft no longer changes its transponder code. Pilots who log on to CPDLC are sent a message to squawk <b>2000</b> within 10 minutes of entering the OCA.</li>
       <li><b>Handoff</b> - when you hand an aircraft that is on CPDLC to another controller (Co-ordination / Active Authorities > Transfer), the pilot is sent the contact message and logged off after WILCO/ROGER, as with the FDD Transfer.</li>
       <li><b>Updates:</b> a pop-up appears when a newer plugin is available and opens the download page. Replace <b>only the DLL</b> and keep your vnaaats.cfg.</li>
     </ul>
@@ -215,7 +215,6 @@
     <ul class="list-disc ml-6 space-y-2 mb-6">
       <li><b>server=https://vnaaats.com</b> - the server (keep the https).</li>
       <li><b>key=...</b> - your access key from the Gander Oceanic members page. Keep it private.</li>
-      <li><b>squawk=1</b> - give code 2000 as soon as you track an aircraft (0 = off).</li>
       <li><b>autotype=1</b> - lets the FDD <b>Send</b> buttons type into EuroScope for you. The plugin brings EuroScope to the front, clears the command line and types one command at a time. With <b>autotype=0</b>, or if Windows refuses, the command is copied for you to paste instead and the menu tells you so.</li>
     </ul>
 
