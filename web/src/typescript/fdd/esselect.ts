@@ -35,6 +35,18 @@ async function poll(): Promise<void> {
   } catch (e) { /* offline: try again next time */ }
 }
 
+// Highlight an aircraft from inside the FDD (the alerts button): same outline, scroll and selection as a click in EuroScope
+export function highlightAircraft(callsign: string): void {
+  if (!callsign) return;
+  espicked.set(callsign.toUpperCase());
+  espickN.update((n) => n + 1);
+  dataHandler.setAsel(callsign);
+  setTimeout(() => {
+    const el = document.getElementById("strip-" + callsign);
+    if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 200);
+}
+
 export function startEsSelect(): void {
   if (timer) return;
   poll();

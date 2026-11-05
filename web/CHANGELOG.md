@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- The "N alerts" button is now clickable: it jumps to the flight with the warning, outlines its strip and selects it; click again for the next one (suggested by a controller).
 - Strip list: each Shanwick Tango route (T9, T13, T16, T213, T290) is now its own group, like the NAT tracks, with its route in the header, instead of one TANGO ROUTES group. Concorde tracks were already one group each. Tango groups come after the NAT and Concorde tracks, before RANDOM.
 - EuroScope plugin: the Area Sel box (CZQX / EGGX / BDBX) is gone. It is now one locked area called OCA (the whole oceanic area, what BDBX was), because the CZQX and EGGX visibility ranges were too small. The Select box (Delivery / OCA Enroute / Multi-role) is locked to Multi-role as well. An older saved .asr is forced to both.
 - Squawk 2000 is no longer set by the plugin when you track an aircraft (it upset adjacent domestic positions): the plugin setting and its cfg key are gone. Instead every pilot accepted onto CPDLC is automatically sent "SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA" (VNAAATS_CPDLC_SQUAWK_MSG=off turns it off). Plugin 2.7.0.
