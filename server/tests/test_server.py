@@ -529,11 +529,11 @@ class TempKeyTest(unittest.TestCase):
             os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
 
 
-class TempKeyRosterTest(unittest.TestCase):
-    """The temporary key page only issues keys to CIDs certified on the roster (503 when the roster cannot be read)."""
-    class FakeRoster:
+class TempKeyOnlineTest(unittest.TestCase):
+    """The temporary key page only issues keys to a CID that is connected to VATSIM right now (503 when the feed cannot be read)."""
+    class FakeNetwork:
         def __init__(self): self.answer = True
-        def eligible(self, cid): return self.answer
+        def cid_online(self, cid): return self.answer
 
     @classmethod
     def setUpClass(cls):
@@ -543,9 +543,9 @@ class TempKeyRosterTest(unittest.TestCase):
         cache.refresh(fetch=lambda: SAMPLE)
         store = s.FlightStore(os.path.join(cls.tmp, "k.db"))
         cls.members = mm.MemberKeys(store)
-        cls.roster = cls.FakeRoster()
+        cls.net = cls.FakeNetwork()
         auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR"})
-        cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(cache, store, KEY, None, None, None, auth, None, None, None, cls.members, "", cls.roster))
+        cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(cache, store, KEY, None, cls.net, None, auth, None, None, None, cls.members))
         threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
         cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
 
@@ -561,16 +561,16 @@ class TempKeyRosterTest(unittest.TestCase):
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read().decode())
 
-    def test_roster_gate(self):
+    def test_online_gate(self):
         os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
         body = {"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"}
         try:
-            self.roster.answer = False
-            self.assertEqual(self.call(body)[0], 403)         # not certified
-            self.roster.answer = None
-            self.assertEqual(self.call(body)[0], 503)         # roster unreadable
-            self.roster.answer = True
-            self.assertEqual(self.call(body)[0], 200)         # certified
+            self.net.answer = False
+            self.assertEqual(self.call(body)[0], 403)         # not connected
+            self.net.answer = None
+            self.assertEqual(self.call(body)[0], 503)         # feed unreadable
+            self.net.answer = True
+            self.assertEqual(self.call(body)[0], 200)         # connected
         finally:
             os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
 

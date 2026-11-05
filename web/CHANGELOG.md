@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Temporary key page: it no longer checks the Gander roster feed (it was missing some certified controllers, so people were refused wrongly). Instead the CID must be connected to VATSIM at that moment (as an observer, pilot or controller), which shows the key is going to the owner of the CID. The passphrase is still needed. A message says what to do if the CID is not connected.
 - Temporary keys and passwords from the temporary key page now last 90 days (was 7), the same as keys from the Gander Oceanic website.
 - Temporary key page: now says up front that Gander Oceanic certified controllers get their key from their Gander Oceanic profile (ganderoceanic.ca/my/vnaaats), and that controllers endorsed by VATSIM UK or NYACC follow the instructions on the page.
 - Temporary key page (/temp-key): it now also checks the Gander Oceanic roster. A CID that is not certified is refused ("this CID is not certified on the Gander Oceanic roster"), and if the roster cannot be read it says to try again in a few minutes (before, only the shared passphrase was checked).
