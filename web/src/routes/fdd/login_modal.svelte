@@ -43,11 +43,10 @@
   let savedKeyText: string = sess.getKey();
   let waiting: boolean = false;
   let keyError: string = "";
-  let usePassword: boolean = false;
   let launched: boolean = false;
   let keyTimer: any = null;
   async function tryKey(): Promise<void> {
-    if (!savedKeyText || $session.loggedIn || usePassword) return;
+    if (!savedKeyText || $session.loggedIn) return;
     waiting = true;
     if (!launched) { launched = true; void app.autoLaunch(); }       // start EuroScope, VACS and the audio client so you can connect
     const r = await sess.loginKey(savedKeyText);
@@ -101,7 +100,6 @@
     <div class="w-96 max-w-full bg-blue-3 border-2 border-l-blue-10 border-t-blue-10 border-r-blue-0 border-b-blue-0 text-white font-regular p-4">
       <div class="text-xl font-bold mb-1">vNAAATS Flight Data Display</div>
       {#if !$session.loggedIn}
-        {#if !usePassword}
           {#if savedKeyText}
             <div class="mb-2 text-lg font-bold text-yellow-300">Awaiting an active VATSIM connection</div>
             <div class="mb-3 text-sm opacity-90">Connect to VATSIM in EuroScope on your oceanic position (for example NAT_FSS, CZQO_CTR or EGGX_CTR). The display opens by itself, on that position, as soon as you are connected.</div>
@@ -116,37 +114,6 @@
             </form>
             {#if keyError}<div class="mb-2 text-sm text-yellow-300">{keyError}</div>{/if}
           {/if}
-          {#if $session.password || $session.vatsim}
-            <button class="mt-4 text-sm underline opacity-80" on:click={() => { usePassword = true; stopKey(); }}>Sign in with a password instead</button>
-          {/if}
-        {:else}
-          <button class="mb-3 text-sm underline opacity-80" on:click={() => { usePassword = false; if (savedKeyText) startKey(); }}>Back to key sign-in</button>
-        {/if}
-        {#if usePassword}
-        <div class="mb-3 text-sm opacity-80">Sign in with your controller account to use the display.</div>
-        {#if $session.vatsim}
-          <button class="w-full mb-3 py-2 font-bold bg-blue-10 text-black border-2 border-l-blue-0 border-t-blue-0 border-r-blue-8 border-b-blue-8" on:click={sess.vatsimLogin}>
-            Sign in with VATSIM
-          </button>
-        {/if}
-        {#if $session.password}
-          {#if savedName}
-            <button class="w-full mb-1 py-2 font-bold bg-blue-10 text-black" disabled={busy} on:click={useSaved}>Sign in as {savedName}</button>
-            <button class="mb-3 text-sm underline opacity-80" on:click={forget}>Forget the saved sign-in</button>
-          {:else if browserCreds}
-            <button class="w-full mb-3 py-1 border border-blue-6 bg-blue-4" disabled={busy} on:click={useSaved}>Use a saved sign-in</button>
-          {/if}
-          <form on:submit|preventDefault={doPassword}>
-            <div class="text-sm mb-1">{$session.vatsim ? "or use your password" : "Your name or CID, and your password (from your myCZQO vNAAATS key page)"}</div>
-            <input class="w-full mb-2 px-2 py-1 text-black" placeholder="Name or CID" bind:value={name} maxlength="40" autocomplete="name" />
-            <input class="w-full mb-2 px-2 py-1 text-black" type="password" placeholder="Password" bind:value={password} autocomplete="current-password" />
-            {#if app.inApp() || browserCreds}
-              <label class="flex items-center gap-2 mb-2 text-sm"><input type="checkbox" bind:checked={remember} /> Remember me on this computer</label>
-            {/if}
-            <button class="w-full py-2 font-bold bg-blue-10 text-black" disabled={busy || !name || !password}>Sign in</button>
-          </form>
-        {/if}
-        {/if}
       {:else}
         <div class="mb-3 text-sm opacity-80">Hello {$session.name}. Which position are you working?</div>
         <div class="grid grid-cols-2 gap-2 mb-3">
