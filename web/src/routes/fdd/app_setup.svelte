@@ -163,7 +163,7 @@
               {#if st.cfg_has_key}
                 <div class="text-green-300 text-sm">✔ A key is saved in vnaaats.cfg</div>
               {:else}
-                <div class="text-yellow-300 text-sm">No key in vnaaats.cfg yet. Paste the key from your Gander Oceanic vNAAATS page.</div>
+                <div class="text-yellow-300 text-sm">No key in vnaaats.cfg yet. Get your API key at vnaaats.com/get-key and paste it here.</div>
                 <form class="flex gap-2 mt-1" on:submit|preventDefault={saveKey}>
                   <input class="flex-1 px-2 py-1 text-black" placeholder="1234567.abc..." bind:value={key} autocomplete="off" />
                   <button class={BTN} disabled={busy || !key}>Save</button>

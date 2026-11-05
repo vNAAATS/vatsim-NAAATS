@@ -57,7 +57,7 @@
     <ol class="list-decimal ml-6 space-y-1 mb-3">
       <li><b>Your EXOCO folder</b> - choose the folder from step 1.</li>
       <li><b>The vNAAATS plugin</b> - the app looks for <b>VatsimNAAATS.dll</b> in EXOCO\Plugins\vNAAATS. If it is missing or old, press <b>Update now</b> with EuroScope closed. It also installs the airline list and the vNAAATS font next to the DLL.</li>
-      <li><b>Your key</b> - paste the key from the Gander page. The app writes it into <b>vnaaats.cfg</b> for you.</li>
+      <li><b>Your key</b> - get your API key at <a class="underline" href="/get-key">vnaaats.com/get-key</a> (Gander Oceanic controllers can also use their profile on the Gander Oceanic website) and paste it here. The app writes it into <b>vnaaats.cfg</b> for you.</li>
       <li><b>EuroScope</b> - point the app at <b>EuroScope.exe</b>. Leave "Open EuroScope for me when I choose my position" ticked.</li>
       <li><b>VACS</b> and <b>Audio client</b> (both optional) - point the app at the program. Each has a tick to open it for you after you choose your position.</li>
     </ol>
@@ -82,12 +82,12 @@
 
     <h2 class="text-2xl font-bold mb-2">6. Every day after that</h2>
     <ol class="list-decimal ml-6 space-y-1 mb-3">
-      <li>Open <b>FDD for Windows</b>. After the welcome you are at the sign-in screen (tick <b>Remember me</b> to keep your sign-in on this computer).</li>
-      <li>Choose your position. The app then opens <b>EuroScope</b>, <b>VACS</b> and your audio client for you (each only if ticked in setup), and you are asked about natTrak, which has to be signed in to each session.</li>
-      <li>In EuroScope, connect to VATSIM as usual and open your saved vNAAATS screen.</li>
+      <li>Open <b>FDD for Windows</b>. It opens <b>EuroScope</b>, <b>VACS</b> and your audio client for you (each only if ticked in setup) and shows <b>Awaiting an active VATSIM connection</b>.</li>
+      <li>In EuroScope, connect to VATSIM as your oceanic position (for example NAT_FSS, CZQO_CTR or EGGX_CTR) and open your saved vNAAATS screen.</li>
+      <li>Within a few seconds the display opens by itself on that position. There is no sign-in or position to choose: your key and your live VATSIM connection are the sign-in. You are then asked about natTrak, which has to be signed in to each session.</li>
       <li>If an update is available the app tells you and asks before it downloads anything. Close EuroScope first, then press <b>Update now</b>. Your <b>vnaaats.cfg</b> and key are never touched.</li>
     </ol>
-    <p class="mb-6 opacity-90">Check it works: open <b>vNAAATS.log</b> (next to the DLL); its first line shows the version. Nothing is shown on the display until you have signed in and chosen a position.</p>
+    <p class="mb-6 opacity-90">Check it works: open <b>vNAAATS.log</b> (next to the DLL); its first line shows the version. Nothing is shown on the display until you are connected to VATSIM on an oceanic position.</p>
 
     <h2 class="text-2xl font-bold mb-2">Let the display type commands for you (autotype)</h2>
     <p class="mb-6 opacity-90">The example config has <b>autotype=1</b> switched on. The Send buttons for SELCAL, contact me and RCL REQ in the display then type the command into EuroScope for you, and your EuroScope can send the <b>automatic RCL REQ reminders</b> (see the manual). If you would rather copy and paste, turn it off in <b>Settings</b> in the display (the automatic reminders then come from another controller's EuroScope).</p>

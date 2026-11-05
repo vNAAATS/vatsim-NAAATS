@@ -48,17 +48,17 @@ onMount(async () => {
                 Version 2 &ndash; Modernised by Gary Thomas
             </div>
             <div class="flex flex-row justify-center mt-10">
-                <a href="/fdd" class="border-2 rounded px-4 py-2 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 
-                hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
-                    Access FDD
-                </a>
-                <a href="/windows" class="border-2 rounded px-4 py-2 ml-4 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 
+                <a href="/windows" class="border-2 rounded px-4 py-2 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-100 transition duration-500 
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
                     FDD for Windows
                 </a>
                 <a href="/download" class="border-2 rounded px-4 py-2 ml-4 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
                     Downloads
+                </a>
+                <a href="/fdd" class="border-2 rounded px-4 py-2 ml-4 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 
+                hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
+                    Use in a browser
                 </a>
                 <div class="relative ml-4">
                     <button type="button" aria-haspopup="true" aria-expanded={pagesOpen} on:click={() => (pagesOpen = !pagesOpen)} on:keydown={(e) => { if (e.key === "Escape") pagesOpen = false; }}
@@ -135,14 +135,14 @@ onMount(async () => {
                 <div class="flex flex-col justify-center items-center w-full p-5 min-h-56 text-center shadow-5xl bg-blue-1 border-2 border-blue-1 rounded">
                     <div class="2xl:text-3xl xl:text-2xl">Flight Data Display</div>
                     <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="90" height="90" viewBox="0 0 24 24" class="py-4 fill-current text-white" aria-hidden="true"><path d="M19 12V13.5C21.21 13.5 23 15.29 23 17.5C23 18.32 22.76 19.08 22.33 19.71L21.24 18.62C21.41 18.28 21.5 17.9 21.5 17.5C21.5 16.12 20.38 15 19 15V16.5L16.75 14.25L19 12M19 23V21.5C16.79 21.5 15 19.71 15 17.5C15 16.68 15.25 15.92 15.67 15.29L16.76 16.38C16.59 16.72 16.5 17.1 16.5 17.5C16.5 18.88 17.62 20 19 20V18.5L21.25 20.75L19 23M4 3H18C19.11 3 20 3.9 20 5V11L19.5 11C17.66 11 16 11.77 14.81 13H12V17H13L13 17.5C13 18 13.06 18.5 13.17 19H4C2.9 19 2 18.11 2 17V5C2 3.9 2.9 3 4 3M4 7V11H10V7H4M12 7V11H18V7H12M4 13V17H10V13H4Z" /></svg>
-                    <div class="font-normal text-base opacity-80">Live strips for every flight, in your browser.</div>
+                    <div class="font-normal text-base opacity-80">Live strips for every flight. Works in any browser, such as an iPad. On Windows, use FDD for Windows.</div>
                 </div>
             </a>
             <a href="/windows" class="flex justify-center items-stretch scale-100 transition duration-500 hover:scale-105">
                 <div class="flex flex-col justify-center items-center w-full p-5 min-h-56 text-center shadow-5xl bg-blue-1 border-2 border-blue-1 rounded">
                     <div class="2xl:text-3xl xl:text-2xl">FDD for Windows</div>
                     <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="90" height="90" viewBox="0 0 24 24" class="py-4 fill-current text-white" aria-hidden="true"><path d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z" /></svg>
-                    <div class="font-normal text-base opacity-80">One installer. Plugin updates and setup look after themselves.</div>
+                    <div class="font-normal text-base opacity-80">The recommended way on Windows: one installer, and plugin updates and setup look after themselves.</div>
                 </div>
             </a>
             <a href="/guide" class="flex justify-center items-stretch scale-100 transition duration-500 hover:scale-105">
