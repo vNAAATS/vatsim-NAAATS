@@ -1617,6 +1617,9 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter your VATSIM CID (numbers only)"})
+                    if members.is_blocked(cid):
+                        auth.record_failure(ip)
+                        return self._send(403, {"error": "this CID is blocked - contact info@vnaaats.com"})
                     if network:                                 # proof it is you: that CID must be connected to VATSIM right now (observer, pilot or controller)
                         on = network.cid_online(cid)
                         if on is None:
@@ -1645,6 +1648,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter the student's VATSIM CID (numbers only)"})
+                    if members.is_blocked(cid):
+                        return self._send(403, {"error": "this CID is blocked"})
                     cur = members.info(cid)
                     if cur.get("exists") and not cur.get("revoked") and cur.get("expires", 0) > time.time() + TRAINEE_KEY_HOURS * 3600 + 60:
                         return self._send(409, {"error": "that CID already has a longer-lived key: the student can use it, and a trainee key would replace it"})

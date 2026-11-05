@@ -561,6 +561,25 @@ class TempKeyOnlineTest(unittest.TestCase):
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read().decode())
 
+    def test_blocked_cid(self):
+        os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
+        f = os.path.join(self.tmp, "blocked.txt")
+        os.environ["VNAAATS_BLOCKED_CIDS"] = f
+        body = {"cid": "1017999", "name": "Test", "passphrase": "correct-horse-battery"}
+        try:
+            self.net.answer = True
+            code, out = self.call(body)
+            self.assertEqual(code, 200)
+            key = out["key"]
+            self.assertEqual(self.members.check_key(key)[0], "1017999")
+            open(f, "w").write("# removed by the team\n1017999  # reason\n")
+            self.assertEqual(self.call(body)[0], 403)                          # cannot get a new key
+            self.assertEqual(self.members.check_key(key), (None, "revoked"))   # the old key stops working at once
+            self.assertIsNone(self.members.check_login("1017999", out["password"]))
+        finally:
+            os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
+            os.environ.pop("VNAAATS_BLOCKED_CIDS", None)
+
     def test_online_gate(self):
         os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
         body = {"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"}
