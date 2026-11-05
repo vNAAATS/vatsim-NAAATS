@@ -5,6 +5,23 @@
   import buildInfo from "../build-info.json";
   import * as site from "../typescript/site";
   import { onMount } from "svelte";
+  import { inApp } from "../typescript/fdd/app";
+
+  // The Homepage link would take FDD for Windows away from the display, so it is only shown in a browser
+  const showHome = !inApp();
+
+  // After a new version is published the old file names are gone. A page that was left open then fails with
+  // "Failed to fetch dynamically imported module": reload once to pick up the new version.
+  onMount(() => {
+    const stale = (m: any) => /dynamically imported module|Importing a module script failed|error loading dynamically/i.test(String(m?.message ?? m ?? ""));
+    const reload = () => {
+      try { if (sessionStorage.getItem("vnaaats.staleReload")) return; sessionStorage.setItem("vnaaats.staleReload", "1"); } catch (e) { /* reload anyway once */ }
+      location.reload();
+    };
+    window.addEventListener("unhandledrejection", (e) => { if (stale(e.reason)) reload(); });
+    window.addEventListener("error", (e) => { if (stale(e.error ?? e.message)) reload(); });
+    setTimeout(() => { try { sessionStorage.removeItem("vnaaats.staleReload"); } catch (e) { /* ignore */ } }, 15000);
+  });
 
   // Server version (from /health) so bug reports can quote both numbers
   let serverVersion: string = "";
@@ -48,11 +65,13 @@
         </div>
       </div>
       <div class="flex flex-row-reverse w-2/5 select-none hover:cursor-default">
-        <a href="./">
-          <button  class="px-5 font-black hover:text-grey-300 select-none">
-            Homepage
-          </button>
-        </a>
+        {#if showHome}
+          <a href="./">
+            <button  class="px-5 font-black hover:text-grey-300 select-none">
+              Homepage
+            </button>
+          </a>
+        {/if}
         
         <!--<div class="px-3">Guest User</div>
         <div class="px-1/2 select-none hover:cursor-default">|</div>

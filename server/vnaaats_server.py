@@ -23,7 +23,7 @@ Extra:
 
 Settings (environment variables): VNAAATS_API_KEY (required), VNAAATS_PORT (8080), VNAAATS_DB, VNAAATS_NATTRAK_URL,
 VNAAATS_REFRESH_SECONDS (600), VNAAATS_BIND (127.0.0.1), VNAAATS_VATSIM_FEED (feed url; set to 'off' to disable),
-VNAAATS_FEED_SECONDS (60), VNAAATS_NATTRAK_PLUGIN_URL (natTrak clearance API; 'off' to disable).
+VNAAATS_FEED_SECONDS (15), VNAAATS_TRANSCEIVER_SECONDS (60), VNAAATS_SLURPER (live CID lookup; 'off' to disable), VNAAATS_NATTRAK_PLUGIN_URL (natTrak clearance API; 'off' to disable).
 Login (editing from the web): VNAAATS_FDD_PASSWORD (shared password), VNAAATS_POSITIONS (comma list shown on the position screen),
 VNAAATS_CONNECT_CLIENT_ID / VNAAATS_CONNECT_CLIENT_SECRET / VNAAATS_PUBLIC_URL (e.g. https://fdd.example.com) for VATSIM Connect,
 VNAAATS_CPDLC=off (CPDLC is on by default; each controller types their own Hoppie code on the FDD), VNAAATS_CPDLC_STATIONS (position=station list,
@@ -70,7 +70,9 @@ STALE_FLIGHT_SECONDS = 24 * 3600
 SERVER_VERSION = "2.7.1"      # shown at /health so you can tell which version is running
 VATSIM_FEED = os.environ.get("VNAAATS_VATSIM_FEED", "https://data.vatsim.net/v3/vatsim-data.json")
 VATSIM_TRANSCEIVERS = os.environ.get("VNAAATS_VATSIM_TRANSCEIVERS", "https://data.vatsim.net/v3/transceivers-data.json")
-FEED_SECONDS = int(os.environ.get("VNAAATS_FEED_SECONDS", "60"))
+FEED_SECONDS = int(os.environ.get("VNAAATS_FEED_SECONDS", "15"))        # VATSIM refreshes its feed about every 15 s, so asking faster is pointless
+TRANSCEIVER_SECONDS = int(os.environ.get("VNAAATS_TRANSCEIVER_SECONDS", "60"))
+SLURPER_URL = os.environ.get("VNAAATS_SLURPER", "https://slurper.vatsim.net")      # live "who is this CID" lookup (as TrackAudio and VACS use); 'off' disables
 NATTRAK_PLUGIN_URL = os.environ.get("VNAAATS_NATTRAK_PLUGIN_URL", "https://nattrak.vatsim.net/api/plugins")
 SESSION_COOKIE = "vnaaats_session"
 SESSION_SECONDS = 12 * 3600
@@ -913,6 +915,9 @@ class NetworkTraffic:
         self.ctrl_by_cid = {}    # CID -> callsigns of the controller positions that CID is connected on (not observers, not ATIS)
         self.ctrl_by_cid = {}    # CID -> callsigns of the controller positions that CID is connected on (no ATIS)
         self.tx_pos = {}         # callsign -> [(lat, lon)] of its transceivers (from the transceivers feed)
+        self.slurper_url = SLURPER_URL
+        self.slurper_cache = {}  # cid -> (time, callsigns): a waiting sign-in asks every few seconds, so keep answers for 4 s
+        self.last_tx = 0
 
     def _in_range(self, pilot, controller):
         """Could this pilot hear this controller? Unknown positions give True, so a feed without them behaves as before."""
@@ -936,6 +941,36 @@ class NetworkTraffic:
             if not self.updated or time.time() - self.updated > 600:
                 return None
             return list(self.ctrl_by_cid.get(re.sub(r"\D", "", str(cid)), []))
+
+    def live_positions(self, cid, fetch=None):
+        """Callsigns this CID is controlling on right now, asked of VATSIM's live slurper (seconds old, not the ~1 minute old feed).
+        Same rules as VACS: the ATC rows with a visibility range above zero, so ATIS is ignored. None if the slurper cannot be read."""
+        cid = re.sub(r"\D", "", str(cid))
+        if not cid or (not fetch and (not self.slurper_url or self.slurper_url == "off")):
+            return None
+        hit = self.slurper_cache.get(cid)
+        if hit and time.time() - hit[0] < 4:
+            return list(hit[1])
+        try:
+            if fetch:
+                text = fetch(cid)
+            else:
+                req = urllib.request.Request(self.slurper_url.rstrip("/") + "/users/info?cid=" + cid, headers={"User-Agent": "vnaaats-server"})
+                with urllib.request.urlopen(req, timeout=3) as r:
+                    text = r.read().decode("utf-8", "replace")
+        except Exception as e:
+            log.warning("Slurper lookup failed: %s", e)
+            return None
+        out = []
+        for line in str(text).splitlines():
+            f = line.split(",")
+            try:
+                if len(f) > 4 and f[0].strip() == cid and f[2].strip().lower() == "atc" and float(f[4] or 0) > 0 and not f[1].upper().endswith("_ATIS"):
+                    out.append(f[1].strip().upper())
+            except ValueError:
+                pass
+        self.slurper_cache[cid] = (time.time(), out)
+        return list(out)
 
     def cid_online(self, cid):
         """True/False: is this VATSIM CID connected to the network right now? None when the feed is not healthy (cannot tell)."""
@@ -1082,7 +1117,9 @@ class NetworkTraffic:
                 self.atc_calls = calls
                 self.controllers = sorted(ctrls, key=lambda x: x["callsign"])
             log.info("Network traffic refreshed: %d oceanic flights", len(out))
-            self.refresh_transceivers()
+            if time.time() - self.last_tx >= TRANSCEIVER_SECONDS - 1:
+                self.last_tx = time.time()
+                self.refresh_transceivers()
         except Exception as e:
             with self.lock:
                 self.error = str(e)
@@ -1633,7 +1670,10 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         if why == "expired":
                             return self._send(401, {"error": "your API key has expired and access is restricted. Request a new one at vnaaats.com/get-key"})
                         return self._send(401, {"error": "that key is not valid (" + why + "). Check the key in Settings > App setup, or get a new one at vnaaats.com/get-key"})
-                    calls = network.controller_positions(cid)
+                    calls = network.live_positions(cid)             # live lookup first (seconds), the data feed (up to a minute old) as the fallback
+                    pos = auth.position_for(calls) if calls else None
+                    if not pos:
+                        calls = network.controller_positions(cid)
                     if calls is None:
                         return self._send(503, {"error": "the VATSIM connection list cannot be read right now - trying again"})
                     pos = auth.position_for(calls)

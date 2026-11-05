@@ -497,6 +497,7 @@ class KeySignInTest(unittest.TestCase):
         store = s.FlightStore(os.path.join(cls.tmp, "k.db"))
         cls.members = mm.MemberKeys(store)
         cls.net = s.NetworkTraffic(cache)
+        cls.net.slurper_url = "off"      # never reach the real VATSIM from a test
         cls.feed = {"pilots": [], "controllers": []}
         cls.net.refresh(fetch=lambda: cls.feed)
         auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR,EGGX_CTR,NAT_FSS"})
@@ -507,6 +508,23 @@ class KeySignInTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.srv.shutdown()
+
+    def test_live_lookup_signs_in_before_the_feed_shows_the_controller(self):
+        self.setfeed()
+        code, out = self.post("/auth/get-key", {"agree": True, "email": "live@example.com", "cid": "1700040", "name": "Live"})
+        key = out["key"]
+        self.assertEqual(self.post("/auth/key-login", {"key": key})[0], 202)                     # not connected anywhere
+        self.net.slurper_cache.clear()
+        orig = self.net.live_positions
+        self.net.live_positions = lambda cid: orig(cid, fetch=lambda c: "%s,NAT_FSS,atc,128.000,600,0,0,0,0,0,0,0,0,0,0,\n%s,EGGX_ATIS,atc,121.0,0,0,0,0,0,0,0,0,0,0,0,\n" % (c, c))
+        try:
+            code, out = self.post("/auth/key-login", {"key": key})
+            self.assertEqual(code, 200)                                                          # the feed does not list this CID yet
+        finally:
+            self.net.live_positions = orig
+        self.net.slurper_cache.clear()
+        rows = self.net.live_positions("1700040", fetch=lambda c: "%s,EGGX_ATIS,atc,121.0,0,0,0,0,0,0,0,0,0,0,0,\n%s,BAW1,pilot,0,0,0,0,0,0,0,0,0,0,0,0,\n" % (c, c))
+        self.assertEqual(rows, [])                                                               # ATIS (range 0) and pilot rows do not count
 
     def setfeed(self, pilots=(), controllers=()):
         self.__class__.feed = {"pilots": [{"cid": 9999999, "callsign": "FILL1"}] + list(pilots), "controllers": list(controllers)}   # someone is always online on the real network
