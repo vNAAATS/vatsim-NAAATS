@@ -3,6 +3,9 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Temporary keys and passwords from the temporary key page now last 90 days (was 7), the same as keys from the Gander Oceanic website.
+- Temporary key page: now says up front that Gander Oceanic certified controllers get their key from their Gander Oceanic profile (ganderoceanic.ca/my/vnaaats), and that controllers endorsed by VATSIM UK or NYACC follow the instructions on the page.
+- Temporary key page (/temp-key): it now also checks the Gander Oceanic roster. A CID that is not certified is refused ("this CID is not certified on the Gander Oceanic roster"), and if the roster cannot be read it says to try again in a few minutes (before, only the shared passphrase was checked).
 - The "N alerts" button is now clickable: it jumps to the flight with the warning, outlines its strip and selects it; click again for the next one (suggested by a controller).
 - Strip list: each Shanwick Tango route (T9, T13, T16, T213, T290) is now its own group, like the NAT tracks, with its route in the header, instead of one TANGO ROUTES group. Concorde tracks were already one group each. Tango groups come after the NAT and Concorde tracks, before RANDOM.
 - EuroScope plugin: the Area Sel box (CZQX / EGGX / BDBX) is gone. It is now one locked area called OCA (the whole oceanic area, what BDBX was), because the CZQX and EGGX visibility ranges were too small. The Select box (Delivery / OCA Enroute / Multi-role) is locked to Multi-role as well. An older saved .asr is forced to both.

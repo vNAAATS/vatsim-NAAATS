@@ -37,7 +37,11 @@
 <div class="min-h-screen bg-blue-1 text-white font-web flex flex-col items-center px-4 py-10">
   <div class="max-w-xl w-full">
     <h1 class="text-4xl font-bold mb-2">vNAAATS - temporary key</h1>
-    <p class="opacity-80 mb-6">For certified oceanic controllers whose key could not be issued from the Gander Oceanic website. The key and password last <b>7 days</b>. Use only your own VATSIM CID, and only if you are shown as <b>Certified</b> on the <a class="underline" href="https://ganderoceanic.ca/roster">Gander Oceanic roster</a>.</p>
+    <div class="p-4 mb-4 border-2 border-blue-10 bg-blue-3">
+      <p class="mb-2"><b>Gander Oceanic certified controllers:</b> get your key and FDD password from your profile on the Gander Oceanic website, <a class="underline" href="https://ganderoceanic.ca/my/vnaaats">ganderoceanic.ca/my/vnaaats</a>. You do not need this page.</p>
+      <p><b>Oceanic controllers endorsed by VATSIM UK or Virtual New York ARTCC (NYACC):</b> follow the instructions below to get a temporary key.</p>
+    </div>
+    <p class="opacity-80 mb-6">The key and password from this page last <b>90 days</b>. Use only your own VATSIM CID, and only if you are shown as <b>Certified</b> on the <a class="underline" href="https://ganderoceanic.ca/roster">Gander Oceanic roster</a> (the roster also lists VATSIM UK and NYACC oceanic controllers).</p>
     {#if !result}
       <label class="block mb-3">VATSIM CID<input class="block w-full p-2 text-black" bind:value={cid} inputmode="numeric" autocomplete="off" /></label>
       <label class="block mb-3">Your name (optional)<input class="block w-full p-2 text-black" bind:value={name} autocomplete="off" /></label>

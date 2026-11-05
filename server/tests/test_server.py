@@ -516,15 +516,61 @@ class TempKeyTest(unittest.TestCase):
         os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
         self.assertEqual(self.call({"cid": "1017951", "passphrase": "x"})[0], 404)
 
-    def test_needs_passphrase_then_issues_seven_day_key(self):
+    def test_needs_passphrase_then_issues_ninety_day_key(self):
         os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
         try:
             self.assertEqual(self.call({"cid": "1017951", "passphrase": "wrong"})[0], 401)
             code, out = self.call({"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"})
             self.assertEqual(code, 200)
             self.assertEqual(self.members.check_key(out["key"])[0], "1017951")
-            self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 7, delta=0.05)
+            self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 90, delta=0.05)
             self.assertEqual(self.call({"cid": "12", "passphrase": "correct-horse-battery"})[0], 400)
+        finally:
+            os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
+
+
+class TempKeyRosterTest(unittest.TestCase):
+    """The temporary key page only issues keys to CIDs certified on the roster (503 when the roster cannot be read)."""
+    class FakeRoster:
+        def __init__(self): self.answer = True
+        def eligible(self, cid): return self.answer
+
+    @classmethod
+    def setUpClass(cls):
+        import members as mm
+        cls.tmp = tempfile.mkdtemp()
+        cache = s.TrackCache(s.load_fixes())
+        cache.refresh(fetch=lambda: SAMPLE)
+        store = s.FlightStore(os.path.join(cls.tmp, "k.db"))
+        cls.members = mm.MemberKeys(store)
+        cls.roster = cls.FakeRoster()
+        auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR"})
+        cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(cache, store, KEY, None, None, None, auth, None, None, None, cls.members, "", cls.roster))
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+        cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+
+    def call(self, body):
+        req = urllib.request.Request(self.base + "/auth/temp-key", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read().decode())
+
+    def test_roster_gate(self):
+        os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
+        body = {"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"}
+        try:
+            self.roster.answer = False
+            self.assertEqual(self.call(body)[0], 403)         # not certified
+            self.roster.answer = None
+            self.assertEqual(self.call(body)[0], 503)         # roster unreadable
+            self.roster.answer = True
+            self.assertEqual(self.call(body)[0], 200)         # certified
         finally:
             os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
 

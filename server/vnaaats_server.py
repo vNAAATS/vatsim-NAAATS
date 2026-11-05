@@ -1589,7 +1589,7 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         return self._send(401, {"error": "wrong password"})
                     token = auth.create_session(re.sub(r"\D", "", name)[:8], name, "password")
                     return self._send_cookie(200, self._status(auth.get(token)), token)
-                if p == "/auth/temp-key":                      # temporary: 7-day key for certified controllers the roster feed misses. Off unless VNAAATS_TEMP_PASSPHRASE is set.
+                if p == "/auth/temp-key":                      # temporary: 90-day key for certified controllers the roster feed misses. Off unless VNAAATS_TEMP_PASSPHRASE is set.
                     temp_pass = os.environ.get("VNAAATS_TEMP_PASSPHRASE", "")
                     if len(temp_pass) < 10 or not members:
                         return self._send(404, {"error": "not switched on"})
@@ -1602,10 +1602,17 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter your VATSIM CID (numbers only)"})
+                    if roster:                                  # only CIDs certified on the Gander Oceanic roster
+                        ok = roster.eligible(cid)
+                        if ok is None:
+                            return self._send(503, {"error": "the Gander Oceanic roster cannot be checked right now - try again in a few minutes"})
+                        if not ok:
+                            auth.record_failure(ip)
+                            return self._send(403, {"error": "this CID is not certified on the Gander Oceanic roster"})
                     if sum(1 for m in members.listing() if m["manual"] and not m["revoked"] and not m["expired"]) >= 40 and not members.info(cid).get("exists"):
                         return self._send(429, {"error": "the temporary keys are used up - contact info@vnaaats.com"})
-                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=7, manual=True)
-                    log.info("Temporary 7-day key issued for CID %s from %s", cid, ip)
+                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=90, manual=True)
+                    log.info("Temporary 90-day key issued for CID %s from %s", cid, ip)
                     return self._send(200, {"key": out["key"], "password": out["password"], "expires": out["expires"], "cid": out["cid"]})
                 if p == "/auth/trainee-key":                   # a trusted instructor issues a 2-hour key + FDD password for a student. Off unless VNAAATS_INSTRUCTOR_PASSWORD is set (10+ characters).
                     inst_pass = os.environ.get("VNAAATS_INSTRUCTOR_PASSWORD", "")
