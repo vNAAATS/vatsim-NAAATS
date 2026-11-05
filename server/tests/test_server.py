@@ -526,6 +526,27 @@ class KeySignInTest(unittest.TestCase):
         rows = self.net.live_positions("1700040", fetch=lambda c: "%s,EGGX_ATIS,atc,121.0,0,0,0,0,0,0,0,0,0,0,0,\n%s,BAW1,pilot,0,0,0,0,0,0,0,0,0,0,0,0,\n" % (c, c))
         self.assertEqual(rows, [])                                                               # ATIS (range 0) and pilot rows do not count
 
+    def test_key_session_closes_an_hour_after_leaving_vatsim(self):
+        a = s.Auth({})
+        state = {"on": True}
+        a.on_position = lambda cid: state["on"]
+        tok = a.create_session("1700050", "X", "key")
+        self.assertIsNotNone(a.get(tok))
+        state["on"] = False
+        self.assertIsNotNone(a.get(tok))                                   # just left: still open
+        a.sessions[tok]["last_on"] = time.time() - 3000
+        self.assertIsNotNone(a.get(tok))                                   # 50 minutes: still open
+        a.sessions[tok]["last_on"] = time.time() - 3700
+        self.assertIsNone(a.get(tok))                                      # over an hour: closed
+        tok = a.create_session("1700050", "X", "key")
+        state["on"] = None
+        a.sessions[tok]["last_on"] = time.time() - 99999
+        self.assertIsNotNone(a.get(tok))                                   # feed unreadable: never closes
+        tok = a.create_session("1700051", "Y", "member")
+        state["on"] = False
+        a.sessions[tok]["last_on"] = time.time() - 99999
+        self.assertIsNotNone(a.get(tok))                                   # only key sign-ins are affected
+
     def setfeed(self, pilots=(), controllers=()):
         self.__class__.feed = {"pilots": [{"cid": 9999999, "callsign": "FILL1"}] + list(pilots), "controllers": list(controllers)}   # someone is always online on the real network
         self.net.refresh(fetch=lambda: self.feed)

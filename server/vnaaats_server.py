@@ -76,6 +76,7 @@ SLURPER_URL = os.environ.get("VNAAATS_SLURPER", "https://slurper.vatsim.net")   
 NATTRAK_PLUGIN_URL = os.environ.get("VNAAATS_NATTRAK_PLUGIN_URL", "https://nattrak.vatsim.net/api/plugins")
 SESSION_COOKIE = "vnaaats_session"
 SESSION_SECONDS = 12 * 3600
+DISCONNECT_SECONDS = int(os.environ.get("VNAAATS_DISCONNECT_SECONDS", "3600"))     # a key sign-in is closed this long after the controller leaves VATSIM
 DEFAULT_POSITIONS = "CZQO_CTR,CZQO_DEL,EGGX_CTR,EGGX_DEL,NAT_FSS"
 EDIT_FIELDS = ("assignedLevel", "assignedMach", "track", "selcal")       # what the web and the plugin both edit (route is web-only)
 SELCAL_OK = re.compile(r"[A-Z]{4}")   # VATSIM pilots can use any four letters
@@ -1170,6 +1171,7 @@ class Auth:
 
     def __init__(self, env=os.environ):
         self.password = env.get("VNAAATS_FDD_PASSWORD", "")
+        self.on_position = None           # fn(cid) -> True/False/None: is this CID controlling on VATSIM now (key sign-ins close an hour after they leave)
         if env.get("VNAAATS_SHARED_PASSWORD", "on").lower() == "off":
             self.password = ""            # shared password switched off: only personal passwords (and VATSIM Connect) work
         self.client_id = env.get("VNAAATS_CONNECT_CLIENT_ID", "")
@@ -1228,7 +1230,26 @@ class Auth:
     def get(self, token):
         with self.lock:
             s = self.sessions.get(token or "")
-            return dict(s) if s and s["expires"] > time.time() else None
+            s = dict(s) if s and s["expires"] > time.time() else None
+        if s and s.get("via") == "key" and self.on_position:
+            now = time.time()
+            try:
+                on = self.on_position(s["cid"])                  # True / False, or None when the feed cannot be read (never closes then)
+            except Exception:
+                on = None
+            with self.lock:
+                live = self.sessions.get(token)
+                if live is None:
+                    return None
+                if on is None or on:
+                    if on:
+                        live["last_on"] = now
+                    return dict(live)
+                if now - live.get("last_on", live["expires"] - SESSION_SECONDS) > DISCONNECT_SECONDS:
+                    del self.sessions[token]                     # off VATSIM for over an hour: the display goes back to "Awaiting an active VATSIM connection"
+                    return None
+                return dict(live)
+        return s
 
     def set_position(self, token, position):
         position = (position or "").strip().upper()
@@ -2418,6 +2439,8 @@ def main():
     log.info("Listening on %s:%d", host, port)
     cpdlc = None
     auth = Auth()
+    if network:
+        auth.on_position = lambda cid: (lambda c: None if c is None else bool(c))(network.controller_positions(cid))
     if os.environ.get("VNAAATS_CPDLC", "on").lower() != "off":
         def locate(callsign):                              # is this pilot within 1000 nm of the oceanic airspace?
             pos = network.position(callsign) if network else None

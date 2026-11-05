@@ -63,10 +63,13 @@
   }
   function forgetKey(): void { sess.rememberKey(""); savedKeyText = ""; waiting = false; keyError = ""; stopKey(); }
   $: if ($session.loggedIn) { waiting = false; stopKey(); }
+  // The session was closed (the controller left VATSIM for over an hour): wait for the next connection again
+  let ready = false;
+  $: if (ready && !$session.loggedIn && savedKeyText && !keyTimer && !keyError) startKey();
 
   onMount(() => {
     loadSaved();
-    sess.refreshSession().then(() => { if (savedKeyText && !$session.loggedIn) startKey(); });
+    sess.refreshSession().then(() => { ready = true; if (savedKeyText && !$session.loggedIn) startKey(); });
     // Ask again now and then, so a session that has run out brings the sign-in screen back
     const t = setInterval(sess.refreshSession, 30000);
     return () => { clearInterval(t); stopKey(); };
