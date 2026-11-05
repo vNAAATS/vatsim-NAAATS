@@ -516,14 +516,14 @@ class TempKeyTest(unittest.TestCase):
         os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
         self.assertEqual(self.call({"cid": "1017951", "passphrase": "x"})[0], 404)
 
-    def test_needs_passphrase_then_issues_seven_day_key(self):
+    def test_needs_passphrase_then_issues_ninety_day_key(self):
         os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
         try:
             self.assertEqual(self.call({"cid": "1017951", "passphrase": "wrong"})[0], 401)
             code, out = self.call({"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"})
             self.assertEqual(code, 200)
             self.assertEqual(self.members.check_key(out["key"])[0], "1017951")
-            self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 7, delta=0.05)
+            self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 90, delta=0.05)
             self.assertEqual(self.call({"cid": "12", "passphrase": "correct-horse-battery"})[0], 400)
         finally:
             os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)

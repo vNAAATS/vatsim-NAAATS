@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Temporary keys and passwords from the temporary key page now last 90 days (was 7), the same as keys from the Gander Oceanic website.
 - Temporary key page: now says up front that Gander Oceanic certified controllers get their key from their Gander Oceanic profile (ganderoceanic.ca/my/vnaaats), and that controllers endorsed by VATSIM UK or NYACC follow the instructions on the page.
 - Temporary key page (/temp-key): it now also checks the Gander Oceanic roster. A CID that is not certified is refused ("this CID is not certified on the Gander Oceanic roster"), and if the roster cannot be read it says to try again in a few minutes (before, only the shared passphrase was checked).
 - The "N alerts" button is now clickable: it jumps to the flight with the warning, outlines its strip and selects it; click again for the next one (suggested by a controller).
