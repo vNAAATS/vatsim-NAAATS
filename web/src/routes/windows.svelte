@@ -53,7 +53,7 @@
     <ul class="list-disc ml-6 space-y-1 mb-6 opacity-90">
       <li><b>Windows 10 or Windows 11</b>, 64-bit. (It uses Microsoft's WebView2, which is already part of Windows 11 and up-to-date Windows 10. If yours is missing, the installer fetches it, so an internet connection is needed to install.)</li>
       <li><b>EuroScope</b> and the official <b>Gander Oceanic sector package</b> from <a class="underline" href="https://files.aero-nav.com/EXCXO">AeroNav</a>.</li>
-      <li>Your own <b>key</b> and <b>sign-in</b> from <a class="underline" href="https://ganderoceanic.ca/my/vnaaats">ganderoceanic.ca/my/vnaaats</a>. These are for <b>certified</b> controllers.</li>
+      <li>Your own <b>API key</b>, free at <a class="underline" href="/get-key">vnaaats.com/get-key</a> for all oceanic controllers (Gander Oceanic controllers can also use <a class="underline" href="https://ganderoceanic.ca/my/vnaaats">ganderoceanic.ca/my/vnaaats</a>). The display opens only while you are connected to VATSIM on an oceanic position. Keep your key private.</li>
       <li>Optional: <a class="underline" href="https://vacs.network/">VACS</a> and <a class="underline" href="https://audio.vatsim.net/">Audio for VATSIM</a> or <a class="underline" href="https://github.com/pierr3/TrackAudio/releases">TrackAudio</a> if you want the app to open them.</li>
     </ul>
 

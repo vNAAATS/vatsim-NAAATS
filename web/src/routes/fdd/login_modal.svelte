@@ -99,6 +99,9 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center" style="background: #0b1b30;">
     <div class="w-96 max-w-full bg-blue-3 border-2 border-l-blue-10 border-t-blue-10 border-r-blue-0 border-b-blue-0 text-white font-regular p-4">
       <div class="text-xl font-bold mb-1">vNAAATS Flight Data Display</div>
+      {#if !app.inApp()}
+        <div class="mb-3 p-2 text-sm border border-blue-6 bg-blue-4">On Windows? <b>FDD for Windows</b> is the recommended way: it sets everything up and keeps the plugin up to date. <a class="underline font-bold" href="/get/fdd-windows" rel="external">Download it</a>. This browser version also works, for example on an iPad.</div>
+      {/if}
       {#if !$session.loggedIn}
           {#if savedKeyText}
             <div class="mb-2 text-lg font-bold text-yellow-300">Awaiting an active VATSIM connection</div>

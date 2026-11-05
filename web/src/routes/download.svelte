@@ -71,7 +71,7 @@
     <h2 class="text-2xl font-bold mb-2">What you need</h2>
     <ul class="list-disc ml-6 space-y-1 mb-6">
       <li>EuroScope, and the official <b>Gander Oceanic sector package</b> from AeroNav (below), which also keeps your AIRAC up to date.</li>
-      <li>Your own <b>key</b> for the plugin, and your sign-in for the <a href="/fdd" class="underline">Flight Data Display</a>: both come from your page on the Gander Oceanic website, <a href="https://ganderoceanic.ca/my/vnaaats" class="underline">ganderoceanic.ca/my/vnaaats</a>. They are for controllers who are <b>certified</b>. Keep your key private.</li>
+      <li>Your own <b>API key</b>, free at <a class="underline" href="/get-key">vnaaats.com/get-key</a> for all oceanic controllers (Gander Oceanic controllers can also use <a class="underline" href="https://ganderoceanic.ca/my/vnaaats">ganderoceanic.ca/my/vnaaats</a>). The display opens only while you are connected to VATSIM on an oceanic position. Keep your key private.</li>
       <li>The display shows nothing until you have signed in and chosen a position, to protect pilot and controller data.</li>
     </ul>
 
