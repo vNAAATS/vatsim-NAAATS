@@ -1658,13 +1658,18 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         return self._send(401, {"error": "wrong password"})
                     token = auth.create_session(re.sub(r"\D", "", name)[:8], name, "password")
                     return self._send_cookie(200, self._status(auth.get(token)), token)
-                if p == "/auth/temp-key":                      # anyone can get a 90-day key; signing in needs a live VATSIM connection on a position (see /auth/key-login)
+                if p in ("/auth/get-key", "/auth/temp-key"):    # anyone can get a 90-day key; signing in needs a live VATSIM connection on a position (see /auth/key-login)
                     if not members:
                         return self._send(404, {"error": "not switched on"})
                     ip = self._client_ip()
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter your VATSIM CID (numbers only)"})
+                    email = str(body.get("email", "")).strip()[:120]
+                    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+                        return self._send(400, {"error": "enter your email address (we keep it, with your CID and IP address, in case your key is misused)"})
+                    if body.get("agree") is not True:
+                        return self._send(400, {"error": "tick the box to confirm you are a certified oceanic controller"})
                     if members.is_blocked(cid):
                         return self._send(403, {"error": "this CID is blocked - contact info@vnaaats.com"})
                     now_t = time.time()
@@ -1683,10 +1688,10 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                             return self._send(409, {"error": "this CID already has a key. If you have lost it, connect to VATSIM with your own CID (observer is fine), wait a minute, and ask again."})
                     if sum(1 for m in members.listing() if m["manual"] and not m["revoked"] and not m["expired"]) >= 1000 and not mine.get("exists"):
                         return self._send(429, {"error": "the temporary keys are used up - contact info@vnaaats.com"})
-                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=90, manual=True)
+                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=90, manual=True, email=email, ip=ip)
                     with TEMP_KEY_LOCK:
                         TEMP_KEY_ISSUED.setdefault(ip, []).append(now_t)
-                    log.info("Key issued for CID %s from %s", cid, ip)
+                    log.info("Key issued for CID %s (%s) from %s", cid, email, ip)
                     return self._send(200, {"key": out["key"], "password": out["password"], "expires": out["expires"], "cid": out["cid"]})
                 if p == "/auth/trainee-key":                   # a trusted instructor issues a 2-hour key + FDD password for a student. Off unless VNAAATS_INSTRUCTOR_PASSWORD is set (10+ characters).
                     inst_pass = os.environ.get("VNAAATS_INSTRUCTOR_PASSWORD", "")

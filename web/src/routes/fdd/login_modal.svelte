@@ -107,7 +107,7 @@
             <div class="text-sm mb-1 opacity-80">{waiting ? "Checking every few seconds..." : "Stopped."}</div>
             <button class="mt-2 mr-4 text-sm underline opacity-80" on:click={forgetKey}>Use a different key</button>
           {:else}
-            <div class="mb-3 text-sm opacity-90">Enter your vNAAATS key. You do not have one yet? Get it at <a class="underline" href="/temp-key">vnaaats.com/temp-key</a> (Gander Oceanic controllers can also use ganderoceanic.ca/my/vnaaats).</div>
+            <div class="mb-3 text-sm opacity-90">Enter your vNAAATS key. You do not have one yet? Get it at <a class="underline" href="/get-key">vnaaats.com/get-key</a> (Gander Oceanic controllers can also use ganderoceanic.ca/my/vnaaats).</div>
             <form class="flex gap-2 mb-1" on:submit|preventDefault={saveKey}>
               <input class="flex-1 px-2 py-1 text-black" placeholder="Your key" bind:value={keyInput} autocomplete="off" />
               <button class="px-3 font-bold bg-blue-10 text-black" disabled={!keyInput.trim()}>Continue</button>

@@ -47,7 +47,7 @@ export async function loginPassword(name: string, password: string): Promise<str
   return r.data.error ?? "login failed";
 }
 
-// ---- key sign-in: the key from vnaaats.com/temp-key (or the Gander Oceanic website) identifies you; the display opens once you are
+// ---- key sign-in: the key from vnaaats.com/get-key (or the Gander Oceanic website) identifies you; the display opens once you are
 // connected to VATSIM on an oceanic position. The key is kept in this browser / app only.
 export function getKey(): string { try { return localStorage.getItem("vnaaats.key") ?? ""; } catch (e) { return ""; } }
 export function rememberKey(key: string): void { try { if (key) localStorage.setItem("vnaaats.key", key.trim()); else localStorage.removeItem("vnaaats.key"); } catch (e) { /* not kept */ } }

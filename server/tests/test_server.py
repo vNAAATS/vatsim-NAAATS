@@ -522,18 +522,22 @@ class KeySignInTest(unittest.TestCase):
 
     def test_anyone_gets_a_key_and_it_is_replaced_only_by_the_connected_owner(self):
         self.setfeed()
-        code, out = self.post("/auth/temp-key", {"cid": "1700001", "name": "Test"})
+        code, out = self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "1700001", "name": "Test"})
         self.assertEqual(code, 200)
         self.assertEqual(self.members.check_key(out["key"])[0], "1700001")
         self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 90, delta=0.05)
-        self.assertEqual(self.post("/auth/temp-key", {"cid": "1700001"})[0], 409)        # already has a key, and is not connected
+        self.assertEqual(self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "1700001"})[0], 409)        # already has a key, and is not connected
         self.setfeed(pilots=[{"cid": 1700001, "callsign": "BAW1"}])
-        self.assertEqual(self.post("/auth/temp-key", {"cid": "1700001"})[0], 200)        # connected: a new key replaces the old
-        self.assertEqual(self.post("/auth/temp-key", {"cid": "12"})[0], 400)
+        self.assertEqual(self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "1700001"})[0], 200)        # connected: a new key replaces the old
+        self.assertEqual(self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "12"})[0], 400)
+        self.assertEqual(self.post("/auth/get-key", {"agree": True, "email": "nonsense", "cid": "1700009"})[0], 400)          # an email address is required
+        self.assertEqual(self.post("/auth/get-key", {"email": "a@b.co", "cid": "1700009"})[0], 400)                          # the confirmation box is required
+        mine = next(m for m in self.members.listing() if m["cid"] == "1700001")
+        self.assertEqual((mine["email"], mine["ip"]), ("test@example.com", "127.0.0.1"))                                   # kept for following up misuse
 
     def test_key_sign_in_waits_for_a_position(self):
         self.setfeed()
-        code, out = self.post("/auth/temp-key", {"cid": "1700002", "name": "Alex"})
+        code, out = self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "1700002", "name": "Alex"})
         key = out["key"]
         self.assertEqual(self.post("/auth/key-login", {"key": "wrong"})[0], 401)
         code, d = self.post("/auth/key-login", {"key": key})
@@ -552,10 +556,10 @@ class KeySignInTest(unittest.TestCase):
         f = os.path.join(self.tmp, "blocked.txt")
         os.environ["VNAAATS_BLOCKED_CIDS"] = f
         try:
-            code, out = self.post("/auth/temp-key", {"cid": "1700003"})
+            code, out = self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "1700003"})
             self.assertEqual(code, 200)
             open(f, "w").write("# removed by the team\n1700003  # reason\n")
-            self.assertEqual(self.post("/auth/temp-key", {"cid": "1700003"})[0], 403)
+            self.assertEqual(self.post("/auth/get-key", {"agree": True, "email": "test@example.com", "cid": "1700003"})[0], 403)
             self.assertEqual(self.members.check_key(out["key"]), (None, "revoked"))
             self.setfeed(controllers=[{"cid": 1700003, "callsign": "NAT_FSS", "facility": 6}])
             self.assertEqual(self.post("/auth/key-login", {"key": out["key"]})[0], 401)
