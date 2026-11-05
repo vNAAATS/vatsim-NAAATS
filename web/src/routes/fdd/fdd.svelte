@@ -168,6 +168,10 @@
   $: shownCount = groups.reduce((n, g) => n + g.rows.length, 0);
   $: concOverdueN = dataHandler.concOverdueList().length + 0 * tickN;
   $: conflictCount = [...dataHandler.conflicts.keys()].length + 0 * tickN;
+  // The API key used to sign in: warn for the last 30 days before it expires
+  $: keyDaysRaw = ($session.keyExpires ?? 0) > 0 ? Math.floor((($session.keyExpires as number) * 1000 - Date.now() + 0 * tickN) / 86400000) : null;
+  $: keyDaysLeft = keyDaysRaw !== null && keyDaysRaw <= 30 ? Math.max(keyDaysRaw, 0) : null;
+  $: keyDateText = ($session.keyExpires ?? 0) > 0 ? new Date(($session.keyExpires as number) * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
   let alertIdx: number = 0;
   function nextAlert(): void {
     const list = [...dataHandler.conflicts.keys()];
@@ -375,6 +379,13 @@
     {/if}
     <button class="px-2 py-0.5 font-bold border border-blue-6 bg-blue-3" title="Plugin options (vnaaats.cfg)" on:click={() => settingsOpen.set(true)}>Settings</button>
   </div>
+  <!-- the API key used to sign in runs out within 30 days -->
+  {#if keyDaysLeft !== null}
+    <div class="px-2 py-1 border-b text-xs {keyDaysLeft <= 7 ? 'bg-red-900 text-red-100 border-red-400' : 'bg-yellow-900 text-yellow-100 border-yellow-400'}">
+      Your API key will expire on <b>{keyDateText}</b>. Renew by requesting a new API key at <a class="underline font-bold" href="https://vnaaats.com/get-key" on:click|preventDefault={() => app.openExternal("https://vnaaats.com/get-key")}>https://vnaaats.com/get-key</a> (connect to VATSIM as yourself first). Access will be restricted from <b>{keyDateText}</b>.
+    </div>
+  {/if}
+
   <!-- row 2: how the list is shown (show, group, sort), counts, and search or add -->
   <div class="flex flex-row flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1 w-full border-b-2 border-blue-10 text-white font-regular text-sm select-none">
     <label title="Show flights within 60 minutes of oceanic entry, until 15 minutes after the exit (shown faded)">Show

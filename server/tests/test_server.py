@@ -548,8 +548,20 @@ class KeySignInTest(unittest.TestCase):
         code, d = self.post("/auth/key-login", {"key": key})
         self.assertEqual(code, 200)
         self.assertEqual((d["loggedIn"], d["position"], d["cid"]), (True, "NAT_FSS", "1700002"))
+        self.assertAlmostEqual((d["keyExpires"] - time.time()) / 86400, 90, delta=0.05)               # the display can warn before it runs out
         self.setfeed(controllers=[{"cid": 1700002, "callsign": "NY_FSS", "facility": 6}])
         self.assertEqual(self.post("/auth/key-login", {"key": key})[0], 202)             # not an oceanic position here
+
+    def test_expired_key_says_so(self):
+        self.setfeed()
+        code, out = self.post("/auth/get-key", {"agree": True, "email": "a@b.co", "cid": "1700004"})
+        with self.members.store.lock:
+            self.members.store.db.execute("UPDATE members SET expires=? WHERE cid=?", (time.time() - 60, "1700004"))
+            self.members.store.db.commit()
+        code, d = self.post("/auth/key-login", {"key": out["key"]})
+        self.assertEqual(code, 401)
+        self.assertIn("expired", d["error"])
+        self.assertIn("vnaaats.com/get-key", d["error"])
 
     def test_blocked_cid(self):
         self.setfeed()
