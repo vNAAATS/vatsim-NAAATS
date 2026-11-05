@@ -47,6 +47,19 @@ export async function loginPassword(name: string, password: string): Promise<str
   return r.data.error ?? "login failed";
 }
 
+// ---- key sign-in: the key from vnaaats.com/temp-key (or the Gander Oceanic website) identifies you; the display opens once you are
+// connected to VATSIM on an oceanic position. The key is kept in this browser / app only.
+export function getKey(): string { try { return localStorage.getItem("vnaaats.key") ?? ""; } catch (e) { return ""; } }
+export function rememberKey(key: string): void { try { if (key) localStorage.setItem("vnaaats.key", key.trim()); else localStorage.removeItem("vnaaats.key"); } catch (e) { /* not kept */ } }
+
+export type KeyResult = { state: "in" | "waiting" | "error"; msg: string; cid?: string };
+export async function loginKey(key: string): Promise<KeyResult> {
+  const r = await post("/auth/key-login", { key });
+  if (r.ok && r.data.waiting) return { state: "waiting", msg: "", cid: r.data.cid };
+  if (r.ok) { session.set(r.data); return { state: "in", msg: "" }; }
+  return { state: "error", msg: r.data.error ?? "sign-in failed" };
+}
+
 export async function choosePosition(position: string): Promise<string> {
   const r = await post("/auth/position", { position });
   if (r.ok) { session.set(r.data); if (position === "") dataHandler.clearData(); else dataHandler.populateAllAircraft(); return ""; }

@@ -38,12 +38,39 @@
     savedName = "";
   }
 
+  // Key sign-in: with a saved key the display waits for a live VATSIM connection on an oceanic position, then opens by itself
+  let keyInput: string = "";
+  let savedKeyText: string = sess.getKey();
+  let waiting: boolean = false;
+  let keyError: string = "";
+  let usePassword: boolean = false;
+  let launched: boolean = false;
+  let keyTimer: any = null;
+  async function tryKey(): Promise<void> {
+    if (!savedKeyText || $session.loggedIn || usePassword) return;
+    waiting = true;
+    if (!launched) { launched = true; void app.autoLaunch(); }       // start EuroScope, VACS and the audio client so you can connect
+    const r = await sess.loginKey(savedKeyText);
+    if (r.state === "in") { waiting = false; keyError = ""; return; }
+    if (r.state === "error") { keyError = r.msg; if (/not valid/.test(r.msg)) { waiting = false; stopKey(); } return; }
+    keyError = "";
+  }
+  function startKey(): void { stopKey(); void tryKey(); keyTimer = setInterval(tryKey, 5000); }
+  function stopKey(): void { if (keyTimer) { clearInterval(keyTimer); keyTimer = null; } }
+  function saveKey(): void {
+    const k = keyInput.trim();
+    if (!k) return;
+    sess.rememberKey(k); savedKeyText = k; keyInput = ""; keyError = ""; startKey();
+  }
+  function forgetKey(): void { sess.rememberKey(""); savedKeyText = ""; waiting = false; keyError = ""; stopKey(); }
+  $: if ($session.loggedIn) { waiting = false; stopKey(); }
+
   onMount(() => {
     loadSaved();
-    sess.refreshSession();
+    sess.refreshSession().then(() => { if (savedKeyText && !$session.loggedIn) startKey(); });
     // Ask again now and then, so a session that has run out brings the sign-in screen back
     const t = setInterval(sess.refreshSession, 30000);
-    return () => clearInterval(t);
+    return () => { clearInterval(t); stopKey(); };
   });
 
   // The flight data is only sent to a signed-in controller with a position, so until then the whole page is covered
@@ -74,6 +101,28 @@
     <div class="w-96 max-w-full bg-blue-3 border-2 border-l-blue-10 border-t-blue-10 border-r-blue-0 border-b-blue-0 text-white font-regular p-4">
       <div class="text-xl font-bold mb-1">vNAAATS Flight Data Display</div>
       {#if !$session.loggedIn}
+        {#if !usePassword}
+          {#if savedKeyText}
+            <div class="mb-2 text-lg font-bold text-yellow-300">Awaiting an active VATSIM connection</div>
+            <div class="mb-3 text-sm opacity-90">Connect to VATSIM in EuroScope on your oceanic position (for example NAT_FSS, CZQO_CTR or EGGX_CTR). The display opens by itself, on that position, as soon as you are connected.</div>
+            {#if keyError}<div class="mb-3 text-sm text-yellow-300">{keyError}</div>{/if}
+            <div class="text-sm mb-1 opacity-80">{waiting ? "Checking every few seconds..." : "Stopped."}</div>
+            <button class="mt-2 mr-4 text-sm underline opacity-80" on:click={forgetKey}>Use a different key</button>
+          {:else}
+            <div class="mb-3 text-sm opacity-90">Enter your vNAAATS key. You do not have one yet? Get it at <a class="underline" href="/temp-key">vnaaats.com/temp-key</a> (Gander Oceanic controllers can also use ganderoceanic.ca/my/vnaaats).</div>
+            <form class="flex gap-2 mb-1" on:submit|preventDefault={saveKey}>
+              <input class="flex-1 px-2 py-1 text-black" placeholder="Your key" bind:value={keyInput} autocomplete="off" />
+              <button class="px-3 font-bold bg-blue-10 text-black" disabled={!keyInput.trim()}>Continue</button>
+            </form>
+            {#if keyError}<div class="mb-2 text-sm text-yellow-300">{keyError}</div>{/if}
+          {/if}
+          {#if $session.password || $session.vatsim}
+            <button class="mt-4 text-sm underline opacity-80" on:click={() => { usePassword = true; stopKey(); }}>Sign in with a password instead</button>
+          {/if}
+        {:else}
+          <button class="mb-3 text-sm underline opacity-80" on:click={() => { usePassword = false; if (savedKeyText) startKey(); }}>Back to key sign-in</button>
+        {/if}
+        {#if usePassword}
         <div class="mb-3 text-sm opacity-80">Sign in with your controller account to use the display.</div>
         {#if $session.vatsim}
           <button class="w-full mb-3 py-2 font-bold bg-blue-10 text-black border-2 border-l-blue-0 border-t-blue-0 border-r-blue-8 border-b-blue-8" on:click={sess.vatsimLogin}>
@@ -96,6 +145,7 @@
             {/if}
             <button class="w-full py-2 font-bold bg-blue-10 text-black" disabled={busy || !name || !password}>Sign in</button>
           </form>
+        {/if}
         {/if}
       {:else}
         <div class="mb-3 text-sm opacity-80">Hello {$session.name}. Which position are you working?</div>

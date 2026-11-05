@@ -486,7 +486,8 @@ class RetrackTakeoverTest(unittest.TestCase):
             srv.shutdown()
 
 
-class TempKeyTest(unittest.TestCase):
+class KeySignInTest(unittest.TestCase):
+    """Anyone can get a key; the FDD signs in with it only while the CID is connected to VATSIM on an oceanic position."""
     @classmethod
     def setUpClass(cls):
         import members as mm
@@ -495,56 +496,10 @@ class TempKeyTest(unittest.TestCase):
         cache.refresh(fetch=lambda: SAMPLE)
         store = s.FlightStore(os.path.join(cls.tmp, "k.db"))
         cls.members = mm.MemberKeys(store)
-        auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR"})
-        cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(cache, store, KEY, None, None, None, auth, None, None, None, cls.members))
-        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
-        cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.srv.shutdown()
-
-    def call(self, body):
-        req = urllib.request.Request(self.base + "/auth/temp-key", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-        try:
-            with urllib.request.urlopen(req) as r:
-                return r.status, json.loads(r.read().decode())
-        except urllib.error.HTTPError as e:
-            return e.code, json.loads(e.read().decode())
-
-    def test_off_without_passphrase(self):
-        os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
-        self.assertEqual(self.call({"cid": "1017951", "passphrase": "x"})[0], 404)
-
-    def test_needs_passphrase_then_issues_ninety_day_key(self):
-        os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
-        try:
-            self.assertEqual(self.call({"cid": "1017951", "passphrase": "wrong"})[0], 401)
-            code, out = self.call({"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"})
-            self.assertEqual(code, 200)
-            self.assertEqual(self.members.check_key(out["key"])[0], "1017951")
-            self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 90, delta=0.05)
-            self.assertEqual(self.call({"cid": "12", "passphrase": "correct-horse-battery"})[0], 400)
-        finally:
-            os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
-
-
-class TempKeyOnlineTest(unittest.TestCase):
-    """The temporary key page only issues keys to a CID that is connected to VATSIM right now (503 when the feed cannot be read)."""
-    class FakeNetwork:
-        def __init__(self): self.answer = True
-        def cid_online(self, cid): return self.answer
-
-    @classmethod
-    def setUpClass(cls):
-        import members as mm
-        cls.tmp = tempfile.mkdtemp()
-        cache = s.TrackCache(s.load_fixes())
-        cache.refresh(fetch=lambda: SAMPLE)
-        store = s.FlightStore(os.path.join(cls.tmp, "k.db"))
-        cls.members = mm.MemberKeys(store)
-        cls.net = cls.FakeNetwork()
-        auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR"})
+        cls.net = s.NetworkTraffic(cache)
+        cls.feed = {"pilots": [], "controllers": []}
+        cls.net.refresh(fetch=lambda: cls.feed)
+        auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR,EGGX_CTR,NAT_FSS"})
         cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(cache, store, KEY, None, cls.net, None, auth, None, None, None, cls.members))
         threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
         cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
@@ -553,45 +508,59 @@ class TempKeyOnlineTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.srv.shutdown()
 
-    def call(self, body):
-        req = urllib.request.Request(self.base + "/auth/temp-key", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+    def setfeed(self, pilots=(), controllers=()):
+        self.__class__.feed = {"pilots": [{"cid": 9999999, "callsign": "FILL1"}] + list(pilots), "controllers": list(controllers)}   # someone is always online on the real network
+        self.net.refresh(fetch=lambda: self.feed)
+
+    def post(self, path, body):
+        req = urllib.request.Request(self.base + path, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(req) as r:
                 return r.status, json.loads(r.read().decode())
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read().decode())
 
+    def test_anyone_gets_a_key_and_it_is_replaced_only_by_the_connected_owner(self):
+        self.setfeed()
+        code, out = self.post("/auth/temp-key", {"cid": "1700001", "name": "Test"})
+        self.assertEqual(code, 200)
+        self.assertEqual(self.members.check_key(out["key"])[0], "1700001")
+        self.assertAlmostEqual((out["expires"] - time.time()) / 86400, 90, delta=0.05)
+        self.assertEqual(self.post("/auth/temp-key", {"cid": "1700001"})[0], 409)        # already has a key, and is not connected
+        self.setfeed(pilots=[{"cid": 1700001, "callsign": "BAW1"}])
+        self.assertEqual(self.post("/auth/temp-key", {"cid": "1700001"})[0], 200)        # connected: a new key replaces the old
+        self.assertEqual(self.post("/auth/temp-key", {"cid": "12"})[0], 400)
+
+    def test_key_sign_in_waits_for_a_position(self):
+        self.setfeed()
+        code, out = self.post("/auth/temp-key", {"cid": "1700002", "name": "Alex"})
+        key = out["key"]
+        self.assertEqual(self.post("/auth/key-login", {"key": "wrong"})[0], 401)
+        code, d = self.post("/auth/key-login", {"key": key})
+        self.assertEqual((code, d.get("waiting")), (202, True))                           # key good, not connected
+        self.setfeed(controllers=[{"cid": 1700002, "callsign": "EGGX_OBS", "facility": 0}])
+        self.assertEqual(self.post("/auth/key-login", {"key": key})[0], 202)             # an observer is not a position
+        self.setfeed(controllers=[{"cid": 1700002, "callsign": "NAT_FSS", "facility": 6}])
+        code, d = self.post("/auth/key-login", {"key": key})
+        self.assertEqual(code, 200)
+        self.assertEqual((d["loggedIn"], d["position"], d["cid"]), (True, "NAT_FSS", "1700002"))
+        self.setfeed(controllers=[{"cid": 1700002, "callsign": "NY_FSS", "facility": 6}])
+        self.assertEqual(self.post("/auth/key-login", {"key": key})[0], 202)             # not an oceanic position here
+
     def test_blocked_cid(self):
-        os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
+        self.setfeed()
         f = os.path.join(self.tmp, "blocked.txt")
         os.environ["VNAAATS_BLOCKED_CIDS"] = f
-        body = {"cid": "1017999", "name": "Test", "passphrase": "correct-horse-battery"}
         try:
-            self.net.answer = True
-            code, out = self.call(body)
+            code, out = self.post("/auth/temp-key", {"cid": "1700003"})
             self.assertEqual(code, 200)
-            key = out["key"]
-            self.assertEqual(self.members.check_key(key)[0], "1017999")
-            open(f, "w").write("# removed by the team\n1017999  # reason\n")
-            self.assertEqual(self.call(body)[0], 403)                          # cannot get a new key
-            self.assertEqual(self.members.check_key(key), (None, "revoked"))   # the old key stops working at once
-            self.assertIsNone(self.members.check_login("1017999", out["password"]))
+            open(f, "w").write("# removed by the team\n1700003  # reason\n")
+            self.assertEqual(self.post("/auth/temp-key", {"cid": "1700003"})[0], 403)
+            self.assertEqual(self.members.check_key(out["key"]), (None, "revoked"))
+            self.setfeed(controllers=[{"cid": 1700003, "callsign": "NAT_FSS", "facility": 6}])
+            self.assertEqual(self.post("/auth/key-login", {"key": out["key"]})[0], 401)
         finally:
-            os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
             os.environ.pop("VNAAATS_BLOCKED_CIDS", None)
-
-    def test_online_gate(self):
-        os.environ["VNAAATS_TEMP_PASSPHRASE"] = "correct-horse-battery"
-        body = {"cid": "1017951", "name": "Test", "passphrase": "correct-horse-battery"}
-        try:
-            self.net.answer = False
-            self.assertEqual(self.call(body)[0], 403)         # not connected
-            self.net.answer = None
-            self.assertEqual(self.call(body)[0], 503)         # feed unreadable
-            self.net.answer = True
-            self.assertEqual(self.call(body)[0], 200)         # connected
-        finally:
-            os.environ.pop("VNAAATS_TEMP_PASSPHRASE", None)
 
 
 class ConcordeTrackTest(unittest.TestCase):

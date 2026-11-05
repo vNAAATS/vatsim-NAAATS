@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import * as app from "../../typescript/fdd/app";
+  import * as sess from "../../typescript/fdd/session";
   import * as vc from "../../typescript/fdd/vacs";
   const { vacs } = vc;
 
@@ -64,7 +65,7 @@
   }
   const folder = () => run(() => app.pickFolder());
   const update = () => run(async () => { const v = await app.updatePlugin(); msg = "Updated: " + v + "."; });
-  const saveKey = () => run(async () => { await app.saveKey(key); key = ""; }, "Key saved.");
+  const saveKey = () => run(async () => { await app.saveKey(key); sess.rememberKey(key); key = ""; }, "Key saved.");
   const VACS_URL = "https://vacs.network/";
   const pick = (k: app.ProgKind) => run(async () => {
     msg = "A file window should open (it can appear behind this one)...";
