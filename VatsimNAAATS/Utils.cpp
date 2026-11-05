@@ -28,7 +28,7 @@ bool CUtils::GridEnabled = false;
 bool CUtils::TagsEnabled = true;
 bool CUtils::QckLookEnabled = false;
 bool CUtils::OverlayEnabled = false;
-int CUtils::AreaSelection = 802;
+int CUtils::AreaSelection = 800; // OCA (whole oceanic area), locked
 int CUtils::SelectedOverlay = 800;
 int CUtils::PosType = 802;
 char CUtils::DllPathFile[_MAX_PATH];
@@ -570,7 +570,7 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	// Area selection
 	stra = screen->GetDataFromAsr(SET_AREASEL.c_str());
 	if (stra != NULL) {
-		AreaSelection = stoi(stra);
+		AreaSelection = 800; // locked to OCA whatever an older .asr saved
 	}
 
 	// Overlay selection

@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- EuroScope plugin: the Area Sel box (CZQX / EGGX / BDBX) is gone. It is now one locked area called OCA (the whole oceanic area, what BDBX was), because the CZQX and EGGX visibility ranges were too small. An older saved .asr is forced to OCA.
 - Squawk 2000 is no longer set by the plugin when you track an aircraft (it upset adjacent domestic positions): the plugin setting and its cfg key are gone. Instead every pilot accepted onto CPDLC is automatically sent "SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA" (VNAAATS_CPDLC_SQUAWK_MSG=off turns it off). Plugin 2.7.0.
 - Aircraft menu, Track tab: the Mach box is now required. The faint text in it is the Mach on natTrak, which is used if you leave the box blank; the FL box shows the natTrak level the same way.
 - Prepare in natTrak (CPDLC clearance requests): the Mach and level the pilot asked for in the request text (REQ: M0.86 FL400) now fill the natTrak form; Mach was left empty before.

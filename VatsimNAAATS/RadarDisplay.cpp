@@ -653,7 +653,7 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 					CUtils::PosType = 801;
 					menuBar->SetDropDownValue(CMenuBar::DRP_AREASEL, CUtils::AreaSelection);
 					menuBar->SetDropDownValue(CMenuBar::DRP_TYPESEL, CUtils::PosType);
-					CLogger::Log(CLogType::NORM, "Logged on as " + myCs + ": area BDBX and Multi-role selected.", "CRadarDisplay::OnRefresh");
+					CLogger::Log(CLogType::NORM, "Logged on as " + myCs + ": area OCA and Multi-role selected.", "CRadarDisplay::OnRefresh");
 				}
 			}
 		}
