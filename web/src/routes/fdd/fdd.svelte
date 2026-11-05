@@ -14,7 +14,7 @@
   import * as cp from "../../typescript/fdd/cpdlc";
   import * as app from "../../typescript/fdd/app";
   import * as esSel from "../../typescript/fdd/esselect";
-  import { espicked } from "../../typescript/fdd/esselect";
+  import { espicked, highlightAircraft } from "../../typescript/fdd/esselect";
   import VacsChip from "./vacs_chip.svelte";
   import AudioChip from "./audio_chip.svelte";
   import RclPanel from "./rcl_panel.svelte";
@@ -168,6 +168,13 @@
   $: shownCount = groups.reduce((n, g) => n + g.rows.length, 0);
   $: concOverdueN = dataHandler.concOverdueList().length + 0 * tickN;
   $: conflictCount = [...dataHandler.conflicts.keys()].length + 0 * tickN;
+  let alertIdx: number = 0;
+  function nextAlert(): void {
+    const list = [...dataHandler.conflicts.keys()];
+    if (list.length === 0) return;
+    highlightAircraft(list[alertIdx % list.length]);
+    alertIdx = (alertIdx + 1) % list.length;
+  }
   let addCs: string = "";
   let addMsg: string = "";
   async function addStrip(): Promise<void> {
@@ -364,7 +371,7 @@
       <span class="px-1 font-bold {visualOn && tickN >= 0 ? 'nt-flash text-black' : 'text-yellow-300'}" title="Concorde flights overdue a position report">&#9201; {concOverdueN} overdue</span>
     {/if}
     {#if conflictCount > 0}
-      <span class="px-2 py-0.5 border border-yellow-300 text-yellow-300 font-bold" title="Flights with a warning are marked on their strip">&#9888; {conflictCount} alert{conflictCount === 1 ? "" : "s"}</span>
+      <button class="px-2 py-0.5 border border-yellow-300 text-yellow-300 font-bold hover:bg-yellow-300 hover:text-black" title="Click to jump to the flight with a warning (click again for the next one)" on:click={nextAlert}>&#9888; {conflictCount} alert{conflictCount === 1 ? "" : "s"}</button>
     {/if}
     <button class="px-2 py-0.5 font-bold border border-blue-6 bg-blue-3" title="Plugin options (vnaaats.cfg)" on:click={() => settingsOpen.set(true)}>Settings</button>
   </div>
