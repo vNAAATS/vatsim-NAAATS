@@ -30,7 +30,7 @@ bool CUtils::QckLookEnabled = false;
 bool CUtils::OverlayEnabled = false;
 int CUtils::AreaSelection = 800; // OCA (whole oceanic area), locked
 int CUtils::SelectedOverlay = 800;
-int CUtils::PosType = 802;
+int CUtils::PosType = 801; // Multi-role, locked
 char CUtils::DllPathFile[_MAX_PATH];
 string CUtils::DllPath;
 
@@ -582,7 +582,7 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	// Position type selection
 	stra = screen->GetDataFromAsr(SET_POSTYPESEL.c_str());
 	if (stra != NULL) {
-		PosType = stoi(stra);
+		PosType = 801; // locked to Multi-role whatever an older .asr saved
 	}
 
 	// Show a user message saying that the plugin was loaded successfully
