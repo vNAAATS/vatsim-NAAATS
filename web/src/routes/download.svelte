@@ -112,7 +112,7 @@
       <a href="/vNAAATS-user-guide.pdf" rel="external" download class="inline-block px-5 py-2 mb-2 border-2 border-blue-10">Download</a>
     </div>
 
-    <a href="/temp-key" style="display:none" aria-hidden="true" tabindex="-1">.</a>
+    <a href="/get-key" style="display:none" aria-hidden="true" tabindex="-1">.</a>
     <p class="text-sm opacity-80">Please report problems at
       <a class="underline" href="https://github.com/{repo}/issues">github.com/{repo}/issues</a>. Source code:
       <a class="underline" href="https://github.com/{repo}">github.com/{repo}</a>.</p>

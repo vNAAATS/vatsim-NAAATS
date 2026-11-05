@@ -910,6 +910,8 @@ class NetworkTraffic:
         self.atc_range = {}      # controller callsign -> visual range in nm (from the feed)
         self.atc_calls = set()   # callsign of every controller online (any position, not ATIS)
         self.online_cids = set() # CID of everyone connected right now (pilots, controllers, observers)
+        self.ctrl_by_cid = {}    # CID -> callsigns of the controller positions that CID is connected on (not observers, not ATIS)
+        self.ctrl_by_cid = {}    # CID -> callsigns of the controller positions that CID is connected on (no ATIS)
         self.tx_pos = {}         # callsign -> [(lat, lon)] of its transceivers (from the transceivers feed)
 
     def _in_range(self, pilot, controller):
@@ -927,6 +929,13 @@ class NetworkTraffic:
             if not self.positions or not self.updated or time.time() - self.updated > 600:
                 return None
             return (callsign or "").upper() not in self.positions
+
+    def controller_positions(self, cid):
+        """Callsigns this CID is controlling on right now ([] if none). None when the feed is not healthy (cannot tell)."""
+        with self.lock:
+            if not self.updated or time.time() - self.updated > 600:
+                return None
+            return list(self.ctrl_by_cid.get(re.sub(r"\D", "", str(cid)), []))
 
     def cid_online(self, cid):
         """True/False: is this VATSIM CID connected to the network right now? None when the feed is not healthy (cannot tell)."""
@@ -1054,7 +1063,16 @@ class NetworkTraffic:
                     cids.add(str(int(who["cid"])))
                 except (KeyError, TypeError, ValueError):
                     pass
+            by_cid = {}
+            for c in data.get("controllers", []):
+                try:
+                    cs = str(c["callsign"]).upper()
+                    if not cs.endswith("_ATIS") and int(c.get("facility", 0)) >= 1:
+                        by_cid.setdefault(str(int(c["cid"])), []).append(cs)
+                except (KeyError, TypeError, ValueError):
+                    pass
             with self.lock:
+                self.ctrl_by_cid = by_cid
                 self.online_cids = cids
                 self.flights, self.updated, self.error = out, time.time(), None
                 self.positions = pos
@@ -1150,6 +1168,18 @@ class Auth:
         now = time.time()
         with self.lock:
             return {s["name"].strip().lower() for s in self.sessions.values() if s["position"] == position and s["expires"] > now and s.get("name")}
+
+    def position_for(self, callsigns):
+        """The FDD position for a controller connection: an exact position first, then any callsign of a position family (CZQO_..., EGGX_..., NAT_...)."""
+        calls = [c.upper() for c in callsigns]
+        for c in calls:
+            if c in self.positions:
+                return c
+        fam = {p.split("_")[0] for p in self.positions}
+        for c in calls:
+            if c.split("_")[0] in fam and re.fullmatch(r"[A-Z0-9_]{3,16}", c):
+                return c
+        return ""
 
     def create_session(self, cid, name, via):
         token = secrets.token_urlsafe(32)
@@ -1400,6 +1430,10 @@ def rcl_enrich(reqs, natrak, store, network):
     return out
 
 
+TEMP_KEY_ISSUED = {}               # ip -> times a key was issued (limit: 10 an hour)
+TEMP_KEY_LOCK = threading.Lock()
+
+
 def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None, auth=None, cpdlc=None, queue=None, rcl=None, members=None, issuer_secret="", roster=None, logs=None):
     logs = logs if logs is not None else adminlog_mod.LogHub()
     queue = queue if queue is not None else commands_mod.CommandQueue()
@@ -1586,6 +1620,26 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     except ValueError as e:
                         return self._send(400, {"error": str(e)})
                     return self._send(404, {"error": "unknown"})
+                if p == "/auth/key-login":                     # sign in with your key, once you are connected to VATSIM on an oceanic position
+                    if not members or not network:
+                        return self._send(404, {"error": "key sign-in is not set up"})
+                    ip = self._client_ip()
+                    if auth.throttled(ip):
+                        return self._send(429, {"error": "too many wrong tries - wait 5 minutes"})
+                    cid, why = members.check_key(str(body.get("key", "")).strip())
+                    if not cid:
+                        auth.record_failure(ip)
+                        return self._send(401, {"error": "that key is not valid (" + why + "). Check the key in Settings > App setup, or get a new one at vnaaats.com/temp-key"})
+                    calls = network.controller_positions(cid)
+                    if calls is None:
+                        return self._send(503, {"error": "the VATSIM connection list cannot be read right now - trying again"})
+                    pos = auth.position_for(calls)
+                    if not pos:
+                        return self._send(202, {"waiting": True, "cid": cid})
+                    token = auth.create_session(cid, members.info(cid).get("name") or cid, "key")
+                    auth.set_position(token, pos)
+                    log.info("Key sign-in: CID %s as %s", cid, pos)
+                    return self._send_cookie(200, self._status(auth.get(token)), token)
                 if p == "/auth/password":
                     ip = self._client_ip()
                     if not auth.password and not (members and members.any()):
@@ -1604,33 +1658,40 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         return self._send(401, {"error": "wrong password"})
                     token = auth.create_session(re.sub(r"\D", "", name)[:8], name, "password")
                     return self._send_cookie(200, self._status(auth.get(token)), token)
-                if p == "/auth/temp-key":                      # temporary: 90-day key for certified controllers the roster feed misses. Off unless VNAAATS_TEMP_PASSPHRASE is set.
-                    temp_pass = os.environ.get("VNAAATS_TEMP_PASSPHRASE", "")
-                    if len(temp_pass) < 10 or not members:
+                if p in ("/auth/get-key", "/auth/temp-key"):    # anyone can get a 90-day key; signing in needs a live VATSIM connection on a position (see /auth/key-login)
+                    if not members:
                         return self._send(404, {"error": "not switched on"})
                     ip = self._client_ip()
-                    if auth.throttled(ip):
-                        return self._send(429, {"error": "too many wrong tries - wait 5 minutes"})
-                    if not hmac.compare_digest(str(body.get("passphrase", "")).encode(), temp_pass.encode()):
-                        auth.record_failure(ip)
-                        return self._send(401, {"error": "wrong passphrase"})
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter your VATSIM CID (numbers only)"})
+                    email = str(body.get("email", "")).strip()[:120]
+                    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+                        return self._send(400, {"error": "enter your email address (we keep it, with your CID and IP address, in case your key is misused)"})
+                    if body.get("agree") is not True:
+                        return self._send(400, {"error": "tick the box to confirm you are a certified oceanic controller"})
                     if members.is_blocked(cid):
-                        auth.record_failure(ip)
                         return self._send(403, {"error": "this CID is blocked - contact info@vnaaats.com"})
-                    if network:                                 # proof it is you: that CID must be connected to VATSIM right now (observer, pilot or controller)
-                        on = network.cid_online(cid)
+                    now_t = time.time()
+                    with TEMP_KEY_LOCK:                         # at most 10 keys an hour from one address
+                        recent = [t for t in TEMP_KEY_ISSUED.get(ip, []) if now_t - t < 3600]
+                        TEMP_KEY_ISSUED[ip] = recent
+                        if len(recent) >= 10:
+                            return self._send(429, {"error": "too many keys requested from this address - try again in an hour"})
+                    mine = members.info(cid)
+                    if mine.get("exists") and not mine.get("revoked") and not mine.get("expired"):
+                        # a live key is only replaced by someone who is connected to VATSIM as that CID, so nobody can knock out another person's key
+                        on = network.cid_online(cid) if network else None
                         if on is None:
-                            return self._send(503, {"error": "the VATSIM connection list cannot be read right now - try again in a few minutes"})
+                            return self._send(503, {"error": "this CID already has a key and the VATSIM connection list cannot be read right now - try again in a few minutes"})
                         if not on:
-                            auth.record_failure(ip)
-                            return self._send(403, {"error": "CID " + cid + " is not connected to VATSIM. Connect with your own CID (as an observer or a pilot is fine), wait a minute, then try again."})
-                    if sum(1 for m in members.listing() if m["manual"] and not m["revoked"] and not m["expired"]) >= 40 and not members.info(cid).get("exists"):
+                            return self._send(409, {"error": "this CID already has a key. If you have lost it, connect to VATSIM with your own CID (observer is fine), wait a minute, and ask again."})
+                    if sum(1 for m in members.listing() if m["manual"] and not m["revoked"] and not m["expired"]) >= 1000 and not mine.get("exists"):
                         return self._send(429, {"error": "the temporary keys are used up - contact info@vnaaats.com"})
-                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=90, manual=True)
-                    log.info("Temporary 90-day key issued for CID %s from %s", cid, ip)
+                    out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=90, manual=True, email=email, ip=ip)
+                    with TEMP_KEY_LOCK:
+                        TEMP_KEY_ISSUED.setdefault(ip, []).append(now_t)
+                    log.info("Key issued for CID %s (%s) from %s", cid, email, ip)
                     return self._send(200, {"key": out["key"], "password": out["password"], "expires": out["expires"], "cid": out["cid"]})
                 if p == "/auth/trainee-key":                   # a trusted instructor issues a 2-hour key + FDD password for a student. Off unless VNAAATS_INSTRUCTOR_PASSWORD is set (10+ characters).
                     inst_pass = os.environ.get("VNAAATS_INSTRUCTOR_PASSWORD", "")

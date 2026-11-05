@@ -43,6 +43,11 @@ class MemberKeys:
                 store.db.execute("ALTER TABLE members ADD COLUMN manual INTEGER NOT NULL DEFAULT 0")   # 1 = temporary key handed out by the admin by hand
             except Exception:
                 pass                                                                                  # column already there
+            for col in ("email", "issued_ip"):                                                       # who asked for the key (kept for following up misuse)
+                try:
+                    store.db.execute("ALTER TABLE members ADD COLUMN %s TEXT NOT NULL DEFAULT ''" % col)
+                except Exception:
+                    pass
             store.db.commit()
 
     def any(self):
@@ -65,7 +70,7 @@ class MemberKeys:
     def is_blocked(self, cid):
         return re.sub(r"\D", "", str(cid))[:9] in self.blocked()
 
-    def issue(self, cid, name, days=None, manual=False):
+    def issue(self, cid, name, days=None, manual=False, email="", ip=""):
         cid = re.sub(r"\D", "", str(cid))[:9]
         if cid and cid in self.blocked():
             raise ValueError("this CID is blocked")
@@ -78,8 +83,8 @@ class MemberKeys:
         t = self.now()
         expires = t + (days if days else DAYS) * 86400
         with self.store.lock:
-            self.store.db.execute("INSERT OR REPLACE INTO members (cid, name, key_hash, pw_salt, pw_hash, created, expires, revoked, last_used, manual) VALUES (?,?,?,?,?,?,?,0,NULL,?)",
-                                  (cid, name or cid, _hash_key(key.split(".", 1)[1]), salt, _hash_pw(password, salt), t, expires, 1 if manual else 0))
+            self.store.db.execute("INSERT OR REPLACE INTO members (cid, name, key_hash, pw_salt, pw_hash, created, expires, revoked, last_used, manual, email, issued_ip) VALUES (?,?,?,?,?,?,?,0,NULL,?,?,?)",
+                                  (cid, name or cid, _hash_key(key.split(".", 1)[1]), salt, _hash_pw(password, salt), t, expires, 1 if manual else 0, str(email or "")[:120], str(ip or "")[:64]))
             self.store.db.commit()
         return {"key": key, "password": password, "expires": expires, "cid": cid, "name": name or cid}
 
@@ -158,9 +163,9 @@ class MemberKeys:
 
     def listing(self):
         with self.store.lock:
-            rows = self.store.db.execute("SELECT cid, name, created, expires, revoked, last_used, manual FROM members ORDER BY name").fetchall()
+            rows = self.store.db.execute("SELECT cid, name, created, expires, revoked, last_used, manual, email, issued_ip FROM members ORDER BY name").fetchall()
         t = self.now()
-        return [{"cid": c, "name": n, "created": cr, "expires": ex, "revoked": bool(rv), "expired": ex < t, "lastUsed": lu, "manual": bool(mn)} for c, n, cr, ex, rv, lu, mn in rows]
+        return [{"cid": c, "name": n, "created": cr, "expires": ex, "revoked": bool(rv), "expired": ex < t, "lastUsed": lu, "manual": bool(mn), "email": em, "ip": ip} for c, n, cr, ex, rv, lu, mn, em, ip in rows]
 
 
 class RosterWatch:
