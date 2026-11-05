@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Temporary key page: now says up front that Gander Oceanic certified controllers get their key from their Gander Oceanic profile (ganderoceanic.ca/my/vnaaats), and that controllers endorsed by VATSIM UK or NYACC follow the instructions on the page.
 - Temporary key page (/temp-key): it now also checks the Gander Oceanic roster. A CID that is not certified is refused ("this CID is not certified on the Gander Oceanic roster"), and if the roster cannot be read it says to try again in a few minutes (before, only the shared passphrase was checked).
 - The "N alerts" button is now clickable: it jumps to the flight with the warning, outlines its strip and selects it; click again for the next one (suggested by a controller).
 - Strip list: each Shanwick Tango route (T9, T13, T16, T213, T290) is now its own group, like the NAT tracks, with its route in the header, instead of one TANGO ROUTES group. Concorde tracks were already one group each. Tango groups come after the NAT and Concorde tracks, before RANDOM.
