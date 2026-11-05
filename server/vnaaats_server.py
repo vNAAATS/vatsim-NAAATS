@@ -909,6 +909,7 @@ class NetworkTraffic:
         self.atc_all = {}        # "121.900" -> [callsigns of every online controller on it]: frequencies are NOT unique worldwide
         self.atc_range = {}      # controller callsign -> visual range in nm (from the feed)
         self.atc_calls = set()   # callsign of every controller online (any position, not ATIS)
+        self.online_cids = set() # CID of everyone connected right now (pilots, controllers, observers)
         self.tx_pos = {}         # callsign -> [(lat, lon)] of its transceivers (from the transceivers feed)
 
     def _in_range(self, pilot, controller):
@@ -926,6 +927,13 @@ class NetworkTraffic:
             if not self.positions or not self.updated or time.time() - self.updated > 600:
                 return None
             return (callsign or "").upper() not in self.positions
+
+    def cid_online(self, cid):
+        """True/False: is this VATSIM CID connected to the network right now? None when the feed is not healthy (cannot tell)."""
+        with self.lock:
+            if not self.online_cids or not self.updated or time.time() - self.updated > 600:
+                return None
+            return re.sub(r"\D", "", str(cid)) in self.online_cids
 
     def atc_online(self, callsign):
         """True/False: is this controller callsign online on the network right now? None when the feed is not healthy (cannot tell)."""
@@ -1040,7 +1048,14 @@ class NetworkTraffic:
                                       "name": str(c.get("name", "")), "facility": int(c["facility"])})
                 except (KeyError, TypeError, ValueError):
                     pass
+            cids = set()
+            for who in list(data.get("pilots", [])) + list(data.get("controllers", [])):
+                try:
+                    cids.add(str(int(who["cid"])))
+                except (KeyError, TypeError, ValueError):
+                    pass
             with self.lock:
+                self.online_cids = cids
                 self.flights, self.updated, self.error = out, time.time(), None
                 self.positions = pos
                 self.pilots = raw
@@ -1602,13 +1617,16 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter your VATSIM CID (numbers only)"})
-                    if roster:                                  # only CIDs certified on the Gander Oceanic roster
-                        ok = roster.eligible(cid)
-                        if ok is None:
-                            return self._send(503, {"error": "the Gander Oceanic roster cannot be checked right now - try again in a few minutes"})
-                        if not ok:
+                    if members.is_blocked(cid):
+                        auth.record_failure(ip)
+                        return self._send(403, {"error": "this CID is blocked - contact info@vnaaats.com"})
+                    if network:                                 # proof it is you: that CID must be connected to VATSIM right now (observer, pilot or controller)
+                        on = network.cid_online(cid)
+                        if on is None:
+                            return self._send(503, {"error": "the VATSIM connection list cannot be read right now - try again in a few minutes"})
+                        if not on:
                             auth.record_failure(ip)
-                            return self._send(403, {"error": "this CID is not certified on the Gander Oceanic roster"})
+                            return self._send(403, {"error": "CID " + cid + " is not connected to VATSIM. Connect with your own CID (as an observer or a pilot is fine), wait a minute, then try again."})
                     if sum(1 for m in members.listing() if m["manual"] and not m["revoked"] and not m["expired"]) >= 40 and not members.info(cid).get("exists"):
                         return self._send(429, {"error": "the temporary keys are used up - contact info@vnaaats.com"})
                     out = members.issue(cid, str(body.get("name", "")).strip()[:60] or cid, days=90, manual=True)
@@ -1630,6 +1648,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     cid = re.sub(r"\D", "", str(body.get("cid", "")))
                     if not 6 <= len(cid) <= 9:
                         return self._send(400, {"error": "enter the student's VATSIM CID (numbers only)"})
+                    if members.is_blocked(cid):
+                        return self._send(403, {"error": "this CID is blocked"})
                     cur = members.info(cid)
                     if cur.get("exists") and not cur.get("revoked") and cur.get("expires", 0) > time.time() + TRAINEE_KEY_HOURS * 3600 + 60:
                         return self._send(409, {"error": "that CID already has a longer-lived key: the student can use it, and a trainee key would replace it"})

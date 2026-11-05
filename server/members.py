@@ -9,6 +9,7 @@ Only hashes are stored here, so a copy of the database does not leak working key
 A nightly call to /admin/member/sync with the CIDs that are still certified revokes everyone else.
 """
 import hashlib
+import os
 import hmac
 import re
 import secrets
@@ -49,8 +50,25 @@ class MemberKeys:
             return self.store.db.execute("SELECT 1 FROM members WHERE revoked=0 LIMIT 1").fetchone() is not None
 
     # --- issuing
+    @staticmethod
+    def blocked_file():
+        return os.environ.get("VNAAATS_BLOCKED_CIDS", "/var/lib/vnaaats/blocked-cids.txt")
+
+    def blocked(self):
+        """CIDs on the blocked list (one per line, # for notes). Read each time, so a change takes effect at once."""
+        try:
+            with open(self.blocked_file(), encoding="utf-8") as f:
+                return {d for d in (re.sub(r"\D", "", ln.split("#")[0]) for ln in f) if d}
+        except OSError:
+            return set()
+
+    def is_blocked(self, cid):
+        return re.sub(r"\D", "", str(cid))[:9] in self.blocked()
+
     def issue(self, cid, name, days=None, manual=False):
         cid = re.sub(r"\D", "", str(cid))[:9]
+        if cid and cid in self.blocked():
+            raise ValueError("this CID is blocked")
         name = " ".join(str(name or "").split())[:60]
         if not cid:
             raise ValueError("a CID is required")
@@ -76,7 +94,7 @@ class MemberKeys:
             row = self.store.db.execute("SELECT key_hash, expires, revoked FROM members WHERE cid=?", (cid,)).fetchone()
         if not row or not hmac.compare_digest(row[0], _hash_key(secret)):
             return None, "unknown"
-        if row[2]:
+        if row[2] or cid in self.blocked():
             return None, "revoked"
         if row[1] < self.now():
             return None, "expired"
@@ -105,7 +123,7 @@ class MemberKeys:
             else:
                 rows = self.store.db.execute("SELECT cid, name, pw_salt, pw_hash, expires, revoked FROM members WHERE lower(name)=lower(?)", (who,)).fetchall()
         for cid, name, salt, pw_hash, expires, revoked in rows:
-            if hmac.compare_digest(pw_hash, _hash_pw(password, salt)) and not revoked and expires >= self.now():
+            if hmac.compare_digest(pw_hash, _hash_pw(password, salt)) and not revoked and expires >= self.now() and cid not in self.blocked():
                 self._touch(cid)
                 return {"cid": cid, "name": name}
         return None
