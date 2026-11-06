@@ -50,6 +50,7 @@ long long CDataHandler::SettingsStamp = 0;
 volatile long CDataHandler::SettingsBusy = 0;
 volatile long CDataHandler::SettingsMessagePending = 0;
 bool CDataHandler::AutoClick = true;
+int CDataHandler::ContactButton = 0;   // 0 left, 1 middle, 2 right
 int CDataHandler::RouteSeconds = 10;
 bool CDataHandler::BackgroundType = false;
 bool CDataHandler::Highlight = true;
@@ -84,6 +85,7 @@ void CDataHandler::LoadSettings() {
 		else if (k == "autotype") AutoType = (v == "1");
 		else if (k == "retrack") Retrack = (v != "0");
 		else if (k == "autoclick") AutoClick = (v != "0");
+		else if (k == "contactbutton") ContactButton = (v == "middle" ? 1 : (v == "right" ? 2 : 0));
 		else if (k == "backgroundtype") BackgroundType = (v == "1");
 		else if (k == "routeseconds") { try { RouteSeconds = max(0, min(600, stoi(v))); } catch (...) { RouteSeconds = 10; } }
 		else if (k == "settingsstamp") { try { SettingsStamp = stoll(v); } catch (...) { SettingsStamp = 0; } }

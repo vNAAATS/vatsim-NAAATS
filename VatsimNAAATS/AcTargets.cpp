@@ -12,6 +12,7 @@ clock_t CAcTargets::fiveSecondTimer = clock();
 string CAcTargets::SearchedAircraft = "";
 string CAcTargets::OpenTrackingDialog = "";
 map<string, bool> CAcTargets::ButtonStates;
+map<string, pair<POINT, clock_t>> CAcTargets::CallsignPoints;
 
 void CAcTargets::Initialise() {
 	// Initialise button states
@@ -623,6 +624,7 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 
 		// Now create screen object for callsign
 		CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(csTagText.c_str()).cx, tagRect.top + dc->GetTextExtent(csTagText.c_str()).cy);
+		CallsignPoints[string(acFP.GetCallsign())] = { POINT{ callsignRect.CenterPoint().x, callsignRect.CenterPoint().y }, clock() };
 		screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
 
 		// Restore context

@@ -23,6 +23,9 @@ class CAcTargets
 		// Render the airplane icon
 		static void RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, bool tagsOn, map<int, CWinButton>* toggleData, bool halo, bool ptl, CSTCAStatus* status);
 
+		// Where the callsign on each drawn tag is (centre, client pixels, and when it was drawn). Contact Me clicks the callsign, not the aircraft symbol.
+		static map<string, pair<POINT, clock_t>> CallsignPoints;
+
 		// Render tags
 		static POINT RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTarget* target, pair<bool, POINT>* tagPosition, bool direction, CSTCAStatus* status, string asel);
 
