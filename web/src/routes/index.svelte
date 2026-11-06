@@ -4,7 +4,14 @@ import { onMount } from "svelte";
 import * as site from "../typescript/site";
 
 let pagesOpen: boolean = false;
+let heroVideo: HTMLVideoElement;
+let heroPlaying: boolean = true;
+function toggleHero() {
+    if (!heroVideo) return;
+    if (heroVideo.paused) { heroVideo.play(); heroPlaying = true; } else { heroVideo.pause(); heroPlaying = false; }
+}
 const pages: { href: string; label: string }[] = [
+    { href: "/access", label: "Get access" },
     { href: "/fdd", label: "Flight Data Display" },
     { href: "/windows", label: "FDD for Windows" },
     { href: "/download", label: "Downloads" },
@@ -18,6 +25,10 @@ const pages: { href: string; label: string }[] = [
 
 onMount(async () => {
     site.setTitle("Homepage");
+    // Someone who has asked their system for less motion gets the video paused (they can still press play)
+    try {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches && heroVideo) { heroVideo.pause(); heroPlaying = false; }
+    } catch (e) { /* ignore */ }
     document.body.style.opacity = "0%";
 
     // Called 300ms after mount
@@ -53,6 +64,10 @@ onMount(async () => {
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
                     FDD for Windows
                 </a>
+                <a href="/access" class="border-2 rounded px-4 py-2 ml-4 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 
+                hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
+                    Get access
+                </a>
                 <a href="/download" class="border-2 rounded px-4 py-2 ml-4 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-0 transition duration-500 
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
                     Downloads
@@ -84,6 +99,23 @@ onMount(async () => {
             class="mb-8 fill-current opacity-10 text-white animate-pulse scale-110 select-none" version="1.1" width="75" height="75" viewBox="0 0 24 24">
             <path d="M7,10L12,15L17,10H7Z" />
         </svg>
+        </div>
+    </div>
+    <div class="flex flex-col items-center bg-blue-0 px-6 py-14 font-web" id="see-it">
+        <div class="text-center 2xl:text-5xl xl:text-4xl text-3xl font-bitmap font-semibold tracking-wider select-none">
+            See it in action
+        </div>
+        <div class="mt-3 mb-8 text-center text-xl opacity-80 max-w-3xl">FDD for Windows: the One Fits All Program. Flight strips, natTrak, CPDLC, VACS and audio in a single window.</div>
+        <div class="relative w-full max-w-5xl border-2 border-blue-10 rounded shadow-5xl overflow-hidden bg-blue-1">
+            <video bind:this={heroVideo} src="/vNAAATS-hero.mp4" poster="/vNAAATS-hero-poster.jpg" class="block w-full" style="aspect-ratio: 16 / 9;" autoplay muted loop playsinline preload="metadata" aria-label="A short tour of FDD for Windows"></video>
+            <button type="button" on:click={toggleHero} class="absolute right-3 bottom-3 px-3 py-1 text-sm font-bold rounded bg-blue-1 bg-opacity-80 border border-blue-10 hover:bg-blue-5" aria-label={heroPlaying ? "Pause the video" : "Play the video"}>
+                {heroPlaying ? "Pause" : "Play"}
+            </button>
+        </div>
+        <div class="flex flex-row flex-wrap justify-center gap-4 mt-8 font-bitmap tracking-wider text-lg">
+            <a href="/access" class="border-2 rounded px-5 py-2 bg-blue-5 transition duration-500 hover:scale-105">Get access</a>
+            <a href="/windows" class="border-2 rounded px-5 py-2 transition duration-500 hover:scale-105 hover:bg-blue-5">Download for Windows</a>
+            <a href="/videos" class="border-2 rounded px-5 py-2 transition duration-500 hover:scale-105 hover:bg-blue-5">More videos</a>
         </div>
     </div>
     <div class="flex flex-col h-1/2 justify-evenly overflow-hidden bg-blue-1" >
