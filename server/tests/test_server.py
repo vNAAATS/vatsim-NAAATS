@@ -606,6 +606,14 @@ class KeySignInTest(unittest.TestCase):
             self.assertTrue(self.net.cid_online(cid))
         s.TEMP_KEY_ISSUED.clear()
 
+    def test_key_is_accepted_as_pasted_with_label_spaces_or_quotes(self):
+        self.setfeed()
+        key = self.post("/auth/get-key", {"agree": True, "email": "t@example.com", "cid": "1702000", "name": "P"})[1]["key"]
+        for pasted in (key, "key=" + key, "KEY=" + key, "  key=" + key + "  \n", '"' + key + '"', "key=" + key[:12] + " " + key[12:]):
+            self.assertEqual(self.members.check_key(pasted), ("1702000", ""), pasted)
+        self.assertEqual(self.members.check_key("key=" + key[:-1] + ("a" if key[-1] != "a" else "b"))[1], "unknown")      # a wrong key is still refused
+        s.TEMP_KEY_ISSUED.clear()
+
     def test_expired_key_says_so(self):
         self.setfeed()
         code, out = self.post("/auth/get-key", {"agree": True, "email": "a@b.co", "cid": "1700004"})

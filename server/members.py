@@ -89,8 +89,17 @@ class MemberKeys:
         return {"key": key, "password": password, "expires": expires, "cid": cid, "name": name or cid}
 
     # --- checking
+    @staticmethod
+    def clean_key(code):
+        """A key as people paste it: with spaces or line breaks, in quotes, or with the 'key=' label that the vnaaats.cfg line (and the Gander page) shows."""
+        s = "".join(str(code or "").split()).strip("\"'`")
+        if s[:4].lower() == "key=":
+            s = s[4:].strip("\"'`")
+        return s
+
     def check_key(self, code):
         """Returns (cid, "") for a good key, or (None, reason) with reason "unknown", "expired" or "revoked"."""
+        code = self.clean_key(code)
         m = re.fullmatch(r"(\d{1,9})\.([A-Za-z0-9_\-]{16,64})", str(code or ""))
         if not m:
             return None, "unknown"
