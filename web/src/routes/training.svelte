@@ -11,6 +11,7 @@
     { file: "vNAAATS-howto-2-CPDLC.mp4", title: "2. How to use CPDLC", text: "Signing in with your Hoppie code, accepting pilots, level messages, clearance requests, UNICOM and the pop-out window." },
     { file: "vNAAATS-howto-3-natTrak.mp4", title: "3. How to use natTrak through the FDD", text: "The pending and cleared lists, Prepare in natTrak, RCL processed and Send reclearance." },
     { file: "vNAAATS-howto-4-VACS-TrackAudio.mp4", title: "4. VACS and TrackAudio in FDD for Windows", text: "What VACS and TrackAudio are, setting up VACS remote control, answering VACS calls, who spoke last, and the transmitting-aircraft highlight." },
+    { file: "vNAAATS-howto-5-FDD-for-Windows.mp4", title: "5. FDD for Windows, the One Fits All Program", text: "What the app does, why it is better than a browser, installing it, the one-time setup and updates." },
   ];
 </script>
 
@@ -69,7 +70,7 @@
     <p class="mb-6 p-3 border-2 border-blue-10 bg-blue-3"><b>In good time.</b> Pilots should file about 20 minutes before entering, but some do not. Watch your inbound list by the time each aircraft will enter the oceanic area, and check whether a request has come in. If it has not, prompt the pilot by CPDLC to request their oceanic clearance.</p>
 
     <h2 class="text-2xl font-bold mb-2">How-to videos</h2>
-    <p class="opacity-80 mb-4">Short walkthroughs of the FDD. They use sample flights and are not a live display.</p>
+    <p class="opacity-80 mb-4">Short walkthroughs of the FDD. They use sample flights and are not a live display. All the videos are also on <a class="underline" href="/videos">How To Use - Videos</a>.</p>
     {#each howto as v}
       <div class="mb-6">
         <div class="font-bold mb-1">{v.title}</div>

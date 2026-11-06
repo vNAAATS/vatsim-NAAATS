@@ -55,6 +55,12 @@
       <div class="text-sm mt-4"><b>First time?</b> Follow the <a class="underline" href="/guide">install guide</a>. In short: install the Gander sector package, install FDD for Windows, do the one-time setup, then load the plugin in EuroScope once.</div>
     </div>
 
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: FDD for Windows, the One Fits All Program</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-5-FDD-for-Windows.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-5-FDD-for-Windows.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">About four minutes: what the app does, why it is better than a browser, how to install it (including the Windows SmartScreen message), the one-time setup and how updates work.</div>
+    </div>
+
     <div class="p-5 mb-6 border-2 border-blue-10 bg-blue-3">
       <div class="text-lg font-bold mb-2">Video: loading vNAAATS into EuroScope</div>
       <video class="w-full bg-black" controls preload="metadata" playsinline src="/vNAAATS-install-howto.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/vNAAATS-install-howto.mp4">Download it</a>.</video>

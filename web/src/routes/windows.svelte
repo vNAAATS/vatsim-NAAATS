@@ -35,6 +35,12 @@
       <div class="text-xs opacity-80 mt-2">The installer is not code-signed yet, so Windows may say "Windows protected your PC". Choose <b>More info</b>, then <b>Run anyway</b>. <a class="underline" href="/code-signing">Why, and what is being done about it</a>.</div>
     </div>
 
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: FDD for Windows, the One Fits All Program</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-5-FDD-for-Windows.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-5-FDD-for-Windows.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">About four minutes: what the app does, why it is better than a browser, how to install it (including the Windows SmartScreen message), the one-time setup and how updates work.</div>
+    </div>
+
     <h2 class="text-2xl font-bold mb-2">What is it?</h2>
     <p class="mb-6 opacity-90">It is the same Flight Data Display you use in a browser, in its own window with its own icon, plus a small helper that looks after your computer's side of vNAAATS. There is nothing to configure by hand: you answer a few questions once and it remembers.</p>
 
@@ -47,6 +53,12 @@
       <div class="p-3 border-2 border-blue-10 bg-blue-3"><div class="font-bold mb-1">Its own window</div><div class="text-sm opacity-90">A taskbar icon, and a window you can put on a second monitor, separate from all your browser tabs.</div></div>
       <div class="p-3 border-2 border-blue-10 bg-blue-3"><div class="font-bold mb-1">VACS call alert</div><div class="text-sm opacity-90">A headphones button in the display flashes, with a pop-up and an Accept button, when VACS is calling you. It is on already; the app shows you the one VACS setting to tick.</div></div>
       <div class="p-3 border-2 border-blue-10 bg-blue-3"><div class="font-bold mb-1">Help built in</div><div class="text-sm opacity-90">The first-time setup shows the how-to video, and the app tells you plainly if a program could not be started and why.</div></div>
+    </div>
+
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: VACS and TrackAudio in FDD for Windows</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-4-VACS-TrackAudio.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-4-VACS-TrackAudio.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">What VACS and TrackAudio are, setting up VACS remote control, answering VACS calls, who spoke last, and the transmitting-aircraft highlight. We highly recommend TrackAudio for the full features.</div>
     </div>
 
     <h2 class="text-2xl font-bold mb-2">What you need</h2>

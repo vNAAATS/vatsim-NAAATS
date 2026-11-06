@@ -38,6 +38,12 @@
 
     <p class="mb-6 p-3 border-2 border-blue-10 bg-blue-3">After installing, read the <a class="underline font-bold" href="https://vnaaats.com/manual">user manual</a> to see how everything works. A short video of the EuroScope steps is on the <a class="underline" href="/download">download page</a>, and the app shows it during its setup.</p>
 
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: FDD for Windows, the One Fits All Program</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-5-FDD-for-Windows.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-5-FDD-for-Windows.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">About four minutes: what the app does, why it is better than a browser, how to install it (including the Windows SmartScreen message), the one-time setup and how updates work.</div>
+    </div>
+
     <h2 class="text-2xl font-bold mb-2">Before you start</h2>
     <ul class="list-disc ml-6 space-y-1 mb-6">
       <li>EuroScope installed and working, and a VATSIM controller rating.</li>
@@ -65,6 +71,12 @@
     <p class="mb-6 opacity-90">When every line is green, press <b>Continue</b>. If the plugin DLL is not in your folder yet, get the plugin pack from the <a class="underline" href="/download">download page</a> (open "Not using the app?"), put <b>VatsimNAAATS.dll</b> in EXOCO\Plugins\vNAAATS, and run the setup again.</p>
 
     <h2 class="text-2xl font-bold mb-2">4. Load the plugin in EuroScope (once)</h2>
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: loading vNAAATS into EuroScope</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/vNAAATS-install-howto.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/vNAAATS-install-howto.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">About a minute and a quarter: opening your profile, loading the sector file and plugin, then adding the vNAAATS display and the ASR file.</div>
+    </div>
+
     <ol class="list-decimal ml-6 space-y-1 mb-6">
       <li>Open EuroScope with the Gander package.</li>
       <li>Other SET &gt; Plug-ins &gt; Load, and pick <b>VatsimNAAATS.dll</b> (the one in EXOCO\Plugins\vNAAATS that the app manages).</li>

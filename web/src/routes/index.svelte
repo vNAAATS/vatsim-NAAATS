@@ -10,6 +10,7 @@ const pages: { href: string; label: string }[] = [
     { href: "/download", label: "Downloads" },
     { href: "/guide", label: "Install guide" },
     { href: "/manual", label: "User manual" },
+    { href: "/videos", label: "How To Use - Videos" },
     { href: "/training", label: "Oceanic training" },
     { href: "/code-signing", label: "Code signing" },
     { href: "/privacy", label: "Privacy" },

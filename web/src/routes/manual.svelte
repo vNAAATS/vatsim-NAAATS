@@ -38,6 +38,12 @@
     </div>
 
     <h2 id="overview" class="text-2xl font-bold mb-2">1. How it all fits together</h2>
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: how to use vNAAATS</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/vNAAATS-intro.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/vNAAATS-intro.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">About three minutes, with captions, an overview of the display. The flights shown are demo data.</div>
+    </div>
+
     <p class="mb-3 opacity-90">vNAAATS has three parts that share one set of flight data:</p>
     <ul class="list-disc ml-6 space-y-1 mb-3">
       <li><b>The Flight Data Display (FDD)</b> - a web page at <a class="underline" href="https://vnaaats.com/fdd">vnaaats.com/fdd</a>. This is where you work. It lists every oceanic flight as a strip and lets you change flight data, track and transfer aircraft, send messages and run CPDLC.</li>
@@ -57,6 +63,12 @@
     <p class="mb-6 opacity-90">Keep EuroScope connected while you work: the plugin asks the server every 2 seconds whether you have asked for something (track, transfer, SELCAL and so on), and does nothing if EuroScope is offline.</p>
 
     <h2 id="layout" class="text-2xl font-bold mb-2">3. The Flight Data Display screen</h2>
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: how to use the Flight Data Display</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-1-FDD.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-1-FDD.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">Tracking, releasing and transferring tags, automatic hand-off to relief, contact me, supervisor request, and changing a flight level, speed or SELCAL. Sample flights, not a live display.</div>
+    </div>
+
     <ul class="list-disc ml-6 space-y-1 mb-6">
       <li><b>Left (the big panel):</b> the filter bar, the controls bar, the natTrak PENDING and CLEARED boxes, and below them the flight strips.</li>
       <li><b>Right, top:</b> the <b>Flight Plan</b> panel for the selected aircraft.</li>
@@ -149,6 +161,12 @@
     <p class="mb-6 opacity-90">If the panel says <i>View only - sign in and pick a position to edit</i>, nothing can be changed yet: sign in and choose a position.</p>
 
     <h2 id="nattrak" class="text-2xl font-bold mb-2">8. natTrak requests and alerts</h2>
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: how to use natTrak through the FDD</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-3-natTrak.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-3-natTrak.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">The pending and cleared lists, Prepare in natTrak, RCL processed and Send reclearance. Sample flights, not a live display.</div>
+    </div>
+
     <p class="mb-3 opacity-90">Pilots request their oceanic clearance on natTrak. The FDD shows the requests in two boxes under the controls bar:</p>
     <ul class="list-disc ml-6 space-y-2 mb-3">
       <li><b>PENDING - needs action</b> - callsign, NAT, entry fix, level, Mach and ETA. A new request flashes (box row and strip) and plays a sound. Click the row to open natTrak on that track's pending list. <b>Open natTrak</b> opens it in a small pop-up.</li>
@@ -172,6 +190,12 @@
     <p class="mb-6 opacity-90">Flights filed on a Shanwick Tango route (<b>T9</b>, <b>T290</b>, <b>T213</b>, <b>T13</b>, <b>T16</b>) are listed together in one group, <b>TANGO ROUTES</b> (each strip shows its route and fixes), below the NAT tracks and above RANDOM, and in the Tracks drawer under <i>Shanwick Tango routes</i>. A route is recognised when the filed route names the airway and one of its fixes, or both of its fixes. T9 is southbound only (even levels FL300-400, LASNO to BEGAS); T290 is northbound only (odd levels FL290-410, ADVAT to GELPO); T9 and T290 are exempt from the CPDLC mandate. T213 (TAMEL, BERUX) goes both ways; T13 (NILAV to OMOKO) is northbound and T16 (OMOKO to GONAN) southbound; CPDLC is required on T213, T13 and T16 between FL290 and FL410, and T13 and T16 continue into Santa Maria airspace. A level that does not fit T9 or T290 shows the usual level warning. They need an oceanic clearance like any other flight. Northbound counts as EB and southbound as WB for the EB / WB filter. A Gander position does not list them unless it is tracking one.</p>
 
     <h2 id="cpdlc" class="text-2xl font-bold mb-2">9. CPDLC</h2>
+    <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="font-bold mb-1">Video: how to use CPDLC</div>
+      <video class="w-full bg-black" controls preload="none" playsinline src="/training/vNAAATS-howto-2-CPDLC.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/training/vNAAATS-howto-2-CPDLC.mp4">Download it</a>.</video>
+      <div class="text-sm opacity-80 mt-2">Signing in with your Hoppie code, accepting pilots, level messages, clearance requests, UNICOM and the pop-out window. Sample flights, not a live display.</div>
+    </div>
+
     <p class="mb-3 opacity-90">Pilots connect to the vNAAATS CPDLC station and you talk to them from the CPDLC drawer, opened with the <b>CPDLC</b> button in the controls bar.</p>
     <h3 class="text-lg font-bold mt-4 mb-1">Signing in</h3>
     <p class="mb-3 opacity-90">Each controller signs in with their <b>own Hoppie logon code</b>. The code is typed into the drawer, kept in the server's memory only while you are signed in, and never saved. Your position sets the station (CZQO = CZQX, EGGX = EGGX, NAT_FSS = NATX). Use <b>sign out of CPDLC</b> when you leave. Restarting the server logs everyone out of CPDLC, so sign in again if that happens.</p>
