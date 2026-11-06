@@ -357,27 +357,31 @@
       {/if}
     </div>
     <div class="flex-1"></div>
+    <button class="tbtn font-bold border border-blue-6 bg-blue-3" title="Plugin options (vnaaats.cfg)" on:click={() => settingsOpen.set(true)}>Settings</button>
+  </div>
+  <!-- row 1b: the tools - VACS, audio, CPDLC, Auto RCL and alerts, all the same height, alerts at the right -->
+  <div class="flex flex-row flex-wrap items-center gap-2 px-2 pt-1 w-full text-white font-regular text-sm select-none">
     <VacsChip />
     <AudioChip />
     <RclPanel />
     {#if $cpdlcStatus.enabled}
-      <button class="px-2 py-0.5 border border-blue-6 {(cpdlcUnread > 0 || $cpdlcAttention.size > 0) && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : 'bg-blue-3'}"
+      <button class="tbtn border border-blue-6 {(cpdlcUnread > 0 || $cpdlcAttention.size > 0) && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : 'bg-blue-3'}"
         title="Open the CPDLC panel" on:click={() => cpdlcOpen.set(!$cpdlcOpen)}>
         CPDLC{$cpdlcStatus.connected.length > 0 ? " [" + $cpdlcStatus.connected.length + "]" : ""}{cpdlcUnread > 0 ? " \u2709 " + cpdlcUnread : ""}{$cpdlcAttention.size > 0 ? " new logon" : ""}
       </button>
     {/if}
     {#if $rclAuto.sender !== "" || $rclAuto.on}
-      <button class="px-2 py-0.5 border border-blue-6 {rclAsk && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : $rclAuto.on ? 'bg-blue-3' : 'bg-red-700'}"
+      <button class="tbtn border {rclAsk && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold border-blue-6' : $rclAuto.on ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-red-400 text-red-200'}"
         title={($rclAuto.on ? "Automatic RCL REQ is ON: flights 20 to 45 minutes from oceanic entry (or within 200 nm if they have no times) that have not asked for clearance on natTrak are sent the reminder from " + ($rclAuto.sender || "an oceanic controller's EuroScope (none online right now)") + "." + ($rclAuto.confirm ? " The controller is asked before anything is typed." : "") : "Automatic RCL REQ is OFF.") + " Click for details and settings." + ($rclAuto.error ? " Last problem: " + $rclAuto.error : "")}
-        on:click={() => rclPanelOpen.set(!$rclPanelOpen)}>Auto RCL: {$rclAuto.on ? ($rclAuto.confirm && $rclAuto.waiting.length > 0 ? $rclAuto.waiting.length + " waiting" : "ON") : "OFF"}{$rclAuto.on && $rclAuto.sender === "" ? " (no sender)" : ""}</button>
+        on:click={() => rclPanelOpen.set(!$rclPanelOpen)}><span class="inline-block w-2 h-2 rounded-full {$rclAuto.on ? 'bg-green-300' : 'bg-red-400'}"></span>Auto RCL: {$rclAuto.on ? ($rclAuto.confirm && $rclAuto.waiting.length > 0 ? $rclAuto.waiting.length + " waiting" : "ON") : "OFF"}{$rclAuto.on && $rclAuto.sender === "" ? " (no sender)" : ""}</button>
     {/if}
+    <div class="flex-1"></div>
     {#if concOverdueN > 0}
       <span class="px-1 font-bold {visualOn && tickN >= 0 ? 'nt-flash text-black' : 'text-yellow-300'}" title="Concorde flights overdue a position report">&#9201; {concOverdueN} overdue</span>
     {/if}
     {#if conflictCount > 0}
-      <button class="px-2 py-0.5 border border-yellow-300 text-yellow-300 font-bold hover:bg-yellow-300 hover:text-black" title="Click to jump to the flight with a warning (click again for the next one)" on:click={nextAlert}>&#9888; {conflictCount} alert{conflictCount === 1 ? "" : "s"}</button>
+      <button class="tbtn border border-yellow-300 text-yellow-300 font-bold hover:bg-yellow-300 hover:text-black" title="Click to jump to the flight with a warning (click again for the next one)" on:click={nextAlert}>&#9888; {conflictCount} alert{conflictCount === 1 ? "" : "s"}</button>
     {/if}
-    <button class="px-2 py-0.5 font-bold border border-blue-6 bg-blue-3" title="Plugin options (vnaaats.cfg)" on:click={() => settingsOpen.set(true)}>Settings</button>
   </div>
   <!-- the API key used to sign in runs out within 30 days -->
   {#if keyDaysLeft !== null}
@@ -552,6 +556,7 @@
 </div>
 
 <style>
+  :global(.tbtn) { height: 1.75rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.75rem; line-height: 1; white-space: nowrap; }
   :global(.nt-flash) {
     animation: ntflash 1s steps(1, end) infinite;
   }

@@ -30,7 +30,7 @@
 </script>
 
 <div class="relative inline-block">
-  <button class="inline-flex items-center gap-1 px-2 py-0.5 border {state === 'ring' ? (blink ? 'bg-red-600 border-red-300 text-white font-bold' : 'bg-blue-3 border-red-300 font-bold') : state === 'call' ? 'bg-blue-3 border-blue-10 text-blue-10 font-bold' : state === 'up' ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-blue-6 opacity-60'}"
+  <button class="tbtn border {state === 'ring' ? (blink ? 'bg-red-600 border-red-300 text-white font-bold' : 'bg-blue-3 border-red-300 font-bold') : state === 'call' ? 'bg-blue-3 border-blue-10 text-blue-10 font-bold' : state === 'up' ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-blue-6 opacity-60'}"
     title={tip} on:click={() => (open = !open)} aria-label="VACS call indicator">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={state === "up" ? "#7fe0a2" : "currentColor"} stroke-width="2" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3" y="14" width="4" height="6" rx="1.5" /><rect x="17" y="14" width="4" height="6" rx="1.5" /></svg>
     <span>{text}</span>
