@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Instructor, extra and relief callsigns are confirmed to get the same access as the main position, even when others are already signed in on the FDD: NAT_I_FSS and the relief NAT__FSS as NAT_FSS (whole area), CZQO_A_CTR to CZQO_L_CTR (and _DEL, relief CZQO__CTR) as Gander, EGGX_A_CTR to EGGX_L_CTR (and _DEL, relief EGGX__CTR) as Shanwick. No behaviour change: the rules already went by callsign prefix; a test now covers every one.
 - New video "FDD for Windows, the One Fits All Program" (about four minutes): what the app brings together, why it beats a browser on Windows, installing it (including the Windows SmartScreen "Run anyway" step), the one-time setup and how updates prompt. It also recommends TrackAudio for the full features. It is on the FDD for Windows page, the install guide, the downloads page, How To Use - Videos and the training page.
 - The how-to videos now sit on the pages they belong to: the FDD, natTrak and CPDLC videos in the user manual (sections 3, 8 and 9) and the overview under section 1, the EuroScope loading video in the install guide (step 4), and the VACS and TrackAudio video on the FDD for Windows page. Server deploy needed (web files).
 - New page vnaaats.com/videos, "How To Use - Videos": every video in one place (loading vNAAATS into EuroScope, the overview, the four FDD how-tos and the trainee introduction), linked from the homepage menu. Server deploy needed (web files).

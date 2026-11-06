@@ -591,6 +591,21 @@ class KeySignInTest(unittest.TestCase):
         self.setfeed(controllers=[{"cid": 1700002, "callsign": "NY_FSS", "facility": 6}])
         self.assertEqual(self.post("/auth/key-login", {"key": key})[0], 202)             # not an oceanic position here
 
+    def test_instructor_extra_and_relief_callsigns_sign_in_beside_the_main_position(self):
+        calls = ["NAT_FSS", "NAT_I_FSS", "NAT__FSS", "CZQO_CTR", "CZQO_A_CTR", "CZQO_L_CTR", "CZQO_A_DEL", "CZQO_L_DEL", "EGGX_CTR", "EGGX_A_CTR", "EGGX_L_CTR", "EGGX_A_DEL", "EGGX_L_DEL", "CZQO__CTR", "EGGX__CTR"]
+        self.setfeed()
+        keys = {}
+        for n, cs in enumerate(calls):
+            s.TEMP_KEY_ISSUED.clear()                                                        # the per-address limit of 10 keys an hour is not what is being tested
+            cid = str(1701000 + n)
+            keys[cs] = (cid, self.post("/auth/get-key", {"agree": True, "email": "t@example.com", "cid": cid, "name": cs})[1]["key"])
+        self.setfeed(controllers=[{"cid": int(cid), "callsign": cs, "facility": 6} for cs, (cid, _) in keys.items()])      # everyone on the network at once
+        for cs, (cid, key) in keys.items():
+            code, d = self.post("/auth/key-login", {"key": key})
+            self.assertEqual((code, d.get("position")), (200, cs), cs)                       # each gets its own callsign as the position, whoever else is signed in
+            self.assertTrue(self.net.cid_online(cid))
+        s.TEMP_KEY_ISSUED.clear()
+
     def test_expired_key_says_so(self):
         self.setfeed()
         code, out = self.post("/auth/get-key", {"agree": True, "email": "a@b.co", "cid": "1700004"})

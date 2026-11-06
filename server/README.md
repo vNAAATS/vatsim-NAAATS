@@ -29,6 +29,7 @@ The flight data display can now change level, Mach, track and SELCAL. Only signe
 Reading (viewing the FDD) stays open. The plugin keeps using the API key for its own saves.
 
 - **Password login** (works straight away): `VNAAATS_FDD_PASSWORD` in `/etc/vnaaats.env`. `deploy/setup.sh` creates one the first time and prints it. Five wrong tries from one address lock that address out for 5 minutes.
+- **Which callsigns count:** the rules go by the start of the callsign, so extra and relief callsigns get the same access as the main position, however many people are already signed in: `NAT_I_FSS` (instructor) and the relief `NAT__FSS` behave as `NAT_FSS`; `CZQO_A_CTR` to `CZQO_L_CTR` and `_DEL`, and relief `CZQO__CTR`, as Gander; `EGGX_A_CTR` to `EGGX_L_CTR` and `_DEL`, and relief `EGGX__CTR`, as Shanwick. (CPDLC is the exception: one logon per station.)
 - **Positions** on the opening screen: `VNAAATS_POSITIONS=CZQO_CTR,CZQO_DEL,EGGX_CTR,...` (OBSERVER = view only). Anyone can also type another position.
 - **VATSIM login** (needs HTTPS and a VATSIM Connect client; see below): `VNAAATS_CONNECT_CLIENT_ID`, `VNAAATS_CONNECT_CLIENT_SECRET`, `VNAAATS_PUBLIC_URL=https://your.domain`. Optional `VNAAATS_ALLOWED_CIDS=1234567,7654321` (only these CIDs) or `VNAAATS_MIN_RATING` (default 2 = S1 and above). For the VATSIM sandbox set `VNAAATS_CONNECT_BASE=https://auth-dev.vatsim.net`.
   Register the app at https://auth.vatsim.net (production needs an approved organisation); the redirect URL to register is `https://your.domain/auth/callback`.
