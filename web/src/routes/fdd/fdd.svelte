@@ -366,8 +366,7 @@
     <RclPanel />
     {#if $cpdlcStatus.enabled}
       <button class="tbtn border border-blue-6 {(cpdlcUnread > 0 || $cpdlcAttention.size > 0) && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : 'bg-blue-3'}"
-        title="Open the CPDLC panel" on:click={() => cpdlcOpen.set(!$cpdlcOpen)}>
-        CPDLC{$cpdlcStatus.connected.length > 0 ? " [" + $cpdlcStatus.connected.length + "]" : ""}{cpdlcUnread > 0 ? " \u2709 " + cpdlcUnread : ""}{$cpdlcAttention.size > 0 ? " new logon" : ""}
+        title="Open the CPDLC panel" on:click={() => cpdlcOpen.set(!$cpdlcOpen)}><span class="inline-block w-2 h-2 rounded-full bg-green-300" title="CPDLC is online"></span>CPDLC{$cpdlcStatus.connected.length > 0 ? " [" + $cpdlcStatus.connected.length + "]" : ""}{cpdlcUnread > 0 ? " \u2709 " + cpdlcUnread : ""}{$cpdlcAttention.size > 0 ? " new logon" : ""}
       </button>
     {/if}
     {#if $rclAuto.sender !== "" || $rclAuto.on}

@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- The CPDLC button now has a green dot to show CPDLC is online. Server deploy needed (web files).
 - Tidier header: the top of FDD is now three clear rows. Row 1 is your position and name with Position and Settings at the right. Row 2 is the tools (VACS, audio, CPDLC, Auto RCL, alerts), all the same height and style, with Auto RCL shown as an outlined button with an on/off dot instead of a solid red block, and the alerts button at the far right. Row 3 is Show/Group/Sort and the search box as before. Server deploy needed (web files).
 - Keys now work however they are pasted: with the "key=" label (as the vnaaats.cfg line and the Gander page show it), in quotes, or with spaces or a line break. Before, pasting "key=1234567.abc..." gave "that key is not valid (unknown)". Server deploy needed; it covers FDD, FDD for Windows and the plugin.
 - Instructor, extra and relief callsigns are confirmed to get the same access as the main position, even when others are already signed in on the FDD: NAT_I_FSS and the relief NAT__FSS as NAT_FSS (whole area), CZQO_A_CTR to CZQO_L_CTR (and _DEL, relief CZQO__CTR) as Gander, EGGX_A_CTR to EGGX_L_CTR (and _DEL, relief EGGX__CTR) as Shanwick. No behaviour change: the rules already went by callsign prefix; a test now covers every one.
