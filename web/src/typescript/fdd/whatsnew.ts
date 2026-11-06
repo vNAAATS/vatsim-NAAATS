@@ -8,6 +8,17 @@ export type Note = { id: string; date: string; items: { title: string; text: str
 
 export const NOTES: Note[] = [
   {
+    id: "2.7.0",
+    date: "6 November 2026",
+    items: [
+      { title: "Auto RCL sends a telex first", text: "If the pilot is online on Hoppie, the oceanic clearance reminder goes as a telex (no CPDLC logon needed). If they have not asked 3 minutes later, or are not on Hoppie, the EuroScope message is sent as before. Aircraft on the ground or below 10,000 ft are never reminded. One controller must be signed in to CPDLC for the telex." },
+      { title: "Contact Me works from the FDD", text: "The plugin now clicks the callsign on the tag for you, checks that the click landed, and tells you if Contact Me was not sent. Needs the new plugin (2.7.2)." },
+      { title: "Aircraft menu keeps natTrak visible", text: "The menu opens over the strips only, so the flight plan and natTrak boxes stay in view." },
+      { title: "natTrak Mach", text: "Prepare in natTrak now fills the Mach as .85, which natTrak accepts." },
+      { title: "Smaller changes", text: "A green dot shows when CPDLC is online, the header is tidier, keys pasted with key= or quotes are accepted, and there is a new Get access page and a short video on the home page." },
+    ],
+  },
+  {
     id: "2.6.0",
     date: "1 November 2026",
     items: [

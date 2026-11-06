@@ -2,7 +2,7 @@
 
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
-## Unreleased
+## 2.7.0 - 2026-11-06
 - Plugin: Contact Me now checks that its click reached the callsign on the tag. If not it clicks once more, and if that also fails the FDD shows "Contact Me NOT sent ... click the callsign in EuroScope" instead of a success note. It cannot tell whether EuroScope then sent the message to the pilot. Plugin update needed.
 - The aircraft menu now opens over the flight strips only, so the flight plan and natTrak boxes on the right stay visible while you use it. Server deploy needed (web files).
 - CPDLC "Prepare in natTrak" now fills the Mach as .85 (was 0.85, which natTrak refused). Server deploy needed (web files).
