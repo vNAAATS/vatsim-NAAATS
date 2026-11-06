@@ -257,6 +257,8 @@ static bool TypeIntoEuroScope(const string& text, string& why) {
 }
 
 static HWND g_radarWnd = NULL;            // the radar window the cursor was last seen over (set by the cursor thread)
+static string g_clickWant;                        // callsign whose tag the plugin is clicking right now (Contact Me)
+static volatile LONG g_clickSeen = 0;             // set when EuroScope reports that click arriving on that tag
 static volatile clock_t g_ignoreClicksUntil = 0; // our own simulated click must not trigger vNAAATS actions
 
 // Click once at a point of the radar window (client pixels), then put the mouse back where it was.
@@ -283,7 +285,7 @@ static bool ClickRadarPoint(POINT clientPt) {
 	return true;
 }
 
-struct CTypeJob { string Text; int Id; bool Click = false; POINT Px = { 0, 0 }; };
+struct CTypeJob { string Text; int Id; bool Click = false; POINT Px = { 0, 0 }; string Callsign; bool TagClick = false; };
 static volatile LONG TypingBusy = 0;
 static void TypeThread(void* arg) {
 	CTypeJob* job = (CTypeJob*)arg;
@@ -291,13 +293,28 @@ static void TypeThread(void* arg) {
 		string why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste";
 		bool typedOk = CDataHandler::BackgroundType ? TypeIntoEuroScopeBackground(job->Text, why) : TypeIntoEuroScope(job->Text, why);
 		if (typedOk) {
+			bool failed = false;
 			string note = string(CDataHandler::BackgroundType ? "Sent to EuroScope (background): " : "Sent to EuroScope: ") + job->Text.substr(0, 40);
 			if (job->Click) {
 				Sleep(500);                       // EuroScope now waits for a click on the aircraft
-				if (ClickRadarPoint(job->Px)) note += " (aircraft clicked for you)";
-				else note += " - click the aircraft to send it";
+				bool clicked = false, confirmed = !job->TagClick;   // a click on the aircraft symbol cannot be confirmed, only one on the tag
+				for (int attempt = 0; attempt < 2 && !(clicked && confirmed); attempt++) {
+					InterlockedExchange(&g_clickSeen, 0);
+					g_clickWant = job->Callsign;
+					clicked = ClickRadarPoint(job->Px);
+					if (!clicked || !job->TagClick) { confirmed = !job->TagClick; continue; }
+					for (int w = 0; w < 30 && !g_clickSeen; w++) Sleep(50);    // up to 1.5 s for EuroScope to report the click
+					confirmed = g_clickSeen != 0;
+					if (!confirmed) Sleep(300);
+				}
+				g_clickWant.clear();
+				if (clicked && confirmed) note += " (callsign clicked for you)";
+				else {
+					CDataHandler::ReportRemoteResult(job->Id, false, "Contact Me NOT sent to " + job->Callsign + " - the click did not reach the tag. Click the callsign in EuroScope to send it");
+					failed = true;
+				}
 			}
-			CDataHandler::ReportRemoteResult(job->Id, true, note);
+			if (!failed) CDataHandler::ReportRemoteResult(job->Id, true, note);
 		}
 		else CDataHandler::ReportRemoteResult(job->Id, false, why);
 	}
@@ -601,7 +618,8 @@ void CRadarDisplay::RunRemoteCommands()
 					// EuroScope waits for a click on the callsign of the tag, so click that when the tag was drawn just now
 					CRect area0(GetRadarArea());
 					auto cp = CAcTargets::CallsignPoints.find(cmd.Callsign);
-					if (cp != CAcTargets::CallsignPoints.end() && clock() - cp->second.second < 3000 && area0.PtInRect(cp->second.first)) { job->Click = true; job->Px = cp->second.first; }
+					if (cp != CAcTargets::CallsignPoints.end() && clock() - cp->second.second < 3000 && area0.PtInRect(cp->second.first)) { job->Click = true; job->TagClick = true; job->Px = cp->second.first; }
+					job->Callsign = cmd.Callsign;
 					CRadarTarget tgt = plugin->RadarTargetSelect(cmd.Callsign.c_str());
 					if (!job->Click && tgt.IsValid()) {
 						POINT px = ConvertCoordFromPositionToPixel(tgt.GetPosition().GetPosition());
@@ -1652,7 +1670,10 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 
 void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
-	if (clock() < g_ignoreClicksUntil) return; // the plugin's own click (Contact Me), not the controller's
+	if (clock() < g_ignoreClicksUntil) {        // the plugin's own click (Contact Me), not the controller's
+		if ((ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) && g_clickWant == string(sObjectId)) InterlockedExchange(&g_clickSeen, 1);   // proof the click reached the tag
+		return;
+	}
 	// If menu button
 	if (ObjectType == MENBAR) {
 		if (Button == BUTTON_RIGHT) { // Toggle buttons
