@@ -50,6 +50,8 @@ long long CDataHandler::SettingsStamp = 0;
 volatile long CDataHandler::SettingsBusy = 0;
 volatile long CDataHandler::SettingsMessagePending = 0;
 bool CDataHandler::AutoClick = true;
+int CDataHandler::RouteSeconds = 10;
+bool CDataHandler::BackgroundType = false;
 bool CDataHandler::Highlight = true;
 
 string CDataHandler::UrlEncode(const string& value) {
@@ -82,6 +84,8 @@ void CDataHandler::LoadSettings() {
 		else if (k == "autotype") AutoType = (v == "1");
 		else if (k == "retrack") Retrack = (v != "0");
 		else if (k == "autoclick") AutoClick = (v != "0");
+		else if (k == "backgroundtype") BackgroundType = (v == "1");
+		else if (k == "routeseconds") { try { RouteSeconds = max(0, min(600, stoi(v))); } catch (...) { RouteSeconds = 10; } }
 		else if (k == "settingsstamp") { try { SettingsStamp = stoll(v); } catch (...) { SettingsStamp = 0; } }
 		else if (k == "highlight") Highlight = (v != "0");
 		else if (k == "remotelog") CLogger::RemoteMode = (v == "0" ? 0 : (v == "2" ? 2 : 1));

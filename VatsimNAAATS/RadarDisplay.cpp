@@ -138,26 +138,74 @@ static BOOL CALLBACK FindEsWindow(HWND hwnd, LPARAM lParam) {
 	return TRUE;
 }
 
+// Bring EuroScope to the front. Windows often refuses this for a background program, so it is tried up to four times, each time a little
+// harder: an Alt tap, then joining the input queue of the window that is in front (which lets SetForegroundWindow through).
+static bool BringEsToFront(HWND es) {
+	for (int attempt = 0; attempt < 4; attempt++) {
+		DWORD pid = 0;
+		HWND fg = GetForegroundWindow();
+		DWORD fgThread = fg ? GetWindowThreadProcessId(fg, &pid) : 0;
+		if (pid == GetCurrentProcessId()) return true;
+		if (IsIconic(es)) ShowWindow(es, SW_RESTORE);
+		DWORD me = GetCurrentThreadId();
+		bool attached = fgThread && fgThread != me && AttachThreadInput(me, fgThread, TRUE) != FALSE;
+		keybd_event(VK_MENU, 0, 0, 0);
+		keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+		BringWindowToTop(es);
+		SetForegroundWindow(es);
+		if (attached) AttachThreadInput(me, fgThread, FALSE);
+		Sleep(150 + attempt * 100);
+		fg = GetForegroundWindow();
+		pid = 0;
+		if (fg) GetWindowThreadProcessId(fg, &pid);
+		if (pid == GetCurrentProcessId()) return true;
+	}
+	return false;
+}
+
+// Experimental (backgroundtype=1 in vnaaats.cfg): type the line by posting key messages straight to EuroScope's window, so EuroScope does not
+// have to be in front and nothing is interrupted if you switch away. Windows delivers these whichever program is in front.
+// There is no way to see whether EuroScope ran the line, so this reports success once the keys have been posted.
+static bool TypeIntoEuroScopeBackground(const string& text, string& why) {
+	HWND es = NULL;
+	EnumWindows(FindEsWindow, (LPARAM)&es);
+	if (!es) { why = "EuroScope's window was not found"; return false; }
+	DWORD tid = GetWindowThreadProcessId(es, NULL);
+	// the window inside EuroScope that has the keyboard focus (it changes after Home focuses the command line)
+	auto target = [&]() -> HWND {
+		GUITHREADINFO gi = {};
+		gi.cbSize = sizeof(gi);
+		if (GetGUIThreadInfo(tid, &gi) && gi.hwndFocus) return gi.hwndFocus;
+		return es;
+	};
+	auto key = [&](WORD vk) {
+		HWND t = target();
+		LPARAM scan = (LPARAM)MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+		PostMessage(t, WM_KEYDOWN, vk, 1 | (scan << 16));
+		PostMessage(t, WM_KEYUP, vk, 1 | (scan << 16) | (1 << 30) | ((LPARAM)1 << 31));
+	};
+	key(VK_HOME);                                  // Home focuses the command line
+	Sleep(300);
+	key(VK_END);                                   // then empty it
+	for (int n = 0; n < 300; n++) key(VK_BACK);
+	Sleep(400);
+	HWND t = target();
+	for (unsigned char ch : text) {
+		PostMessage(t, WM_CHAR, (WPARAM)ch, 1);
+		Sleep(ch == ' ' ? 40 : 8);
+	}
+	Sleep(300);
+	key(VK_RETURN);
+	return true;
+}
+
 // Type a line into EuroScope's command line: Home (focuses it), the text, Enter.
 // EuroScope is brought to the front first (the controller has just clicked in the browser). Fails if Windows will not allow that.
 static bool TypeIntoEuroScope(const string& text, string& why) {
 	HWND es = NULL;
 	EnumWindows(FindEsWindow, (LPARAM)&es);
 	if (!es) return false;
-	HWND fg = GetForegroundWindow();
-	DWORD pid = 0;
-	if (fg) GetWindowThreadProcessId(fg, &pid);
-	if (pid != GetCurrentProcessId()) {
-		if (IsIconic(es)) ShowWindow(es, SW_RESTORE);
-		keybd_event(VK_MENU, 0, 0, 0); // an Alt tap lets this process take the foreground
-		keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
-		SetForegroundWindow(es);
-		Sleep(150);
-		fg = GetForegroundWindow();
-		pid = 0;
-		if (fg) GetWindowThreadProcessId(fg, &pid);
-		if (pid != GetCurrentProcessId()) { why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste"; return false; }
-	}
+	if (!BringEsToFront(es)) { why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste"; return false; }
 	// True while EuroScope is still the window in front. Typing goes to whichever window is in front, so this is checked before every
 	// key press: if the controller clicks into another program (Discord, a browser...) the typing stops at once instead of carrying on there.
 	auto esInFront = [&]() -> bool {
@@ -235,8 +283,9 @@ static void TypeThread(void* arg) {
 	CTypeJob* job = (CTypeJob*)arg;
 	try {
 		string why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste";
-		if (TypeIntoEuroScope(job->Text, why)) {
-			string note = "Sent to EuroScope: " + job->Text.substr(0, 40);
+		bool typedOk = CDataHandler::BackgroundType ? TypeIntoEuroScopeBackground(job->Text, why) : TypeIntoEuroScope(job->Text, why);
+		if (typedOk) {
+			string note = string(CDataHandler::BackgroundType ? "Sent to EuroScope (background): " : "Sent to EuroScope: ") + job->Text.substr(0, 40);
 			if (job->Click) {
 				Sleep(500);                       // EuroScope now waits for a click on the aircraft
 				if (ClickRadarPoint(job->Px)) note += " (aircraft clicked for you)";
@@ -251,6 +300,9 @@ static void TypeThread(void* arg) {
 	InterlockedExchange(&TypingBusy, 0);
 	delete job;
 }
+
+// Routes drawn with a right click on a tag (CRoutesHelper::ActiveRoutes) and when each one is to be erased (routeseconds in vnaaats.cfg)
+static std::map<string, clock_t> g_routeExpiry;
 
 static int RetrackPhase = 0; // see RunRemoteCommands: 0 = not connected
 
@@ -877,6 +929,18 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Get entry time and direction
 		int entryMinutes;
 		bool direction;
+
+		// Erase routes that have been on the screen for routeseconds
+		if (!CRoutesHelper::ActiveRoutes.empty()) {
+			clock_t nowClock = clock();
+			for (int i = (int)CRoutesHelper::ActiveRoutes.size() - 1; i >= 0; i--) {
+				auto it = g_routeExpiry.find(CRoutesHelper::ActiveRoutes[i]);
+				if (it != g_routeExpiry.end() && nowClock >= it->second) {
+					g_routeExpiry.erase(it);
+					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + i);
+				}
+			}
+		}
 
 		// Draw routes
 		if (CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty() && CRoutesHelper::ActiveRoutes.size() != 0) {
@@ -1816,10 +1880,12 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				if (found != -1) {
 					CLogger::Log(CLogType::NORM, "Erasing route draw for: " + string(sObjectId), "CRadarDisplay::OnClickScreenObject");
 					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
+					g_routeExpiry.erase(string(sObjectId));
 				}
 				else {
 					CLogger::Log(CLogType::NORM, "Enabling route draw for: " + string(sObjectId), "CRadarDisplay::OnClickScreenObject");
 					CRoutesHelper::ActiveRoutes.push_back(string(sObjectId));
+					if (CDataHandler::RouteSeconds > 0) g_routeExpiry[string(sObjectId)] = clock() + (clock_t)CDataHandler::RouteSeconds * CLOCKS_PER_SEC;   // erased by itself after routeseconds
 				}
 			}
 		}

@@ -2471,7 +2471,8 @@ def main():
     log.info("Personal member keys: %s", "website can issue them" if len(issuer_secret) >= 24 else "off (set VNAAATS_ISSUER_SECRET, 24+ characters)")
     rcl = None
     if os.environ.get("VNAAATS_RCL_AUTO", "on").lower() != "off" and network:
-        rcl = rcl_auto_mod.RclAuto(store, queue, network, natrak, lambda route, pos: route_distance_nm(route, pos, cache.fixes), OCEANIC_PREFIXES)
+        rcl = rcl_auto_mod.RclAuto(store, queue, network, natrak, lambda route, pos: route_distance_nm(route, pos, cache.fixes), OCEANIC_PREFIXES,
+                                     hoppie=(lambda sender: cpdlc.station_for_sender(sender)) if cpdlc else None)
         log.info("Automatic RCL REQ reminders are available (%s)", "ON" if rcl.enabled else "switched off on the display")
     logs = adminlog_mod.LogHub(os.environ.get("VNAAATS_ADMIN_TOKEN", ""), os.environ.get("VNAAATS_LOG_DIR", os.path.join(HERE, "logs")))
     hook = os.environ.get("VNAAATS_ADMIN_WEBHOOK", "").strip()

@@ -65,6 +65,8 @@ class CDataHandler
 	static volatile long SettingsBusy; // 1 while a fetch is running
 	static volatile long SettingsMessagePending; // 1 = tell the controller to restart EuroScope
 	static void FetchSettings(void* args); // writes changed FDD settings into vnaaats.cfg (they apply when EuroScope is restarted)
+	static bool BackgroundType; // backgroundtype=1 (experimental, default off): type into EuroScope without bringing it to the front
+	static int RouteSeconds; // routeseconds=10 (default): a route drawn with a right click on a tag is erased after this many seconds (0 = stays until clicked again)
 	static bool AutoClick; // autoclick=1 (default): after typing .contactme, click the aircraft for you
 	static bool Highlight; // highlight=1 (default): circle the aircraft in white when it is clicked on the FDD
 	static bool AutoType; // autotype=1: type .selcal / .contactme / .msg into EuroScope when the FDD asks

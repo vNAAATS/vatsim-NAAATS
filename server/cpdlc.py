@@ -578,6 +578,27 @@ class CpdlcStation:
             self.fast_until = self.now() + FAST_POLL_SECONDS
         return n
 
+    def ping_online(self, calls):
+        """Which of these callsigns are online on Hoppie right now (a ping is not a CPDLC logon: any pilot whose client polls Hoppie answers).
+        Returns a set, or None if Hoppie could not be asked."""
+        calls = sorted({str(c).upper() for c in calls if re.fullmatch(r"[A-Z0-9]{2,8}", str(c).upper())})
+        if not calls:
+            return set()
+        try:
+            answer = self.client.request("SERVER", "ping", " ".join(calls))
+        except Exception as e:
+            self.error = "ping failed: %s" % e
+            return None
+        head, _, raw = parse_blocks(answer)
+        if head != "ok":
+            return None
+        return {c for c in re.findall(r"[A-Z0-9]{2,8}", " ".join(raw).upper()) if c in calls}
+
+    def asked_rcl(self, callsign):
+        """True if this aircraft has an open oceanic clearance request here (by CPDLC or telex)."""
+        cs = str(callsign).upper()
+        return any(r["callsign"] == cs for r in self.rcl_requests())
+
     def ping_connected(self):
         """Drop aircraft that stopped being online on Hoppie (two misses in a row)."""
         with self.lock:
@@ -755,6 +776,16 @@ class CpdlcHub:
             for v in self.running.values():
                 if v["token"] == token:
                     return v["obj"]
+        return None
+
+    def station_for_sender(self, position):
+        """A running station to send from: the one that belongs to this position if it is signed in, otherwise any signed-in station."""
+        with self.lock:
+            mine = self.station_for(position)
+            if mine and mine in self.running:
+                return self.running[mine]["obj"]
+            for v in self.running.values():
+                return v["obj"]
         return None
 
     def is_connected(self, callsign):

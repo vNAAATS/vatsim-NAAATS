@@ -37,15 +37,21 @@ OCA_WEST_LON = -53.0           # Gander OCA western edge / Shanwick OCA eastern 
 OCA_EAST_LON = -15.0
 OCA_MIN_LAT = 43.0
 OCA_MAX_LAT = 72.0
+MIN_AIRBORNE_ALT = 10000       # feet: below this the flight is on the ground, taking off or still climbing out
 MIN_GROUNDSPEED = 100          # knots: a parked or taxiing aircraft is not due
 TICK_SECONDS = 10
 POLLER_FRESH_SECONDS = 15      # a plugin that asked for commands this recently is "online"
-RETRY_SECONDS = 300
-MAX_TRIES = 3
+RETRY_SECONDS = 300            # after a reminder was typed and the plugin said it worked, no second one is tried for this long
+RETRY_FAIL_SECONDS = 60        # after a failure (EuroScope not in front, no answer) the next try comes this soon
+MAX_TRIES = 5
+TELEX_WAIT_SECONDS = 180       # a telex was sent: if the pilot has not asked for clearance by then, the EuroScope message goes as well
+TELEX_REPING_SECONDS = 120     # a flight that was not online on Hoppie is asked about again after this long
+TELEX_PER_TICK = 5
 INFLIGHT_SECONDS = 90          # the command is given this long to come back before we may queue it again
 PROMPT_EVERY_SECONDS = 300    # the FDD asks about the waiting flights at most this often
 STALL_SECONDS = 60            # released flights with nothing in flight and no progress for this long: the batch is abandoned
 BY = "AUTO"
+TELEX_BY = "Auto RCL telex"      # the red star set by a telex; the EuroScope message may still follow it
 
 
 def entry_minutes_from_now(route_etas, now_utc_minute):
@@ -105,8 +111,11 @@ def oca_state(pos, eastbound):
 
 
 class RclAuto:
-    def __init__(self, store, queue, network, natrak, distance_fn, oceanic_prefixes, now=time.time, start=True):
+    def __init__(self, store, queue, network, natrak, distance_fn, oceanic_prefixes, now=time.time, start=True, hoppie=None):
         self.store, self.queue, self.network, self.natrak = store, queue, network, natrak
+        self.hoppie = hoppie       # (sender position) -> a signed-in CPDLC station that can ping Hoppie and send a telex, or None
+        self.telex_sent = {}       # flight callsign -> time the telex went out
+        self.telex_off = {}        # flight callsign -> time it was found not online on Hoppie
         self.distance_fn = distance_fn          # (route, (lat, lon)) -> nm to the nearest fix on the route, or None
         self.prefixes = tuple(oceanic_prefixes)
         self.now = now
@@ -134,6 +143,7 @@ class RclAuto:
             self.store.db.commit()
         with self.store.lock:
             self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_auto (callsign TEXT PRIMARY KEY, ts REAL NOT NULL)")
+            self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_telex (callsign TEXT PRIMARY KEY, ts REAL NOT NULL)")
             self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_setting (id INTEGER PRIMARY KEY CHECK (id = 1), on_ INTEGER NOT NULL)")
             row = self.store.db.execute("SELECT on_ FROM rcl_setting WHERE id=1").fetchone()
             self.store.db.commit()
@@ -190,6 +200,8 @@ class RclAuto:
                 self.approved.discard(cs)
                 self.batch["failed"].append(cs)
                 self.last_error = "%s: no answer from EuroScope" % cs
+                if cs in self.tries:
+                    self.tries[cs]["next"] = t + RETRY_FAIL_SECONDS
             gone = (not self.enabled) or (not self.confirm) or no_sender
             if self.approved and not self.inflight and (gone or t - self.activity > STALL_SECONDS):
                 self.approved = set()                       # released flights that will never be typed (sender left, switched off, stalled)
@@ -232,7 +244,8 @@ class RclAuto:
         sender = self.sender() or ""
         prompt = bool(self.enabled and self.confirm and waiting and sender and self.now() >= self.next_prompt)
         return {"on": self.enabled, "sender": sender, "inflight": n, "error": self.last_error, "startsInSeconds": wait,
-                "confirm": self.confirm, "waiting": waiting, "prompt": prompt, "sending": sending, "batch": batch}
+                "confirm": self.confirm, "waiting": waiting, "prompt": prompt, "sending": sending, "batch": batch,
+                "telex": len(self.telex_sent), "telexOn": bool(self.hoppie)}
 
     # --- the decision
     def already_sent(self, cs):
@@ -242,8 +255,9 @@ class RclAuto:
     def due(self, rec, now_dt=None):
         """True when this flight should get the reminder now."""
         cs = str(rec.get("callsign", "")).upper()
-        if not cs or rec.get("ntSent"):
-            return False
+        sent = rec.get("ntSent")
+        if not cs or (sent and (not isinstance(sent, dict) or sent.get("by") != TELEX_BY)):
+            return False                                    # reminded already (a telex alone does not count: telex_stage decides about that)
         if self.natrak and cs in self.natrak.by_callsign():
             return False
         by = str(rec.get("trackedBy", "")).upper()
@@ -261,6 +275,9 @@ class RclAuto:
         gs = pilot.get("groundspeed")
         if isinstance(gs, (int, float)) and gs < MIN_GROUNDSPEED:
             return False
+        alt = pilot.get("altitude")
+        if isinstance(alt, (int, float)) and 0 < alt < MIN_AIRBORNE_ALT:
+            return False                                    # still on the ground (the take-off run is faster than MIN_GROUNDSPEED) or just lifting off
         if cs in self.baseline:
             return False
         if oca_state(pos, rec.get("direction") if isinstance(rec.get("direction"), bool) else None) != "before":
@@ -278,6 +295,79 @@ class RclAuto:
         if m is None and isinstance(gs, (int, float)) and gs > 0 and d / gs * 60 < MIN_LEAD_MINUTES:
             return False            # no times on the flight: judge the 20 minutes from the distance and speed instead
         return True
+
+    # --- telex first: no EuroScope typing at all when the pilot is on the Hoppie network
+    def telex_time(self, cs):
+        t = self.telex_sent.get(cs)
+        if t is None:
+            with self.store.lock:
+                row = self.store.db.execute("SELECT ts FROM rcl_telex WHERE callsign=?", (cs,)).fetchone()
+            if row:
+                t = self.telex_sent[cs] = row[0]
+        return t
+
+    def telex_stage(self, sender, due_list, t):
+        """Takes the flights that are due and returns the ones that still need the EuroScope message. A flight that is online on Hoppie
+        gets the reminder as a telex (no logon needed) and is left alone for TELEX_WAIT_SECONDS; if it has not asked for clearance by
+        then it comes back here and is typed as before."""
+        try:
+            st = self.hoppie(sender)
+        except Exception:
+            log.exception("auto RCL: could not get a CPDLC station")
+            st = None
+        if not st:
+            return due_list
+        rest, fresh = [], []
+        for item in due_list:
+            cs = item[0]
+            sent = self.telex_time(cs)
+            if sent is not None:
+                try:
+                    if st.asked_rcl(cs):
+                        continue                                    # the pilot answered by CPDLC or telex: nothing more to do
+                except Exception:
+                    pass
+                if t - sent < TELEX_WAIT_SECONDS:
+                    continue                                        # give the telex time to be read
+                rest.append(item)                                   # no answer: the EuroScope message goes too
+            elif t - self.telex_off.get(cs, -1e9) < TELEX_REPING_SECONDS:
+                rest.append(item)
+            else:
+                fresh.append(item)
+        if fresh:
+            try:
+                online = st.ping_online([i[0] for i in fresh])
+            except Exception:
+                log.exception("auto RCL: Hoppie ping failed")
+                online = None
+            if online is None:
+                return rest + fresh                                 # Hoppie could not be asked: EuroScope as before
+            sent_now = 0
+            for item in fresh:
+                cs = item[0]
+                if cs in online and sent_now < TELEX_PER_TICK:
+                    try:
+                        st.send_telex(cs, commands_mod.NATMSG, by=BY)
+                    except Exception as e:
+                        log.warning("Auto RCL telex to %s failed: %s", cs, e)
+                        rest.append(item)
+                        continue
+                    sent_now += 1
+                    self.telex_sent[cs] = t
+                    with self.store.lock:
+                        self.store.db.execute("INSERT OR REPLACE INTO rcl_telex VALUES (?, ?)", (cs, t))
+                        self.store.db.commit()
+                    try:
+                        self.store.mark_nt(cs, TELEX_BY, True, item[1])             # the red star on the strip
+                    except Exception:
+                        log.exception("could not mark the telex on %s", cs)
+                    log.info("Auto RCL REQ telex sent to %s (online on Hoppie); EuroScope message follows after %d s if no request", cs, TELEX_WAIT_SECONDS)
+                elif cs in online:
+                    continue                                        # more than TELEX_PER_TICK this tick: the rest next time
+                else:
+                    self.telex_off[cs] = t                          # not on Hoppie: the EuroScope message goes now
+                    rest.append(item)
+        return rest
 
     # --- the loop
     def candidates(self):
@@ -340,6 +430,8 @@ class RclAuto:
             if self.already_sent(cs) or not self.due(rec):
                 continue
             due_list.append((cs, rec, tr))
+        if self.hoppie and due_list:
+            due_list = self.telex_stage(sender, due_list, t)
         if self.confirm:
             mins = {}
             for cs, rec, _ in due_list:
@@ -394,6 +486,9 @@ class RclAuto:
             log.info("Auto RCL REQ sent to %s", cs)
         else:
             self.last_error = "%s: %s" % (cs, (msg or "failed")[:120])
+            with self.lock:
+                if cs in self.tries:
+                    self.tries[cs]["next"] = self.now() + RETRY_FAIL_SECONDS      # try again soon, not in five minutes
             log.warning("Auto RCL REQ for %s failed: %s", cs, msg)
 
     def purge(self):
