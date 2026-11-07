@@ -255,7 +255,7 @@ export async function rclSend(id: number, kind: "clx" | "processed", messages: s
 // What goes into natTrak's "new clearance" form for a request (field ids of the natTrak page)
 export function natTrakFields(r: RclRequest): { label: string; id: string; value: string }[] {
   const lvl = r.level ? String(r.level) : "";
-  const mach = r.mach ? "." + String(Math.round(r.mach < 10 ? r.mach * 100 : r.mach)).padStart(2, "0") : "";   // natTrak takes .85 or 085, not 0.85
+  const mach = r.mach ? String(Math.round(r.mach < 10 ? r.mach * 100 : r.mach)).padStart(3, "0") : "";   // natTrak wants three digits: .83 is 083 (not 0.83, not .83)
   return [
     { label: "Callsign", id: "callsign", value: r.callsign },
     { label: "Destination", id: "destination", value: r.dest || "" },
