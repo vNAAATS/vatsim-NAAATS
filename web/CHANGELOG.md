@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Track header rows: half-degree track points (such as 5830/40 on tracks C and E) used to run into each other; the 30 minutes now show small beside the degrees (58³⁰/40 style) so each point fits its column. Server deploy needed (web files).
 - FDD for Windows: before opening EuroScope, VACS or the audio client, the app checks whether that program is already running and does nothing if it is, so you no longer get a second copy. Server deploy not needed; the Windows app updates itself when a new version is built.
 - Admin view: open vnaaats.com/admin/fdd, type the admin token (the same VNAAATS_ADMIN_TOKEN as the log page) and the FDD opens read only with no VATSIM connection needed. It shows the live display; nothing can be edited, sent or logged on to CPDLC from it, and the toolbar says "Admin view, read only". Server deploy needed.
 - Handoff: no handoff prompt at 30W when a combined Gander + Shanwick position (NAT_FSS, NAT_1_FSS and similar) is online, because that controller works both areas on one frequency; the flight's next real boundary is used instead. The eastbound track end points at 14W (GISTI, XETBO, RILED, LEKVA, ELSOX, EPUNA, ATSUR) now hand off to Shannon. Handoff messages no longer pop up: a slowly flashing yellow "Handoff: CALLSIGN" button appears on the toolbar (with +N for more); click it to read the messages and Transfer or Send to UNICOM. Server deploy needed.

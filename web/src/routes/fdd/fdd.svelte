@@ -1,4 +1,6 @@
 <script lang="ts">
+  const halfPoint = (name: string) => name.match(/^(\d{2})(\d{2})\/(\d{2,3})$/);   // 5830/40: a half-degree track point
+
   import { onDestroy, onMount } from "svelte";
   import * as utils from "../../typescript/fdd/utils";
   import Button from "../../props/fdd/button.svelte";
@@ -518,7 +520,12 @@
             {:else}
             <div style="grid-column: 2 / span 3;" />
             {#each dataHandler.currentNatTracks.get(g.track).Route as waypoint}
-              <div class="whitespace-nowrap overflow-hidden" style={waypoint.name.length > 5 ? "font-size: 0.82em;" : ""}>{waypoint.name}</div>
+              {#if halfPoint(waypoint.name)}
+                <!-- half-degree point (5830/40): the 30 minutes sit small beside the degrees so it is as wide as 58/40 and cannot run into its neighbour -->
+                <div class="whitespace-nowrap overflow-hidden">{halfPoint(waypoint.name)[1]}<span style="font-size: 0.62em; vertical-align: 0.38em; margin-left: 1px;">{halfPoint(waypoint.name)[2]}</span>/{halfPoint(waypoint.name)[3]}</div>
+              {:else}
+                <div class="whitespace-nowrap overflow-hidden" style={waypoint.name.length > 5 ? "font-size: 0.82em;" : ""}>{waypoint.name}</div>
+              {/if}
             {/each}
             {/if}
           {/if}
