@@ -1,19 +1,34 @@
 /*
  *  VACS call alert. VACS (vacs.network) has a remote-control WebSocket on this computer (default ws://localhost:9600/ws, switched off
- *  until the controller turns it on in VACS). We only LISTEN for call events and, if asked, accept a ringing call. Nothing is sent to our server.
+ *  until the controller turns it on in VACS). We listen for call events, keep a short call log, and on the controller's click accept a ringing
+ *  call, end a call or place a call to an online position. Nothing is sent to our server.
  *  The VACS API has no stability promise, so everything here fails quietly: on any problem the indicator simply goes grey.
  */
 import { writable, get } from "svelte/store";
 import * as app from "./app";
 
+export type Party = { cid: string; position: string; callsign: string };
+export type LogEntry = {
+  callId: string; dir: "in" | "out"; who: string; cid: string; callsign: string; prio: boolean;
+  at: number;                                // when it started ringing / when we placed it (ms)
+  answeredAt: number;                        // 0 = not answered
+  endedAt: number;                           // 0 = still going
+  result: "ringing" | "answered" | "missed" | "no answer" | "ended" | "declined";
+};
+export type Online = { cid: string; callsign: string; position: string; freq: string };
 export type VacsState = {
   enabled: boolean;
   link: "off" | "connecting" | "up";        // our WebSocket to VACS
   onPosition: boolean;                       // VACS itself is connected to a position
-  ringing: { callId: string; from: string; prio: boolean } | null;
-  call: { callId: string; with: string } | null;
+  ringing: { callId: string; from: string; prio: boolean; cid: string; callsign: string; at: number } | null;
+  call: { callId: string; with: string; since: number } | null;
   dismissed: string;                         // callId whose pop-up was dismissed
   error: string;
+  log: LogEntry[];                           // newest first, kept in this browser only
+  online: Online[];                          // everyone VACS says is online, for the Call list
+  callError: string;                         // why the last call-out failed, if it did
+  busy: boolean;                             // Busy: new calls are declined automatically
+  busyPrio: boolean;                         // ...except priority calls, which still ring
 };
 
 const KEY = "vnaaats.vacs";
@@ -24,7 +39,20 @@ function lsSet(k: string, v: string): void { try { localStorage.setItem(k, v); }
 export function isEnabled(): boolean { const v = lsGet(KEY); return v === null ? app.inApp() : v === "1"; }
 export function getPort(): number { const n = parseInt(lsGet(PORT) ?? "", 10); return n > 0 && n < 65536 ? n : 9600; }
 
-export const vacs = writable<VacsState>({ enabled: false, link: "off", onPosition: false, ringing: null, call: null, dismissed: "", error: "" });
+const LOGKEY = "vnaaats.vacsLog";
+const BUSYKEY = "vnaaats.vacsBusy";
+const BUSYPRIOKEY = "vnaaats.vacsBusyPrio";
+function loadLog(): LogEntry[] {
+  try {
+    const a = JSON.parse(lsGet(LOGKEY) ?? "[]");
+    if (!Array.isArray(a)) return [];
+    // a call still "ringing" or going when the page was closed cannot be known any more
+    return a.slice(0, 30).map((e: LogEntry) => (e.result === "ringing" ? { ...e, result: "missed" as const, endedAt: e.endedAt || e.at } : e.endedAt ? e : { ...e, endedAt: e.answeredAt || e.at, result: "ended" as const }));
+  } catch (e) { return []; }
+}
+function saveLog(l: LogEntry[]): void { lsSet(LOGKEY, JSON.stringify(l.slice(0, 30))); }
+
+export const vacs = writable<VacsState>({ enabled: false, link: "off", onPosition: false, ringing: null, call: null, dismissed: "", error: "", log: loadLog(), online: [], callError: "", busy: lsGet(BUSYKEY) === "1", busyPrio: lsGet(BUSYPRIOKEY) !== "0" });
 const upd = (f: (s: VacsState) => void) => vacs.update((s) => { f(s); return { ...s }; });
 
 let ws: WebSocket | null = null;
@@ -34,10 +62,36 @@ let wanted = false;
 let delay = 5000;
 let nextId = 1;
 let me = "";                                 // our own VATSIM CID, to tell "ringing for me" from calls we placed
+let mySource: any = null;                    // the "source" we place calls with (from VACS' own default call source)
 const calls = new Map<string, string>();     // callId -> label of the other party
+const clients = new Map<string, Online>();   // CID -> who VACS says is online
+
+function who(cid: string, position: string): Party {
+  const c = clients.get(cid);
+  return { cid, position: position || c?.position || "", callsign: c?.callsign || "" };
+}
+function logStart(e: LogEntry): void {
+  upd((s) => { s.log = [e, ...s.log.filter((x) => x.callId !== e.callId)].slice(0, 30); saveLog(s.log); });
+}
+function logChange(callId: string, f: (e: LogEntry) => void): void {
+  upd((s) => { const e = s.log.find((x) => x.callId === callId); if (e) { f(e); saveLog(s.log); } });
+}
+function setOnline(): void { upd((s) => { s.online = [...clients.values()].filter((c) => c.cid !== me).sort((a, b) => (a.callsign || a.position).localeCompare(b.callsign || b.position)); }); }
+function putClient(c: any): void {
+  if (!c?.id) return;
+  clients.set(String(c.id), { cid: String(c.id), callsign: String(c.displayName ?? ""), position: String(c.positionId ?? ""), freq: String(c.frequency ?? "") });
+}
+function endLog(callId: string, now: number): void {
+  logChange(callId, (e) => {
+    if (e.endedAt) return;
+    e.endedAt = now;
+    e.result = e.answeredAt ? "ended" : e.dir === "in" ? "missed" : "no answer";
+  });
+}
 
 const EVENTS = ["signaling:call-invitation", "signaling:call-update", "signaling:call-end", "signaling:force-call-end", "signaling:accept-incoming-call",
-  "signaling:outgoing-call", "signaling:connected", "signaling:disconnected", "webrtc:call-connected", "webrtc:call-disconnected", "auth:authenticated"];
+  "signaling:outgoing-call", "signaling:call-reject", "signaling:connected", "signaling:disconnected", "webrtc:call-connected", "webrtc:call-disconnected", "auth:authenticated",
+  "signaling:client-list", "signaling:client-connected", "signaling:client-disconnected"];
 
 function label(src: any): string {
   return (src?.positionId || src?.stationId || src?.clientId || "unknown").toString();
@@ -52,36 +106,65 @@ function handle(name: string, p: any): void {
     case "signaling:call-invitation": {
       if (!p?.callId) return;
       const from = label(p.source);
+      const w = who(String(p.source?.clientId ?? ""), String(p.source?.positionId ?? p.source?.stationId ?? ""));
       calls.set(p.callId, from);
-      upd((s) => { s.ringing = { callId: p.callId, from, prio: !!p.prio }; });
+      const now = Date.now();
+      const st = get(vacs);
+      if (st.busy && !(p.prio && st.busyPrio) && !st.call) {
+        // Busy: turn the call away without ringing; it is logged as declined
+        send({ type: "invoke", id: "n" + nextId++, cmd: "signaling_end_call", args: { callId: p.callId } });
+        logStart({ callId: p.callId, dir: "in", who: from, cid: w.cid, callsign: w.callsign, prio: !!p.prio, at: now, answeredAt: 0, endedAt: now, result: "declined" });
+        break;
+      }
+      upd((s) => { s.ringing = { callId: p.callId, from, prio: !!p.prio, cid: w.cid, callsign: w.callsign, at: now }; });
+      logStart({ callId: p.callId, dir: "in", who: from, cid: w.cid, callsign: w.callsign, prio: !!p.prio, at: now, answeredAt: 0, endedAt: 0, result: "ringing" });
       break;
     }
-    case "signaling:accept-incoming-call":
-      upd((s) => { if (s.ringing && s.ringing.callId === p) { s.call = { callId: p, with: s.ringing.from }; s.ringing = null; } });
+    case "signaling:accept-incoming-call": {
+      const now = Date.now();
+      upd((s) => { if (s.ringing && s.ringing.callId === p) { s.call = { callId: p, with: s.ringing.from, since: now }; s.ringing = null; } });
+      logChange(String(p), (e) => { if (!e.answeredAt) { e.answeredAt = now; e.result = "answered"; } });
       break;
+    }
     case "signaling:outgoing-call": {
       if (!p?.callId) return;
       const to = (p.targets ?? []).map(targetLabel).filter((x: string) => x).join(", ");
       calls.set(p.callId, to);
-      upd((s) => { s.call = { callId: p.callId, with: to }; });
+      const now = Date.now();
+      upd((s) => { s.call = { callId: p.callId, with: to, since: 0 }; s.callError = ""; });
+      const t0 = (p.targets ?? [])[0];
+      const cid = String(t0?.client ?? "");
+      logStart({ callId: p.callId, dir: "out", who: to, cid, callsign: clients.get(cid)?.callsign ?? "", prio: !!p.prio, at: now, answeredAt: 0, endedAt: 0, result: "ringing" });
       break;
     }
-    case "webrtc:call-connected":
+    case "webrtc:call-connected": {
+      const now = Date.now();
       upd((s) => {
-        if (s.ringing && s.ringing.callId === p?.callId) { s.call = { callId: p.callId, with: s.ringing.from }; s.ringing = null; }
-        else if (!s.call && p?.callId) s.call = { callId: p.callId, with: calls.get(p.callId) ?? "" };
+        if (s.ringing && s.ringing.callId === p?.callId) { s.call = { callId: p.callId, with: s.ringing.from, since: now }; s.ringing = null; }
+        else if (p?.callId && (!s.call || s.call.callId === p.callId)) s.call = { callId: p.callId, with: s.call?.with || (calls.get(p.callId) ?? ""), since: now };
       });
+      if (p?.callId) logChange(String(p.callId), (e) => { if (!e.answeredAt) { e.answeredAt = now; e.result = "answered"; } });
+      break;
+    }
+    case "signaling:call-reject":
+      upd((s) => { s.callError = "The other controller rejected the call."; });
+      if (p?.callId) endLog(String(p.callId), Date.now());
       break;
     case "signaling:call-end":
     case "signaling:force-call-end":
       calls.delete(p);
       upd((s) => { if (s.ringing?.callId === p) s.ringing = null; if (s.call?.callId === p) s.call = null; });
+      endLog(String(p), Date.now());
       break;
+    case "signaling:client-list":
+      clients.clear(); for (const c of Array.isArray(p) ? p : []) putClient(c); setOnline(); break;
+    case "signaling:client-connected": putClient(p); setOnline(); break;
+    case "signaling:client-disconnected": clients.delete(String(p)); setOnline(); break;
     case "webrtc:call-disconnected":
       break;                                  // one leg of a call; the call itself ends with signaling:call-end
     case "signaling:connected": upd((s) => { s.onPosition = true; }); break;
     case "signaling:disconnected": upd((s) => { s.onPosition = false; s.ringing = null; s.call = null; }); break;
-    case "auth:authenticated": me = String(p ?? ""); break;
+    case "auth:authenticated": me = String(p ?? ""); setOnline(); break;
   }
 }
 
@@ -110,9 +193,24 @@ function open(): void {
     else if (d.type === "response" && d.id === "state" && d.ok) {
       upd((s) => { s.onPosition = d.data?.connectionState === "connected"; });
       if (d.data?.clientId) me = String(d.data.clientId);
+      for (const c of Array.isArray(d.data?.clients) ? d.data.clients : []) putClient(c);
+      const ds = d.data?.defaultCallSources;
+      const first = Array.isArray(ds) ? ds[0] : ds && typeof ds === "object" ? Object.values(ds)[0] : null;
+      mySource = first && typeof first === "object" && (first as any).clientId ? first : null;
+      setOnline();
+    }
+    else if (d.type === "response" && typeof d.id === "string" && d.id.startsWith("dial")) {
+      if (!d.ok) upd((s) => { s.callError = "VACS did not place the call" + (d.error ? ": " + (typeof d.error === "string" ? d.error : d.error.message ?? "") : "."); });
     }
   };
-  sock.onclose = () => { clearInterval(ping); if (ws === sock) ws = null; upd((s) => { s.link = "off"; s.onPosition = false; s.ringing = null; s.call = null; }); again(); };
+  sock.onclose = () => {
+    clearInterval(ping); if (ws === sock) ws = null;
+    const open = get(vacs).log.filter((e) => !e.endedAt).map((e) => e.callId);
+    clients.clear();
+    upd((s) => { s.link = "off"; s.onPosition = false; s.ringing = null; s.call = null; s.online = []; });
+    for (const id of open) endLog(id, Date.now());
+    again();
+  };
   sock.onerror = () => { /* onclose follows */ };
 }
 
@@ -134,7 +232,8 @@ export function stop(): void {
   clearTimeout(timer); clearInterval(ping);
   try { ws?.close(); } catch (e) { /* ignore */ }
   ws = null;
-  upd((s) => { s.link = "off"; s.onPosition = false; s.ringing = null; s.call = null; });
+  clients.clear();
+  upd((s) => { s.link = "off"; s.onPosition = false; s.ringing = null; s.call = null; s.online = []; });
 }
 export function configure(enabled: boolean, port: number): void {
   lsSet(KEY, enabled ? "1" : "0");
@@ -143,6 +242,33 @@ export function configure(enabled: boolean, port: number): void {
   delay = 5000;
   start();
 }
+/** Rings an online controller from VACS. `cid` is their VATSIM CID as shown in the Call list; prio makes it a priority call. */
+export function dial(cid: string, prio: boolean = false): void {
+  const st = get(vacs);
+  if (st.link !== "up" || !st.onPosition) { upd((s) => { s.callError = "VACS is not connected to a position."; }); return; }
+  if (st.call || st.ringing) { upd((s) => { s.callError = "Finish the current call first."; }); return; }
+  const mine = clients.get(me);
+  const source = mySource ?? { clientId: me, ...(mine?.position ? { positionId: mine.position, stationId: mine.position } : {}) };
+  upd((s) => { s.callError = ""; });
+  send({ type: "invoke", id: "dial" + nextId++, cmd: "signaling_invite_to_call", args: { targets: [{ client: cid }], source, prio } });
+}
+export function hangup(): void {
+  const c = get(vacs).call;
+  if (c) send({ type: "invoke", id: "n" + nextId++, cmd: "signaling_end_call", args: { callId: c.callId } });
+}
+/** Turns a ringing call away. VACS has no "reject" command, so this asks it to end the call; if VACS ignores that the call keeps ringing there. */
+export function decline(): void {
+  const r = get(vacs).ringing;
+  if (!r) return;
+  send({ type: "invoke", id: "n" + nextId++, cmd: "signaling_end_call", args: { callId: r.callId } });
+  upd((s) => { if (s.ringing?.callId === r.callId) s.ringing = null; });
+  logChange(r.callId, (e) => { if (!e.endedAt) { e.endedAt = Date.now(); e.result = "declined"; } });
+}
+export function setBusy(on: boolean, prioThrough: boolean = get(vacs).busyPrio): void {
+  lsSet(BUSYKEY, on ? "1" : "0"); lsSet(BUSYPRIOKEY, prioThrough ? "1" : "0");
+  upd((s) => { s.busy = on; s.busyPrio = prioThrough; });
+}
+export function clearLog(): void { upd((s) => { s.log = []; saveLog([]); }); }
 export function accept(): void {
   const r = get(vacs).ringing;
   if (r) send({ type: "invoke", id: "n" + nextId++, cmd: "signaling_accept_call", args: { callId: r.callId } });
