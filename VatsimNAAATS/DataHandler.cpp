@@ -27,6 +27,7 @@ string CDataHandler::FddUrl = DEFAULT_SERVER + "/fdd";
 string CDataHandler::TrackURL = DEFAULT_SERVER + "/GetAllNatTracks";
 map<string, CAircraftFlightPlan> CDataHandler::flights;
 
+string CDataHandler::VersionUrl = DEFAULT_SERVER + "/pluginversion";
 const string CDataHandler::PluginVersion = "https://raw.githubusercontent.com/garythms/vatsim-naaats-v2/server-and-squawk/pluginversion.txt";
 string CDataHandler::TrackSource = DEFAULT_SERVER + "/GetTrackSource";
 string CDataHandler::GetSingleAircraft = DEFAULT_SERVER + "/GetSingleFlightData?callsign=";
@@ -94,6 +95,7 @@ void CDataHandler::LoadSettings() {
 	}
 	while (!server.empty() && server.back() == '/') server.pop_back();
 	FddUrl = server + "/fdd";
+	VersionUrl = server + "/pluginversion";
 	DownloadUrl = server + "/download";
 	TrackURL = server + "/GetAllNatTracks";
 	TrackSource = server + "/GetTrackSource";
@@ -116,40 +118,39 @@ void CDataHandler::LoadSettings() {
 int CDataHandler::CheckPluginVersion(CPlugIn* plugin)
 {
 	// Try and get data and pass into string
+	// Our own server first (the PC already trusts it for everything else), GitHub only if that fails. A failed check is only a
+	// warning: it must not pop up in EuroScope or raise an error report, because nothing is wrong with the plugin itself.
 	string responseString = "";
-	try {
-		// Convert URL to LPCSTR type
-		LPCSTR lpcURL = CDataHandler::PluginVersion.c_str();
-
-		// Delete cache data
-		DeleteUrlCacheEntry(lpcURL);
-
-		// Download data
-		CComPtr<IStream> pStream;
-		HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
-		// If failed
-		if (FAILED(hr)) {
-			int code = (int)hr;
-			// Show user message
-			plugin->DisplayUserMessage("vNAAATS", "Error", (string("Failed to fetch version info. Code: ") + to_string(code)).c_str(), true, true, true, true, true);
-			// Clogger
-			CLogger::Log(CLogType::ERR, string("Could not fetch version info. Code: ") + to_string(code), "CDataHandler::CheckPluginVersion");
-			return -1;
+	string lastProblem = "";
+	const string urls[2] = { VersionUrl, PluginVersion };
+	for (int u = 0; u < 2 && responseString.empty(); u++) {
+		try {
+			LPCSTR lpcURL = urls[u].c_str();
+			DeleteUrlCacheEntry(lpcURL);
+			CComPtr<IStream> pStream;
+			HRESULT hr = URLOpenBlockingStream(NULL, lpcURL, &pStream, 0, NULL);
+			if (FAILED(hr)) {
+				lastProblem = string(u == 0 ? "our server" : "GitHub") + " code " + to_string((int)hr);
+				continue;
+			}
+			char tempBuffer[16384];
+			DWORD bytesRead = 0;
+			pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
+			string got = "";
+			for (DWORD i = 0; i < bytesRead; i++) got += tempBuffer[i];
+			while (!got.empty() && isspace((unsigned char)got.back())) got.pop_back();
+			while (!got.empty() && isspace((unsigned char)got.front())) got.erase(got.begin());
+			// a version looks like 2.7.2; anything else (an error page, say) is ignored
+			bool ok = !got.empty() && got.size() <= 16;
+			for (char ch : got) if (!isdigit((unsigned char)ch) && ch != '.') ok = false;
+			if (ok) responseString = got; else lastProblem = string(u == 0 ? "our server" : "GitHub") + " sent something unexpected";
 		}
-		// Put data into buffer
-		char tempBuffer[16384];
-		DWORD bytesRead = 0;
-		hr = pStream->Read(tempBuffer, sizeof(tempBuffer), &bytesRead);
-		// Put data into string
-		for (int i = 0; i < bytesRead; i++) {
-			responseString += tempBuffer[i];
+		catch (exception & e) {
+			lastProblem = string(u == 0 ? "our server" : "GitHub") + ": " + e.what();
 		}
 	}
-	catch (exception & e) {
-		// Log to ES
-		plugin->DisplayUserMessage("vNAAATS", "Error", string("Failed to fetch version info: " + string(e.what())).c_str(), true, true, true, true, true);
-		// Clogger
-		CLogger::Log(CLogType::EXC, "Could not fetch version info: " + string(string(e.what())), "CDataHandler::CheckPluginVersion");
+	if (responseString.empty()) {
+		CLogger::Log(CLogType::WARN, "Could not check for a new plugin version (" + lastProblem + ")", "CDataHandler::CheckPluginVersion");
 		return -1;
 	}
 

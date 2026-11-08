@@ -3,6 +3,10 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- Auto RCL history: the Auto RCL panel now has a History list (newest first, UTC time) showing for each aircraft when the telex was sent, whether the pilot answered or did not reply, when the EuroScope message was queued and typed, and any failure. Kept for two days. Server deploy needed.
+- VACS: a telephone "ring ring" sounds once when a call comes in (not for calls turned away by Busy). Turn it off, or test it, in the VACS Setup tab. Browsers only allow sound after you have clicked anywhere on the page once. Server deploy needed (web files).
+- Plugin: the update check now asks vnaaats.com (/pluginversion) instead of GitHub, which fixes the "Could not fetch version info" certificate error some computers showed. If the check cannot be done it is only written to the log as a warning, with no message in EuroScope and no Discord alert. Plugin update needed.
+- New scripts/release.py sets the versions and notes for a release in one step. Server deploy needed.
 - VACS in the FDD: the incoming-call box now shows who is calling (callsign, position and VATSIM CID) and the time it rang. Click the VACS button for a Calls tab (the last 30 calls with time, who, answered or missed, and length; a missed-call count shows on the button) and a "Call someone" tab (everyone VACS lists as online, neighbours first, with search; Call rings them through VACS). You can end a call from the button too. The incoming-call box also has a Decline button, and the Calls tab has a Busy switch that turns new calls away automatically (priority calls can still ring; the button turns amber while Busy is on). Declined calls show in the list. VACS has no official "reject" command, so Decline and Busy ask VACS to end the call. The list is kept in your own browser only. Needs VACS 2.1.0 with Remote Control on, as before. Server deploy needed (web files).
 - CPDLC "Prepare in natTrak" now fills the Mach as three digits (.83 is 083), which is what natTrak accepts. The earlier fix sent .83. Server deploy needed (web files).
 

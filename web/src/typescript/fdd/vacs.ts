@@ -52,6 +52,39 @@ function loadLog(): LogEntry[] {
 }
 function saveLog(l: LogEntry[]): void { lsSet(LOGKEY, JSON.stringify(l.slice(0, 30))); }
 
+const MUTEKEY = "vnaaats.vacsMute";
+export const ringMuted = writable<boolean>(lsGet(MUTEKEY) === "1");
+export function setRingMuted(m: boolean): void { ringMuted.set(m); lsSet(MUTEKEY, m ? "1" : "0"); }
+let actx: AudioContext | null = null;
+/** Browsers only allow sound after the page has been clicked once; this makes sure the audio context is ready by then. */
+function audio(): AudioContext | null {
+  try {
+    if (!actx) actx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (actx.state === "suspended") void actx.resume();
+    return actx;
+  } catch (e) { return null; }
+}
+try { window.addEventListener("pointerdown", () => { audio(); }, { once: true }); } catch (e) { /* no window */ }
+/** One telephone "ring ring": two bursts of a 440 + 480 Hz warble, played once per incoming call. */
+export function ringOnce(): void {
+  if (get(ringMuted)) return;
+  const c = audio();
+  if (!c || c.state !== "running") return;
+  const t0 = c.currentTime + 0.02;
+  const out = c.createGain(); out.gain.value = 0.18; out.connect(c.destination);
+  for (const start of [0, 0.6]) {
+    const g = c.createGain(); g.connect(out);
+    g.gain.setValueAtTime(0, t0 + start);
+    g.gain.linearRampToValueAtTime(1, t0 + start + 0.02);
+    g.gain.setValueAtTime(1, t0 + start + 0.38);
+    g.gain.linearRampToValueAtTime(0, t0 + start + 0.4);
+    for (const f of [440, 480]) {
+      const o = c.createOscillator(); o.type = "sine"; o.frequency.value = f; o.connect(g);
+      const lfo = c.createOscillator(); lfo.frequency.value = 20; const d = c.createGain(); d.gain.value = 15; lfo.connect(d); d.connect(o.frequency);
+      o.start(t0 + start); o.stop(t0 + start + 0.42); lfo.start(t0 + start); lfo.stop(t0 + start + 0.42);
+    }
+  }
+}
 export const vacs = writable<VacsState>({ enabled: false, link: "off", onPosition: false, ringing: null, call: null, dismissed: "", error: "", log: loadLog(), online: [], callError: "", busy: lsGet(BUSYKEY) === "1", busyPrio: lsGet(BUSYPRIOKEY) !== "0" });
 const upd = (f: (s: VacsState) => void) => vacs.update((s) => { f(s); return { ...s }; });
 
@@ -118,6 +151,7 @@ function handle(name: string, p: any): void {
       }
       upd((s) => { s.ringing = { callId: p.callId, from, prio: !!p.prio, cid: w.cid, callsign: w.callsign, at: now }; });
       logStart({ callId: p.callId, dir: "in", who: from, cid: w.cid, callsign: w.callsign, prio: !!p.prio, at: now, answeredAt: 0, endedAt: 0, result: "ringing" });
+      ringOnce();
       break;
     }
     case "signaling:accept-incoming-call": {

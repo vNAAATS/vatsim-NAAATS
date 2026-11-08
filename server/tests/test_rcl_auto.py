@@ -114,6 +114,15 @@ class RclTests(Base):
         self.poll()
         self.assertIsNone(self.rcl.tick())                              # never twice
 
+    def test_history_records_each_step(self):
+        self.poll()
+        self.assertEqual(self.rcl.tick(), "BAW1")
+        c = self.q.done(1, True, "ok")
+        self.rcl.done(c, True)
+        h = self.rcl.status()["history"]
+        self.assertEqual([x["kind"] for x in h], ["sent", "message"])       # newest first
+        self.assertTrue(all(x["callsign"] == "BAW1" and x["ts"] for x in h))
+
     def test_failure_retries_then_gives_up(self):
         self.poll()
         for n in range(r.MAX_TRIES):

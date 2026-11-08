@@ -19,6 +19,11 @@
     if (w.minutes === null) return "no entry time yet";
     return (w.time ? "entry " + w.time + "Z" : "entry") + (w.fix ? " at " + w.fix : "") + ", in " + w.minutes + " min";
   }
+  const KIND: Record<string, [string, string]> = {
+    "telex": ["Telex sent", "text-blue-200"], "telex-failed": ["Telex failed", "text-yellow-300"], "answered": ["Pilot answered", "text-green-300"],
+    "no-reply": ["No telex reply", "text-yellow-300"], "message": ["Message queued", "text-blue-200"], "sent": ["Message sent", "text-green-300"], "failed": ["Failed", "text-red-300"],
+  };
+  function hhmm(ts: number): string { const d = new Date(ts * 1000); return String(d.getUTCHours()).padStart(2, "0") + String(d.getUTCMinutes()).padStart(2, "0") + "Z"; }
   async function answer(a: "send" | "later" | "skip" | "stop"): Promise<void> {
     busy = true; msg = await sess.rclAnswer(a); busy = false;
   }
@@ -71,6 +76,16 @@
           <label class="flex items-center gap-2"><input type="checkbox" checked={$rclAuto.confirm} disabled={!sess.canEdit($session)} on:change={toggleConfirm} /> Ask me before sending (recommended)</label>
         </div>
         <div class="mt-2 text-xs opacity-70">Flights 20 to 45 minutes from oceanic entry that have not asked for clearance on natTrak get the reminder. With "ask first" off they are sent automatically, and EuroScope may come to the front without warning.</div>
+        <div class="mt-3 mb-1 font-bold">History</div>
+        {#if ($rclAuto.history ?? []).length === 0}
+          <div class="opacity-80">Nothing has been sent yet.</div>
+        {:else}
+          <ul class="max-h-48 overflow-y-auto">
+            {#each $rclAuto.history ?? [] as h}
+              <li class="flex gap-2 py-0.5 border-b border-blue-6" title={h.detail}><span class="opacity-70 w-14 shrink-0">{hhmm(h.ts)}</span><b class="w-24 shrink-0">{h.callsign}</b><span class={(KIND[h.kind] ?? ["", ""])[1]}>{(KIND[h.kind] ?? [h.kind, ""])[0]}</span></li>
+            {/each}
+          </ul>
+        {/if}
         {#if $rclAuto.error}<div class="mt-1 text-yellow-300">Last problem: {$rclAuto.error}</div>{/if}
       {/if}
       {#if msg}<div class="mt-2 text-yellow-300">{msg}</div>{/if}

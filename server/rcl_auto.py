@@ -115,6 +115,8 @@ class RclAuto:
         self.store, self.queue, self.network, self.natrak = store, queue, network, natrak
         self.hoppie = hoppie       # (sender position) -> a signed-in CPDLC station that can ping Hoppie and send a telex, or None
         self.telex_sent = {}       # flight callsign -> time the telex went out
+        self.answered_logged = set()   # flights whose "answered" line is already in the history
+        self.noreply_logged = set()
         self.telex_off = {}        # flight callsign -> time it was found not online on Hoppie
         self.distance_fn = distance_fn          # (route, (lat, lon)) -> nm to the nearest fix on the route, or None
         self.prefixes = tuple(oceanic_prefixes)
@@ -144,12 +146,28 @@ class RclAuto:
         with self.store.lock:
             self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_auto (callsign TEXT PRIMARY KEY, ts REAL NOT NULL)")
             self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_telex (callsign TEXT PRIMARY KEY, ts REAL NOT NULL)")
+            self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_history (id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, callsign TEXT NOT NULL, kind TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '')")
             self.store.db.execute("CREATE TABLE IF NOT EXISTS rcl_setting (id INTEGER PRIMARY KEY CHECK (id = 1), on_ INTEGER NOT NULL)")
             row = self.store.db.execute("SELECT on_ FROM rcl_setting WHERE id=1").fetchone()
             self.store.db.commit()
         self.enabled = True if row is None else bool(row[0])
         if start:
             threading.Thread(target=self.loop, daemon=True).start()
+
+    # --- history (what happened to which aircraft, newest last; shown in the Auto RCL panel)
+    def hist(self, cs, kind, detail=""):
+        """kind: telex, telex-failed, answered, no-reply, message, sent, failed."""
+        try:
+            with self.store.lock:
+                self.store.db.execute("INSERT INTO rcl_history (ts, callsign, kind, detail) VALUES (?, ?, ?, ?)", (self.now(), cs, kind, str(detail)[:160]))
+                self.store.db.commit()
+        except Exception:
+            log.exception("could not record the auto RCL history")
+
+    def history(self, limit=60):
+        with self.store.lock:
+            rows = self.store.db.execute("SELECT ts, callsign, kind, detail FROM rcl_history ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        return [{"ts": r[0], "callsign": r[1], "kind": r[2], "detail": r[3]} for r in rows]
 
     # --- settings
     def set_enabled(self, on):
@@ -245,7 +263,7 @@ class RclAuto:
         prompt = bool(self.enabled and self.confirm and waiting and sender and self.now() >= self.next_prompt)
         return {"on": self.enabled, "sender": sender, "inflight": n, "error": self.last_error, "startsInSeconds": wait,
                 "confirm": self.confirm, "waiting": waiting, "prompt": prompt, "sending": sending, "batch": batch,
-                "telex": len(self.telex_sent), "telexOn": bool(self.hoppie)}
+                "telex": len(self.telex_sent), "telexOn": bool(self.hoppie), "history": self.history()}
 
     # --- the decision
     def already_sent(self, cs):
@@ -324,11 +342,17 @@ class RclAuto:
             if sent is not None:
                 try:
                     if st.asked_rcl(cs):
+                        if cs not in self.answered_logged:
+                            self.answered_logged.add(cs)
+                            self.hist(cs, "answered", "Pilot asked for clearance after the telex")
                         continue                                    # the pilot answered by CPDLC or telex: nothing more to do
                 except Exception:
                     pass
                 if t - sent < TELEX_WAIT_SECONDS:
                     continue                                        # give the telex time to be read
+                if cs not in self.noreply_logged:
+                    self.noreply_logged.add(cs)
+                    self.hist(cs, "no-reply", "No reply to the telex; EuroScope message follows")
                 rest.append(item)                                   # no answer: the EuroScope message goes too
             elif t - self.telex_off.get(cs, -1e9) < TELEX_REPING_SECONDS:
                 rest.append(item)
@@ -350,10 +374,12 @@ class RclAuto:
                         st.send_telex(cs, commands_mod.NATMSG, by=BY)
                     except Exception as e:
                         log.warning("Auto RCL telex to %s failed: %s", cs, e)
+                        self.hist(cs, "telex-failed", e)
                         rest.append(item)
                         continue
                     sent_now += 1
                     self.telex_sent[cs] = t
+                    self.hist(cs, "telex", "Reminder sent as a Hoppie telex")
                     with self.store.lock:
                         self.store.db.execute("INSERT OR REPLACE INTO rcl_telex VALUES (?, ?)", (cs, t))
                         self.store.db.commit()
@@ -459,6 +485,7 @@ class RclAuto:
             with self.lock:
                 self.inflight[cs] = {"cid": cid, "ts": t, "base": rec, "sender": sender}
                 self.tries[cs] = {"n": tr["n"] + 1, "next": t + RETRY_SECONDS}
+            self.hist(cs, "message", "EuroScope message queued on %s" % sender)
             log.info("Auto RCL REQ queued for %s via %s", cs, sender)
             return cs
         return None
@@ -483,17 +510,20 @@ class RclAuto:
                 self.store.db.commit()
             self.store.mark_nt(cs, "Auto RCL REQ", True, info.get("base"))
             self.last_error = ""
+            self.hist(cs, "sent", "RCL REQ message typed in EuroScope")
             log.info("Auto RCL REQ sent to %s", cs)
         else:
             self.last_error = "%s: %s" % (cs, (msg or "failed")[:120])
             with self.lock:
                 if cs in self.tries:
                     self.tries[cs]["next"] = self.now() + RETRY_FAIL_SECONDS      # try again soon, not in five minutes
+            self.hist(cs, "failed", (msg or "failed")[:120])
             log.warning("Auto RCL REQ for %s failed: %s", cs, msg)
 
     def purge(self):
         with self.store.lock:
             self.store.db.execute("DELETE FROM rcl_auto WHERE ts < ?", (self.now() - 3 * 86400,))
+            self.store.db.execute("DELETE FROM rcl_history WHERE ts < ?", (self.now() - 2 * 86400,))
             self.store.db.commit()
 
     def loop(self):

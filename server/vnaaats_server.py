@@ -2139,6 +2139,11 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         return self._send(401, {"error": "log in first"})
                     st = queue.status(to_int(q.get("id"), 0))
                     return self._send(200, st) if st else self._send(404, {"error": "unknown command"})
+                if p == "/pluginversion":                      # the latest plugin version as plain text, for the plugin's start-up check (public)
+                    info, _blob = plugin_files.latest()
+                    if not info or not info.get("version"):
+                        return self._send(503, "unavailable", "text/plain")
+                    return self._send(200, str(info["version"]), "text/plain")
                 if p in ("/plugin/latest.json", "/plugin/VatsimNAAATS.dll"):    # the latest released plugin, for the vNAAATS app (public: it is on GitHub too)
                     info, blob = plugin_files.latest()
                     if not info:

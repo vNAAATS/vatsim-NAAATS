@@ -117,7 +117,8 @@ class CDataHandler
 		static int GetTrackSource(CPlugIn* plugin); // Event tracks or not
 
 		// Version URL
-		static const string PluginVersion;
+		static const string PluginVersion;       // GitHub copy, used only if our own server cannot be reached
+		static string VersionUrl;                // our own server: <server>/pluginversion (plain text)
 
 		// NAT Track URL
 		static string TrackURL;

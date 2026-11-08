@@ -6,6 +6,7 @@
   let open: boolean = false;
   let tab: "calls" | "dial" | "setup" = "calls";
   let en: boolean = v.isEnabled();
+  const { ringMuted } = v;
   let port: string = String(v.getPort());
   let find: string = "";
   let blink: boolean = true;
@@ -156,6 +157,7 @@
           <div class="font-bold mb-1">VACS call alert</div>
           <div class="mb-2 opacity-90">Shows incoming calls, keeps a call log and lets you ring people. It talks to VACS on this computer only; nothing is sent to our server.</div>
           <label class="flex items-center gap-2 mb-2"><input type="checkbox" bind:checked={en} /> Switch the alert on</label>
+          <label class="flex items-center gap-2 mb-2"><input type="checkbox" checked={!$ringMuted} on:change={(e) => v.setRingMuted(!e.currentTarget.checked)} /> Ring once when a call comes in <button class="px-2 border border-blue-6" on:click={() => { v.setRingMuted(false); v.ringOnce(); }}>Test</button></label>
           <label class="flex items-center gap-2 mb-2">VACS port <input class="w-20 px-1 text-black" bind:value={port} inputmode="numeric" /></label>
           <div class="mb-2 text-xs opacity-80">In VACS (2.1.0 or newer) open <b>Advanced Settings</b> and tick <b>Enable remote control</b>; it is off by default and uses port 9600. For safety set <b>Listen addr.</b> to <b>127.0.0.1:9600</b> so only this computer can connect. Your browser may ask to allow access to devices on your network: choose Allow.</div>
           <button class="px-3 py-0.5 font-bold bg-blue-10 text-black" on:click={apply}>Save</button>

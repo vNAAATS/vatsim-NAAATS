@@ -133,8 +133,9 @@ export type RclAuto = {
   prompt: boolean;                        // time to ask (at most every 5 minutes)
   sending: number;                        // released and not yet typed
   batch: { total: number; done: number; failed: string[] };
+  history?: { ts: number; callsign: string; kind: string; detail: string }[];   // newest first
 };
-export const rclAuto = writable<RclAuto>({ on: false, sender: "", inflight: 0, error: "", confirm: true, waiting: [], prompt: false, sending: 0, batch: { total: 0, done: 0, failed: [] } });
+export const rclAuto = writable<RclAuto>({ on: false, sender: "", inflight: 0, error: "", confirm: true, waiting: [], prompt: false, sending: 0, batch: { total: 0, done: 0, failed: [] }, history: [] });
 export const rclPanelOpen = writable<boolean>(false);
 
 export async function refreshRclAuto(): Promise<void> {
