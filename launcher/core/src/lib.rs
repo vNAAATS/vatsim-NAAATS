@@ -73,10 +73,20 @@ pub fn valid_key(key: &str) -> bool {
     (8..=120).contains(&key.len()) && key != PLACEHOLDER && key.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_'))
 }
 
+/// A key as people paste it: with spaces, quotes, or the "key=" label that the vnaaats.cfg line shows. Leaves just the key.
+pub fn clean_key(raw: &str) -> String {
+    let mut s = raw.trim().trim_matches(|c| c == '"' || c == '\'' || c == '`').trim();
+    if s.len() >= 4 && s[..4].eq_ignore_ascii_case("key=") {
+        s = s[4..].trim().trim_matches(|c| c == '"' || c == '\'' || c == '`').trim();
+    }
+    s.to_string()
+}
+
 /// Put `key=` into vnaaats.cfg (replacing an existing key line, or adding one; creating the file if it is not there).
 /// Every other line is kept as it was, including the line endings.
 pub fn set_cfg_key(dir: &Path, key: &str) -> Result<(), String> {
-    let key = key.trim();
+    let key = clean_key(key);
+    let key = key.as_str();
     if !valid_key(key) {
         return Err("that does not look like a vNAAATS key (it is long, with letters, numbers and a dot)".into());
     }
@@ -191,6 +201,17 @@ mod tests {
         fs::write(d2.path().join(CFG_NAME), "autotype=1\n").unwrap();
         set_cfg_key(d2.path(), "1234567.abcdefghijkl").unwrap();
         assert_eq!(fs::read_to_string(d2.path().join(CFG_NAME)).unwrap(), "autotype=1\nkey=1234567.abcdefghijkl\n");
+    }
+
+    #[test]
+    fn a_pasted_key_label_is_dropped() {
+        let d = tempfile::tempdir().unwrap();
+        for pasted in ["key=1234567.abcdefghijkl", "KEY=1234567.abcdefghijkl", " \"key=1234567.abcdefghijkl\" ", "1234567.abcdefghijkl"] {
+            set_cfg_key(d.path(), pasted).unwrap();
+            let t = fs::read_to_string(d.path().join(CFG_NAME)).unwrap();
+            let keys: Vec<&str> = t.lines().filter(|l| l.starts_with("key=")).collect();
+            assert_eq!(keys, vec!["key=1234567.abcdefghijkl"], "{}", pasted);
+        }
     }
 
     #[test]
