@@ -41,7 +41,7 @@
     mach = ac && ac.AssignedMach ? String(ac.AssignedMach).padStart(3, "0") : "";
     selcal = ac && ac.Selcal && ac.Selcal !== "N/A" ? String(ac.Selcal) : "";
     scratch = ac && ac.Scratch ? String(ac.Scratch) : "";
-    m.loadControllers().then((c) => (controllers = c));
+    m.loadControllers().then((c) => { controllers = c; const h = ac?.Handoff; if (h && h.controller && c.some((x: any) => x.callsign === h.controller)) pickedCtrl = h.controller; });
   }
   function close(): void { dispatch("close"); }
   function pickTab(t: string): void { tab = t; note = ""; copied = ""; }
@@ -184,10 +184,11 @@
           {#if controllers.length === 0}
             <div class="text-sm opacity-80">No adjacent ATC - Send to UNICOM</div>
           {:else}
+            {#if ac && ac.Handoff}<div class="text-sm mb-2 {ac.Handoff.soon ? 'text-yellow-300 font-bold' : 'opacity-80'}">Next: {ac.Handoff.name} ({ac.Handoff.nm} nm to {ac.Handoff.fix}){ac.Handoff.unicom ? " - nobody online, send to UNICOM" : " - " + (ac.Handoff.online ?? []).map((o) => (o.code ? o.code + " " : "") + o.callsign + " " + o.frequency).join(", ")}</div>{/if}
             <select class="w-full px-1 py-0.5 text-black mb-3" bind:value={pickedCtrl}>
               <option value="">Choose controller</option>
               {#each controllers as c}
-                <option value={c.callsign}>{c.callsign} {c.frequency} {c.name}</option>
+                <option value={c.callsign}>{((ac?.Handoff?.online ?? []).find((o) => o.callsign === c.callsign)?.code ?? "")} {c.callsign} {c.frequency} {c.name}</option>
               {/each}
             </select>
             <button class="px-2 py-1 {BTN}" disabled={busy || !canEdit || !pickedCtrl} on:click={transfer}>Transfer</button>

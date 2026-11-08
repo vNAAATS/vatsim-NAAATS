@@ -18,6 +18,7 @@
   import VacsChip from "./vacs_chip.svelte";
   import AudioChip from "./audio_chip.svelte";
   import RclPanel from "./rcl_panel.svelte";
+  import HandoffPanel from "./handoff_panel.svelte";
 
   const { session } = sess;
   const { cpdlcStatus, cpdlcOpen, cpdlcAttention } = cp;
@@ -364,6 +365,7 @@
     <VacsChip />
     <AudioChip />
     <RclPanel />
+    <HandoffPanel />
     {#if $cpdlcStatus.enabled}
       <button class="tbtn border border-blue-6 {(cpdlcUnread > 0 || $cpdlcAttention.size > 0) && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : 'bg-blue-3'}"
         title="Open the CPDLC panel" on:click={() => cpdlcOpen.set(!$cpdlcOpen)}><span class="inline-block w-2 h-2 rounded-full bg-green-300" title="CPDLC is online"></span>CPDLC{$cpdlcStatus.connected.length > 0 ? " [" + $cpdlcStatus.connected.length + "]" : ""}{cpdlcUnread > 0 ? " \u2709 " + cpdlcUnread : ""}{$cpdlcAttention.size > 0 ? " new logon" : ""}
@@ -535,6 +537,7 @@
             isEquipped={ac.IsEquipped}
             alert={visualOn && dataHandler.isNatTrakAlert(ac.Callsign) && tickN >= 0}
             ntSent={ac.NtSent}
+            handoff={ac.Handoff ?? null}
             cmAt={ac.ContactMeAt ?? 0}
             cmState={tickN >= 0 ? dataHandler.contactMeState(ac) : ""}
             comm={ac.Comm}

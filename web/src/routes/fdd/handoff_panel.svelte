@@ -1,0 +1,86 @@
+<script lang="ts">
+  import { onMount, onDestroy } from "svelte";
+  import * as sess from "../../typescript/fdd/session";
+  import * as cp from "../../typescript/fdd/cpdlc";
+  import * as m from "../../typescript/fdd/acmenu";
+  import * as h from "../../typescript/fdd/handoff";
+
+  const { session } = sess;
+  const { handoffCards, handoffSoundOn, handoffAuto, autoLog } = h;
+  let timer: any = null;
+  let picked: Record<string, string> = {};   // callsign -> chosen position
+  let note: Record<string, string> = {};
+  let busy: Record<string, boolean> = {};
+
+  onMount(() => { h.update($session.position ?? ""); timer = setInterval(() => h.update($session.position ?? ""), 2000); });
+  onDestroy(() => { if (timer) clearInterval(timer); });
+
+  function choice(c: h.HandoffCard): string { return picked[c.callsign] ?? c.online[0]?.callsign ?? ""; }
+  async function transfer(c: h.HandoffCard): Promise<void> {
+    const o = c.online.find((x) => x.callsign === choice(c));
+    if (!o) return;
+    busy[c.callsign] = true; note[c.callsign] = ""; busy = busy; note = note;
+    const id = await m.queueCommand({ type: "transfer", callsign: c.callsign, target: o.callsign, freq: o.frequency });
+    if (typeof id === "string") note[c.callsign] = "✖ " + id;
+    else {
+      note[c.callsign] = "Sending to EuroScope...";
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        const s = await m.commandState(id);
+        if (s.state === "ok") { h.dismissCard(c); busy[c.callsign] = false; return; }
+        if (s.state === "failed") { note[c.callsign] = "✖ " + s.msg; break; }
+      }
+      if (!note[c.callsign].startsWith("✖")) note[c.callsign] = "✖ EuroScope did not answer. Hand off in EuroScope instead.";
+    }
+    busy[c.callsign] = false; busy = busy; note = note;
+  }
+  async function unicom(c: h.HandoffCard): Promise<void> {
+    busy[c.callsign] = true; busy = busy;
+    const e = await cp.sendUnicom(c.callsign);
+    note[c.callsign] = e ? "✖ " + e : "";
+    busy[c.callsign] = false; busy = busy; note = note;
+    if (!e) h.dismissCard(c);
+  }
+</script>
+
+<button class="tbtn border {$handoffAuto.on ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-red-400 text-red-200'}" disabled={!sess.canEdit($session)}
+  title={"Auto handoff is " + ($handoffAuto.on ? "ON" : "OFF") + ". On: for aircraft you track that are on CPDLC, the transfer is sent for you " + $handoffAuto.nm + " nm from the boundary when a position is online to take it; with nobody online the UNICOM message is sent at the boundary and the tag is released when the pilot answers. Needs this display to stay open. " + ($autoLog || "")}
+  on:click={() => h.setHandoffAuto(!$handoffAuto.on)}><span class="inline-block w-2 h-2 rounded-full {$handoffAuto.on ? 'bg-green-300' : 'bg-red-400'}"></span>Auto handoff: {$handoffAuto.on ? "ON" : "OFF"}</button>
+{#if $handoffAuto.on}
+  <select class="tbtn border border-blue-6 bg-blue-3 text-white" value={String($handoffAuto.nm)} title="Distance from the boundary at which the transfer is sent" on:change={(e) => h.setHandoffAuto(true, parseInt(e.currentTarget.value, 10))}>
+    {#each [10, 20, 30, 40, 50] as n}<option value={String(n)}>{n} nm</option>{/each}
+  </select>
+{/if}
+{#if $autoLog}<span class="text-xs text-yellow-300 max-w-xs truncate" title={$autoLog}>{$autoLog}</span>{/if}
+
+{#if $handoffCards.length > 0}
+  <div class="fixed right-3 bottom-3 z-50 flex flex-col gap-2 w-96 max-w-[95vw] font-web text-white" aria-live="polite">
+    {#each $handoffCards as c (c.callsign + c.kind)}
+      <div class="bg-blue-2 border-2 border-yellow-300 shadow-lg" role="alertdialog" aria-label="Handoff {c.callsign}">
+        <div class="px-3 py-1 bg-yellow-300 text-black font-bold flex items-center">
+          <span>{c.kind === "near" ? "Handoff soon" : "Leaving oceanic airspace"}: {c.callsign}</span>
+          <button class="ml-auto px-2 text-xs border border-black" on:click={() => h.dismissCard(c)} aria-label="Dismiss">Dismiss</button>
+        </div>
+        <div class="p-3 text-sm">
+          {#if c.kind === "near"}
+            <div class="mb-2"><b>{c.callsign}</b> is nearing the sector boundary (<b>{c.nm} nm</b> to {c.fix}) to <b>{c.name}</b>.</div>
+            <select class="w-full px-1 py-0.5 text-black mb-2" value={choice(c)} on:change={(e) => { picked[c.callsign] = e.currentTarget.value; picked = picked; }}>
+              {#each c.online as o}<option value={o.callsign}>{o.code ? o.code + " " : ""}{o.callsign} {o.frequency}</option>{/each}
+            </select>
+            <button class="px-3 py-1 font-bold bg-blue-10 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => transfer(c)}>Transfer</button>
+          {:else}
+            <div class="mb-2"><b>{c.callsign}</b> is leaving oceanic airspace at {c.fix}. No adjacent controller is online (<b>{c.name}</b>): hand off to UNICOM (122.800).</div>
+            {#if c.cpdlc}
+              <button class="px-3 py-1 font-bold bg-yellow-300 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => unicom(c)}>Send to UNICOM</button>
+            {:else}
+              <div class="opacity-90">Not on CPDLC: tell the pilot on voice or text to monitor UNICOM 122.800, then release the tag.</div>
+            {/if}
+          {/if}
+          {#if c.error && !note[c.callsign]}<div class="mt-2 text-yellow-300">✖ Automatic handoff failed: {c.error}. Do it here or in EuroScope.</div>{/if}
+          {#if note[c.callsign]}<div class="mt-2 text-yellow-300">{note[c.callsign]}</div>{/if}
+          <label class="mt-2 flex items-center gap-2 text-xs opacity-80"><input type="checkbox" checked={$handoffSoundOn} on:change={(e) => h.setHandoffSound(e.currentTarget.checked)} /> Play a sound for handoff prompts</label>
+        </div>
+      </div>
+    {/each}
+  </div>
+{/if}

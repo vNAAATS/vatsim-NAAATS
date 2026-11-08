@@ -61,6 +61,7 @@ import members as members_mod
 import usersettings as usersettings_mod
 import pluginfiles as pluginfiles_mod
 import adminlog as adminlog_mod
+import handoff as handoff_mod
 log = logging.getLogger("vnaaats")
 
 TRAINEE_KEY_HOURS = 2            # how long an instructor-issued trainee key lasts
@@ -1515,6 +1516,20 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
         rec["offline"] = network.is_offline(rec.get("callsign", "")) if network else None
         rec["comm"] = network.comm_for(rec.get("callsign", "")) if network and hasattr(network, "comm_for") else None
         rec["distNm"] = route_distance_nm(rec.get("route", ""), network.position(rec.get("callsign", "")) if network else None, cache.fixes)
+        rec["handoff"] = None                                                # the next boundary, how far, and who is online to take it
+        try:
+            hp = network.position(rec.get("callsign", "")) if network else None
+            if hp and network:
+                pts = []
+                for tok in str(rec.get("route", "")).split():
+                    ll = token_to_latlon(tok, cache.fixes)
+                    if ll:
+                        pts.append((tok, ll[0], ll[1]))
+                with network.lock:
+                    ctrls = list(network.controllers)
+                rec["handoff"] = handoff_mod.hint(pts, hp, ctrls)
+        except Exception:
+            log.exception("handoff hint failed for %s", rec.get("callsign"))
         if is_conc(rec.get("type", "")):
             rec["posReports"] = store.pos_get(rec.get("callsign", ""))
         return rec

@@ -29,6 +29,7 @@ export type Aircraft = {
   ContactMeAt?: number; // ms: when a .contactme was sent from the FDD (0 = never)
   NtSent: boolean; // natTrak reminder sent to the pilot (red star) - false once they request or an oceanic controller tracks
   Cpdlc: boolean; // connected to the CPDLC station
+  Handoff?: { facility: string; fix: string; nm: number; name: string; soon: boolean; controller: string; frequency: string; code?: string; unicom: boolean; online?: { callsign: string; code: string; frequency: string }[] } | null; // next boundary, distance and who is online to take it
   DistNm: number | null; // nm from the pilot to the nearest route fix (VATSIM feed), null if unknown
   Offline: boolean | null; // true = the VATSIM feed is working and this pilot is not on it
   Entry: string; // first and last named/lat-lon point of the route in flight order (before any display reversal)

@@ -39,6 +39,7 @@ interface JsonAcObj {
   source?: string;
   cpdlc?: boolean;
   distNm?: number | null;
+  handoff?: { facility: string; fix: string; nm: number; name: string; soon: boolean; controller: string; frequency: string; code?: string; unicom: boolean; online?: { callsign: string; code: string; frequency: string }[] } | null;
   ntSent?: boolean;
   cmAt?: number;
   manual?: any;
@@ -341,6 +342,7 @@ export async function populateAllAircraft() : Promise<void> {
             Source: objArr[i]?.source ?? "plugin",
             Cpdlc: objArr[i]?.cpdlc ?? false,
             DistNm: objArr[i]?.distNm ?? null,
+            Handoff: objArr[i]?.handoff ?? null,
             NtSent: objArr[i]?.ntSent ?? false,
             ContactMeAt: objArr[i]?.cmAt ? objArr[i].cmAt * 1000 : 0,
             Manual: !!objArr[i]?.manual,
