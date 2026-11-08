@@ -983,3 +983,51 @@ class PluginRouteEndpointTests(unittest.TestCase):
 
     def test_unknown_aircraft_404(self):
         self.assertEqual(self.get("/PluginRoute?code=%s&callsign=NOPE9" % KEY)[0], 404)
+
+
+class AdminFddTests(unittest.TestCase):
+    """The admin view: the log-viewer token opens a read-only display with no VATSIM connection."""
+    TOKEN = "admin-token-123456"
+
+    @classmethod
+    def setUpClass(cls):
+        import adminlog
+        tmp = tempfile.mkdtemp()
+        logs = adminlog.LogHub(cls.TOKEN, os.path.join(tmp, "logs"))
+        store = s.FlightStore(os.path.join(tmp, "a.db"))
+        cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(s.TrackCache(s.load_fixes()), store, KEY, None, None, None, s.Auth({}), None, None, None, None, "", None, logs))
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+        cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+
+    def _post(self, path, body, headers=None, cookie=""):
+        h = {"Content-Type": "application/json"}
+        h.update(headers or {})
+        if cookie:
+            h["Cookie"] = cookie
+        req = urllib.request.Request(self.base + path, json.dumps(body).encode(), h, method="POST")
+        try:
+            r = urllib.request.urlopen(req)
+            return r.status, json.loads(r.read() or b"{}"), r.headers.get("Set-Cookie", "")
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b"{}"), ""
+
+    def test_needs_the_token(self):
+        self.assertEqual(self._post("/admin/fdd/session", {})[0], 403)
+        self.assertEqual(self._post("/admin/fdd/session", {}, {"X-Admin-Token": "wrong"})[0], 403)
+
+    def test_view_only(self):
+        code, data, cookie = self._post("/admin/fdd/session", {}, {"X-Admin-Token": self.TOKEN})
+        self.assertEqual(code, 200)
+        self.assertEqual(data["position"], "ADMIN")
+        ck = cookie.split(";")[0]
+        for path in ("/EditFlight", "/AddFlight", "/RemoveFlight", "/cpdlc/logon", "/cpdlc/send", "/auth/position"):
+            self.assertEqual(self._post(path, {"callsign": "X", "position": "CZQO_CTR"}, cookie=ck)[0], 403, path)
+        self.assertEqual(self._post("/auth/logout", {}, cookie=ck)[0], 200)
+
+    def test_page_and_position(self):
+        self.assertIn(b"Admin token", urllib.request.urlopen(self.base + "/admin/fdd").read())
+        self.assertEqual(self._post("/auth/position", {"position": "ADMIN"})[0], 400)

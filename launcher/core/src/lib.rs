@@ -156,9 +156,26 @@ pub fn is_exe(path: &Path) -> bool {
     path.is_file() && path.extension().map(|e| e.to_string_lossy().eq_ignore_ascii_case("exe")).unwrap_or(false)
 }
 
+/// Does `tasklist /FO CSV /NH` output list a process called `exe_name` (case-insensitive)? Lines look like "EuroScope.exe","1234",...
+pub fn tasklist_has(output: &str, exe_name: &str) -> bool {
+    output.lines().any(|l| {
+        let first = l.trim().trim_start_matches('"').split('"').next().unwrap_or("");
+        first.eq_ignore_ascii_case(exe_name)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn finds_running_process() {
+        let out = "\"System\",\"4\",\"Services\",\"0\",\"1 K\"\r\n\"EuroScope.exe\",\"4242\",\"Console\",\"1\",\"90,000 K\"\r\n";
+        assert!(tasklist_has(out, "euroscope.exe"));
+        assert!(!tasklist_has(out, "vacs.exe"));
+        assert!(!tasklist_has("INFO: No tasks are running which match the specified criteria.", "vacs.exe"));
+        assert!(!tasklist_has(out, "Euro"));
+    }
 
     #[test]
     fn finds_dll_in_nested_folder() {

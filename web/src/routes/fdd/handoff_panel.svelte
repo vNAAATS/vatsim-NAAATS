@@ -11,6 +11,9 @@
   let picked: Record<string, string> = {};   // callsign -> chosen position
   let note: Record<string, string> = {};
   let busy: Record<string, boolean> = {};
+  let open: boolean = false;                  // the list of handoff messages (opened by clicking the flashing button)
+  $: if ($handoffCards.length === 0) open = false;
+  $: soonest = $handoffCards.length ? [...$handoffCards].sort((a, b) => a.nm - b.nm)[0] : null;
 
   onMount(() => { h.update($session.position ?? ""); timer = setInterval(() => h.update($session.position ?? ""), 2000); });
   onDestroy(() => { if (timer) clearInterval(timer); });
@@ -54,33 +57,50 @@
 {#if $autoLog}<span class="text-xs text-yellow-300 max-w-xs truncate" title={$autoLog}>{$autoLog}</span>{/if}
 
 {#if $handoffCards.length > 0}
-  <div class="fixed right-3 bottom-3 z-50 flex flex-col gap-2 w-96 max-w-[95vw] font-web text-white" aria-live="polite">
-    {#each $handoffCards as c (c.callsign + c.kind)}
-      <div class="bg-blue-2 border-2 border-yellow-300 shadow-lg" role="alertdialog" aria-label="Handoff {c.callsign}">
-        <div class="px-3 py-1 bg-yellow-300 text-black font-bold flex items-center">
-          <span>{c.kind === "near" ? "Handoff soon" : "Leaving oceanic airspace"}: {c.callsign}</span>
-          <button class="ml-auto px-2 text-xs border border-black" on:click={() => h.dismissCard(c)} aria-label="Dismiss">Dismiss</button>
-        </div>
-        <div class="p-3 text-sm">
-          {#if c.kind === "near"}
-            <div class="mb-2"><b>{c.callsign}</b> is nearing the sector boundary (<b>{c.nm} nm</b> to {c.fix}) to <b>{c.name}</b>.</div>
-            <select class="w-full px-1 py-0.5 text-black mb-2" value={choice(c)} on:change={(e) => { picked[c.callsign] = e.currentTarget.value; picked = picked; }}>
-              {#each c.online as o}<option value={o.callsign}>{o.code ? o.code + " " : ""}{o.callsign} {o.frequency}</option>{/each}
-            </select>
-            <button class="px-3 py-1 font-bold bg-blue-10 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => transfer(c)}>Transfer</button>
-          {:else}
-            <div class="mb-2"><b>{c.callsign}</b> is leaving oceanic airspace at {c.fix}. No adjacent controller is online (<b>{c.name}</b>): hand off to UNICOM (122.800).</div>
-            {#if c.cpdlc}
-              <button class="px-3 py-1 font-bold bg-yellow-300 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => unicom(c)}>Send to UNICOM</button>
+  <button class="tbtn border border-yellow-300 font-bold ho-flash text-black" aria-live="polite"
+    title="Click to read the handoff message{$handoffCards.length === 1 ? '' : 's'} and act on {$handoffCards.length === 1 ? 'it' : 'them'}" on:click={() => (open = !open)}>
+    &#8644; Handoff: {soonest ? soonest.callsign : ""}{$handoffCards.length > 1 ? " +" + ($handoffCards.length - 1) : ""}
+  </button>
+  {#if open}
+    <div class="fixed inset-0 z-40" on:click={() => (open = false)}></div>
+    <div class="fixed right-3 z-50 flex flex-col gap-2 w-96 max-w-[95vw] max-h-[70vh] overflow-y-auto font-web text-white" style="top: 13rem;" role="dialog" aria-label="Handoff messages">
+      {#each $handoffCards as c (c.callsign + c.kind)}
+        <div class="bg-blue-2 border-2 border-yellow-300 shadow-lg" role="alertdialog" aria-label="Handoff {c.callsign}">
+          <div class="px-3 py-1 bg-yellow-300 text-black font-bold flex items-center">
+            <span>{c.kind === "near" ? "Handoff soon" : "Leaving oceanic airspace"}: {c.callsign}</span>
+            <button class="ml-auto px-2 text-xs border border-black" on:click={() => h.dismissCard(c)} aria-label="Dismiss">Dismiss</button>
+          </div>
+          <div class="p-3 text-sm">
+            {#if c.kind === "near"}
+              <div class="mb-2"><b>{c.callsign}</b> is nearing the sector boundary (<b>{c.nm} nm</b> to {c.fix}) to <b>{c.name}</b>.</div>
+              <select class="w-full px-1 py-0.5 text-black mb-2" value={choice(c)} on:change={(e) => { picked[c.callsign] = e.currentTarget.value; picked = picked; }}>
+                {#each c.online as o}<option value={o.callsign}>{o.code ? o.code + " " : ""}{o.callsign} {o.frequency}</option>{/each}
+              </select>
+              <button class="px-3 py-1 font-bold bg-blue-10 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => transfer(c)}>Transfer</button>
             {:else}
-              <div class="opacity-90">Not on CPDLC: tell the pilot on voice or text to monitor UNICOM 122.800, then release the tag.</div>
+              <div class="mb-2"><b>{c.callsign}</b> is leaving oceanic airspace at {c.fix}. No adjacent controller is online (<b>{c.name}</b>): hand off to UNICOM (122.800).</div>
+              {#if c.cpdlc}
+                <button class="px-3 py-1 font-bold bg-yellow-300 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => unicom(c)}>Send to UNICOM</button>
+              {:else}
+                <div class="opacity-90">Not on CPDLC: tell the pilot on voice or text to monitor UNICOM 122.800, then release the tag.</div>
+              {/if}
             {/if}
-          {/if}
-          {#if c.error && !note[c.callsign]}<div class="mt-2 text-yellow-300">✖ Automatic handoff failed: {c.error}. Do it here or in EuroScope.</div>{/if}
-          {#if note[c.callsign]}<div class="mt-2 text-yellow-300">{note[c.callsign]}</div>{/if}
-          <label class="mt-2 flex items-center gap-2 text-xs opacity-80"><input type="checkbox" checked={$handoffSoundOn} on:change={(e) => h.setHandoffSound(e.currentTarget.checked)} /> Play a sound for handoff prompts</label>
+            {#if c.error && !note[c.callsign]}<div class="mt-2 text-yellow-300">&#10006; Automatic handoff failed: {c.error}. Do it here or in EuroScope.</div>{/if}
+            {#if note[c.callsign]}<div class="mt-2 text-yellow-300">{note[c.callsign]}</div>{/if}
+            <label class="mt-2 flex items-center gap-2 text-xs opacity-80"><input type="checkbox" checked={$handoffSoundOn} on:change={(e) => h.setHandoffSound(e.currentTarget.checked)} /> Play a sound for handoff prompts</label>
+          </div>
         </div>
-      </div>
-    {/each}
-  </div>
+      {/each}
+    </div>
+  {/if}
 {/if}
+
+<style>
+  /* slow flash (about 2 seconds a cycle) so it catches the eye without being a strobe */
+  :global(.ho-flash) { animation: hoflash 2s ease-in-out infinite; }
+  @keyframes -global-hoflash {
+    0%, 100% { background-color: #fde047; }
+    50% { background-color: #a16207; color: #fff; }
+  }
+  @media (prefers-reduced-motion: reduce) { :global(.ho-flash) { animation: none; background-color: #fde047; } }
+</style>

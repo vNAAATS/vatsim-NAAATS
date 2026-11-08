@@ -35,6 +35,7 @@ EXIT_FACILITY = {}
 EXIT_FACILITY.update(_facs("BIRD", "RATSU"))                                         # the RATSU triangle is Reykjavik East
 EXIT_FACILITY.update(_facs("EGPX", "ATSIX BALIX ERAKA GOMUP MIMKU NIBOG"))
 EXIT_FACILITY.update(_facs("EISN", "SUNOT PIKIL RESNO DOGAL MALOT LIMRI DINIM SOMAX BEDRA OMOKO TAMEL LASNO"))   # includes the NOTA and SOTA
+EXIT_FACILITY.update(_facs("EISN", "GISTI XETBO RILED LEKVA ELSOX EPUNA ATSUR"))    # the eastbound NAT track end points at 14W (50N to 53N), same band as the Shannon exits above - check against the procedures
 EXIT_FACILITY.update(_facs("LFRR", "ETIKI SEPAL SIVIR REGHI LAPEX RIVAX"))          # Brest (BOTA)
 EXIT_FACILITY.update(_facs("LECM", "BEGAS"))
 EXIT_FACILITY.update(_facs("LPPO", "GONAN PASAS DIXIS"))
@@ -79,8 +80,17 @@ def _along(points, seg, t, tseg, tt):
         total += _nm((points[i][1], points[i][2]), (points[i + 1][1], points[i + 1][2]))
     return total + _nm((points[tseg][1], points[tseg][2]), pt(tseg, tt))
 
-def next_handoff(points, pos):
-    """The next boundary this flight reaches. Returns {"facility", "fix", "nm"} or None when it cannot be told."""
+import re
+_COMBINED = re.compile(r"^NAT(_[A-Z0-9]+)*_FSS$")
+
+def combined_online(controllers):
+    """True when a combined Gander + Shanwick position (NAT_FSS, NAT_1_FSS ...) is online. It works both areas on one frequency, so a flight
+    crossing 30W between them is not handed to anyone."""
+    return any(_COMBINED.match(str(c.get("callsign", "")).upper()) for c in controllers or [])
+
+def next_handoff(points, pos, skip_30w=False):
+    """The next boundary this flight reaches. Returns {"facility", "fix", "nm"} or None when it cannot be told.
+    skip_30w: do not count the Gander / Shanwick boundary (one controller has both)."""
     if len(points) < 2 or not pos:
         return None
     loc = locate(points, pos)
@@ -88,7 +98,7 @@ def next_handoff(points, pos):
         return None
     seg, t, _ = loc
     events = []
-    for i in range(len(points) - 1):                                   # the 30W crossing between the two oceanic centres
+    for i in range(0 if skip_30w else len(points) - 1):                # the 30W crossing between the two oceanic centres (not when one controller has both)
         a, b = points[i], points[i + 1]
         if a[2] != b[2] and (a[2] - CROSS_LON) * (b[2] - CROSS_LON) <= 0 and (i, (CROSS_LON - a[2]) / (b[2] - a[2])) > (seg, t):
             f = (CROSS_LON - a[2]) / (b[2] - a[2])
@@ -116,7 +126,7 @@ def pick_online(facility, controllers):
 
 def hint(points, pos, controllers):
     """Everything the display needs for one flight, or None."""
-    nh = next_handoff(points, pos)
+    nh = next_handoff(points, pos, skip_30w=combined_online(controllers))
     if not nh:
         return None
     online = pick_online(nh["facility"], controllers)

@@ -1652,6 +1652,16 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         raise ValueError
                 except ValueError:
                     return self._send(400, {"error": "bad JSON"})
+                if p == "/admin/fdd/session":                  # the admin view: the log-viewer token opens a read-only display, no VATSIM connection needed
+                    if not logs.token_ok(self.headers.get("X-Admin-Token", ""), self._client_ip()):
+                        return self._send(403, {"error": "not allowed"})
+                    tok = auth.create_session("ADMIN", "Admin (view only)", "admin")
+                    auth.set_position(tok, "ADMIN")
+                    log.info("Admin view opened from %s", self._client_ip())
+                    return self._send_cookie(200, self._status(auth.get(tok)), tok)
+                _s0 = self._session()
+                if _s0 and _s0.get("via") == "admin" and p != "/auth/logout":
+                    return self._send(403, {"error": "the admin view is read-only"})
                 if p == "/PluginLog":                          # the plugin sends a copy of its log (batched)
                     bad = key_problem(q_post.get("code", ""))
                     if bad:
@@ -1803,6 +1813,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     auth.logout(self._token())
                     return self._send_cookie(200, self._status(None), "", 0)
                 if p == "/auth/position":
+                    if str(body.get("position", "")).strip().upper() == "ADMIN":
+                        return self._send(400, {"error": "not a position"})
                     if str(body.get("position", "")).strip().upper() == "OBSERVER":
                         return self._send(400, {"error": "view-only mode has been removed: choose a controlling position"})
                     if not self._session() or not auth.set_position(self._token(), str(body.get("position", ""))):
@@ -2133,6 +2145,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
             q = {k: v[0] for k, v in parse_qs(u.query, keep_blank_values=True).items()}
             p = u.path.rstrip("/") or "/"
             try:
+                if p == "/admin/fdd":                          # token form; the token is checked by POST /admin/fdd/session
+                    return self._send(200, adminlog_mod.FDD_PAGE, "text/html")
                 if p == "/admin/log":                          # the page itself holds no data; the token unlocks it
                     return self._send(200, adminlog_mod.PAGE, "text/html")
                 if p == "/admin/log/data":

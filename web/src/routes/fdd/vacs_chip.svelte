@@ -60,7 +60,7 @@
   </button>
 
   {#if showPop}
-    <div class="absolute right-0 top-full mt-1 z-50 w-80 p-3 border-2 border-red-300 bg-blue-2 text-white shadow-lg" role="alert">
+    <div class="absolute left-0 top-full mt-1 z-50 w-80 max-w-[95vw] p-3 border-2 border-red-300 bg-blue-2 text-white shadow-lg" role="alert">
       <div class="font-bold text-base">VACS: incoming {ringing?.prio ? "PRIORITY " : ""}call</div>
       <div class="my-1 text-lg"><b>{ringing?.callsign || ringing?.from}</b></div>
       <div class="text-sm opacity-90">
@@ -76,7 +76,7 @@
   {/if}
 
   {#if open}
-    <div class="absolute right-0 top-full mt-1 z-50 w-96 border-2 border-blue-10 bg-blue-2 text-white text-sm shadow-lg">
+    <div class="absolute left-0 top-full mt-1 z-50 w-96 max-w-[95vw] border-2 border-blue-10 bg-blue-2 text-white text-sm shadow-lg">
       <div class="flex border-b border-blue-6">
         <button class="px-3 py-1 {tab === 'calls' ? 'bg-blue-3 font-bold' : 'opacity-80'}" on:click={() => (tab = "calls")}>Calls</button>
         <button class="px-3 py-1 {tab === 'dial' ? 'bg-blue-3 font-bold' : 'opacity-80'}" on:click={() => (tab = "dial")}>Call someone</button>

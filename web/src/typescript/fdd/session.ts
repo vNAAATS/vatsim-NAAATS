@@ -22,7 +22,7 @@ export const emptySession: Session = { editing: false, password: false, vatsim: 
 export const session = writable<Session>(emptySession);
 
 export function canEdit(s: Session): boolean {
-  return s.loggedIn && s.position !== "";
+  return s.loggedIn && s.position !== "" && s.position !== "ADMIN";   // ADMIN = the read-only admin view
 }
 
 async function post(path: string, body: any): Promise<{ ok: boolean; data: any }> {

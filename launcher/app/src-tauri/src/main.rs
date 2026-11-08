@@ -237,6 +237,11 @@ async fn launch(window: WebviewWindow, app: tauri::AppHandle, kind: String) -> R
     if !vnaaats_core::is_exe(&p) {
         return Err("that program is no longer there - choose it again".into());
     }
+    if let Some(name) = p.file_name().map(|n| n.to_string_lossy().to_string()) {
+        if is_running(&name) {
+            return Ok(());                  // already open: a second copy would only get in the way
+        }
+    }
     let mut cmd = Command::new(&p);
     if let Some(dir) = p.parent() {
         cmd.current_dir(dir);
@@ -248,6 +253,25 @@ async fn launch(window: WebviewWindow, app: tauri::AppHandle, kind: String) -> R
         Err(e) if e.raw_os_error() == Some(740) => open_like_explorer(&p),
         Err(e) => Err(format!("could not start it: {}", e)),
     }
+}
+
+/// Is a program with this file name already running (started by the user or by an earlier launch)? If the check itself fails, say no.
+#[cfg(windows)]
+fn is_running(exe_name: &str) -> bool {
+    use std::os::windows::process::CommandExt;
+    let out = Command::new("tasklist")
+        .args(["/FO", "CSV", "/NH", "/FI", &format!("IMAGENAME eq {}", exe_name)])
+        .creation_flags(0x0800_0000)        // CREATE_NO_WINDOW
+        .output();
+    match out {
+        Ok(o) => vnaaats_core::tasklist_has(&String::from_utf8_lossy(&o.stdout), exe_name),
+        Err(_) => false,
+    }
+}
+
+#[cfg(not(windows))]
+fn is_running(_exe_name: &str) -> bool {
+    false
 }
 
 #[cfg(windows)]

@@ -118,7 +118,10 @@ export function setEnabled(on: boolean): void {
 }
 export function clearHistory(): void { upd((s) => { s.history = []; }); saveHist([]); }
 
-export function lastRx(s: TaState): Talk | null { return s.history.find((t) => !t.mine) ?? null; }
+/** A controller callsign (NAT_FSS, EGGX_CTR, ...). What a controller transmits is not "received" by you, so it is never the last RX; it still shows in the history. */
+export function isAtc(who: string): boolean { return /_(CTR|FSS|TWR|APP|DEP|GND|DEL|ATIS|RMP|OBS|SUP|INS)$/.test(String(who ?? "").toUpperCase()); }
+/** The last call received from a pilot. */
+export function lastRx(s: TaState): Talk | null { return s.history.find((t) => !t.mine && !isAtc(t.who)) ?? null; }
 export function hhmmss(ts: number): string {
   const d = new Date(ts * 1000);
   return [d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()].map((n) => String(n).padStart(2, "0")).join(":") + "Z";

@@ -302,3 +302,17 @@ $("ctl").onclick=e=>{const m=e.target.dataset&&e.target.dataset.me;if(m){$("who"
 $("dl").onclick=()=>{const t=rows.map(r=>r.ts+" "+r.me+" "+r.line).join("\\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download="vnaaats-log.txt";a.click()};
 if(tok){$("tok").value=tok;open_()}setInterval(tick,3000);
 </script></body></html>"""
+
+
+FDD_PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>vNAAATS admin: open the FDD</title>
+<style>body{font:15px system-ui,sans-serif;background:#10161d;color:#dde;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+form{background:#18222d;padding:24px;border-radius:8px;width:320px}h1{font-size:17px;margin:0 0 6px}p{color:#9ab;font-size:13px;margin:0 0 14px}
+input,button{width:100%;box-sizing:border-box;padding:9px;border-radius:5px;border:1px solid #345;background:#0d1319;color:#dde;font-size:14px}
+button{margin-top:10px;background:#2a6fb0;border:0;cursor:pointer}#e{color:#f88;margin-top:8px;min-height:1em}</style></head><body>
+<form id="f"><h1>Open the FDD (admin, view only)</h1><p>Shows the live display without a VATSIM connection. Nothing can be edited or sent from it.</p>
+<input id="t" type="password" placeholder="Admin token" autocomplete="current-password" autofocus><button>Open</button><div id="e"></div></form>
+<script>document.getElementById("f").onsubmit=async function(ev){ev.preventDefault();var e=document.getElementById("e");e.textContent="";
+try{var r=await fetch("/admin/fdd/session",{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Token":document.getElementById("t").value},body:"{}",credentials:"same-origin"});
+if(r.ok)location.href="/fdd";else e.textContent=r.status==403?"Wrong token (or too many tries: wait a minute).":"Failed ("+r.status+")";}catch(x){e.textContent="Cannot reach the server."}};</script></body></html>
+"""

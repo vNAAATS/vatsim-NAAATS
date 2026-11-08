@@ -339,7 +339,10 @@
   <!-- row 1: who I am and what is live (VACS, CPDLC, Auto RCL, alerts) -->
   <div class="flex flex-row flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1 w-full text-white font-regular text-sm select-none">
     <div class="relative">
-      {#if $session.loggedIn && $session.position}
+      {#if $session.loggedIn && $session.position === "ADMIN"}
+        <span class="font-bold text-yellow-300">Admin view, read only</span>
+        <button class="ml-1 px-2 py-0 font-bold border border-blue-6 bg-blue-4 hover:bg-blue-10 hover:text-black" on:click={() => sess.logout()}>Sign out</button>
+      {:else if $session.loggedIn && $session.position}
         <span class="font-bold text-green-300">{$session.position}</span> {$session.name}
         <button class="ml-1 px-2 py-0 font-bold border border-blue-6 bg-blue-4 hover:bg-blue-10 hover:text-black" on:click={() => (posMenu = !posMenu)} title="Change position, relief, sign out">Position &#9662;</button>
         {#if posMenu}
@@ -364,19 +367,19 @@
   <div class="flex flex-row flex-wrap items-center gap-2 px-2 pt-1 w-full text-white font-regular text-sm select-none">
     <VacsChip />
     <AudioChip />
-    <RclPanel />
-    <HandoffPanel />
     {#if $cpdlcStatus.enabled}
       <button class="tbtn border border-blue-6 {(cpdlcUnread > 0 || $cpdlcAttention.size > 0) && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold' : 'bg-blue-3'}"
         title="Open the CPDLC panel" on:click={() => cpdlcOpen.set(!$cpdlcOpen)}><span class="inline-block w-2 h-2 rounded-full bg-green-300" title="CPDLC is online"></span>CPDLC{$cpdlcStatus.connected.length > 0 ? " [" + $cpdlcStatus.connected.length + "]" : ""}{cpdlcUnread > 0 ? " \u2709 " + cpdlcUnread : ""}{$cpdlcAttention.size > 0 ? " new logon" : ""}
       </button>
     {/if}
+    <RclPanel />
+    <div class="flex-1"></div>
+    <HandoffPanel />
     {#if $rclAuto.sender !== "" || $rclAuto.on}
       <button class="tbtn border {rclAsk && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold border-blue-6' : $rclAuto.on ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-red-400 text-red-200'}"
         title={($rclAuto.on ? "Automatic RCL REQ is ON: flights 20 to 45 minutes from oceanic entry (or within 200 nm if they have no times) that have not asked for clearance on natTrak are sent the reminder from " + ($rclAuto.sender || "an oceanic controller's EuroScope (none online right now)") + "." + ($rclAuto.confirm ? " The controller is asked before anything is typed." : "") : "Automatic RCL REQ is OFF.") + " Click for details and settings." + ($rclAuto.error ? " Last problem: " + $rclAuto.error : "")}
         on:click={() => rclPanelOpen.set(!$rclPanelOpen)}><span class="inline-block w-2 h-2 rounded-full {$rclAuto.on ? 'bg-green-300' : 'bg-red-400'}"></span>Auto RCL: {$rclAuto.on ? ($rclAuto.confirm && $rclAuto.waiting.length > 0 ? $rclAuto.waiting.length + " waiting" : "ON") : "OFF"}{$rclAuto.on && $rclAuto.sender === "" ? " (no sender)" : ""}{$rclAuto.error ? " !" : ""}</button>
     {/if}
-    <div class="flex-1"></div>
     {#if concOverdueN > 0}
       <span class="px-1 font-bold {visualOn && tickN >= 0 ? 'nt-flash text-black' : 'text-yellow-300'}" title="Concorde flights overdue a position report">&#9201; {concOverdueN} overdue</span>
     {/if}

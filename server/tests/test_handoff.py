@@ -22,6 +22,21 @@ class HandoffTests(unittest.TestCase):
         w = h.hint(list(reversed(ROUTE)), (55, -25), [{"callsign": "CZQO_CTR", "frequency": "131.7"}])
         self.assertEqual((w["facility"], w["fix"]), ("CZQO", "30W"))
 
+    def test_combined_nat_position_has_no_30w_handoff(self):
+        east = [("RESNO", 55, -40), ("55/30", 55, -30), ("55/20", 55, -20), ("DOGAL", 54.5, -10)]
+        nat = [{"callsign": "NAT_FSS", "frequency": "127.9"}]
+        r = h.hint(east, (55, -29), nat)                       # just past 30W: not leaving oceanic airspace, nothing to hand over yet
+        self.assertEqual((r["facility"], r["fix"]), ("EISN", "DOGAL"))
+        self.assertTrue(r["unicom"])                           # nobody online for Shannon, but that is at DOGAL, not at 30W
+        self.assertGreater(r["nm"], 300)
+        self.assertEqual(h.hint(east, (55, -35), nat)["fix"], "DOGAL")
+        self.assertEqual(h.hint(east, (55, -35), [{"callsign": "NAT_1_FSS"}])["fix"], "DOGAL")
+        self.assertEqual(h.hint(east, (55, -35), [{"callsign": "EGGX_CTR"}])["fix"], "30W")      # separate centres: still handed over
+
+    def test_14w_track_end_points_go_to_shannon(self):
+        r = h.hint([("A", 52.5, -30), ("RILED", 52.5, -14)], (52.5, -20), SHANNON)
+        self.assertEqual((r["facility"], r["fix"], r["controller"]), ("EISN", "RILED", "EISN_N_CTR"))
+
     def test_nobody_online_means_unicom(self):
         r = h.hint(ROUTE, (55, -11), [])
         self.assertTrue(r["unicom"] and r["controller"] == "")
