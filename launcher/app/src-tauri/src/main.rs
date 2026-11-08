@@ -182,6 +182,16 @@ async fn update_plugin(window: WebviewWindow, app: tauri::AppHandle) -> Result<S
     Ok(if done.is_empty() { "already up to date".to_string() } else { done.join(" and ") })
 }
 
+/// Rewrites vnaaats.cfg from the server's current template (comments and option list), keeping the controller's own values.
+#[tauri::command]
+async fn refresh_cfg(window: WebviewWindow, app: tauri::AppHandle) -> Result<bool, String> {
+    check_origin(&window)?;
+    let Some(root) = load(&app).root else { return Ok(false) };
+    let Some(dll) = vnaaats_core::find_plugin_dll(Path::new(&root), 6) else { return Ok(false) };
+    let tpl = http_get("/vnaaats.example.cfg", 20000)?;
+    vnaaats_core::refresh_cfg(dll.parent().ok_or("bad folder")?, &String::from_utf8_lossy(&tpl))
+}
+
 #[tauri::command]
 async fn save_key(window: WebviewWindow, app: tauri::AppHandle, key: String) -> Result<(), String> {
     check_origin(&window)?;
@@ -498,7 +508,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout, app_update_check, app_update_install])
+        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, refresh_cfg, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout, app_update_check, app_update_install])
         .run(tauri::generate_context!())
         .expect("the vNAAATS app could not start");
 }

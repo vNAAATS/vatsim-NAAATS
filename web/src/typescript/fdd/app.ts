@@ -20,6 +20,7 @@ async function call<T>(cmd: string, args: Record<string, unknown> = {}): Promise
 
 export const status = (): Promise<AppStatus> => call<AppStatus>("status");
 export const pickFolder = (): Promise<string | null> => call("pick_folder");
+export const refreshCfg = (): Promise<boolean> => call("refresh_cfg");
 export const updatePlugin = (): Promise<string> => call("update_plugin");
 export const saveKey = (key: string): Promise<void> => call("save_key", { key });
 export type ProgKind = "euroscope" | "vacs" | "afv" | "trackaudio";
@@ -78,6 +79,7 @@ const PROG_NAME: Record<string, string> = { euroscope: "EuroScope", vacs: "VACS"
 /** Called after a position is chosen: starts EuroScope, VACS and the chosen audio client once per app session, if ticked and located. */
 export async function autoLaunch(): Promise<void> {
   if (!inApp()) return;
+  try { if (sessionStorage.getItem("vnaaats.cfgrefreshed") !== "1") { sessionStorage.setItem("vnaaats.cfgrefreshed", "1"); await refreshCfg(); } } catch (e) { /* the file stays as it is */ }   // vnaaats.cfg gets the current comments and option list once per app session; values are kept
   let st: AppStatus;
   try { st = await status(); } catch (e) { return; }
   const audio = audioGet();

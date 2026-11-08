@@ -156,6 +156,56 @@ pub fn is_exe(path: &Path) -> bool {
     path.is_file() && path.extension().map(|e| e.to_string_lossy().eq_ignore_ascii_case("exe")).unwrap_or(false)
 }
 
+/// Bring vnaaats.cfg up to date with the template on the server: the comments and the list of options are replaced by the template's,
+/// every value the controller already has (key, server, switches, settingsstamp ...) is kept, options the file does not have are
+/// left out (the plugin's own defaults apply, so behaviour does not change), and lines the template does not know are kept at the end.
+/// Returns true when the file was rewritten. A file that is not there is left alone (the key step creates it).
+pub fn refresh_cfg(dir: &Path, template: &str) -> Result<bool, String> {
+    let path = dir.join(CFG_NAME);
+    let Ok(old) = fs::read_to_string(&path) else { return Ok(false) };
+    let template = template.trim_start_matches('\u{feff}');
+    if template.len() > 20000 || !template.starts_with('#') || !template.lines().any(|l| l.starts_with("server=")) {
+        return Err("the server did not send a valid vnaaats.example.cfg".into());
+    }
+    let active = |l: &str| -> Option<(String, String)> {
+        let t = l.trim();
+        if t.is_empty() || t.starts_with('#') { return None; }
+        t.split_once('=').map(|(k, v)| (k.trim().to_string(), v.trim().to_string()))
+    };
+    let mut have: Vec<(String, String)> = Vec::new();
+    for l in old.lines() {
+        if let Some((k, v)) = active(l) {
+            if !have.iter().any(|(hk, _)| *hk == k) { have.push((k, v)); }
+        }
+    }
+    let eol = if old.contains("\r\n") || old.is_empty() { "\r\n" } else { "\n" };
+    let mut out: Vec<String> = Vec::new();
+    let mut used: Vec<String> = Vec::new();
+    for l in template.lines() {
+        match active(l) {
+            None => out.push(l.trim_end().to_string()),
+            Some((k, _)) => {
+                if let Some((_, v)) = have.iter().find(|(hk, _)| *hk == k) {
+                    out.push(format!("{}={}", k, v));
+                    used.push(k);
+                }
+            }
+        }
+    }
+    let extras: Vec<&(String, String)> = have.iter().filter(|(k, _)| !used.contains(k)).collect();
+    if !extras.is_empty() {
+        out.push(String::new());
+        for (k, v) in extras { out.push(format!("{}={}", k, v)); }
+    }
+    while out.last().map(|l| l.is_empty()).unwrap_or(false) { out.pop(); }
+    let text = out.join(eol) + eol;
+    if text == old { return Ok(false); }
+    let tmp = dir.join("vnaaats.cfg.tmp");
+    fs::write(&tmp, text).map_err(|e| format!("could not write vnaaats.cfg: {}", e))?;
+    fs::rename(&tmp, &path).map_err(|e| format!("could not save vnaaats.cfg: {}", e))?;
+    Ok(true)
+}
+
 /// Does `tasklist /FO CSV /NH` output list a process called `exe_name` (case-insensitive)? Lines look like "EuroScope.exe","1234",...
 pub fn tasklist_has(output: &str, exe_name: &str) -> bool {
     output.lines().any(|l| {
@@ -167,6 +217,20 @@ pub fn tasklist_has(output: &str, exe_name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn refresh_cfg_keeps_values_and_updates_comments() {
+        let d = tempfile::tempdir().unwrap();
+        let tpl = "# new header\nserver=https://vnaaats.com\nkey=PASTE\n\n# autotype help\nautotype=1\n# highlight help\nhighlight=1\n";
+        assert_eq!(refresh_cfg(d.path(), tpl), Ok(false));          // no file: left alone
+        fs::write(d.path().join(CFG_NAME), "# old header\r\nserver=https://x.example\r\nkey=1234567.abc\r\nautotype=0\r\nsquawk=0\r\nsettingsstamp=5\r\n").unwrap();
+        assert_eq!(refresh_cfg(d.path(), tpl), Ok(true));
+        let t = fs::read_to_string(d.path().join(CFG_NAME)).unwrap();
+        assert_eq!(t, "# new header\r\nserver=https://x.example\r\nkey=1234567.abc\r\n\r\n# autotype help\r\nautotype=0\r\n# highlight help\r\n\r\nsquawk=0\r\nsettingsstamp=5\r\n");
+        assert!(!t.contains("highlight=") && !t.contains("PASTE"));  // not in their file: not added
+        assert_eq!(refresh_cfg(d.path(), tpl), Ok(false));          // second time: nothing to do
+        assert!(refresh_cfg(d.path(), "<html>nope").is_err());
+    }
 
     #[test]
     fn finds_running_process() {

@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- FDD for Windows: vnaaats.cfg is brought up to date automatically once each time the app is opened (when the position is chosen). It takes the current comments and list of options from vnaaats.com/vnaaats.example.cfg and keeps every value you already have (key, server, switches, FDD settings); options your file does not have are not added, so nothing changes how the plugin behaves. Your own extra comments in the file are replaced. The example file in the plugin zip now matches the one on the website (it was missing the squawk option). Server deploy needed (web files); Windows app update needed.
 - Track header rows: half-degree track points (such as 5830/40 on tracks C and E) used to run into each other; the 30 minutes now show small beside the degrees (58³⁰/40 style) so each point fits its column. Server deploy needed (web files).
 - FDD for Windows: before opening EuroScope, VACS or the audio client, the app checks whether that program is already running and does nothing if it is, so you no longer get a second copy. Server deploy not needed; the Windows app updates itself when a new version is built.
 - Admin view: open vnaaats.com/admin/fdd, type the admin token (the same VNAAATS_ADMIN_TOKEN as the log page) and the FDD opens read only with no VATSIM connection needed. It shows the live display; nothing can be edited, sent or logged on to CPDLC from it, and the toolbar says "Admin view, read only". Server deploy needed.
