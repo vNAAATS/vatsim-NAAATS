@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fly } from "svelte/transition";
+  import { ms } from "../../typescript/fdd/motion";
   import { onMount, onDestroy } from "svelte";
   import * as v from "../../typescript/fdd/vacs";
   const { vacs } = v;
@@ -76,7 +78,7 @@
   {/if}
 
   {#if open}
-    <div class="absolute left-0 top-full mt-1 z-50 w-96 max-w-[95vw] border-2 border-blue-10 bg-blue-2 text-white text-sm shadow-lg">
+    <div transition:fly={{ y: -6, duration: ms(140) }} class="absolute left-0 top-full mt-1 z-50 w-96 max-w-[95vw] border-2 border-blue-10 bg-blue-2 text-white text-sm shadow-lg">
       <div class="flex border-b border-blue-6">
         <button class="px-3 py-1 {tab === 'calls' ? 'bg-blue-3 font-bold' : 'opacity-80'}" on:click={() => (tab = "calls")}>Calls</button>
         <button class="px-3 py-1 {tab === 'dial' ? 'bg-blue-3 font-bold' : 'opacity-80'}" on:click={() => (tab = "dial")}>Call someone</button>

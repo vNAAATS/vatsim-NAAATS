@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { showFlightPlan } from "../../typescript/fdd/selectac";
+  import { fade, fly } from "svelte/transition";
+  import { flip } from "svelte/animate";
+  import { ms } from "../../typescript/fdd/motion";
   import { onMount, onDestroy } from "svelte";
   import * as sess from "../../typescript/fdd/session";
   import * as cp from "../../typescript/fdd/cpdlc";
@@ -62,29 +66,35 @@
     &#8644; Handoff: {soonest ? soonest.callsign : ""}{$handoffCards.length > 1 ? " +" + ($handoffCards.length - 1) : ""}
   </button>
   {#if open}
-    <div class="fixed inset-0 z-40" on:click={() => (open = false)}></div>
+    <div transition:fade={{ duration: ms(120) }} class="fixed inset-0 z-40" on:click={() => (open = false)}></div>
     <div class="fixed right-3 z-50 flex flex-col gap-2 w-96 max-w-[95vw] max-h-[70vh] overflow-y-auto font-web text-white" style="top: 13rem;" role="dialog" aria-label="Handoff messages">
       {#each $handoffCards as c (c.callsign + c.kind)}
-        <div class="bg-blue-2 border-2 border-yellow-300 shadow-lg" role="alertdialog" aria-label="Handoff {c.callsign}">
+        <div animate:flip={{ duration: ms(200) }} in:fly={{ x: 28, duration: ms(240) }} out:fade={{ duration: ms(160) }} class="bg-blue-2 border-2 border-yellow-300 shadow-lg" role="alertdialog" aria-label="Handoff {c.callsign}">
           <div class="px-3 py-1 bg-yellow-300 text-black font-bold flex items-center">
-            <span>{c.kind === "near" ? "Handoff soon" : "Leaving oceanic airspace"}: {c.callsign}</span>
+            <span>{c.kind === "near" ? "Handoff soon" : "Leaving oceanic airspace"}: <button class="underline" title="Show the flight plan" on:click={() => showFlightPlan(c.callsign)}>{c.callsign}</button></span>
             <button class="ml-auto px-2 text-xs border border-black" on:click={() => h.dismissCard(c)} aria-label="Dismiss">Dismiss</button>
           </div>
           <div class="p-3 text-sm">
             {#if c.kind === "near"}
               <div class="mb-2"><b>{c.callsign}</b> is nearing the sector boundary (<b>{c.nm} nm</b> to {c.fix}) to <b>{c.name}</b>.</div>
+            {:else}
+              <div class="mb-2"><b>{c.callsign}</b> is leaving oceanic airspace at {c.fix}.{c.online.length === 0 ? " No adjacent controller is online (" + c.name + ")." : ""}</div>
+            {/if}
+            <!-- both ways of handing the aircraft on are always here: transfer to a controller who is online, or hand off to UNICOM -->
+            {#if c.online.length > 0}
               <select class="w-full px-1 py-0.5 text-black mb-2" value={choice(c)} on:change={(e) => { picked[c.callsign] = e.currentTarget.value; picked = picked; }}>
                 {#each c.online as o}<option value={o.callsign}>{o.code ? o.code + " " : ""}{o.callsign} {o.frequency}</option>{/each}
               </select>
-              <button class="px-3 py-1 font-bold bg-blue-10 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => transfer(c)}>Transfer</button>
-            {:else}
-              <div class="mb-2"><b>{c.callsign}</b> is leaving oceanic airspace at {c.fix}. No adjacent controller is online (<b>{c.name}</b>): hand off to UNICOM (122.800).</div>
-              {#if c.cpdlc}
-                <button class="px-3 py-1 font-bold bg-yellow-300 text-black" disabled={busy[c.callsign] || !sess.canEdit($session)} on:click={() => unicom(c)}>Send to UNICOM</button>
-              {:else}
-                <div class="opacity-90">Not on CPDLC: tell the pilot on voice or text to monitor UNICOM 122.800, then release the tag.</div>
-              {/if}
             {/if}
+            <div class="flex flex-row flex-wrap gap-2">
+              <button class="px-3 py-1 font-bold bg-blue-10 text-black disabled:opacity-40" disabled={c.online.length === 0 || busy[c.callsign] || !sess.canEdit($session)}
+                title={c.online.length === 0 ? "Nobody is online to transfer to" : "Transfer in EuroScope to the controller chosen above"} on:click={() => transfer(c)}>Transfer</button>
+              {#if c.cpdlc}
+                <button class="px-3 py-1 font-bold bg-yellow-300 text-black disabled:opacity-40" disabled={busy[c.callsign] || !sess.canEdit($session)}
+                  title="Send the CPDLC message to monitor UNICOM 122.800 and release the tag when the pilot answers" on:click={() => unicom(c)}>Hand off to UNICOM</button>
+              {/if}
+            </div>
+            {#if !c.cpdlc}<div class="mt-2 opacity-90">Not on CPDLC: for UNICOM, tell the pilot on voice or text to monitor 122.800, then release the tag.</div>{/if}
             {#if c.error && !note[c.callsign]}<div class="mt-2 text-yellow-300">&#10006; Automatic handoff failed: {c.error}. Do it here or in EuroScope.</div>{/if}
             {#if note[c.callsign]}<div class="mt-2 text-yellow-300">{note[c.callsign]}</div>{/if}
             <label class="mt-2 flex items-center gap-2 text-xs opacity-80"><input type="checkbox" checked={$handoffSoundOn} on:change={(e) => h.setHandoffSound(e.currentTarget.checked)} /> Play a sound for handoff prompts</label>

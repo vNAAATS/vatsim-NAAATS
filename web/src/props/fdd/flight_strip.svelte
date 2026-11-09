@@ -92,7 +92,7 @@
   }
 </script>
 
-<div bind:this={stripEl} id={"strip-" + callsign} style={faded ? "opacity: 0.45;" : ""} class={"hover:border-green-500 hover:border-2" + (isTalker ? " ta-box" : "") + (talking ? " ta-live" : "") + ($espicked === callsign ? ($espickN % 2 ? " es-pick-a" : " es-pick-b") : "")} title={tip}
+<div bind:this={stripEl} id={"strip-" + callsign} style={faded ? "opacity: 0.45;" : ""} class={"strip-in hover:border-green-500 hover:border-2" + (isTalker ? " ta-box" : "") + (talking ? " ta-live" : "") + ($espicked === callsign ? ($espickN % 2 ? " es-pick-a" : " es-pick-b") : "")} title={tip}
   on:click={() => {
     if (dataHandler.isNatTrakAlert(callsign)) dataHandler.openNatTrakFor(callsign); // flashing request: open natTrak
     dataHandler.ackNatTrak(callsign);
@@ -140,6 +140,10 @@
   </div>
 </div>
 <style>
+  /* a row that appears (new aircraft, track change) eases in instead of popping */
+  :global(.strip-in) { animation: stripin 0.35s ease-out; }
+  @keyframes -global-stripin { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { :global(.strip-in) { animation: none; } }
   /* TrackAudio talker box: solid while the aircraft is transmitting, then fades out over a couple of seconds */
   :global(.ta-box) { position: relative; }
   :global(.ta-box)::before {

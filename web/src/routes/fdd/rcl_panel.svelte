@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { showFlightPlan } from "../../typescript/fdd/selectac";
   import { fly } from "svelte/transition";
   import * as sess from "../../typescript/fdd/session";
   const { session, rclAuto, rclPanelOpen } = sess;
@@ -82,7 +83,7 @@
         {:else}
           <ul class="max-h-48 overflow-y-auto">
             {#each $rclAuto.history ?? [] as h}
-              <li class="flex gap-2 py-0.5 border-b border-blue-6" title={h.detail}><span class="opacity-70 w-14 shrink-0">{hhmm(h.ts)}</span><b class="w-24 shrink-0">{h.callsign}</b><span class={(KIND[h.kind] ?? ["", ""])[1]}>{(KIND[h.kind] ?? [h.kind, ""])[0]}</span></li>
+              <li class="flex gap-2 py-0.5 border-b border-blue-6" title={h.detail}><span class="opacity-70 w-14 shrink-0">{hhmm(h.ts)}</span><button class="w-24 shrink-0 text-left font-bold underline" title="Show the flight plan" on:click={() => showFlightPlan(h.callsign)}>{h.callsign}</button><span class={(KIND[h.kind] ?? ["", ""])[1]}>{(KIND[h.kind] ?? [h.kind, ""])[0]}</span></li>
             {/each}
           </ul>
         {/if}

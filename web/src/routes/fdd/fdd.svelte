@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { ms } from "../../typescript/fdd/motion";
+  import { fly } from "svelte/transition";
   const halfPoint = (name: string) => name.match(/^(\d{2})(\d{2})\/(\d{2,3})$/);   // 5830/40: a half-degree track point
 
   import { onDestroy, onMount } from "svelte";
@@ -349,7 +351,7 @@
         <button class="ml-1 px-2 py-0 font-bold border border-blue-6 bg-blue-4 hover:bg-blue-10 hover:text-black" on:click={() => (posMenu = !posMenu)} title="Change position, relief, sign out">Position &#9662;</button>
         {#if posMenu}
           <div class="fixed inset-0 z-40" on:click={() => (posMenu = false)}></div>
-          <div class="absolute left-0 top-full mt-1 z-50 min-w-max border-2 border-blue-10 bg-blue-2 shadow-lg">
+          <div transition:fly={{ y: -6, duration: ms(140) }} class="absolute left-0 top-full mt-1 z-50 min-w-max border-2 border-blue-10 bg-blue-2 shadow-lg">
             <div class="px-4 py-1 hover:bg-blue-10 hover:text-black hover:cursor-pointer" on:click={() => { posMenu = false; sess.choosePosition(""); }}>Change position</div>
             <div class="px-4 py-1 hover:bg-blue-10 hover:text-black hover:cursor-pointer" title="Hand all your tracked aircraft to the controller relieving you" on:click={() => { posMenu = false; reliefOpen.set(true); }}>Relief / handover</div>
             <div class="px-4 py-1 hover:bg-blue-10 hover:text-black hover:cursor-pointer" on:click={() => { posMenu = false; sess.logout(); }}>Sign out</div>
@@ -570,10 +572,11 @@
 <style>
   :global(.tbtn) { height: 1.75rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.75rem; line-height: 1; white-space: nowrap; }
   :global(.nt-flash) {
-    animation: ntflash 1s steps(1, end) infinite;
+    animation: ntflash 1.4s ease-in-out infinite;
   }
   @keyframes -global-ntflash {
-    0% { background-color: #ef4444; }
+    0%, 100% { background-color: #ef4444; }
     50% { background-color: #fde047; }
   }
+  @media (prefers-reduced-motion: reduce) { :global(.nt-flash) { animation: none; background-color: #fde047; } }
 </style>
