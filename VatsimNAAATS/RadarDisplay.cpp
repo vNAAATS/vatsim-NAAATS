@@ -262,12 +262,29 @@ static volatile LONG g_clickSeen = 0;             // set when EuroScope reports 
 static volatile clock_t g_ignoreClicksUntil = 0; // our own simulated click must not trigger vNAAATS actions
 
 // Click once at a point of the radar window (client pixels), then put the mouse back where it was.
-static bool ClickRadarPoint(POINT clientPt) {
+static bool ClickRadarPoint(POINT clientPt, string& why) {
 	HWND w = g_radarWnd;
-	if (!w || !IsWindow(w)) return false;
+	if (!w) { why = "the plugin has not yet seen your mouse over the EuroScope radar - move the mouse over the radar once and try again"; return false; }
+	if (!IsWindow(w)) { why = "the radar window it remembered has gone - move the mouse over the radar once and try again"; return false; }
 	POINT sp = clientPt;
-	if (!ClientToScreen(w, &sp)) return false;
+	if (!ClientToScreen(w, &sp)) { why = "Windows could not work out where the aircraft is on screen"; return false; }
 	POINT back; GetCursorPos(&back);
+	// Record exactly where the click goes, and what Windows says is under that point, so a click that misses can be understood from the log
+	{
+		HWND hit = WindowFromPoint(sp);
+		DWORD hitPid = 0; if (hit) GetWindowThreadProcessId(hit, &hitPid);
+		char cls[64] = "", wcls[64] = "";
+		if (hit) GetClassNameA(hit, cls, sizeof(cls));
+		GetClassNameA(w, wcls, sizeof(wcls));
+		RECT wr = {}; GetWindowRect(w, &wr);
+		bool ours = hit && hitPid == GetCurrentProcessId();
+		CLogger::Log(ours ? CLogType::NORM : CLogType::WARN,
+			"Contact Me click: client " + to_string(clientPt.x) + "," + to_string(clientPt.y) + " -> screen " + to_string(sp.x) + "," + to_string(sp.y) +
+			"; radar window " + string(wcls) + " at " + to_string(wr.left) + "," + to_string(wr.top) + "-" + to_string(wr.right) + "," + to_string(wr.bottom) +
+			"; under that point: " + (hit ? string(cls) : string("nothing")) + (ours ? " (EuroScope)" : " (NOT EuroScope: another window is in the way)") +
+			"; button " + to_string(CDataHandler::ContactButton), "ClickRadarPoint");
+		if (!ours) { why = "another window is covering that spot on the screen, so the click would not reach EuroScope"; return false; }
+	}
 	g_ignoreClicksUntil = clock() + 1500;
 	// a small move first so EuroScope sees the pointer arrive over the aircraft, then the click with the button set in cfg (contactbutton)
 	SetCursorPos(sp.x - 2, sp.y - 2);
@@ -298,11 +315,13 @@ static void TypeThread(void* arg) {
 			if (job->Click) {
 				Sleep(500);                       // EuroScope now waits for a click on the aircraft
 				bool clicked = false, confirmed = !job->TagClick;   // a click on the aircraft symbol cannot be confirmed, only one on the tag
+				string clickWhy;
 				for (int attempt = 0; attempt < 2 && !(clicked && confirmed); attempt++) {
 					InterlockedExchange(&g_clickSeen, 0);
 					g_clickWant = job->Callsign;
-					clicked = ClickRadarPoint(job->Px);
-					if (!clicked || !job->TagClick) { confirmed = !job->TagClick; continue; }
+					clicked = ClickRadarPoint(job->Px, clickWhy);
+					if (!clicked) break;                          // the reason is in clickWhy; trying again would fail the same way
+					if (!job->TagClick) { confirmed = false; continue; }
 					for (int w = 0; w < 30 && !g_clickSeen; w++) Sleep(50);    // up to 1.5 s for EuroScope to report the click
 					confirmed = g_clickSeen != 0;
 					if (!confirmed) Sleep(300);
@@ -310,7 +329,7 @@ static void TypeThread(void* arg) {
 				g_clickWant.clear();
 				if (clicked && confirmed) note += " (callsign clicked for you)";
 				else {
-					CDataHandler::ReportRemoteResult(job->Id, false, "Contact Me NOT sent to " + job->Callsign + " - the click did not reach the tag. Click the callsign in EuroScope to send it");
+					CDataHandler::ReportRemoteResult(job->Id, false, "Contact Me NOT sent to " + job->Callsign + " - " + (clickWhy.empty() ? string("the click did not register on the tag (check contactbutton in vnaaats.cfg matches the mouse button EuroScope uses to select an aircraft)") : clickWhy) + ". Click the callsign in EuroScope to send it");
 					failed = true;
 				}
 			}
