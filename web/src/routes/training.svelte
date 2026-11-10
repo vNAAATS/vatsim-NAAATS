@@ -8,8 +8,8 @@
   // The how-to videos. They are small files served from this site and only load when played.
   const howto = [
     { file: "vNAAATS-howto-1-FDD.mp4", title: "1. How to use the Flight Data Display", text: "Tracking, releasing and transferring tags, automatic hand-off to relief, contact me, supervisor request, and changing a flight level, speed or SELCAL." },
-    { file: "vNAAATS-howto-2-CPDLC.mp4", title: "2. How to use CPDLC", text: "Signing in with your Hoppie code, accepting pilots, level messages, clearance requests, UNICOM and the pop-out window." },
-    { file: "vNAAATS-howto-3-natTrak.mp4", title: "3. How to use natTrak through the FDD", text: "The pending and cleared lists, Prepare in natTrak, RCL processed and Send reclearance." },
+    { file: "vNAAATS-howto-2-CPDLC.mp4", title: "2. How to use CPDLC", text: "Signing in with your Hoppie code, accepting pilots, level messages, oceanic clearance requests (RCL) and the automated entry message, contact by voice, UNICOM and the pop-out window." },
+    { file: "vNAAATS-howto-3-natTrak.mp4", title: "3. How to use natTrak through the FDD", text: "The pending and cleared lists, Prepare in natTrak, RCL processed, Send reclearance and Auto RCL with the red star." },
     { file: "vNAAATS-howto-4-VACS-TrackAudio.mp4", title: "4. VACS and TrackAudio in FDD for Windows", text: "What VACS and TrackAudio are, setting up VACS remote control, answering VACS calls, who spoke last, and the transmitting-aircraft highlight." },
     { file: "vNAAATS-howto-5-FDD-for-Windows.mp4", title: "5. FDD for Windows, the One Fits All Program", text: "What the app does, why it is better than a browser, installing it, the one-time setup and updates." },
     { file: "vNAAATS-howto-6-RCL-process.mp4", title: "6. The oceanic clearance (RCL) process", text: "How vNAAATS modernises oceanic traffic controlled across the NAT Region, and how a request for oceanic clearance travels from the pilot to the controller and back: the reminder and the red star, pilots without CPDLC, the new buttons, RCL processed and reclearance, the contact message at the entry point, and what to do when there is no reply." },

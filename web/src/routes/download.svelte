@@ -70,7 +70,7 @@
     <div class="p-5 mb-6 border-2 border-blue-10 bg-blue-3">
       <div class="text-lg font-bold mb-2">Video: how to use vNAAATS</div>
       <video class="w-full bg-black" controls preload="metadata" playsinline src="/vNAAATS-intro.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/vNAAATS-intro.mp4">Download it</a>.</video>
-      <div class="text-sm opacity-80 mt-2">About three minutes, with captions. The flights shown are demo data.</div>
+      <div class="text-sm opacity-80 mt-2">About two and a half minutes: what vNAAATS is and how to get started. The flights shown are demo data.</div>
     </div>
 
     <!-- 2. What you need -->

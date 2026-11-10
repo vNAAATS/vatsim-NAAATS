@@ -41,7 +41,7 @@
     <div class="p-4 mb-6 border-2 border-blue-10 bg-blue-3">
       <div class="font-bold mb-1">Video: how to use vNAAATS</div>
       <video class="w-full bg-black" controls preload="none" playsinline src="/vNAAATS-intro.mp4">Your browser cannot play this video. <a class="underline" rel="external" href="/vNAAATS-intro.mp4">Download it</a>.</video>
-      <div class="text-sm opacity-80 mt-2">About three minutes, with captions, an overview of the display. The flights shown are demo data.</div>
+      <div class="text-sm opacity-80 mt-2">About two and a half minutes, an overview of vNAAATS and the oceanic clearance process. The flights shown are demo data.</div>
     </div>
 
     <p class="mb-3 opacity-90">vNAAATS has three parts that share one set of flight data:</p>

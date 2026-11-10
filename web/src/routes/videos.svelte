@@ -13,7 +13,7 @@
       videos: [
         { src: "/training/vNAAATS-howto-5-FDD-for-Windows.mp4", title: "FDD for Windows, the One Fits All Program", text: "What the app does, why it is better than a browser, installing it (including the Windows SmartScreen message), the one-time setup and how updates work." },
         { src: "/vNAAATS-install-howto.mp4", title: "Loading vNAAATS into EuroScope", text: "About a minute and a quarter: opening your profile, loading the sector file and plugin, then adding the vNAAATS display and the ASR file." },
-        { src: "/vNAAATS-intro.mp4", title: "How to use vNAAATS", text: "About three minutes, with captions. An overview of the display. The flights shown are demo data." },
+        { src: "/vNAAATS-intro.mp4", title: "What is vNAAATS?", text: "About two and a half minutes. How vNAAATS modernises oceanic control across the Nat region: the display, the RCL process, the handoff helper and how to get started. The flights shown are demo data." },
       ],
     },
     {
