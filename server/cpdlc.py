@@ -383,8 +383,8 @@ class CpdlcStation:
                 continue
             # the area the aircraft is in now: crossing 30W between Shanwick and Gander (either way) gets a second message for the new area
             area = f.get("area") or f.get("entry") or self.oca_name(cs)
-            if self.entry_sent.get(cs) == area:
-                continue
+            if cs in self.entry_sent and (self.entry_sent[cs] == area or self.client.station != "NATX"):
+                continue                                                 # the second message at 30W is only for the combined NAT_FSS (NATX) station
             text = entry_contact_text(area)
             with self.lock:
                 done = self.db.execute("SELECT 1 FROM cpdlc_messages WHERE callsign=? AND dir='UP' AND text=? AND ts > ?",

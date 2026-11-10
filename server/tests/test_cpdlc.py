@@ -613,6 +613,15 @@ class EntryAndRclTests(unittest.TestCase):
         st.poll_once()
         self.assertEqual(len(self.uplinks(hop)), 3)
 
+    def test_no_second_message_at_30w_on_a_single_area_station(self):
+        state = {"airborne": True, "skip": False, "entry": "CZQO", "inside": True, "area": "CZQO"}
+        hop = FakeHoppie()
+        st = c.CpdlcStation(os.path.join(tempfile.mkdtemp(), "e.db"), c.HoppieClient("http://x", "code", "CZQX", http=hop), auto_accept=True, facts=lambda cs: dict(state))
+        self.logon(hop, st)
+        state["area"] = "EGGX"
+        st.poll_once()
+        self.assertEqual(len(self.uplinks(hop)), 2)
+
     def test_entry_message_shanwick_name(self):
         hop, st = self.station(lambda cs: {"airborne": True, "skip": False, "entry": "EGGX", "inside": True})
         self.logon(hop, st)
