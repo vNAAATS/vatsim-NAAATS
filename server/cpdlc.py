@@ -41,14 +41,28 @@ REPLY_STATES = (("WILCO", "WILCO"), ("UNABLE", "UNABLE"), ("ROGER", "ROGER"), ("
 
 OCA_REQUEST_RE = re.compile(r"\bOCEANIC\s+CLEARANCE\b|\bOCEANIC\s+CLX\b|\bOCA\s+CLEARANCE\b|\bREQUEST\s+CLEARANCE\b|\bOCEAN\s+REQUEST\b|\bOCEAN\s+CLEARANCE\b|\bOCEANIC\s+REQUEST\b|\bRCL\b|\bENTRY\s+POINT\b")
 MSG_OCA_UNABLE = "UNABLE TO PROVIDE OCEANIC CLEARANCES VIA CPDLC. PLEASE VISIT NATTRAK.VATSIM.NET AND SUBMIT YOUR REQUEST THERE"
-MSG_RCL_RECEIVED = "RCL RECEIVED - STANDBY FOR CLEARANCE"
+RCL_STATION_NAMES = {"CZQX": "CZQO", "EGGX": "EGGX", "NATX": "NAT_FSS"}      # Hoppie station -> the name the pilot sees when the entry area is not known
+
+
+def rcl_received_text(oca):
+    """What the pilot is told when the request arrives. oca = the area the flight enters (CZQO or EGGX)."""
+    return "RCL RECEIVED BY %s" % (oca or "NAT_FSS")
+
+
+def entry_contact_text(oca):
+    """Sent once, at the oceanic entry point, to a pilot who is connected by CPDLC (needs ROGER)."""
+    return "THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH %s CENTER" % ("GANDER" if oca == "CZQO" else "SHANWICK")
+
+
+ENTRY_MSG = os.environ.get("VNAAATS_CPDLC_ENTRY_MSG", "on").lower() != "off"
+NOREPLY_SECONDS = 180            # an uplink that needs an answer and has none after this long is marked "no reply" on the display
 RCL_INTAKE = os.environ.get("VNAAATS_CPDLC_RCL", "on").lower() != "off"      # off = the old behaviour (refuse and point to natTrak)
 RCL_SEND = os.environ.get("VNAAATS_CPDLC_RCL_SEND", "off").lower() == "on"      # the "RCL processed" / "Send reclearance" buttons: off until switched on (staged roll-out)
 RCL_KEEP_SECONDS = 6 * 3600        # a request stays in the list this long unless dismissed
 RCL_REPEAT_SECONDS = 1800          # a second request from the same aircraft inside this time updates the first
 MSG_TOO_FAR = "UNABLE. CONTACT CONTROLLER ON VOICE 20 MILES BEFORE OCEANIC ENTRY POINT"
 MSG_SQUAWK = "SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA"      # sent to every pilot who is accepted onto CPDLC (the plugin no longer sets the code itself)
-SQUAWK_MSG = os.environ.get("VNAAATS_CPDLC_SQUAWK_MSG", "on").lower() != "off"
+SQUAWK_MSG = os.environ.get("VNAAATS_CPDLC_SQUAWK_MSG", "off").lower() == "on"      # off: the squawk instruction now comes with the "fly current flight plan" message after the request is processed
 MSG_UNICOM = "THERE IS NO FURTHER ATC AVAILABLE. SERVICE TERMINATED. MONITOR ADVISORY ON 122.800"
 LOGOFF_TEXT = "LOGOFF"          # UNVERIFIED against the live Hoppie network: what the ground sends to log a pilot off
 NEAR_OCEANIC_NM = 1000           # pilots further than this from the oceanic airspace are refused a CPDLC logon
@@ -152,13 +166,17 @@ def parse_blocks(text):
 
 MACH_RE = re.compile(r"\bM(?:ACH)?\s*0?\.?(\d{2})\d?\b")
 LEVEL_RE = re.compile(r"\bF(?:L)?\s*(\d{3})\b")
+MAXFL_RE = re.compile(r"\bMAX\s*(?:FL|F)?\s*(\d{3})\b")
 
 
 def parse_rcl_text(text):
     """What a pilot asked for in an oceanic clearance request ('... REQ: M0.86 FL400'): Mach in hundredths (86) and level (400). None for anything not found."""
     t = (text or "").upper()
+    mx = MAXFL_RE.search(t)
+    if mx:
+        t = t[:mx.start()] + " " + t[mx.end():]                  # "MAX FL380" is the highest acceptable level, not the requested one
     m, f = MACH_RE.search(t), LEVEL_RE.search(t)
-    return {"mach": int(m.group(1)) if m else None, "level": int(f.group(1)) if f else None}
+    return {"mach": int(m.group(1)) if m else None, "level": int(f.group(1)) if f else None, "max": int(mx.group(1)) if mx else None}
 
 
 def parse_cpdlc_packet(packet):
@@ -200,11 +218,13 @@ class HoppieClient:
 
 # ----------------------------------------------------------------------------- the station
 class CpdlcStation:
-    def __init__(self, db_path, client, auto_accept=True, now=time.time, locate=None, on_release=None):
+    def __init__(self, db_path, client, auto_accept=True, now=time.time, locate=None, on_release=None, facts=None):
         self.client = client
         self.auto_accept = auto_accept
         self.now = now
         self.locate = locate or (lambda callsign: None)          # callsign -> True (near oceanic) / False (too far) / None (unknown)
+        self.facts = facts or (lambda callsign: {})              # callsign -> {"airborne", "skip", "entry" (CZQO/EGGX), "inside"} where known
+        self.entry_sent = {}                                     # flight -> the area (CZQO/EGGX) whose contact message it last had from this station
         self.on_release = on_release or (lambda callsign: None)  # called when the tag should be released in EuroScope
         self.pending = {}                                        # callsign -> {"min", "kind", "ts"}: waiting for the pilot's WILCO/ROGER
         self.lock = threading.RLock()
@@ -335,6 +355,52 @@ class CpdlcStation:
             self.db.commit()
             return cur.rowcount > 0
 
+    def oca_name(self, callsign):
+        """The area a flight enters (CZQO or EGGX): from its direction when known, otherwise from the station the pilot is talking to."""
+        f = {}
+        try:
+            f = self.facts((callsign or "").upper()) or {}
+        except Exception as e:                                # a broken lookup must never stop a reply going out
+            log.warning("facts lookup failed for %s: %s", callsign, e)
+        return f.get("entry") or RCL_STATION_NAMES.get(self.client.station, "NAT_FSS")
+
+    def entry_tick(self, only=None):
+        """Once per area, when a pilot connected by CPDLC is inside the oceanic area, tell them who has contact (again on crossing 30W into the other area). Needs ROGER.
+        Never to an aircraft on the ground, one departing Iceland (Reykjavik's, not ours), or one we cannot place."""
+        if not ENTRY_MSG:
+            return
+        with self.lock:
+            names = [only.upper()] if only else list(self.connected.keys())
+        for cs in names:
+            if not self.is_connected(cs):
+                continue
+            try:
+                f = self.facts(cs) or {}
+            except Exception as e:
+                log.warning("facts lookup failed for %s: %s", cs, e)
+                continue
+            if f.get("airborne") is not True or f.get("skip") or f.get("inside") is not True:
+                continue
+            # the area the aircraft is in now: crossing 30W between Shanwick and Gander (either way) gets a second message for the new area
+            area = f.get("area") or f.get("entry") or self.oca_name(cs)
+            if self.entry_sent.get(cs) == area:
+                continue
+            text = entry_contact_text(area)
+            with self.lock:
+                done = self.db.execute("SELECT 1 FROM cpdlc_messages WHERE callsign=? AND dir='UP' AND text=? AND ts > ?",
+                                       (cs, text, self.now() - 12 * 3600)).fetchone()
+            self.entry_sent[cs] = area
+            if done:
+                continue
+            mn = self._alloc_min()
+            try:
+                self._send_packet(cs, mn, None, "R", text)
+            except RuntimeError as e:
+                log.warning("entry-point message to %s failed: %s", cs, e)
+                self.entry_sent.pop(cs, None)
+                continue
+            self._store("UP", cs, mn, None, "R", text, state="SENT", by="auto")
+
     def _rcl_request(self, sender, pkt):
         """A pilot asked for an oceanic clearance over CPDLC: keep it for the controllers, and tell the pilot it arrived."""
         cs = sender.upper()
@@ -348,7 +414,7 @@ class CpdlcStation:
                 self.db.execute("INSERT INTO cpdlc_rcl (ts, station, callsign, text) VALUES (?,?,?,?)", (now, self.client.station, cs, pkt["text"]))
             self.db.commit()
         self._store("DOWN", sender, pkt["min"], pkt["mrn"], pkt["ra"], pkt["text"], state="", seen=0)
-        self._auto_reply(sender, MSG_RCL_RECEIVED, pkt["min"], "NE")
+        self._auto_reply(sender, rcl_received_text(self.oca_name(sender)), pkt["min"], "NE")
 
     # --- sending
     def _alloc_min(self):
@@ -462,7 +528,7 @@ class CpdlcStation:
                 self.db.commit()
             self._store("DOWN", sender, None, None, "", "TELEX: " + text, state="", seen=0)
             try:
-                self.client.request(sender, "telex", MSG_RCL_RECEIVED)
+                self.client.request(sender, "telex", rcl_received_text(self.oca_name(sender)))
             except Exception as e:
                 log.warning("telex reply to %s failed: %s", sender, e)
             return
@@ -547,6 +613,7 @@ class CpdlcStation:
         self._set_connected(cs, True)
         if SQUAWK_MSG:
             self._auto_reply(cs, MSG_SQUAWK, None, "NE")      # tell the pilot about squawk 2000 (replaces the plugin setting the code)
+        self.entry_tick(cs)                                   # already at the entry point? then they get the contact message now
 
     def poll_once(self):
         try:
@@ -576,6 +643,10 @@ class CpdlcStation:
                 n += 1
         if n:
             self.fast_until = self.now() + FAST_POLL_SECONDS
+        try:
+            self.entry_tick()
+        except Exception:
+            log.exception("entry-point check failed")
         return n
 
     def ping_online(self, calls):
@@ -671,9 +742,10 @@ def parse_stations(text):
 
 
 class CpdlcHub:
-    def __init__(self, db_path, url=DEFAULT_URL, auto_accept=True, stations=None, make_client=None, is_session_alive=None, now=time.time, start_threads=True, locate=None):
+    def __init__(self, db_path, url=DEFAULT_URL, auto_accept=True, stations=None, make_client=None, is_session_alive=None, now=time.time, start_threads=True, locate=None, facts=None):
         self.db_path, self.url, self.auto_accept, self.now = db_path, url, auto_accept, now
         self.locate = locate
+        self.facts = facts
         self.release_times = {}
         self.stations_map = stations or {}
         self.make_client = make_client or (lambda code, station: HoppieClient(self.url, code, station))
@@ -733,7 +805,7 @@ class CpdlcHub:
             if cur:                                # same controller re-entering a code
                 cur["obj"].client.logon = code
                 return station, None
-            obj = CpdlcStation(self.db_path, client, auto_accept=self.auto_accept, now=self.now, locate=self.locate, on_release=self._mark_released)
+            obj = CpdlcStation(self.db_path, client, auto_accept=self.auto_accept, now=self.now, locate=self.locate, on_release=self._mark_released, facts=self.facts)
             self.running[station] = {"token": token, "obj": obj}
         if self.start_threads:
             threading.Thread(target=obj.loop, daemon=True).start()

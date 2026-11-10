@@ -1482,7 +1482,7 @@ def rcl_enrich(reqs, natrak, store, network):
         asked = cpdlc_mod.parse_rcl_text(r.get("text", ""))          # the level and Mach the pilot asked for in the request itself
         _fx, _tm, _rt = clx_mod._entry(rec.get("route", ""), rec.get("routeEtas", ""), str((n or {}).get("fix") or "").upper())
         item.update({"ntDown": bool(natrak and getattr(natrak, "error", None)), "entryFix": _fx, "entryTime": _tm, "dest": rec.get("arrival", ""), "route": rec.get("route", ""), "etas": rec.get("routeEtas", ""),
-                     "level": asked["level"] or rec.get("assignedLevel"), "mach": asked["mach"] or rec.get("assignedMach"), "track": rec.get("track", ""),
+                     "maxLevel": asked.get("max"), "level": asked["level"] or rec.get("assignedLevel"), "mach": asked["mach"] or rec.get("assignedMach"), "track": rec.get("track", ""),
                      "natTrak": ({"status": n.get("status", ""), "level": n.get("level"), "mach": n.get("mach"), "nat": n.get("nat"),
                                   "fix": n.get("fix"), "issued": issued} if n else None)})
         out.append(item)
@@ -1888,12 +1888,14 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                             return self._send(400, {"error": "nothing to send"})
                         by = "%s (%s)" % (sess["position"], sess["name"])
                         try:
+                            if any("????" in m for m in msgs):
+                                return self._send(400, {"error": "the message still has ???? in it: fill in the missing route, level, Mach or entry point first"})
                             viatelex = not st.is_connected(cs)      # e.g. the pilot asked by telex: answer the same way
-                            for m in msgs:
+                            for i, m in enumerate(msgs):
                                 if viatelex:
                                     st.send_telex(cs, m, by=by)
                                 else:
-                                    st.send(cs, m, "NE", None, by=by)
+                                    st.send(cs, m, "WU" if i == 0 else "NE", None, by=by)      # the clearance itself needs WILCO
                         except (ValueError, RuntimeError) as e:
                             return self._send(400, {"error": str(e)})
                         st.rcl_mark_sent(req["id"], by, kind)
@@ -2483,8 +2485,29 @@ def main():
             with cache.lock:
                 tracks = list(cache.tracks)
             return cpdlc_mod.near_oceanic(pos[0], pos[1], tracks)
+        def facts(callsign):                               # what the CPDLC station needs to know about a flight before it sends an automatic message
+            cs = callsign.upper()
+            pilot = (network.lookup_pilot(cs) if network else None) or {}
+            pos = network.position(cs) if network else None
+            rec = (store.get(cs) if store else None) or {}
+            out = {"airborne": None, "skip": False, "entry": None, "inside": None}
+            alt, gs = pilot.get("altitude"), pilot.get("groundspeed")
+            if isinstance(alt, (int, float)) and isinstance(gs, (int, float)):
+                out["airborne"] = alt >= rcl_auto_mod.MIN_AIRBORNE_ALT and gs >= rcl_auto_mod.MIN_GROUNDSPEED
+            dep = str(rec.get("departure") or (pilot.get("flight_plan") or {}).get("departure") or "").upper()
+            out["skip"] = dep.startswith("BI")             # leaving Iceland: Reykjavik's area, it sends no RCL and is not ours at entry
+            d = rec.get("direction")
+            if isinstance(d, bool):
+                out["entry"] = "CZQO" if d else "EGGX"        # eastbound enters at Gander, westbound at Shanwick
+            if pos:
+                out["inside"] = rcl_auto_mod.oca_state(pos, d if isinstance(d, bool) else None) == "inside"
+                try:
+                    out["area"] = "EGGX" if float(pos[1]) > -30 else "CZQO"      # east of 30W is Shanwick, west of it Gander
+                except (TypeError, ValueError, IndexError):
+                    pass
+            return out
         cpdlc = cpdlc_mod.CpdlcHub(os.environ.get("VNAAATS_DB", os.path.join(HERE, "vnaaats.db")),
-                                   locate=locate,
+                                   locate=locate, facts=facts,
                                    url=os.environ.get("VNAAATS_HOPPIE_URL", cpdlc_mod.DEFAULT_URL),
                                    auto_accept=os.environ.get("VNAAATS_CPDLC_AUTOACCEPT", "1") != "0",
                                    stations=cpdlc_mod.parse_stations(os.environ.get("VNAAATS_CPDLC_STATIONS", "")),

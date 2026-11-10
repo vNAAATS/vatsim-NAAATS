@@ -76,7 +76,10 @@
           <button class="px-3 py-1 font-bold border border-blue-6 {$rclAuto.on ? 'bg-blue-3' : 'bg-red-700'}" disabled={!sess.canEdit($session)} on:click={toggleOn}>Auto RCL: {$rclAuto.on ? "ON" : "OFF"}</button>
           <label class="flex items-center gap-2"><input type="checkbox" checked={$rclAuto.confirm} disabled={!sess.canEdit($session)} on:change={toggleConfirm} /> Ask me before sending (recommended)</label>
         </div>
-        <div class="mt-2 text-xs opacity-70">Flights 20 to 45 minutes from oceanic entry that have not asked for clearance on natTrak get the reminder. With "ask first" off they are sent automatically, and EuroScope may come to the front without warning.</div>
+        <div class="mt-2 text-xs opacity-70">Flights 30 to 90 minutes from oceanic entry that have not asked for clearance on natTrak get the reminder. With "ask first" off they are sent automatically, and EuroScope may come to the front without warning.</div>
+        {#if ($rclAuto.voice ?? []).length > 0}
+          <div class="mt-3 p-2 border border-yellow-300 text-yellow-300"><b>By voice (under 30 min to entry, no RCL):</b> {($rclAuto.voice ?? []).join(", ")}</div>
+        {/if}
         <div class="mt-3 mb-1 font-bold">History</div>
         {#if ($rclAuto.history ?? []).length === 0}
           <div class="opacity-80">Nothing has been sent yet.</div>

@@ -381,7 +381,7 @@
     <HandoffPanel />
     {#if $rclAuto.sender !== "" || $rclAuto.on}
       <button class="tbtn border {rclAsk && visualOn && tickN >= 0 ? 'nt-flash text-black font-bold border-blue-6' : $rclAuto.on ? 'bg-blue-3 border-blue-6' : 'bg-blue-3 border-red-400 text-red-200'}"
-        title={($rclAuto.on ? "Automatic RCL REQ is ON: flights 20 to 45 minutes from oceanic entry (or within 200 nm if they have no times) that have not asked for clearance on natTrak are sent the reminder from " + ($rclAuto.sender || "an oceanic controller's EuroScope (none online right now)") + "." + ($rclAuto.confirm ? " The controller is asked before anything is typed." : "") : "Automatic RCL REQ is OFF.") + " Click for details and settings." + ($rclAuto.error ? " Last problem: " + $rclAuto.error : "")}
+        title={($rclAuto.on ? "Automatic RCL REQ is ON: flights 30 to 90 minutes from oceanic entry (or within 200 nm if they have no times) that have not asked for clearance on natTrak are sent the reminder from " + ($rclAuto.sender || "an oceanic controller's EuroScope (none online right now)") + "." + ($rclAuto.confirm ? " The controller is asked before anything is typed." : "") : "Automatic RCL REQ is OFF.") + " Click for details and settings." + ($rclAuto.error ? " Last problem: " + $rclAuto.error : "")}
         on:click={() => rclPanelOpen.set(!$rclPanelOpen)}><span class="inline-block w-2 h-2 rounded-full {$rclAuto.on ? 'bg-green-300' : 'bg-red-400'}"></span>Auto RCL: {$rclAuto.on ? ($rclAuto.confirm && $rclAuto.waiting.length > 0 ? $rclAuto.waiting.length + " waiting" : "ON") : "OFF"}{$rclAuto.on && $rclAuto.sender === "" ? " (no sender)" : ""}{$rclAuto.error ? " !" : ""}</button>
     {/if}
     {#if concOverdueN > 0}

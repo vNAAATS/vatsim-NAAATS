@@ -5,7 +5,7 @@ Nothing here sends anything: the controller sees the text, can edit it, and pres
 import re
 from datetime import datetime, timezone
 
-PROCESSED = "RCL PROCESSED - FLY FLIGHT PLAN ROUTE"
+PROCESSED = "FLY CURRENT FLIGHT PLAN OR AS AMENDED BY ATC. SQUAWK 2000 AT THE OCEANIC ENTRY POINT"
 
 
 def _level(v):
@@ -74,7 +74,7 @@ def build_clearance(rec, nt, now=None):
     if rte:
         parts.append(rte)
     parts.append("FM %s%s MNTN %s %s" % (fix or "????", "/" + eta if eta else "", lvl or "????", mach or "????"))
-    parts.append("SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA")
+    parts.append("SQUAWK 2000 AT THE OCEANIC ENTRY POINT")
     parts.append("END OF MESSAGE")
     return " / ".join(parts)
 

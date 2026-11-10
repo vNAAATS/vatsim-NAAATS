@@ -29,7 +29,7 @@ class Base(unittest.TestCase):
         self.dist = [None]
         self.rcl = r.RclAuto(self.store, self.q, self.net, self.nat, lambda route, pos: self.dist[0], ("CZQO", "EGGX"), now=lambda: self.t[0], start=False)
         self.rcl.confirm = False                                    # these tests are about the automatic path; the confirm path has its own tests below
-        self.rec = {"callsign": "BAW1", "route": "A B", "routeEtas": "1230 1300", "trackedBy": ""}
+        self.rec = {"callsign": "BAW1", "route": "A B", "routeEtas": "1300 1330", "trackedBy": ""}
         self.net.flights = [self.rec]
         self.net.pos["BAW1"] = (51.0, -8.0)
         self.net.pilots["BAW1"] = {"groundspeed": 450}
@@ -50,10 +50,12 @@ class RclTests(Base):
     def test_due_rules(self):
         self.assertTrue(self.rcl.due(self.rec))                         # 30 min to entry
         self.rec["routeEtas"] = "1330 1400"
-        self.assertFalse(self.rcl.due(self.rec))                        # 90 min away, no distance known
-        self.dist[0] = 150
-        self.assertTrue(self.rcl.due(self.rec))                         # but within 200 nm
-        self.dist[0] = 250
+        self.assertTrue(self.rcl.due(self.rec))                         # 90 min to entry: the window opens here
+        self.rec["routeEtas"] = "1340 1400"
+        self.assertFalse(self.rcl.due(self.rec))                        # 100 min away, no distance known
+        self.dist[0] = 650
+        self.assertTrue(self.rcl.due(self.rec))                         # but within 700 nm
+        self.dist[0] = 750
         self.assertFalse(self.rcl.due(self.rec))
         self.rec["routeEtas"] = "1140 1300"
         self.dist[0] = 100
@@ -61,17 +63,18 @@ class RclTests(Base):
         self.rec["routeEtas"] = "1158 1300"
         self.assertFalse(self.rcl.due(self.rec))                        # entry passed 2 min ago: already in oceanic
         self.rec["routeEtas"] = "1215 1300"
-        self.assertFalse(self.rcl.due(self.rec))                        # 15 min to entry: natTrak would refuse the request
-        self.rec["routeEtas"] = "1220 1300"
-        self.assertTrue(self.rcl.due(self.rec))                         # exactly 20 min: still allowed
+        self.assertFalse(self.rcl.due(self.rec))                        # 15 min to entry: too late for the reminder (voice)
+        self.rec["routeEtas"] = "1225 1300"
+        self.assertFalse(self.rcl.due(self.rec))                        # 25 min: inside the 30 minute limit
+        self.rec["routeEtas"] = "1230 1300"
+        self.assertTrue(self.rcl.due(self.rec))                         # exactly 30 min: still in the window
         self.rec["routeEtas"] = "-- --"
         self.dist[0] = 100
         self.net.pilots["BAW1"] = {"groundspeed": 450}
         self.assertFalse(self.rcl.due(self.rec))                        # no times: 100 nm at 450 kt is 13 min, too late
-        self.dist[0] = 190
-        self.assertTrue(self.rcl.due(self.rec))                         # 190 nm at 450 kt is 25 min
-        self.rec["routeEtas"] = "1230 1300"
-        self.rec["routeEtas"] = "1230 1300"
+        self.dist[0] = 300
+        self.assertTrue(self.rcl.due(self.rec))                         # 300 nm at 450 kt is 40 min
+        self.rec["routeEtas"] = "1300 1330"
         self.net.pilots["BAW1"] = {"groundspeed": 5}
         self.assertFalse(self.rcl.due(self.rec))                        # parked
         self.net.pilots["BAW1"] = {"groundspeed": 150, "altitude": 200}
@@ -153,7 +156,7 @@ class RclTests(Base):
         self.rec["direction"] = True                                    # eastbound = through it
         self.assertFalse(self.rcl.due(self.rec))
         self.rec["direction"] = False                                   # westbound = about to enter
-        self.dist[0] = 150
+        self.dist[0] = 400
         self.assertTrue(self.rcl.due(self.rec))
         self.net.pos["BAW1"] = (48.0, -60.0)                            # west of Gander
         self.assertFalse(self.rcl.due(self.rec))                        # westbound and past the area
@@ -216,9 +219,9 @@ class ConfirmTests(Base):
         self.assertEqual(self.q.pending_for("CZQO_CTR"), [])
         st = self.rcl.status()
         self.assertEqual([w["callsign"] for w in st["waiting"]], ["BAW1"])
-        self.assertEqual(st["waiting"][0]["minutes"], 30)
+        self.assertEqual(st["waiting"][0]["minutes"], 60)
         self.assertEqual(st["waiting"][0]["fix"], "A")
-        self.assertEqual(st["waiting"][0]["time"], "1230")
+        self.assertEqual(st["waiting"][0]["time"], "1300")
 
     def test_prompt_is_paced_and_needs_a_sender(self):
         self.assertFalse(self.rcl.status()["prompt"])                   # nobody online

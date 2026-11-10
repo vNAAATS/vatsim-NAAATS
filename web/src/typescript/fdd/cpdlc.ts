@@ -231,6 +231,8 @@ export const templates: { label: string; text: string; ra: string }[] = [
   { label: "Expect climb", text: "EXPECT CLIMB TO @FL350@", ra: "R" },
   { label: "Contact", text: "CONTACT @STATION@ @FREQUENCY@", ra: "WU" },
   { label: "Squawk", text: "SQUAWK @2000@", ra: "WU" },
+  { label: "Resume normal speed", text: "RESUME NORMAL SPEED", ra: "WU" },
+  { label: "Contact by voice", text: "CONTACT @STATION@ BY VOICE", ra: "WU" },
   { label: "Standby", text: "STANDBY", ra: "NE" },
   { label: "Roger", text: "ROGER", ra: "NE" },
   { label: "Unable", text: "UNABLE", ra: "NE" },
