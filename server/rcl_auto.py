@@ -28,9 +28,9 @@ import commands as commands_mod
 
 log = logging.getLogger("vnaaats")
 
-DUE_MINUTES = 45
-MIN_LEAD_MINUTES = 20          # natTrak will not accept a new request closer than this to the oceanic entry point
-DUE_NM = 200
+DUE_MINUTES = 90                # the request is due from 90 minutes before the oceanic entry point (VATSIM and NAT Doc 007: 90 to 30)
+MIN_LEAD_MINUTES = 30          # closer than this the request is late: the pilot is told to use voice (natTrak itself takes none inside 20 minutes)
+DUE_NM = 700
 START_DELAY_SECONDS = 300      # nothing is sent until an oceanic controller has been online this long (session start settling time)
 SENDER_GAP_RESET = 600         # no oceanic controller online for this long = a new session: the wait and the baseline start again
 OCA_WEST_LON = -53.0           # Gander OCA western edge / Shanwick OCA eastern edge, rounded outwards for a safe "inside" test
@@ -263,18 +263,19 @@ class RclAuto:
         prompt = bool(self.enabled and self.confirm and waiting and sender and self.now() >= self.next_prompt)
         return {"on": self.enabled, "sender": sender, "inflight": n, "error": self.last_error, "startsInSeconds": wait,
                 "confirm": self.confirm, "waiting": waiting, "prompt": prompt, "sending": sending, "batch": batch,
-                "telex": len(self.telex_sent), "telexOn": bool(self.hoppie), "history": self.history()}
+                "voice": list(getattr(self, "voice", [])), "telex": len(self.telex_sent), "telexOn": bool(self.hoppie), "history": self.history()}
 
     # --- the decision
     def already_sent(self, cs):
         with self.store.lock:
             return self.store.db.execute("SELECT 1 FROM rcl_auto WHERE callsign=?", (cs,)).fetchone() is not None
 
-    def due(self, rec, now_dt=None):
-        """True when this flight should get the reminder now."""
+    def due(self, rec, now_dt=None, late=False):
+        """True when this flight should get the reminder now. With late=True: True when it is under MIN_LEAD_MINUTES from its entry
+        point (still before it) with no request on natTrak, so it has to be dealt with by voice."""
         cs = str(rec.get("callsign", "")).upper()
         sent = rec.get("ntSent")
-        if not cs or (sent and (not isinstance(sent, dict) or sent.get("by") != TELEX_BY)):
+        if not cs or (not late and sent and (not isinstance(sent, dict) or sent.get("by") != TELEX_BY)):
             return False                                    # reminded already (a telex alone does not count: telex_stage decides about that)
         if self.natrak and cs in self.natrak.by_callsign():
             return False
@@ -296,22 +297,24 @@ class RclAuto:
         alt = pilot.get("altitude")
         if isinstance(alt, (int, float)) and 0 < alt < MIN_AIRBORNE_ALT:
             return False                                    # still on the ground (the take-off run is faster than MIN_GROUNDSPEED) or just lifting off
-        if cs in self.baseline:
+        if cs in self.baseline and not late:
             return False
         if oca_state(pos, rec.get("direction") if isinstance(rec.get("direction"), bool) else None) != "before":
             return False                                    # already inside, or through, the oceanic area: nothing to request
         now_dt = now_dt or datetime.fromtimestamp(self.now(), timezone.utc)
         m = entry_minutes_from_now(rec.get("routeEtas", ""), now_dt.hour * 60 + now_dt.minute)
+        if late:
+            return m is not None and 0 <= m < MIN_LEAD_MINUTES
         if m is not None:
             if m < MIN_LEAD_MINUTES:
-                return False        # natTrak takes no new request inside 20 minutes of entry (and one already past entry, or through, needs none)
+                return False        # natTrak takes no new request inside the last 30 minutes before entry (and one already past entry, or through, needs none)
             if m <= DUE_MINUTES:
                 return True
         d = self.distance_fn(rec.get("route", ""), pos)
         if d is None or d > DUE_NM:
             return False
         if m is None and isinstance(gs, (int, float)) and gs > 0 and d / gs * 60 < MIN_LEAD_MINUTES:
-            return False            # no times on the flight: judge the 20 minutes from the distance and speed instead
+            return False            # no times on the flight: judge the 30 minutes from the distance and speed instead
         return True
 
     # --- telex first: no EuroScope typing at all when the pilot is on the Hoppie network
@@ -440,6 +443,11 @@ class RclAuto:
         if not self.baselined:
             self.take_baseline()
         hidden = self.store.dismissed_set()
+        try:
+            self.voice = sorted(str(r.get("callsign", "")).upper() for r in self.candidates()
+                                if str(r.get("callsign", "")).upper() not in hidden and self.due(r, late=True))
+        except Exception:
+            self.voice = []
         now_min = datetime.fromtimestamp(t, timezone.utc)
         now_min = now_min.hour * 60 + now_min.minute
         due_list = []

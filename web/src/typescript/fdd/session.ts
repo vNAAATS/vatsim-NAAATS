@@ -129,6 +129,7 @@ export type RclWaiting = { callsign: string; minutes: number | null; fix: string
 export type RclAuto = {
   on: boolean; sender: string; inflight: number; error: string;
   confirm: boolean;                       // ask the sending controller before anything is typed
+  voice?: string[];                       // under 30 minutes from entry with no request: handle by voice
   waiting: RclWaiting[];                  // due, waiting for the controller's answer
   prompt: boolean;                        // time to ask (at most every 5 minutes)
   sending: number;                        // released and not yet typed

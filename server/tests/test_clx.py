@@ -11,7 +11,7 @@ class ClxTests(unittest.TestCase):
 
     def test_matches_natrak_wording(self):
         m = clx.build("clx", self.REC, {"nat": "C", "fix": "DOGAL", "level": "400", "mach": "0.85"}, "CZQO_FSS", self.NOW)
-        self.assertEqual(m[0], "CLX 1532 031126 NAT CLRNCE / KLM695 CLRD TO CYYZ VIA DOGAL / NAT C / DOGAL 55/20 56/30 57/40 57/50 HOIST / FM DOGAL/1507 MNTN F400 M085 / SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA / END OF MESSAGE")
+        self.assertEqual(m[0], "CLX 1532 031126 NAT CLRNCE / KLM695 CLRD TO CYYZ VIA DOGAL / NAT C / DOGAL 55/20 56/30 57/40 57/50 HOIST / FM DOGAL/1507 MNTN F400 M085 / SQUAWK 2000 AT THE OCEANIC ENTRY POINT / END OF MESSAGE")
 
     def test_natrak_values_win(self):
         m = clx.build("clx", self.REC, {"nat": "D", "fix": "DOGAL", "level": "380", "mach": "0.83"}, "EGGX_CTR", self.NOW)
@@ -20,7 +20,7 @@ class ClxTests(unittest.TestCase):
 
     def test_processed_and_contact(self):
         m = clx.build("processed", self.REC, None, "NAT_FSS", self.NOW)
-        self.assertEqual(m[0], "RCL PROCESSED - FLY FLIGHT PLAN ROUTE")
+        self.assertEqual(m[0], "FLY CURRENT FLIGHT PLAN OR AS AMENDED BY ATC. SQUAWK 2000 AT THE OCEANIC ENTRY POINT")
         self.assertTrue(m[1].startswith("CONTACT NAT FSS 5 MINS PRIOR ENTRY"))
         self.assertTrue(clx.contact_line("CZQO_CTR").startswith("CONTACT GANDER"))
 

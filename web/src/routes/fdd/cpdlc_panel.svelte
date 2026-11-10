@@ -168,6 +168,10 @@
     if (sendOnClick) send();
   }
   function answer(m: cp.CpdlcMessage, t: { text: string; ra: string }): void { replyTo = m; text = t.text; ra = t.ra; }
+  // An uplink that wants a reply (ROGER/WILCO/AFFIRM) and has had none for 3 minutes
+  function noReply(m: { dir: string; ra: string; state: string; ts: number }): boolean {
+    return m.dir === "UP" && m.state === "SENT" && (m.ra === "WU" || m.ra === "R" || m.ra === "AN") && Date.now() / 1000 - m.ts >= 180;
+  }
   function ageMin(ts: number): number { return Math.max(0, Math.floor((Date.now() / 1000 - ts) / 60)); }
   function since(ts: number): string {
     const m = Math.max(0, Math.floor((Date.now() / 1000 - ts) / 60));
@@ -364,6 +368,7 @@
                 </span>
               </div>
               <div class="mt-0.5 text-xs opacity-80 break-words">{r.text}</div>
+              <div class="mt-0.5 text-xs font-bold {r.maxLevel ? '' : 'text-yellow-300'}" title="The highest level the pilot can accept at the entry point (NAT Doc 007 6.3.25). Without one, ATC treats the requested level as the highest.">{r.maxLevel ? "MAX FL" + r.maxLevel : "No MAX FL given"}</div>
               <div class="mt-1 flex flex-row flex-wrap items-center gap-1.5">
                 <button class="px-2 py-0.5 text-xs font-bold {r.natTrak ? 'border border-blue-6 hover:bg-blue-4' : 'bg-blue-10 text-black'}" title="Open natTrak with this flight's details ready" on:click={() => prepare(r)}>Prepare in natTrak</button>
                 {#if $cpdlcStatus.rclSend}
@@ -437,7 +442,7 @@
                 <div class="my-1.5 px-3 py-1.5 border-l-4 rounded-sm shadow-sm {m.dir === 'UP' ? 'border-blue-10 bg-blue-3' : 'border-yellow-300 bg-blue-4'}">
                   <div class="flex flex-row justify-between text-xs opacity-80 tracking-wide">
                     <span>{m.dir === "UP" ? "▲ UPLINK" : "▼ DOWNLINK"} {hhmm(m.ts)}{m.by && m.by !== "auto" ? " " + m.by : ""}</span>
-                    <span class={stateColour[m.state] ?? ""}>{m.state === "LOGON" ? "" : m.state}{m.dir === "DOWN" && !m.seen ? " NEW" : ""}</span>
+                    <span class={stateColour[m.state] ?? ""}>{m.state === "LOGON" ? "" : m.state}{m.dir === "DOWN" && !m.seen ? " NEW" : ""}{#if noReply(m)}<b class="ml-2 px-1 bg-yellow-300 text-black" title="No answer from the pilot for 3 minutes. Consider asking again or using voice.">NO REPLY</b>{/if}</span>
                   </div>
                   <div class="font-bold break-words">{m.readable}</div>
                   {#if m.dir === "DOWN" && m.state === "OPEN"}

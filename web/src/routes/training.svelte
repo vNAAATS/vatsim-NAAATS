@@ -67,7 +67,7 @@
       <li>If there is no conflict, click <b>Move to processed list</b>, then review the next one.</li>
       <li>For a reclearance, choose the same NAT track, give the reason in the free text, and transmit the reclearance. The FDD updates automatically.</li>
     </ol>
-    <p class="mb-6 p-3 border-2 border-blue-10 bg-blue-3"><b>In good time.</b> Pilots should file about 20 minutes before entering, but some do not. Watch your inbound list by the time each aircraft will enter the oceanic area, and check whether a request has come in. If it has not, prompt the pilot by CPDLC to request their oceanic clearance.</p>
+    <p class="mb-6 p-3 border-2 border-blue-10 bg-blue-3"><b>In good time.</b> Pilots should send their oceanic clearance request (RCL) 30 to 90 minutes before the oceanic entry point, and include their MAX FL, but some do not. Inside 30 minutes it has to be done by voice. Watch your inbound list by the time each aircraft will enter the oceanic area, and check whether a request has come in. If it has not, prompt the pilot by CPDLC to request their oceanic clearance.</p>
 
     <h2 class="text-2xl font-bold mb-2">How-to videos</h2>
     <p class="opacity-80 mb-4">Short walkthroughs of the FDD. They use sample flights and are not a live display. All the videos are also on <a class="underline" href="/videos">How To Use - Videos</a>.</p>

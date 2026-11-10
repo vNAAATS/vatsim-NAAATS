@@ -62,7 +62,7 @@ class StationTests(unittest.TestCase):
         self.assertEqual([r["callsign"] for r in reqs], ["BAW2606"])
         rep = [x for x in hop.sent if x["type"] == "telex"]
         self.assertEqual(rep[0]["to"], "BAW2606")
-        self.assertIn("RCL RECEIVED", rep[0]["packet"])
+        self.assertIn("RCL RECEIVED BY", rep[0]["packet"])
 
     def test_send_telex_to_pilot_not_on_cpdlc(self):
         hop, st = make()
@@ -76,19 +76,18 @@ class StationTests(unittest.TestCase):
         st.poll_once()
         self.assertEqual(st.status()["rclRequests"], [])
 
-    def test_logon_accept_sends_the_squawk_message(self):
+    def test_logon_accept_sends_only_the_acceptance(self):
         hop, st = make()
         hop.queue = [("BAW123", "/data2/5//Y/REQUEST LOGON")]
         st.poll_once()
         sent = [x["packet"] for x in hop.sent if x["type"] == "cpdlc"]
-        self.assertEqual(sent[0], "/data2/1/5/NE/LOGON ACCEPTED")
-        self.assertEqual(sent[1], "/data2/2//NE/SQUAWK 2000 WITHIN 10 MINS OF ENTERING OCA")
+        self.assertEqual(sent, ["/data2/1/5/NE/LOGON ACCEPTED"])           # the squawk instruction now comes with the processed message
 
     def test_request_text_gives_mach_and_level(self):
         f = c.parse_rcl_text
-        self.assertEqual(f("OCEAN REQUEST ENTRY POINT: VENER AT: 0812Z REQ: M0.85 FL370"), {"mach": 85, "level": 370})
-        self.assertEqual(f("REQUEST CLEARANCE M086 F400"), {"mach": 86, "level": 400})
-        self.assertEqual(f("OCEANIC CLEARANCE REQUEST"), {"mach": None, "level": None})
+        self.assertEqual(f("OCEAN REQUEST ENTRY POINT: VENER AT: 0812Z REQ: M0.85 FL370"), {"mach": 85, "level": 370, "max": None})
+        self.assertEqual(f("REQUEST CLEARANCE M086 F400"), {"mach": 86, "level": 400, "max": None})
+        self.assertEqual(f("OCEANIC CLEARANCE REQUEST"), {"mach": None, "level": None, "max": None})
 
     def test_rcl_enrich_uses_the_asked_mach(self):
         class Nat:
@@ -144,7 +143,7 @@ class StationTests(unittest.TestCase):
             st.send("BAW123", "CLIMB", ra="XX")
         m = st.send("BAW123", "climb to and maintain @fl350@", "WU", by="CZQO_CTR (Gary)")
         self.assertEqual((m["dir"], m["text"], m["state"], m["by"]), ("UP", "CLIMB TO AND MAINTAIN @FL350@", "SENT", "CZQO_CTR (Gary)"))
-        self.assertEqual(hop.sent[-1]["packet"], "/data2/3//WU/CLIMB TO AND MAINTAIN @FL350@")
+        self.assertEqual(hop.sent[-1]["packet"], "/data2/2//WU/CLIMB TO AND MAINTAIN @FL350@")
         hop.queue = [("BAW123", "/data2/6/%d/N/WILCO" % m["min"])]
         st.poll_once()
         self.assertEqual([x for x in st.messages("BAW123") if x["dir"] == "UP" and x["min"] == m["min"]][0]["state"], "WILCO")
@@ -162,7 +161,7 @@ class StationTests(unittest.TestCase):
         self.assertEqual((req["state"], req["seen"]), ("OPEN", False))
         st.send("BAW123", "UNABLE", "NE", mrn=req["min"])
         self.assertEqual([x for x in st.messages("BAW123") if x["id"] == req["id"]][0]["state"], "ANSWERED")
-        self.assertEqual(hop.sent[-1]["packet"], "/data2/3/7/NE/UNABLE")
+        self.assertEqual(hop.sent[-1]["packet"], "/data2/2/7/NE/UNABLE")
 
     def test_logoff_and_ping_drop(self):
         hop, st = make()
@@ -239,7 +238,7 @@ class AutomationTests(unittest.TestCase):
         hop.queue = [("BAW9", "/data2/2//Y/REQUEST OCEANIC CLEARANCE NAT A FL350 M84")]
         st.poll_once()
         last = self.uplinks(hop)[-1]
-        self.assertIn("RCL RECEIVED - STANDBY FOR CLEARANCE", last)
+        self.assertIn("RCL RECEIVED BY", last)
         self.assertTrue("/2/NE/" in last)                                        # answers message 2, no reply wanted
         reqs = st.status()["rclRequests"]
         self.assertEqual([(r["callsign"], r["text"]) for r in reqs], [("BAW9", "REQUEST OCEANIC CLEARANCE NAT A FL350 M84")])
@@ -563,3 +562,60 @@ class ForceLogoutTests(unittest.TestCase):
         self.assertEqual(hub.status("t2", "CZQO_CTR")["lockedSeconds"], 80)
         clock[0] += 81
         self.assertEqual(hub.start("t2", "CZQO_CTR", "zzzzzz99"), ("CZQX", None))
+
+
+class EntryAndRclTests(unittest.TestCase):
+    def station(self, facts):
+        hop = FakeHoppie()
+        st = c.CpdlcStation(os.path.join(tempfile.mkdtemp(), "e.db"), c.HoppieClient("http://x", "code", "NATX", http=hop), auto_accept=True, facts=facts)
+        return hop, st
+
+    def logon(self, hop, st, cs="BAW123"):
+        hop.queue = [(cs, "/data2/5//Y/REQUEST LOGON")]
+        st.poll_once()
+
+    def uplinks(self, hop):
+        return [x["packet"] for x in hop.sent if x["type"] == "cpdlc"]
+
+    def test_rcl_reply_names_the_entry_area(self):
+        for entry, want in (("CZQO", "CZQO"), ("EGGX", "EGGX"), (None, "NAT_FSS")):
+            hop, st = self.station(lambda cs, e=entry: {"entry": e})
+            self.logon(hop, st)
+            hop.queue = [("BAW123", "/data2/7//Y/REQUEST OCEANIC CLEARANCE FL350 M84")]
+            st.poll_once()
+            self.assertIn("RCL RECEIVED BY " + want, self.uplinks(hop)[-1])
+
+    def test_entry_message_once_at_entry_with_roger(self):
+        state = {"airborne": True, "skip": False, "entry": "CZQO", "inside": False}
+        hop, st = self.station(lambda cs: dict(state))
+        self.logon(hop, st)
+        st.poll_once()
+        self.assertEqual(len(self.uplinks(hop)), 1)                      # not at the entry point yet: only the logon acceptance
+        state["inside"] = True
+        st.poll_once(); st.poll_once()
+        sent = self.uplinks(hop)
+        self.assertEqual(len(sent), 2)                                   # sent once, not on every poll
+        self.assertEqual(sent[1], "/data2/2//R/THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH GANDER CENTER")
+        self.assertEqual(st.messages("BAW123")[-1]["state"], "SENT")      # shows as waiting for the ROGER
+
+    def test_entry_message_shanwick_name(self):
+        hop, st = self.station(lambda cs: {"airborne": True, "skip": False, "entry": "EGGX", "inside": True})
+        self.logon(hop, st)
+        self.assertIn("CONTACT WITH SHANWICK CENTER", self.uplinks(hop)[-1])      # already at the entry when they log on: sent straight away
+
+    def test_no_entry_message_on_the_ground_or_from_iceland(self):
+        for f in ({"airborne": False, "skip": False, "inside": True}, {"airborne": None, "skip": False, "inside": True},
+                  {"airborne": True, "skip": True, "inside": True}, {"airborne": True, "skip": False, "inside": None}):
+            hop, st = self.station(lambda cs, f=f: dict(f, entry="CZQO"))
+            self.logon(hop, st)
+            st.poll_once()
+            self.assertEqual(self.uplinks(hop), ["/data2/1/5/NE/LOGON ACCEPTED"], f)
+
+
+class MaxFlTests(unittest.TestCase):
+    def test_max_fl_is_read_and_kept_apart_from_the_requested_level(self):
+        f = c.parse_rcl_text
+        self.assertEqual(f("OCEAN REQUEST ENTRY POINT: VENER AT: 0812Z REQ: M0.85 FL360 MAX FL380"), {"mach": 85, "level": 360, "max": 380})
+        self.assertEqual(f("REQUEST OCEANIC CLEARANCE M085 FL360 MAX F360"), {"mach": 85, "level": 360, "max": 360})
+        self.assertEqual(f("RCL M084 F350")["max"], None)
+        self.assertEqual(f("MAX FL380 REQ FL360 M084")["level"], 360)
