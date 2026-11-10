@@ -8,6 +8,17 @@ export type Note = { id: string; date: string; items: { title: string; text: str
 
 export const NOTES: Note[] = [
   {
+    id: "2.8.0",
+    date: "10 November 2026",
+    items: [
+      { title: "Oceanic clearance (RCL) follows NAT Doc 007", text: "An RCL is a request, not a clearance. It is answered \"RCL RECEIVED BY\" your area, then \"FLY CURRENT FLIGHT PLAN OR AS AMENDED BY ATC. SQUAWK 2000 AT THE OCEANIC ENTRY POINT\" when you process it. The request shows the MAX FL, and there are quick buttons for Resume normal speed and Contact by voice." },
+      { title: "Automated entry message", text: "The CPDLC contact message is sent once per area, and again at 30W only on NAT_FSS (NATX)." },
+      { title: "Handoff helper", text: "A reminder, not a way to take control. Both handoff buttons are always shown, and there is no prompt at 30W when a combined NAT_FSS position is online." },
+      { title: "Auto RCL history and VACS calls", text: "Auto RCL has a History list. VACS shows who is calling, with a call log and a ring tone you can turn off." },
+      { title: "New training videos", text: "Videos 6 (the RCL process) and 7 (the handoff helper) are on the Training page, and videos 1 to 5 and the overview have been re-recorded." },
+    ],
+  },
+  {
     id: "2.7.0",
     date: "6 November 2026",
     items: [

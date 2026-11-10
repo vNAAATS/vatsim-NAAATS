@@ -49,6 +49,8 @@ EuroScope command for you to paste into the command line.
 NEW IN 1.5b3: a red * beside the callsign on the radar tag means a natTrak reminder was sent to that pilot from the FDD (aircraft menu > NatTrak).
 It disappears when the pilot requests clearance or an oceanic controller tracks the aircraft.
 
+NEW IN 2.8.0: (1) the update check now asks vnaaats.com (/pluginversion) instead of GitHub, which fixes the "Could not fetch version info" certificate error some computers showed. If the check cannot be done it is only written to the log as a warning, with no message in EuroScope and no Discord alert. Replace only VatsimNAAATS.dll and keep your vnaaats.cfg.
+
 NEW IN 2.7.2: (1) Contact Me from the FDD now clicks the callsign on the radar tag, which is what EuroScope waits for after .contactme, so you no longer click it yourself. The plugin checks that the click reached the tag, tries once more if not, and tells the FDD "Contact Me NOT sent" if it still did not. (2) Auto RCL typing tries harder to bring EuroScope to the front (up to four attempts); backgroundtype=1 in vnaaats.cfg is an experiment that types without EuroScope in front. (3) A route drawn by right-clicking a callsign is erased after 10 seconds (routeseconds in vnaaats.cfg; 0 keeps it). (4) New contactbutton=left|middle|right in vnaaats.cfg for controllers whose EuroScope selects aircraft with another mouse button. Replace only VatsimNAAATS.dll and keep your vnaaats.cfg.
 NEW IN 2.7.1: Fixes the version number. 2.7.0 still said it was 2.6.0 inside EuroScope and in the log, so it kept offering an update to itself. If you have 2.7.0 (or 2.6.0), replace only VatsimNAAATS.dll with this one and keep your vnaaats.cfg. Everything described under 2.7.0 is in this build.
 
