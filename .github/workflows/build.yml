@@ -1,0 +1,71 @@
+name: Build plugin
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2022
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      # The EuroScope SDK import library is not in the repo (it is distributed with the EuroScope plugin SDK).
+      # Put EuroScopePlugInDll.lib in the repo's lib folder (git add -f lib/EuroScopePlugInDll.lib) to enable the build.
+      - name: Check SDK library
+        shell: pwsh
+        run: |
+          if (-not (Test-Path lib/EuroScopePlugInDll.lib)) { Write-Error "lib/EuroScopePlugInDll.lib is missing (see comment in build.yml)"; exit 1 }
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build (Release, 32-bit)
+        shell: pwsh
+        run: |
+          msbuild VatsimNAAATS/VatsimNAAATS.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /p:WindowsTargetPlatformVersion=10.0 /m /nologo /v:m | Tee-Object -FilePath build.log
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            $errs = Select-String -Path build.log -Pattern ' error ' | ForEach-Object { $_.Line.Trim() } | Select-Object -Unique -First 25
+            foreach ($e in $errs) { Write-Host "::error::$($e -replace '%','%25')" }
+            exit $code
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VatsimNAAATS-plugin
+          path: |
+            **/Release/VatsimNAAATS.dll
+            VatsimNAAATS/vnaaats.example.cfg
+      - name: Package
+        if: github.event_name == 'push' && github.ref_name == 'server-and-squawk'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force pkg | Out-Null
+          Copy-Item (Get-ChildItem -Recurse -Filter VatsimNAAATS.dll | Where-Object { $_.FullName -match 'Release' } | Select-Object -First 1).FullName pkg/
+          Copy-Item VatsimNAAATS/vnaaats.example.cfg pkg/
+          Copy-Item VatsimNAAATS/README.txt pkg/
+          Copy-Item VatsimNAAATS/ICAO_Airlines.txt pkg/
+          Copy-Item VatsimNAAATS/vNAAATS.ttf pkg/
+          Copy-Item VatsimNAAATS/vNAAATS.asr pkg/
+          Compress-Archive -Path pkg/* -DestinationPath VatsimNAAATS-plugin.zip -Force
+      - name: Publish release
+        if: github.event_name == 'push' && github.ref_name == 'server-and-squawk'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-build --yes --cleanup-tag 2>$null
+          gh release create latest-build VatsimNAAATS-plugin.zip pkg/VatsimNAAATS.dll --prerelease --target ${{ github.sha }} --title "Latest plugin build" --notes "Automatic build of the server-and-squawk branch (${{ github.sha }})."
+      # Plugin release notices to Discord are posted by the server (deploy/plugin_announce.py), not from here.
+      # A full version number (like 2.0.0, not 1.5b23) also makes a normal, non-pre-release GitHub release called v2.0.0.
+      - name: Publish version release (full versions only)
+        if: github.event_name == 'push' && github.ref_name == 'server-and-squawk'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ver = (Get-Content pluginversion.txt -Raw).Trim()
+          if ($ver -notmatch '^\d+\.\d+\.\d+$') { Write-Host "Version $ver is a test build - no version release."; exit 0 }
+          $tag = "v$ver"
+          gh release view $tag 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) { Write-Host "$tag is already released."; exit 0 }
+          gh release create $tag VatsimNAAATS-plugin.zip pkg/VatsimNAAATS.dll --title "vNAAATS $tag" --notes-file RELEASE-NOTES.md --target ${{ github.sha }}

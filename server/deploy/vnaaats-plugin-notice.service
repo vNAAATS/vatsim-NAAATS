@@ -1,0 +1,6 @@
+[Unit]
+Description=vNAAATS plugin release notice (Discord)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/vnaaats/deploy/plugin_announce.py

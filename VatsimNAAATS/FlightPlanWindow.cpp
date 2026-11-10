@@ -37,6 +37,11 @@ CFlightPlanWindow::CFlightPlanWindow(POINT topLeft) : CBaseWindow(topLeft) {
 	restrictionSelections[SEL_ATCR_INT] = "INT";
 };
 
+// What the route box shows when the plugin has no route yet for the aircraft (it holds only the "AIRCRAFT" present-position placeholder)
+static string RouteBoxText(const string& route) {
+	return (route.empty() || route == "AIRCRAFT") ? "CHECK / EDIT ROUTE" : route;
+}
+
 void CFlightPlanWindow::MakeWindowItems() {
 	// Button defaults
 	windowButtons[BTN_CLOSE] = CWinButton(BTN_CLOSE, WIN_FLTPLN, "Close", CInputState::INACTIVE);
@@ -88,7 +93,7 @@ void CFlightPlanWindow::MakeWindowItems() {
 	textInputs[TXT_TYPE] = CTextInput(TXT_TYPE, WIN_FLTPLN, "Type", "", 55, CInputState::INACTIVE);
 	textInputs[TXT_DEPART] = CTextInput(TXT_DEPART, WIN_FLTPLN, "Depart", "", 50, CInputState::INACTIVE);
 	textInputs[TXT_ETD] = CTextInput(TXT_ETD, WIN_FLTPLN, "Etd", "", 50, CInputState::INACTIVE);
-	textInputs[TXT_SELCAL] = CTextInput(TXT_SELCAL, WIN_FLTPLN, "SELCAL", "", 55, CInputState::INACTIVE);
+	textInputs[TXT_SELCAL] = CTextInput(TXT_SELCAL, WIN_FLTPLN, "SELCAL", "", 55, CInputState::ACTIVE);
 	textInputs[TXT_DATALINK] = CTextInput(TXT_DATALINK, WIN_FLTPLN, "Datalink", "", 60, CInputState::INACTIVE);
 	textInputs[TXT_COMMS] = CTextInput(TXT_COMMS, WIN_FLTPLN, "Com", "", 35, CInputState::INACTIVE);
 	textInputs[TXT_OWNERSHIP] = CTextInput(TXT_OWNERSHIP, WIN_FLTPLN, "Sector", "", 30, CInputState::INACTIVE);
@@ -193,6 +198,16 @@ void CFlightPlanWindow::MoveSubWindow(int id, POINT topLeft) {
 void CFlightPlanWindow::RenderWindow(CDC* dc, Graphics* g, CRadarScreen* screen) {
 	// Save device context
 	int iDC = dc->SaveDC();
+
+	// Values changed on the server (e.g. from the web FDD): show them in the boxes (done here, on the drawing thread)
+	if (primedPlan != nullptr && primedPlan->WindowRefresh) {
+		primedPlan->WindowRefresh = false;
+		if (!primedPlan->Mach.empty() && isdigit((unsigned char)primedPlan->Mach[0]))
+			textInputs[TXT_SPD].Content = string("M") + CUtils::PadWithZeros(3, atoi(primedPlan->Mach.c_str()));
+		textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
+		textInputs[TXT_TCK].Content = primedPlan->Track;
+		textInputs[TXT_SELCAL].Content = primedPlan->SELCAL;
+	}
 
 	// Create brushes
 	CBrush darkerBrush(ScreenBlue.ToCOLORREF());
@@ -1937,7 +1952,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 		else {
 			textInputs[TXT_TCK].Content = primedPlan->Track;
 		}
-		textInputs[TXT_RTE].Content = route;
+		textInputs[TXT_RTE].Content = RouteBoxText(route);
 		textInputs[TXT_RTE].State == CInputState::DISABLED;
 
 		if (fp->State == "CPY") {
@@ -1986,7 +2001,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 				SetTextValue(screen, CFlightPlanWindow::TXT_TCK, primedPlan->Track);
 			}
 			else {
-				SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
+				SetTextValue(screen, CFlightPlanWindow::TXT_RTE, RouteBoxText(route));
 			}
 		}
 		else {
@@ -2007,7 +2022,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 					SetTextValue(screen, CFlightPlanWindow::TXT_TCK, primedPlan->Track);
 				}
 				else {
-					SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
+					SetTextValue(screen, CFlightPlanWindow::TXT_RTE, RouteBoxText(route));
 				}
 			}
 			else
@@ -2025,7 +2040,7 @@ void CFlightPlanWindow::Instantiate(CRadarScreen* screen,string callsign, CMessa
 	textInputs[TXT_COMMS].Content = primedPlan->Communications;
 	textInputs[TXT_OWNERSHIP].Content = primedPlan->Sector;
 	textInputs[TXT_SELCAL].Content = primedPlan->SELCAL;
-	textInputs[TXT_DATALINK].Content = primedPlan->DLStatus == "true" ? "ONLINE" : "OFFLINE";
+	textInputs[TXT_DATALINK].Content = primedPlan->CpdlcConnected ? "CPDLC ON" : "CPDLC OFF"; // real state: is the pilot logged on to our CPDLC station
 
 
 	// If tracked by other controller
@@ -2338,6 +2353,75 @@ void CFlightPlanWindow::SetTextValue(CRadarScreen* screen, int id, string conten
 		}
 	}
 
+	// SELCAL: four letters from the SELCAL alphabet (A-H, J-M, P-S), dashes/spaces ignored
+	if (id == TXT_SELCAL) {
+		string code;
+		for (size_t i = 0; i < content.size(); i++) {
+			char c = (char)toupper((unsigned char)content[i]);
+			if (c == '-' || c == ' ') continue;
+			code += c;
+		}
+		bool valid = code.size() == 4;
+		for (size_t i = 0; valid && i < code.size(); i++) {
+			char c = code[i];
+			if (!((c >= 'A' && c <= 'H') || (c >= 'J' && c <= 'M') || (c >= 'P' && c <= 'S'))) valid = false;
+		}
+		if (code.empty()) { // Cleared: go back to whatever the remarks say
+			primedPlan->SelcalManual = false;
+			textInputs.find(id)->second.Error = false;
+			return;
+		}
+		if (!valid) {
+			textInputs.find(id)->second.Error = true;
+			return;
+		}
+		primedPlan->SELCAL = code;
+		primedPlan->SelcalManual = true;
+		textInputs.find(id)->second.Error = false;
+		content = code;
+
+		// Already cleared (so already on the server)? Save the new SELCAL straight away so everybody sees it
+		if (primedPlan->IsCleared) {
+			CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+			try {
+				netFP->Callsign = primedPlan->Callsign;
+				netFP->Type = primedPlan->Type;
+				netFP->AssignedLevel = stoi(primedPlan->FlightLevel);
+				netFP->AssignedMach = stoi(primedPlan->Mach);
+				netFP->Track = primedPlan->Track;
+				netFP->Departure = primedPlan->Depart;
+				netFP->Arrival = primedPlan->Dest;
+				netFP->Direction = CUtils::GetAircraftDirection(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+				netFP->Selcal = primedPlan->SELCAL;
+				netFP->DatalinkConnected = primedPlan->DLStatus == "true";
+				netFP->IsEquipped = primedPlan->IsEquipped;
+				netFP->State = primedPlan->State;
+				netFP->Etd = primedPlan->Etd;
+				netFP->Relevant = true;
+				netFP->TargetMode = CUtils::GetTargetMode(screen->GetPlugIn()->RadarTargetSelect(primedPlan->Callsign.c_str()).GetPosition().GetRadarFlags());
+				netFP->TrackedBy = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerCallsign();
+				netFP->TrackedById = screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).GetTrackingControllerId();
+				netFP->Route = "";
+				netFP->RouteEtas = "";
+				vector<CRoutePosition> rte;
+				CRoutesHelper::GetRoute(screen, &rte, primedPlan->Callsign);
+				for (size_t i = 0; i < rte.size(); i++) {
+					netFP->Route += rte[i].Fix + (i + 1 < rte.size() ? " " : "");
+					netFP->RouteEtas += rte[i].Estimate + (i + 1 < rte.size() ? " " : "");
+				}
+				CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+				data->Screen = screen;
+				data->Callsign = primedPlan->Callsign;
+				data->plugin = screen->GetPlugIn();
+				data->FP = netFP;
+				_beginthread(CDataHandler::UpdateNetworkAircraft, 0, (void*)data); // Async
+			}
+			catch (std::exception&) {
+				delete netFP;
+			}
+		}
+	}
+
 	// Set the text
 	if (textInputs.find(id) != textInputs.end()) {
 		for (int i = 0; i < content.size(); i++) { // Check if string
@@ -2582,7 +2666,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					textInputs[TXT_LEVEL].Content = primedPlan->FlightLevel;
 					textInputs[TXT_DEST].Content = primedPlan->Dest;
 					if (primedPlan->Track == "RR")
-						SetTextValue(screen, CFlightPlanWindow::TXT_RTE, route);
+						SetTextValue(screen, CFlightPlanWindow::TXT_RTE, RouteBoxText(route));
 					else
 						SetTextValue(screen, CFlightPlanWindow::TXT_TCK, primedPlan->Track);
 
@@ -2654,7 +2738,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 						_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data); // Async
 					}
 					catch (std::exception & ex) {
-						CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+						CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
 						
 					}					
 				}
@@ -2711,7 +2795,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 						}
 					}
 					catch (std::exception & ex) {
-						CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+						CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
 						CLogger::Log(CLogType::ERR, "An error occurred whilst trying to update network data. Callsign: " + netFP->Callsign, "");
 					}					
 				}
@@ -2781,8 +2865,8 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 							}
 						}
 						catch (std::exception & ex) {
-							CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-							CLogger::Log(CLogType::ERR, "An error occurred whilst trying to update network data. Callsign: " + netFP->Callsign + "\nVerbose details: " + *ex.what(), "");
+							CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+							CLogger::Log(CLogType::ERR, "An error occurred whilst trying to update network data. Callsign: " + netFP->Callsign + string("\nVerbose details: ") + ex.what(), "");
 						}
 					}
 				}
@@ -2841,7 +2925,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 					}
 				}
 				catch (std::exception & ex) {
-					CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+					CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
 				}
 			}
 		}
@@ -2849,6 +2933,24 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 			try {
 				CLogger::Log(CLogType::NORM, "Initiating handoff of aircraft " + primedPlan->Callsign + " to station " + selectedAuthority + ".", "CRadarDisplay::OnRefresh");
 				screen->GetPlugIn()->FlightPlanSelect(primedPlan->Callsign.c_str()).InitiateHandoff(selectedAuthority.c_str());
+
+				// On CPDLC? Then the server tells the pilot "CONTACT <station> ON <frequency>, BYE." and logs them off when they reply
+				if (primedPlan->CpdlcConnected) {
+					string freq = "";
+					auto ctrl = onlineControllers.find(selectedAuthority);
+					if (ctrl != onlineControllers.end()) {
+						char buf[16];
+						snprintf(buf, sizeof(buf), "%.3f", ctrl->second.GetPrimaryFrequency());
+						freq = buf;
+					}
+					CUtils::CNetworkAsyncData* hd = new CUtils::CNetworkAsyncData();
+					hd->Screen = screen;
+					hd->Callsign = primedPlan->Callsign;
+					hd->Target = selectedAuthority;
+					hd->Freq = freq;
+					hd->plugin = screen->GetPlugIn();
+					_beginthread(CDataHandler::PostCpdlcHandoff, 0, (void*)hd); // Async
+				}
 				SetButtonState(BTN_XCHANGE_TRANSFER, CInputState::DISABLED);
 				windowButtons[BTN_XCHANGE_TRACK].Label = "Track";
 				selectedAuthority = "";
@@ -2897,7 +2999,7 @@ void CFlightPlanWindow::ButtonUp(int id, CRadarScreen* screen) {
 				}
 			}
 			catch (std::exception & ex) {
-				CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
+				CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
 			}
 		}
 		if (id == BTN_UNCLEAR) {

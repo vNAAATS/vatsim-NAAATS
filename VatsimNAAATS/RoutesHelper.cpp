@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <regex>
 #include "RoutesHelper.h"
 #include "DataHandler.h"
 
@@ -83,11 +84,41 @@ bool CRoutesHelper::GetRoute(CRadarScreen* screen, vector<CRoutePosition>* route
 			}
 		}
 	catch (std::exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CRoutesHelper::GetRoute");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + string("\nVerbose details: ") + ex.what(), "CRoutesHelper::GetRoute");
 		return false;
 	}
 
+	return true;
+}
+
+// Coordinate waypoints as filed on the North Atlantic: 52/50, 5730/30, 5020N, N5020, 52N050W, 5230N05000W.
+// Returns false if the text is not a coordinate (so one odd token cannot break the whole route).
+static bool ParseOceanicCoordinate(string t, CPosition* pos) {
+	for (auto& c : t) c = (char)toupper((unsigned char)c);
+	smatch m;
+	double lat, lon;
+	if (regex_match(t, m, regex("(\\d{2})(\\d{2})N"))) {          // 5020N = 50N 020W
+		lat = stod(m[1].str()); lon = -stod(m[2].str());
+	}
+	else if (regex_match(t, m, regex("N(\\d{2})(\\d{2})"))) {     // N5020 = 50.5N 020W
+		lat = stod(m[1].str()) + 0.5; lon = -stod(m[2].str());
+	}
+	else if (regex_match(t, m, regex("(\\d{2})(\\d{2})?/(\\d{2,3})"))) { // 52/50, 5730/30
+		lat = stod(m[1].str()) + (m[2].matched ? stod(m[2].str()) / 60.0 : 0.0);
+		lon = -stod(m[3].str());
+	}
+	else if (regex_match(t, m, regex("(\\d{2})(\\d{2})?([NS])(\\d{3})(\\d{2})?([EW])"))) { // 52N050W, 5230N05000W
+		lat = stod(m[1].str()) + (m[2].matched ? stod(m[2].str()) / 60.0 : 0.0);
+		lon = stod(m[4].str()) + (m[5].matched ? stod(m[5].str()) / 60.0 : 0.0);
+		if (m[3].str() == "S") lat = -lat;
+		if (m[6].str() == "W") lon = -lon;
+	}
+	else {
+		return false;
+	}
+	pos->m_Latitude = lat;
+	pos->m_Longitude = lon;
 	return true;
 }
 
@@ -186,10 +217,12 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 						}
 					}
 					else {
-						// Make position from the string lat and lon
+						// Make position from the coordinate text; anything that is not a coordinate is skipped
 						CPosition pos;
-						pos.m_Latitude = stod(fp->RouteRaw[i].substr(0, 2));
-						pos.m_Longitude = -(stod(fp->RouteRaw[i].substr(3, 2)));
+						if (!ParseOceanicCoordinate(fp->RouteRaw[i], &pos)) {
+							CLogger::Log(CLogType::NORM, "Route token " + fp->RouteRaw[i] + " is not a coordinate and was skipped.", "CRoutesHelper::InitialiseRoute");
+							continue;
+						}
 						point.Name = fp->RouteRaw[i];
 						point.Position = pos;
 					}
@@ -328,8 +361,8 @@ void CRoutesHelper::InitialiseRoute(void* args) {
 		delete args;
 	}
 	catch (std::exception & ex) {
-		CLogger::DebugLog(data->Screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + data->Callsign + "\nVerbose details: " + *ex.what(), "CRoutesHelper::InitialiseRoute");
+		CLogger::DebugLog(data->Screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + data->Callsign + string("\nVerbose details: ") + ex.what(), "CRoutesHelper::InitialiseRoute");
 	}
 }
 
@@ -479,8 +512,8 @@ int CRoutesHelper::ParseRoute(CRadarScreen* screen, string callsign, string rawI
 
 	}
 	catch (std::exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CRoutesHelper::ParseRoute");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + string("\nVerbose details: ") + ex.what(), "CRoutesHelper::ParseRoute");
 		return 1;
 	}
 
@@ -536,8 +569,8 @@ string CRoutesHelper::OnNatTrack(CRadarScreen* screen, string callsign) {
 		}
 	}
 	catch (std::exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CRoutesHelper::OnNatTrack");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + string("\nVerbose details: ") + ex.what(), "CRoutesHelper::OnNatTrack");
 		return "";
 	}
 }

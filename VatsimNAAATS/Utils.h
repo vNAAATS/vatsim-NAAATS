@@ -66,7 +66,8 @@ class CUtils { // TODO: refactor into namespace
 		static bool IsExitPoint(string pointName, bool direction);
 
 		// Check if the aircraft is to be displayed on the screen
-		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false);
+		static bool IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false); // includes a 15 minute keep after leaving scope
+		static bool IsAircraftRelevantNow(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled = false);
 
 		// Check if aircraft is AGCS equipped
 		static bool IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipCode);
@@ -91,6 +92,9 @@ class CUtils { // TODO: refactor into namespace
 
 		// Find selcal code from remarks
 		static string GetSelcalCode(CFlightPlan* fpData);
+
+		// Assign transponder code 2000 (oceanic) to the aircraft. Returns true if the code is now 2000.
+		static bool AssignOceanicSquawk(CPlugIn* plugin, const string& callsign);
 
 		// Parse zulu time
 		static string ParseZuluTime(bool delimit, int deltaTime = -1, CFlightPlan* fp = nullptr, int ep = -1);
@@ -147,7 +151,13 @@ class CUtils { // TODO: refactor into namespace
 			string Callsign;
 			CPlugIn* plugin = nullptr;
 			CNetworkFlightPlan* FP = nullptr;
+			string Target; // CPDLC handoff: controller callsign being handed to
+			string Freq;   // CPDLC handoff: their frequency, e.g. 127.500
 		};
+
+		// Radio-telephony name for a callsign, e.g. BAW227 -> "Speedbird" (empty if unknown).
+		// Reads ICAO_Airlines.txt from the DLL folder once.
+		static string TelephonyFor(const string& callsign);
 
 		// DLL path
 		static char DllPathFile[_MAX_PATH];

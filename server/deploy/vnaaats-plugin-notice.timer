@@ -1,0 +1,9 @@
+[Unit]
+Description=Check for a new vNAAATS plugin build every 10 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

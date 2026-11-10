@@ -1,0 +1,60 @@
+name: Build FDD for Windows
+# FDD for Windows: a window around the web Flight Data Display that can also check/replace the plugin DLL,
+# save the key into vnaaats.cfg and start EuroScope, VACS and the audio client. Published as the "fdd-windows" release
+# (never marked "latest", because the server looks at the latest release for the plugin DLL).
+on:
+  push:
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+  pull_request:
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            launcher/target
+          key: launcher-${{ hashFiles('launcher/**/Cargo.toml') }}
+      - name: Test the file handling
+        working-directory: launcher
+        run: cargo test -p vnaaats-core
+      - name: Install the Tauri tool
+        run: npm install -g @tauri-apps/cli@2
+      - name: Number this build (each build must be newer than the last for the updater)
+        shell: pwsh
+        run: |
+          $v = "0.2.${{ github.run_number }}"
+          (Get-Content launcher/app/src-tauri/tauri.conf.json -Raw) -replace '"version": "0\.1\.0"', ('"version": "' + $v + '"') | Set-Content launcher/app/src-tauri/tauri.conf.json -NoNewline
+          (Get-Content launcher/app/src-tauri/Cargo.toml -Raw) -replace '(?m)^version = "0\.1\.0"', ('version = "' + $v + '"') | Set-Content launcher/app/src-tauri/Cargo.toml -NoNewline
+          echo "APP_VERSION=$v" >> $env:GITHUB_ENV
+      - name: Remove installers left in the cache by earlier builds
+        shell: pwsh
+        run: Remove-Item launcher/target/release/bundle/nsis -Recurse -Force -ErrorAction SilentlyContinue
+      - name: Build the app
+        working-directory: launcher/app/src-tauri
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: tauri build
+      - name: Publish FDD for Windows
+        if: github.event_name == 'push' && (github.ref_name == 'server-and-squawk' || startsWith(github.ref_name, 'feature/launcher'))
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The cached target folder keeps the installers of earlier builds: take exactly this build's, never "the first one" (that was an old one)
+          $exe = Get-Item ("launcher/target/release/bundle/nsis/vNAAATS_" + $env:APP_VERSION + "_x64-setup.exe")
+          Copy-Item $exe.FullName FDD-for-Windows-Setup.exe
+          $sig = (Get-Content ($exe.FullName + ".sig") -Raw).Trim()
+          $json = [ordered]@{ version = $env:APP_VERSION; notes = "FDD for Windows $env:APP_VERSION"; pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ");
+            platforms = [ordered]@{ "windows-x86_64" = [ordered]@{ signature = $sig; url = "https://github.com/garythms/vatsim-NAAATS-v2/releases/download/fdd-windows/FDD-for-Windows-Setup.exe" } } }
+          $json | ConvertTo-Json -Depth 5 | Set-Content latest.json
+          gh release delete fdd-windows --yes --cleanup-tag 2>$null
+          gh release delete launcher-test --yes --cleanup-tag 2>$null
+          gh release create fdd-windows FDD-for-Windows-Setup.exe latest.json --latest=false --target ${{ github.sha }} --title "FDD for Windows" --notes "FDD for Windows: the vNAAATS Flight Data Display in its own window, with a one-time setup for the plugin, your key, EuroScope, VACS and your audio client. Install guide: https://vnaaats.com/guide (build ${{ github.sha }})."

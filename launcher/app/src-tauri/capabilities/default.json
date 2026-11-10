@@ -1,0 +1,26 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Only pages from vnaaats.com may talk to this app.",
+  "windows": ["main", "pop-*"],
+  "remote": { "urls": ["https://vnaaats.com/*"] },
+  "permissions": [
+    "core:default",
+    "allow-status",
+    "allow-pick-folder",
+    "allow-update-plugin",
+    "allow-save-key",
+    "allow-pick-exe",
+    "allow-launch",
+    "allow-open-url",
+    "allow-cred-get",
+    "allow-cred-save",
+    "allow-cred-forget",
+    "allow-open-nattrak",
+    "allow-nattrak-open",
+    "allow-nattrak-signed-in",
+    "allow-app-update-check",
+    "allow-app-update-install",
+    "allow-open-popout"
+  ]
+}

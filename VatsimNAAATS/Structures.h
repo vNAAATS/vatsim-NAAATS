@@ -294,6 +294,10 @@ struct CNetworkFlightPlan {
 	string TrackedBy;
 	string TrackedById;
 	string LastUpdated;
+	bool Cpdlc = false; // connected to the CPDLC station on the server
+	bool NtSent = false; // natTrak reminder sent to the pilot (red star)
+	double ContactMeAt = 0; // when a Contact Me was sent from the FDD (seconds since 1970, 0 = never)
+	bool CpdlcRelease = false; // server asks to release the tag (pilot sent to UNICOM)
 };
 
 struct CAircraftFlightPlan {
@@ -368,6 +372,21 @@ struct CAircraftFlightPlan {
 	bool IsEquipped;
 	bool IsValid = false;
 	bool IsRelevant = true;
+	bool CpdlcConnected = false; // show [CALLSIGN] on the radar tag
+	bool NtSent = false; // natTrak reminder sent: red * beside the callsign
+	double ContactMeAt = 0; // Contact Me sent from the FDD (seconds since 1970, 0 = never): yellow tag outline, red after 20 minutes
+	bool ReleaseRequested = false; // release the tag on the next draw (set after UNICOM)
+	bool ReleaseHandled = false;   // the current server release request has been acted on
+	bool WindowRefresh = false; // server changed level/speed/track/SELCAL: refresh the open flight plan window
+	// Scratchpad note shared with the FDD. NetScratch comes from the server (set on the download thread); the rest is used on the draw thread.
+	string Scratch;             // the note shown under the tag
+	string NetScratch;
+	bool NetScratchKnown = false;
+	string LastNetScratch;      // the server value the last time it was looked at
+	string ScratchSynced;       // what EuroScope and the server last agreed on
+	bool ScratchInit = false;
+	clock_t ScratchRetryAt = 0; // EuroScope refused a write: try again later
+	bool SelcalManual = false; // SELCAL typed in by the controller: do not overwrite from remarks
 	bool IsFirstUpdate = false; // So that we can disable flight plan window until the plan has been fetched from server at least once
 	CRadarTargetMode TargetMode = CRadarTargetMode::ADS_B;
 	bool IsCleared = false;
