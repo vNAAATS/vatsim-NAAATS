@@ -598,6 +598,21 @@ class EntryAndRclTests(unittest.TestCase):
         self.assertEqual(sent[1], "/data2/2//R/THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC CONTACT WITH GANDER CENTER")
         self.assertEqual(st.messages("BAW123")[-1]["state"], "SENT")      # shows as waiting for the ROGER
 
+    def test_second_message_when_crossing_30w(self):
+        state = {"airborne": True, "skip": False, "entry": "CZQO", "inside": True, "area": "CZQO"}
+        hop, st = self.station(lambda cs: dict(state))
+        self.logon(hop, st)
+        st.poll_once()
+        self.assertEqual(len(self.uplinks(hop)), 2)
+        state["area"] = "EGGX"                                           # eastbound, now across 30W
+        st.poll_once(); st.poll_once()
+        sent = self.uplinks(hop)
+        self.assertEqual(len(sent), 3)
+        self.assertIn("CONTACT WITH SHANWICK CENTER", sent[2])
+        state["area"] = "CZQO"                                           # back again within 12 hours: already had it, no repeat
+        st.poll_once()
+        self.assertEqual(len(self.uplinks(hop)), 3)
+
     def test_entry_message_shanwick_name(self):
         hop, st = self.station(lambda cs: {"airborne": True, "skip": False, "entry": "EGGX", "inside": True})
         self.logon(hop, st)

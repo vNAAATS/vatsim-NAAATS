@@ -2501,6 +2501,10 @@ def main():
                 out["entry"] = "CZQO" if d else "EGGX"        # eastbound enters at Gander, westbound at Shanwick
             if pos:
                 out["inside"] = rcl_auto_mod.oca_state(pos, d if isinstance(d, bool) else None) == "inside"
+                try:
+                    out["area"] = "EGGX" if float(pos[1]) > -30 else "CZQO"      # east of 30W is Shanwick, west of it Gander
+                except (TypeError, ValueError, IndexError):
+                    pass
             return out
         cpdlc = cpdlc_mod.CpdlcHub(os.environ.get("VNAAATS_DB", os.path.join(HERE, "vnaaats.db")),
                                    locate=locate, facts=facts,

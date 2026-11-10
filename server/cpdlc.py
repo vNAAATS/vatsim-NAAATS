@@ -224,7 +224,7 @@ class CpdlcStation:
         self.now = now
         self.locate = locate or (lambda callsign: None)          # callsign -> True (near oceanic) / False (too far) / None (unknown)
         self.facts = facts or (lambda callsign: {})              # callsign -> {"airborne", "skip", "entry" (CZQO/EGGX), "inside"} where known
-        self.entry_sent = set()                                  # flights that already had the entry-point message from this station
+        self.entry_sent = {}                                     # flight -> the area (CZQO/EGGX) whose contact message it last had from this station
         self.on_release = on_release or (lambda callsign: None)  # called when the tag should be released in EuroScope
         self.pending = {}                                        # callsign -> {"min", "kind", "ts"}: waiting for the pilot's WILCO/ROGER
         self.lock = threading.RLock()
@@ -365,14 +365,14 @@ class CpdlcStation:
         return f.get("entry") or RCL_STATION_NAMES.get(self.client.station, "NAT_FSS")
 
     def entry_tick(self, only=None):
-        """Once per flight, when a pilot connected by CPDLC is at the oceanic entry (inside the oceanic area), tell them who has contact. Needs ROGER.
+        """Once per area, when a pilot connected by CPDLC is inside the oceanic area, tell them who has contact (again on crossing 30W into the other area). Needs ROGER.
         Never to an aircraft on the ground, one departing Iceland (Reykjavik's, not ours), or one we cannot place."""
         if not ENTRY_MSG:
             return
         with self.lock:
             names = [only.upper()] if only else list(self.connected.keys())
         for cs in names:
-            if cs in self.entry_sent or not self.is_connected(cs):
+            if not self.is_connected(cs):
                 continue
             try:
                 f = self.facts(cs) or {}
@@ -381,19 +381,23 @@ class CpdlcStation:
                 continue
             if f.get("airborne") is not True or f.get("skip") or f.get("inside") is not True:
                 continue
+            # the area the aircraft is in now: crossing 30W between Shanwick and Gander (either way) gets a second message for the new area
+            area = f.get("area") or f.get("entry") or self.oca_name(cs)
+            if self.entry_sent.get(cs) == area:
+                continue
+            text = entry_contact_text(area)
             with self.lock:
-                done = self.db.execute("SELECT 1 FROM cpdlc_messages WHERE callsign=? AND dir='UP' AND text LIKE 'THIS IS AN AUTOMATED MESSAGE TO CONFIRM CPDLC%' AND ts > ?",
-                                       (cs, self.now() - 12 * 3600)).fetchone()
-            self.entry_sent.add(cs)
+                done = self.db.execute("SELECT 1 FROM cpdlc_messages WHERE callsign=? AND dir='UP' AND text=? AND ts > ?",
+                                       (cs, text, self.now() - 12 * 3600)).fetchone()
+            self.entry_sent[cs] = area
             if done:
                 continue
             mn = self._alloc_min()
-            text = entry_contact_text(f.get("entry") or self.oca_name(cs))
             try:
                 self._send_packet(cs, mn, None, "R", text)
             except RuntimeError as e:
                 log.warning("entry-point message to %s failed: %s", cs, e)
-                self.entry_sent.discard(cs)
+                self.entry_sent.pop(cs, None)
                 continue
             self._store("UP", cs, mn, None, "R", text, state="SENT", by="auto")
 
