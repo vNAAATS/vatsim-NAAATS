@@ -2,6 +2,7 @@
 import { onMount } from "svelte";
  
 import * as site from "../typescript/site";
+import StatusPill from "../props/status_pill.svelte";
 
 let pagesOpen: boolean = false;
 let heroVideo: HTMLVideoElement;
@@ -60,6 +61,7 @@ onMount(async () => {
             <div class="text-white font-bitmap text-2xl pt-2 select-none opacity-90" id="version-credit">
                 Version 2 &ndash; Modernised by Gary Thomas
             </div>
+            <StatusPill />
             <div class="flex flex-row justify-center mt-10">
                 <a href="/windows" class="border-2 rounded px-4 py-2 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-100 transition duration-500 
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
