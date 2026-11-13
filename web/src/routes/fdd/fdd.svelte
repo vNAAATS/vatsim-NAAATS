@@ -385,7 +385,7 @@
         on:click={() => rclPanelOpen.set(!$rclPanelOpen)}><span class="inline-block w-2 h-2 rounded-full {$rclAuto.on ? 'bg-green-300' : 'bg-red-400'}"></span>Auto RCL: {$rclAuto.on ? ($rclAuto.confirm && $rclAuto.waiting.length > 0 ? $rclAuto.waiting.length + " waiting" : "ON") : "OFF"}{$rclAuto.on && $rclAuto.sender === "" ? " (no sender)" : ""}{$rclAuto.error ? " !" : ""}</button>
     {/if}
     {#if concOverdueN > 0}
-      <span class="px-1 font-bold {visualOn && tickN >= 0 ? 'nt-flash text-black' : 'text-yellow-300'}" title="Concorde flights overdue a position report">&#9201; {concOverdueN} overdue</span>
+      <span class="px-1 font-bold {visualOn && tickN >= 0 ? 'nt-flash text-black' : 'text-yellow-300'}" title="Flights overdue a position report (Concorde, or flights switched on for voice reports)">&#9201; {concOverdueN} overdue</span>
     {/if}
     {#if conflictCount > 0}
       <button class="tbtn border border-yellow-300 text-yellow-300 font-bold hover:bg-yellow-300 hover:text-black" title="Click to jump to the flight with a warning (click again for the next one)" on:click={nextAlert}>&#9888; {conflictCount} alert{conflictCount === 1 ? "" : "s"}</button>

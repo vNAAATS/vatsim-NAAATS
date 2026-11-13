@@ -139,6 +139,15 @@
   function openPos(): void { dataHandler.setAsel(callsign); pr.posOpen.set(true); close(); }
 
   $: isConc = !!ac && (ac.IsConc || ac.Type === "CONC");
+  $: voice = !!ac && (ac.VoiceReports || isConc);
+  let voiceMsg: string = "";
+  async function toggleVoice(): Promise<void> {
+    if (!canEdit || busy) return;
+    busy = true; voiceMsg = "";
+    voiceMsg = await sess.setVoiceReports(callsign, !voice);
+    ac = dataHandler.getAircraft(callsign);
+    busy = false;
+  }
   $: onCpdlc = !!callsign && cp.isConnected(callsign);
   $: tabs = [["track", trackedByMe ? "Update" : "Track"], ["transfer", "Transfer"], ["untrack", "Release Tag"], ["selcal", "SELCAL"], ["cpdlc", "CPDLC"], ["scratch", "Note"], ["contact", "Contact Me"], ["nt", "RCL REQ"], ["remove", "Hide"]] as [string, string][];
   $: trackedByMe = !!ac && !!ac.TrackedBy && !!$session.position && String(ac.TrackedBy).toUpperCase() === $session.position.toUpperCase();
@@ -157,9 +166,13 @@
           {#each tabs as t}
             <span class="px-2 py-0.5 {BTN} {tab === t[0] ? 'bg-blue-1 border-l-blue-0 border-t-blue-0 border-r-blue-6 border-b-blue-6' : ''}" on:click={() => pickTab(t[0])}>{t[1]}</span>
           {/each}
-          {#if isConc}
+          {#if voice}
             <span class="px-2 py-0.5 {BTN}" on:click={openPos}>Position reports</span>
           {/if}
+          {#if !isConc}
+            <span class="px-2 py-0.5 {BTN} {voice ? 'text-green-300' : ''}" title="For a flight that reports its position by voice (for example one that is not ADS equipped): type its times in and get an overdue alert" on:click={toggleVoice}>Voice reports: {voice ? "ON" : "off"}</span>
+          {/if}
+          {#if voiceMsg}<span class="text-xs text-yellow-300">{voiceMsg}</span>{/if}
           <span class="ml-auto" />
           <span class="px-2 py-0.5 border-2 border-red-500 bg-red-700 font-bold hover:cursor-pointer {tab === 'sup' ? 'bg-red-900' : ''}" on:click={() => pickTab("sup")}>Supervisor</span>
         </div>

@@ -318,9 +318,29 @@ class FlightStore:
         self.db.execute("CREATE TABLE IF NOT EXISTS fixes (name TEXT PRIMARY KEY, lat REAL NOT NULL, lon REAL NOT NULL)")
         self.db.execute("""CREATE TABLE IF NOT EXISTS pos_reports (callsign TEXT NOT NULL, fix TEXT NOT NULL, est TEXT NOT NULL DEFAULT '',
             act TEXT NOT NULL DEFAULT '', by TEXT NOT NULL DEFAULT '', at TEXT NOT NULL DEFAULT '', ts REAL NOT NULL, PRIMARY KEY (callsign, fix))""")
+        self.db.execute("CREATE TABLE IF NOT EXISTS voice_reports (callsign TEXT PRIMARY KEY, ts REAL NOT NULL, by TEXT NOT NULL DEFAULT '')")
         self.db.commit()
 
-    # --- position reports for aircraft that report by voice (Concorde): estimate and actual time per route fix
+    # --- flights a controller switched on for voice position reports (any aircraft that is not Concorde). It lapses after a flight's length,
+    # so the same callsign tomorrow does not start with it on, and switching it on or off starts the typed times afresh.
+    VOICE_SECONDS = 18 * 3600
+
+    def voice_set(self, callsign, on, by):
+        cs = callsign.strip().upper()
+        with self.lock:
+            self.db.execute("DELETE FROM pos_reports WHERE callsign=?", (cs,))
+            if on:
+                self.db.execute("INSERT OR REPLACE INTO voice_reports VALUES (?,?,?)", (cs, time.time(), by))
+            else:
+                self.db.execute("DELETE FROM voice_reports WHERE callsign=?", (cs,))
+            self.db.commit()
+
+    def voice_on(self, callsign):
+        with self.lock:
+            row = self.db.execute("SELECT ts FROM voice_reports WHERE callsign=?", (callsign.strip().upper(),)).fetchone()
+        return bool(row) and time.time() - row[0] < self.VOICE_SECONDS
+
+    # --- position reports for aircraft that report by voice (Concorde, or a flight switched on above): estimate and actual time per route fix
     def pos_set(self, callsign, fix, est, act, by):
         cs, fix = callsign.strip().upper(), fix.strip().upper()
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1530,7 +1550,9 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                 rec["handoff"] = handoff_mod.hint(pts, hp, ctrls)
         except Exception:
             log.exception("handoff hint failed for %s", rec.get("callsign"))
-        if is_conc(rec.get("type", "")):
+        voice = is_conc(rec.get("type", "")) or store.voice_on(rec.get("callsign", ""))
+        rec["voiceReports"] = voice                                        # position reports by voice: always for Concorde, otherwise when a controller switched it on
+        if voice:
             rec["posReports"] = store.pos_get(rec.get("callsign", ""))
         return rec
     secure_cookie = auth.public_url.startswith("https://")
@@ -2025,6 +2047,21 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         base = next((f for f in network.all() if f.get("callsign") == cs), None)
                     rec = store.mark_nt(cs, ("%s (%s)" % (sess["position"], sess["name"]))[:60], bool(body.get("sent", True)), base)
                     return self._send(200, {"ok": True}) if rec else self._send(404, {"error": "unknown flight"})
+                if p == "/SetVoiceReports":                   # a controller switches voice position reports on or off for one flight (not needed for Concorde)
+                    sess = self._session()
+                    if not sess:
+                        return self._send(401, {"error": "log in first"})
+                    if not sess["position"] or sess["position"] == "OBSERVER":
+                        return self._send(403, {"error": "choose a controlling position first"})
+                    cs = str(body.get("callsign", "")).strip().upper()
+                    if not re.fullmatch(r"[A-Z0-9]{2,8}", cs):
+                        return self._send(400, {"error": "bad callsign"})
+                    rec = store.get(cs) or (next((f for f in network.all() if f.get("callsign") == cs), None) if network else None)
+                    if not rec:
+                        return self._send(404, {"error": "unknown flight"})
+                    if not is_conc(rec.get("type", "")):
+                        store.voice_set(cs, bool(body.get("on", True)), ("%s (%s)" % (sess["position"], sess["name"]))[:60])
+                    return self._send(200, with_cpdlc(rec))
                 if p == "/EditPosReport":
                     sess = self._session()
                     if not sess:
@@ -2041,8 +2078,8 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                     rec = store.get(cs) or (next((f for f in network.all() if f.get("callsign") == cs), None) if network else None)
                     if not rec:
                         return self._send(404, {"error": "unknown flight"})
-                    if not is_conc(rec.get("type", "")):
-                        return self._send(400, {"error": "position reports are only for Concorde"})
+                    if not (is_conc(rec.get("type", "")) or store.voice_on(cs)):
+                        return self._send(400, {"error": "position reports are for Concorde, or for a flight you have switched voice position reports on for"})
                     store.pos_set(cs, fix, est, act, ("%s (%s)" % (sess["position"], sess["name"]))[:60])
                     return self._send(200, with_cpdlc(rec))
                 if p in ("/AddFlight", "/RemoveFlight"):

@@ -47,6 +47,7 @@ interface JsonAcObj {
   comm?: { kind: string; by: string; freq: string } | null;
   offline?: boolean | null;
   posReports?: Record<string, { est: string; act: string; by: string; at: string }>;
+  voiceReports?: boolean;
   updatedBy?: string;
   updatedAt?: string;
   history?: { at: string; by: string; changes: Record<string, [any, any]> }[];
@@ -310,11 +311,12 @@ export async function populateAllAircraft() : Promise<void> {
             objArr[i].track = "RR";
           }
 
-          // Concorde: typed-in actual / estimated times replace the calculated ones
+          // Voice position reports (Concorde, or a flight switched on): typed-in actual / estimated times replace the calculated ones
           const isConc: boolean = /^CONC/i.test(objArr[i]?.type ?? "");
-          const posReports = isConc ? objArr[i].posReports ?? {} : {};
+          const voice: boolean = isConc || objArr[i]?.voiceReports === true;
+          const posReports = voice ? objArr[i].posReports ?? {} : {};
           const posCalc: string[] = [...routeEtas];
-          const shownEtas: string[] = isConc
+          const shownEtas: string[] = voice
             ? routePoints.map((fix: string, k: number) => posReports[fix]?.act || posReports[fix]?.est || routeEtas[k] || "--")
             : routeEtas;
 
@@ -356,6 +358,7 @@ export async function populateAllAircraft() : Promise<void> {
             UpdatedAt: objArr[i]?.updatedAt ? Date.parse(objArr[i].updatedAt!) : 0,
             History: objArr[i]?.history ?? [],
             IsConc: isConc,
+            VoiceReports: voice,
             PosFixes: [...routePoints],
             PosCalc: posCalc,
             PosReports: posReports,
@@ -390,10 +393,10 @@ function timeToMin(t: string): number {
   return d.length === 4 ? parseInt(d.slice(0, 2)) * 60 + parseInt(d.slice(2)) : -1;
 }
 
-// The fix this Concorde is overdue to report at ("" if none): the first fix with no actual time whose estimate
+// The fix this flight (Concorde or switched on for voice reports) is overdue to report at ("" if none): the first fix with no actual time whose estimate
 // (typed, else calculated) passed more than 3 minutes ago. Estimates more than 90 minutes old are ignored.
 export function concOverdueFix(ac: Aircraft): string {
-  if (!ac.IsConc) return "";
+  if (!ac.VoiceReports) return "";
   const n: Date = new Date();
   const nowMin: number = n.getUTCHours() * 60 + n.getUTCMinutes();
   for (let i: number = 0; i < ac.PosFixes.length; i++) {
@@ -632,7 +635,7 @@ export function etaSpan(ac: Aircraft): { entry: number; exit: number } | null {
   const n: Date = new Date();
   const nowMin: number = n.getUTCHours() * 60 + n.getUTCMinutes();
   const offs: number[] = [];
-  const times: string[] = ac.IsConc ? ac.PosCalc : ac.RouteEtas;
+  const times: string[] = ac.VoiceReports ? ac.PosCalc : ac.RouteEtas;
   for (const t of times ?? []) {
     const m: number = timeToMin(t);
     if (m < 0) continue;

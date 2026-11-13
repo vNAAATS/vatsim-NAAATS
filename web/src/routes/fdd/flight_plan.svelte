@@ -144,7 +144,7 @@
         width={"w-16"}
         value={dataHandler.entryClock(asel)}
         maxlength={4}
-        editable={editable && !asel.IsConc && dataHandler.entryClock(asel) !== ""}
+        editable={editable && !asel.VoiceReports && dataHandler.entryClock(asel) !== ""}
         onCommit={(t) => save("entryEta", t)}
       />
       <TextInput
@@ -228,7 +228,7 @@
       />
     </div>
     <div class="px-3 pt-0.5 text-xs font-regular text-white leading-tight">
-      {#if asel.IsConc}
+      {#if asel.VoiceReports}
         <button class="px-2 py-0.5 mb-0.5 font-bold border border-blue-6 {dataHandler.concOverdueFix(asel) !== '' && dataHandler.visualOn ? 'nt-flash text-black' : 'bg-blue-3'}"
           on:click={() => posOpen.set(true)}>Position reports{dataHandler.concOverdueFix(asel) !== "" ? " - OVERDUE at " + dataHandler.concOverdueFix(asel) : ""}</button>
       {/if}

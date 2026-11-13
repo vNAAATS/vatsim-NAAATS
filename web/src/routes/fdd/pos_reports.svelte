@@ -37,7 +37,7 @@
   function at(ts: string): string { return ts ? ts.slice(11, 16) + "z" : ""; }
 </script>
 
-{#if $posOpen && asel && asel.IsConc}
+{#if $posOpen && asel && asel.VoiceReports}
   <div transition:fade={{ duration: 180 }} class="fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.55);" on:click|self={() => posOpen.set(false)}>
     <div transition:fly={{ y: 24, duration: 220 }} class="w-full bg-blue-3 border-2 border-l-blue-10 border-t-blue-10 border-r-blue-0 border-b-blue-0 text-white font-regular" style="max-width: 36rem; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="flex flex-row justify-between items-center px-3 py-2 bg-blue-4 font-bold select-none">

@@ -285,6 +285,28 @@ class EditTests(unittest.TestCase):
             self.assertEqual(self.call(path + "?code=" + KEY)[0], 200)             # the plugin key still works
             self.assertEqual(self.call(path + "?code=wrong")[0], 401)
 
+    def test_voice_position_reports_for_any_aircraft(self):
+        ck = self.login("CZQO_CTR")
+        self.assertEqual(self.call("/SetVoiceReports", {"callsign": "FEED1", "on": True})[0], 401)                  # not signed in
+        code, body, _ = self.call("/EditPosReport", {"callsign": "FEED1", "fix": "52/30", "est": "1432"}, ck)
+        self.assertEqual(code, 400)                                                                                   # off by default for a non-Concorde
+        code, body, _ = self.call("/SetVoiceReports", {"callsign": "FEED1", "on": True}, ck)
+        self.assertEqual((code, body.get("voiceReports")), (200, True))
+        code, body, _ = self.call("/EditPosReport", {"callsign": "FEED1", "fix": "52/30", "est": "1432", "act": "1433"}, ck)
+        self.assertEqual(code, 200)
+        self.assertEqual(body["posReports"]["52/30"]["act"], "1433")
+        code, body, _ = self.call("/SetVoiceReports", {"callsign": "FEED1", "on": False}, ck)
+        self.assertEqual((code, body.get("voiceReports")), (200, False))
+        self.assertNotIn("posReports", body)                                                                          # switching off clears what was typed
+        self.assertEqual(self.call("/EditPosReport", {"callsign": "FEED1", "fix": "52/30", "est": "1432"}, ck)[0], 400)
+        self.assertEqual(self.call("/SetVoiceReports", {"callsign": "NOSUCH1", "on": True}, ck)[0], 404)
+
+    def test_voice_position_reports_lapse(self):
+        self.store.voice_set("LAPSE1", True, "x")
+        self.assertTrue(self.store.voice_on("LAPSE1"))
+        self.store.db.execute("UPDATE voice_reports SET ts=? WHERE callsign='LAPSE1'", (time.time() - 19 * 3600,))
+        self.assertFalse(self.store.voice_on("LAPSE1"))
+
     def test_no_observer_mode(self):
         ck = self.login(None)
         code, body, _ = self.call("/auth/position", {"position": "OBSERVER"}, ck)

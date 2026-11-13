@@ -38,7 +38,8 @@ export type Aircraft = {
   UpdatedBy: string; // who last changed level / Mach / track / SELCAL / route (position + name, or plugin callsign)
   UpdatedAt: number; // epoch ms, 0 if unknown
   History: { at: string; by: string; changes: Record<string, [any, any]> }[];
-  IsConc: boolean; // Concorde: reports by voice, controllers type its times in
+  IsConc: boolean; // Concorde
+  VoiceReports: boolean; // reports by voice, controllers type its times in: always Concorde, or any flight a controller switched on
   PosFixes: string[]; // route fixes in flight order (position report rows)
   PosCalc: string[]; // calculated times for those fixes, same order
   PosReports: Record<string, { est: string; act: string; by: string; at: string }>;

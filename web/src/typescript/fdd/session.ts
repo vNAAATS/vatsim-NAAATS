@@ -90,6 +90,18 @@ export async function editPosReport(callsign: string, fix: string, est: string, 
   return "";
 }
 
+// Switch voice position reports on or off for one flight (Concorde always has them). Returns an error message or "".
+export async function setVoiceReports(callsign: string, on: boolean): Promise<string> {
+  const r = await post("/SetVoiceReports", { callsign, on });
+  if (!r.ok) {
+    if (r.data.error && /log in/.test(r.data.error)) await refreshSession();
+    return r.data.error ?? "could not change it";
+  }
+  await dataHandler.populateAllAircraft();
+  dataHandler.reselect(callsign);
+  return "";
+}
+
 export async function editFlight(callsign: string, changes: Record<string, string | number>): Promise<string> {
   const r = await post("/EditFlight", Object.assign({ callsign }, changes));
   if (!r.ok) {
