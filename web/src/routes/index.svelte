@@ -50,7 +50,8 @@ onMount(async () => {
 </script>
 
 <div class="h-screen scrollbar-none overflow-x-hidden" id="topDiv">
-    <div class="flex flex-col items-center justify-center h-full backdrop-filter" style="background-image: url(/banner.jpg); overflow-hidden;">
+    <div class="relative flex flex-col items-center justify-center h-full backdrop-filter" style="background-image: url(/banner.jpg); overflow-hidden;">
+        <StatusPill />
         <div class="flex flex-col items-center justify-center h-1/3">
         </div>
         <div class="flex flex-col items-center justify-start h-1/3">
@@ -61,7 +62,6 @@ onMount(async () => {
             <div class="text-white font-bitmap text-2xl pt-2 select-none opacity-90" id="version-credit">
                 Version 2 &ndash; Modernised by Gary Thomas
             </div>
-            <StatusPill />
             <div class="flex flex-row justify-center mt-10">
                 <a href="/windows" class="border-2 rounded px-4 py-2 hover:cursor-pointer scale-100 bg-blue-5 bg-opacity-100 transition duration-500 
                 hover:scale-110 hover:bg-opacity-100 font-bitmap font-normal tracking-wider text-lg">
