@@ -41,9 +41,18 @@
     const code = hoppieCode.trim();
     logonErr = await cp.logonCpdlc(code);
     logonBusy = false;
-    if (logonErr === "") { if (remember) { storeSaved(code); hasSaved = true; } hoppieCode = ""; }
+    if (logonErr === "") { if (remember) { storeSaved(code); hasSaved = true; } hoppieCode = ""; useOther = false; }
   }
-  function forgetSaved(): void { storeSaved(""); hasSaved = false; remember = false; autoTried = "x"; }
+  function forgetSaved(): void { storeSaved(""); hasSaved = false; remember = false; autoTried = "x"; useOther = false; }
+  // Signed out (or just opened) with a code remembered in this browser: offer a one-click Sign in instead of typing the code again
+  let useOther: boolean = false;
+  $: if (!$cpdlcStatus.active && $session.cid) hasSaved = loadSaved() !== "";
+  async function signInSaved(): Promise<void> {
+    logonBusy = true; logonErr = "";
+    logonErr = await cp.logonCpdlc(loadSaved());
+    logonBusy = false;
+    if (logonErr === "") askConnect = false;
+  }
   // With a saved Hoppie code: ask once per page visit and station whether to connect to CPDLC now (nothing happens until the controller says yes).
   let askConnect: boolean = false;
   let askErr: string = "";
@@ -300,6 +309,13 @@
             <div class="text-yellow-300">{$cpdlcStatus.stationForPosition} is already being used by another controller.</div>
           {:else}
             <div class="font-bold mb-1">Sign in to CPDLC as {$cpdlcStatus.stationForPosition}</div>
+            {#if hasSaved && !useOther}
+              <div class="opacity-80 mb-2">Your Hoppie code is saved in this browser.</div>
+              <button class="px-4 py-1 font-bold bg-blue-10 text-black" disabled={logonBusy} on:click={signInSaved}>{logonBusy ? "Checking..." : "Sign in"}</button>
+              <span class="ml-3 underline text-xs hover:cursor-pointer" on:click={() => (useOther = true)}>Use a different code</span>
+              <span class="ml-3 underline text-xs hover:cursor-pointer" on:click={forgetSaved}>Forget the saved code</span>
+              {#if logonErr}<div class="mt-1 text-yellow-300">{logonErr}</div>{/if}
+            {:else}
             <div class="opacity-80 mb-2">Type your own Hoppie logon code. The server keeps it in memory only while you are signed in and never saves it. You can choose to remember it in this browser.</div>
             <form on:submit|preventDefault={signIn}>
               <input type="password" autocomplete="off" class="w-full px-2 py-1 text-black" placeholder="Your Hoppie code" bind:value={hoppieCode} />
@@ -308,6 +324,7 @@
               {#if hasSaved}<span class="ml-3 underline text-xs hover:cursor-pointer" on:click={forgetSaved}>Forget the saved code</span>{/if}
             </form>
             {#if logonErr}<div class="mt-1 text-yellow-300">{logonErr}</div>{/if}
+            {/if}
           {/if}
         </div>
       {/if}
