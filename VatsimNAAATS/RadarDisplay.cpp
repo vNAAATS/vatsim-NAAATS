@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "RadarDisplay.h"
+#include <set>
 #include "AcTargets.h"
 #include "InboundList.h"
 #include "Constants.h"
@@ -8,10 +9,13 @@
 #include "Utils.h"
 #include "ConflictDetection.h"
 #include "DataHandler.h"
+#include "RoutesHelper.h"
 #include <thread>
 #include <gdiplus.h>
 #include <ctype.h>
 #include <iostream>
+#include <functional>
+#include <json.hpp>
 
 using namespace Gdiplus;
 using namespace std;
@@ -58,11 +62,13 @@ void CRadarDisplay::PopulateProgramData() {
 	inboundList->MoveList({ CUtils::InboundX, CUtils::InboundY });
 	otherList->MoveList({ CUtils::OthersX, CUtils::OthersY });
 
+	CLogger::Log(CLogType::NORM, "Step: lists moved", "CRadarDisplay::PopulateProgramData");
 	// Dropdown values
 	menuBar->SetDropDownValue(CMenuBar::DRP_AREASEL, CUtils::AreaSelection);
 	menuBar->SetDropDownValue(CMenuBar::DRP_OVERLAYS, CUtils::SelectedOverlay);
 	menuBar->SetDropDownValue(CMenuBar::DRP_TYPESEL, CUtils::PosType);
 
+	CLogger::Log(CLogType::NORM, "Step: dropdown values set", "CRadarDisplay::PopulateProgramData");
 	// Buttons
 	if (CUtils::TagsEnabled && !menuBar->IsButtonPressed(CMenuBar::BTN_TAGS)) {
 		menuBar->SetButtonState(CMenuBar::BTN_TAGS, CInputState::ACTIVE);
@@ -77,6 +83,7 @@ void CRadarDisplay::PopulateProgramData() {
 		menuBar->SetButtonState(CMenuBar::BTN_QCKLOOK, CInputState::ACTIVE);
 	}
 
+	CLogger::Log(CLogType::NORM, "Step: buttons set", "CRadarDisplay::PopulateProgramData");
 	// Parse track ID
 	if (CUtils::SelectedOverlay == DRP_OVL_ALL) {
 		COverlays::CurrentType = COverlayType::TCKS_ALL;
@@ -91,27 +98,666 @@ void CRadarDisplay::PopulateProgramData() {
 		COverlays::CurrentType = COverlayType::TCKS_SEL;
 	}
 
+	CLogger::Log(CLogType::NORM, "Step: overlay chosen", "CRadarDisplay::PopulateProgramData");
+	// Load server address / key from vnaaats.cfg
+	CDataHandler::LoadSettings();
+
+	CLogger::Log(CLogType::NORM, "Step: cfg read", "CRadarDisplay::PopulateProgramData");
 	// Download the tracks
 	CDataHandler::PopulateLatestTrackData(GetPlugIn());
 
+	CLogger::Log(CLogType::NORM, "Step: tracks downloaded", "CRadarDisplay::PopulateProgramData");
 	// Set tracks in menu bar
 	menuBar->MakeDropDownItems(menuBar->DRP_TCKCTRL);
 
+	CLogger::Log(CLogType::NORM, "Step: track list built", "CRadarDisplay::PopulateProgramData");
 	// Initialise fonts
 	FontSelector::InitialiseFonts();
 
+	CLogger::Log(CLogType::NORM, "Step: fonts ready", "CRadarDisplay::PopulateProgramData");
 	// Start cursor update loop
 	appCursor->screen = this;
 	_beginthread(CursorStateUpdater, 0, (void*)appCursor);
 	CLogger::Log(CLogType::NORM, "Firing cursor update sequence thread.", "CRadarDisplay::PopulateProgramData");
 
+	CLogger::Log(CLogType::NORM, "Step: cursor thread started", "CRadarDisplay::PopulateProgramData");
 	// Check plugin version
 	CDataHandler::CheckPluginVersion(GetPlugIn());
+	CLogger::Log(CLogType::NORM, "Start-up finished.", "CRadarDisplay::PopulateProgramData");
 }
 
 // On radar screen refresh (modified to occur 4 times a second)
+// Find EuroScope's main window (the visible top-level window of this process)
+static BOOL CALLBACK FindEsWindow(HWND hwnd, LPARAM lParam) {
+	DWORD pid = 0;
+	GetWindowThreadProcessId(hwnd, &pid);
+	if (pid == GetCurrentProcessId() && IsWindowVisible(hwnd) && GetWindow(hwnd, GW_OWNER) == NULL && GetWindowTextLengthA(hwnd) > 0) {
+		*(HWND*)lParam = hwnd;
+		return FALSE;
+	}
+	return TRUE;
+}
+
+// Bring EuroScope to the front. Windows often refuses this for a background program, so it is tried up to four times, each time a little
+// harder: an Alt tap, then joining the input queue of the window that is in front (which lets SetForegroundWindow through).
+static bool BringEsToFront(HWND es) {
+	for (int attempt = 0; attempt < 4; attempt++) {
+		DWORD pid = 0;
+		HWND fg = GetForegroundWindow();
+		DWORD fgThread = fg ? GetWindowThreadProcessId(fg, &pid) : 0;
+		if (pid == GetCurrentProcessId()) return true;
+		if (IsIconic(es)) ShowWindow(es, SW_RESTORE);
+		DWORD me = GetCurrentThreadId();
+		bool attached = fgThread && fgThread != me && AttachThreadInput(me, fgThread, TRUE) != FALSE;
+		keybd_event(VK_MENU, 0, 0, 0);
+		keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+		BringWindowToTop(es);
+		SetForegroundWindow(es);
+		if (attached) AttachThreadInput(me, fgThread, FALSE);
+		Sleep(150 + attempt * 100);
+		fg = GetForegroundWindow();
+		pid = 0;
+		if (fg) GetWindowThreadProcessId(fg, &pid);
+		if (pid == GetCurrentProcessId()) return true;
+	}
+	return false;
+}
+
+// Experimental (backgroundtype=1 in vnaaats.cfg): type the line by posting key messages straight to EuroScope's window, so EuroScope does not
+// have to be in front and nothing is interrupted if you switch away. Windows delivers these whichever program is in front.
+// There is no way to see whether EuroScope ran the line, so this reports success once the keys have been posted.
+static bool TypeIntoEuroScopeBackground(const string& text, string& why) {
+	HWND es = NULL;
+	EnumWindows(FindEsWindow, (LPARAM)&es);
+	if (!es) { why = "EuroScope's window was not found"; return false; }
+	DWORD tid = GetWindowThreadProcessId(es, NULL);
+	// the window inside EuroScope that has the keyboard focus (it changes after Home focuses the command line)
+	auto target = [&]() -> HWND {
+		GUITHREADINFO gi = {};
+		gi.cbSize = sizeof(gi);
+		if (GetGUIThreadInfo(tid, &gi) && gi.hwndFocus) return gi.hwndFocus;
+		return es;
+	};
+	auto key = [&](WORD vk) {
+		HWND t = target();
+		LPARAM scan = (LPARAM)MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+		PostMessage(t, WM_KEYDOWN, vk, 1 | (scan << 16));
+		PostMessage(t, WM_KEYUP, vk, 1 | (scan << 16) | (1 << 30) | ((LPARAM)1 << 31));
+	};
+	key(VK_HOME);                                  // Home focuses the command line
+	Sleep(300);
+	key(VK_END);                                   // then empty it
+	for (int n = 0; n < 300; n++) key(VK_BACK);
+	Sleep(400);
+	HWND t = target();
+	for (unsigned char ch : text) {
+		PostMessage(t, WM_CHAR, (WPARAM)ch, 1);
+		Sleep(ch == ' ' ? 40 : 8);
+	}
+	Sleep(300);
+	key(VK_RETURN);
+	return true;
+}
+
+// Type a line into EuroScope's command line: Home (focuses it), the text, Enter.
+// EuroScope is brought to the front first (the controller has just clicked in the browser). Fails if Windows will not allow that.
+static bool TypeIntoEuroScope(const string& text, string& why) {
+	HWND es = NULL;
+	EnumWindows(FindEsWindow, (LPARAM)&es);
+	if (!es) return false;
+	if (!BringEsToFront(es)) { why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste"; return false; }
+	// True while EuroScope is still the window in front. Typing goes to whichever window is in front, so this is checked before every
+	// key press: if the controller clicks into another program (Discord, a browser...) the typing stops at once instead of carrying on there.
+	auto esInFront = [&]() -> bool {
+		HWND f = GetForegroundWindow();
+		DWORD p2 = 0;
+		if (f) GetWindowThreadProcessId(f, &p2);
+		return p2 == GetCurrentProcessId();
+	};
+	const string interrupted = "interrupted - you switched away from EuroScope, so nothing more was typed and the message was NOT sent";
+	// This runs on its own thread with short pauses, so EuroScope's own thread can finish each step (move focus to the
+	// command line, clear it, take the text, run the line) before the next keys arrive. Sending everything in one burst
+	// left old text in the box and glued commands together.
+	auto send = [&](vector<INPUT>& in) { if (!in.empty()) SendInput((UINT)in.size(), in.data(), sizeof(INPUT)); in.clear(); };
+	vector<INPUT> in;
+	auto key = [&](WORD vk) {
+		INPUT d = {}; d.type = INPUT_KEYBOARD; d.ki.wVk = vk; in.push_back(d);
+		INPUT u = d; u.ki.dwFlags = KEYEVENTF_KEYUP; in.push_back(u);
+	};
+	if (!esInFront()) { why = interrupted; return false; }
+	key(VK_HOME); send(in);                       // Home focuses the command line
+	Sleep(300);
+	if (!esInFront()) { why = interrupted; return false; }
+	key(VK_END);                                  // then empty it: End and plenty of Backspaces, whatever was left in it
+	for (int n = 0; n < 300; n++) key(VK_BACK);
+	send(in);
+	Sleep(300);
+	if (!esInFront()) { why = interrupted; return false; }
+	// One character at a time with a short pause: EuroScope shows a dot-command hint while ".msg" is being typed and could
+	// swallow the space that follows it (".msgBAW123 Hello"). Spaces are sent as a real Space key press.
+	for (unsigned char ch : text) {
+		if (!esInFront()) {                       // switched away part-way: stop (the next message clears the command line first)
+			why = interrupted;
+			return false;
+		}
+		if (ch == ' ') {
+			key(VK_SPACE);
+		}
+		else {
+			INPUT d = {}; d.type = INPUT_KEYBOARD; d.ki.wScan = ch; d.ki.dwFlags = KEYEVENTF_UNICODE; in.push_back(d);
+			INPUT u = d; u.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP; in.push_back(u);
+		}
+		send(in);
+		Sleep(ch == ' ' ? 60 : 10);
+	}
+	Sleep(300);
+	if (!esInFront()) { why = interrupted; return false; }
+	key(VK_RETURN); send(in);
+	return true;
+}
+
+static HWND g_radarWnd = NULL;            // the radar window the cursor was last seen over (set by the cursor thread)
+static string g_clickWant;                        // callsign whose tag the plugin is clicking right now (Contact Me)
+static volatile LONG g_clickSeen = 0;             // set when EuroScope reports that click arriving on that tag
+static volatile clock_t g_ignoreClicksUntil = 0; // our own simulated click must not trigger vNAAATS actions
+
+// Click once at a point of the radar window (client pixels), then put the mouse back where it was.
+static bool ClickRadarPoint(POINT clientPt, string& why) {
+	HWND w = g_radarWnd;
+	if (!w) { why = "the plugin has not yet seen your mouse over the EuroScope radar - move the mouse over the radar once and try again"; return false; }
+	if (!IsWindow(w)) { why = "the radar window it remembered has gone - move the mouse over the radar once and try again"; return false; }
+	POINT sp = clientPt;
+	if (!ClientToScreen(w, &sp)) { why = "Windows could not work out where the aircraft is on screen"; return false; }
+	POINT back; GetCursorPos(&back);
+	// Record exactly where the click goes, and what Windows says is under that point, so a click that misses can be understood from the log
+	{
+		HWND hit = WindowFromPoint(sp);
+		DWORD hitPid = 0; if (hit) GetWindowThreadProcessId(hit, &hitPid);
+		char cls[64] = "", wcls[64] = "";
+		if (hit) GetClassNameA(hit, cls, sizeof(cls));
+		GetClassNameA(w, wcls, sizeof(wcls));
+		RECT wr = {}; GetWindowRect(w, &wr);
+		bool ours = hit && hitPid == GetCurrentProcessId();
+		CLogger::Log(ours ? CLogType::NORM : CLogType::WARN,
+			"Contact Me click: client " + to_string(clientPt.x) + "," + to_string(clientPt.y) + " -> screen " + to_string(sp.x) + "," + to_string(sp.y) +
+			"; radar window " + string(wcls) + " at " + to_string(wr.left) + "," + to_string(wr.top) + "-" + to_string(wr.right) + "," + to_string(wr.bottom) +
+			"; under that point: " + (hit ? string(cls) : string("nothing")) + (ours ? " (EuroScope)" : " (NOT EuroScope: another window is in the way)") +
+			"; button " + to_string(CDataHandler::ContactButton), "ClickRadarPoint");
+		if (!ours) { why = "another window is covering that spot on the screen, so the click would not reach EuroScope"; return false; }
+	}
+	g_ignoreClicksUntil = clock() + 1500;
+	// a small move first so EuroScope sees the pointer arrive over the aircraft, then the click with the button set in cfg (contactbutton)
+	SetCursorPos(sp.x - 2, sp.y - 2);
+	Sleep(80);
+	SetCursorPos(sp.x, sp.y);
+	Sleep(200);
+	DWORD down = MOUSEEVENTF_LEFTDOWN, up = MOUSEEVENTF_LEFTUP;
+	if (CDataHandler::ContactButton == 1) { down = MOUSEEVENTF_MIDDLEDOWN; up = MOUSEEVENTF_MIDDLEUP; }
+	else if (CDataHandler::ContactButton == 2) { down = MOUSEEVENTF_RIGHTDOWN; up = MOUSEEVENTF_RIGHTUP; }
+	mouse_event(down, 0, 0, 0, 0);
+	Sleep(60);
+	mouse_event(up, 0, 0, 0, 0);
+	Sleep(250);
+	SetCursorPos(back.x, back.y);
+	return true;
+}
+
+struct CTypeJob { string Text; int Id; bool Click = false; POINT Px = { 0, 0 }; string Callsign; bool TagClick = false; };
+static volatile LONG TypingBusy = 0;
+static void TypeThread(void* arg) {
+	CTypeJob* job = (CTypeJob*)arg;
+	try {
+		string why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste";
+		bool typedOk = CDataHandler::BackgroundType ? TypeIntoEuroScopeBackground(job->Text, why) : TypeIntoEuroScope(job->Text, why);
+		if (typedOk) {
+			bool failed = false;
+			string note = string(CDataHandler::BackgroundType ? "Sent to EuroScope (background): " : "Sent to EuroScope: ") + job->Text.substr(0, 40);
+			if (job->Click) {
+				Sleep(500);                       // EuroScope now waits for a click on the aircraft
+				bool clicked = false, confirmed = !job->TagClick;   // a click on the aircraft symbol cannot be confirmed, only one on the tag
+				string clickWhy;
+				for (int attempt = 0; attempt < 2 && !(clicked && confirmed); attempt++) {
+					InterlockedExchange(&g_clickSeen, 0);
+					g_clickWant = job->Callsign;
+					clicked = ClickRadarPoint(job->Px, clickWhy);
+					if (!clicked) break;                          // the reason is in clickWhy; trying again would fail the same way
+					if (!job->TagClick) { confirmed = false; continue; }
+					for (int w = 0; w < 30 && !g_clickSeen; w++) Sleep(50);    // up to 1.5 s for EuroScope to report the click
+					confirmed = g_clickSeen != 0;
+					if (!confirmed) Sleep(300);
+				}
+				g_clickWant.clear();
+				if (clicked && confirmed) note += " (callsign clicked for you)";
+				else {
+					CDataHandler::ReportRemoteResult(job->Id, false, "Contact Me NOT sent to " + job->Callsign + " - " + (clickWhy.empty() ? string("the click did not register on the tag (check contactbutton in vnaaats.cfg matches the mouse button EuroScope uses to select an aircraft)") : clickWhy) + ". Click the callsign in EuroScope to send it");
+					failed = true;
+				}
+			}
+			if (!failed) CDataHandler::ReportRemoteResult(job->Id, true, note);
+		}
+		else CDataHandler::ReportRemoteResult(job->Id, false, why);
+	}
+	catch (...) { CDataHandler::ReportRemoteResult(job->Id, false, "plugin error while typing"); }
+	Sleep(1200);                                    // leave EuroScope time to run the line before the next one
+	InterlockedExchange(&TypingBusy, 0);
+	delete job;
+}
+
+// Routes drawn with a right click on a tag (CRoutesHelper::ActiveRoutes) and when each one is to be erased (routeseconds in vnaaats.cfg)
+static std::map<string, clock_t> g_routeExpiry;
+
+static int RetrackPhase = 0; // see RunRemoteCommands: 0 = not connected
+
+// Aircraft I was tracking whose pilot disconnected: if the pilot is back within 5 minutes and nobody else has the aircraft,
+// track it again with the Flight Level, Mach and SELCAL it had. (Runs about every 10 seconds, on the EuroScope thread.)
+static void RunTrackMemos(CPlugIn* plugin, const std::set<string>& mineNow) {
+	const double WINDOW_SECONDS = 300.0;
+	time_t now = time(NULL);
+	for (auto& kv : CDataHandler::MemoSnapshot()) {
+		const string& cs = kv.first;
+		const CDataHandler::CTrackMemo& m = kv.second;
+		try {
+			CFlightPlan es = plugin->FlightPlanSelect(cs.c_str());
+			CRadarTarget rt = plugin->RadarTargetSelect(cs.c_str());
+			if (m.DisconnectedAt == 0) {
+				if (mineNow.count(cs)) continue;                                  // still tracking it
+				// no longer mine: pilot gone (remember it) or I released / handed it off (forget it)
+				if (!es.IsValid() || !rt.IsValid()) CDataHandler::MemoDisconnected(cs);
+				else CDataHandler::MemoForget(cs);
+				continue;
+			}
+			if (difftime(now, m.DisconnectedAt) > WINDOW_SECONDS) { CDataHandler::MemoForget(cs); continue; }   // too late
+			if (difftime(now, m.DisconnectedAt) < 10.0) continue;                 // let EuroScope drop the old one first
+			if (!es.IsValid() || !rt.IsValid()) continue;                         // not back yet
+			if (rt.GetPosition().GetReceivedTime() > 30) continue;                // flight plan still there but no fresh position
+			if (es.GetTrackingControllerIsMe() || !string(es.GetTrackingControllerCallsign()).empty()) { CDataHandler::MemoForget(cs); continue; }   // someone has it
+			CDataHandler::CRemoteCommand cmd;
+			cmd.Id = 0; cmd.Type = "track"; cmd.Callsign = cs; cmd.Level = m.Level; cmd.Mach = m.Mach;
+			cmd.Selcal = (m.Selcal == "N/A") ? "" : m.Selcal;
+			CDataHandler::QueueLocalCommand(cmd);
+			CLogger::Log(CLogType::NORM, cs + " is back within 5 minutes: tracking it again (FL" + m.Level + " M" + m.Mach + (cmd.Selcal.empty() ? "" : " SELCAL " + cmd.Selcal) + ").", "RunTrackMemos");
+			CDataHandler::MemoForget(cs);
+		}
+		catch (...) { CDataHandler::MemoForget(cs); }
+	}
+}
+
+void CRadarDisplay::RunRemoteCommands()
+{
+	CPlugIn* plugin = GetPlugIn();
+	// Flight data that EuroScope reported as out of scope is erased here, on the draw thread, after anything pointing at it is cleared
+	for (const string& cs : CDataHandler::TakeQueuedDeletes()) {
+		if (cs == asel) {
+			asel = "";
+			menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
+		}
+		for (auto it = CRoutesHelper::ActiveRoutes.begin(); it != CRoutesHelper::ActiveRoutes.end();) {
+			if (*it == cs) it = CRoutesHelper::ActiveRoutes.erase(it); else ++it;
+		}
+		CDataHandler::DeleteFlightData(cs);
+	}
+	// Settings chosen on the FDD: check every 2 minutes; changed ones are written to vnaaats.cfg and apply after a restart of EuroScope
+	{
+		static clock_t lastSettings = 0;
+		if (CDataHandler::SettingsBusy == 0 && (lastSettings == 0 || (double)(clock() - lastSettings) / (double)CLOCKS_PER_SEC >= 120.0)) {
+			lastSettings = clock();
+			InterlockedExchange(&CDataHandler::SettingsBusy, 1);
+			_beginthread(CDataHandler::FetchSettings, 0, NULL);
+		}
+		if (InterlockedExchange(&CDataHandler::SettingsMessagePending, 0))
+			plugin->DisplayUserMessage("vNAAATS", "Settings", "Your vNAAATS settings were changed on the FDD and saved in vnaaats.cfg. Close EuroScope and open it again for them to take effect.", true, true, true, true, true);
+	}
+	CDataHandler::ApplyPendingNetwork(this); // changes fetched from the server (e.g. edits made on the web FDD), applied on this thread
+	if (!plugin->ControllerMyself().IsValid() || !plugin->ControllerMyself().IsController()) { RetrackPhase = 0; return; }   // disconnected: start the recovery again next time
+	CDataHandler::ControllerCallsign = plugin->ControllerMyself().GetCallsign();
+
+	// Crash / disconnection recovery: when I (re)connect as a controller, track again the aircraft I had before.
+	//  phase 0 = not connected, 1 = settling (EuroScope needs time to load the flight plans), 2 = fetching, 3 = re-tracking, 4 = normal
+	{
+		int& phase = RetrackPhase;
+		static clock_t phaseAt = 0, lastTrack = 0;
+		static vector<string> todo;
+		static string lastReported = "";
+		static clock_t lastReport = 0;
+		if (!CDataHandler::Retrack) phase = 4;
+		else if (phase == 0) { phase = 1; phaseAt = clock(); }
+		double sinceAt = (double)(clock() - phaseAt) / (double)CLOCKS_PER_SEC;
+		if (phase == 1 && sinceAt >= 20.0) {
+			InterlockedExchange(&CDataHandler::RetrackFetched, 0);
+			phase = 2; phaseAt = clock();
+			_beginthread(CDataHandler::FetchRetrack, 0, nullptr);
+		}
+		else if (phase == 2 && CDataHandler::RetrackFetched) { todo = CDataHandler::TakeRetrack(); phase = todo.empty() ? 4 : 3; phaseAt = clock(); }
+		else if (phase == 2 && sinceAt > 30.0) phase = 4;                                     // server did not answer: carry on
+		else if (phase == 3 && (double)(clock() - lastTrack) / (double)CLOCKS_PER_SEC >= 1.0) {
+			lastTrack = clock();
+			if (todo.empty() || sinceAt > 120.0) { phase = 4; lastReported = "\x01"; }
+			else {
+				string cs = todo.back(); todo.pop_back();
+				CFlightPlan es = plugin->FlightPlanSelect(cs.c_str());
+				// only aircraft nobody is tracking: never take one from another controller
+				if (es.IsValid() && !es.GetTrackingControllerIsMe() && string(es.GetTrackingControllerCallsign()).empty()) {
+					if (es.StartTracking()) CLogger::Log(CLogType::NORM, "Tracking " + cs + " again after reconnecting.", "CRadarDisplay::RunRemoteCommands");
+				}
+			}
+		}
+		// Tell the server what I am tracking (when it changes, checked every 10 s) - only once recovery is finished
+		if (phase == 4 && (CDataHandler::Retrack || CDataHandler::SquawkOnClearance) && (double)(clock() - lastReport) / (double)CLOCKS_PER_SEC >= 10.0) {
+			lastReport = clock();
+			string list;
+			std::set<string> mineNow;
+			for (CFlightPlan f = plugin->FlightPlanSelectFirst(); f.IsValid(); f = plugin->FlightPlanSelectNext(f)) {
+				if (f.GetTrackingControllerIsMe()) {
+					list += (list.empty() ? "" : ",") + string(f.GetCallsign());
+					string csNow = f.GetCallsign();
+					mineNow.insert(csNow);
+					// Remember what I set on it, in case its pilot disconnects and comes back
+					CAircraftFlightPlan* mfp = CDataHandler::GetFlightData(csNow);
+					if (mfp->IsValid && !mfp->FlightLevel.empty() && !mfp->Mach.empty() && atoi(mfp->FlightLevel.c_str()) > 0 && atoi(mfp->Mach.c_str()) > 0)
+						CDataHandler::MemoTracked(csNow, mfp->FlightLevel, mfp->Mach, mfp->SELCAL);
+				}
+			}
+			// Squawk 2000 as soon as I start tracking an aircraft (domestic reassign it when it is back in radar service).
+			// Aircraft I was already tracking when this display started are left alone.
+			static std::set<string> prevMine;
+			static bool prevMineKnown = false;
+			if (CDataHandler::SquawkOnClearance && prevMineKnown) {
+				for (auto& c : mineNow) if (prevMine.find(c) == prevMine.end()) CUtils::AssignOceanicSquawk(plugin, c);
+			}
+			prevMine = mineNow;
+			prevMineKnown = true;
+			if (CDataHandler::Retrack) RunTrackMemos(plugin, mineNow);
+			static clock_t lastSent = 0;
+			// also sent once a minute when nothing changed: this is how the server knows I was still here before a crash
+			if (list != lastReported || (double)(clock() - lastSent) / (double)CLOCKS_PER_SEC >= 60.0) {
+				lastReported = list;
+				lastSent = clock();
+				_beginthread(CDataHandler::ReportTracked, 0, (void*)new CTrackedPush{ CDataHandler::ControllerCallsign, list });
+			}
+		}
+	}
+
+	// Send any waiting log lines to the admin log (background thread, every 5 s at most)
+	CLogger::MaybeFlushRemote();
+
+	// Ask the server for new commands about every 2 seconds
+	if (!CDataHandler::RemotePollBusy && (double)(clock() - CDataHandler::RemoteLastPoll) / (double)CLOCKS_PER_SEC >= 1.0) {
+		CDataHandler::RemoteLastPoll = clock();
+		CDataHandler::RemotePollBusy = true;
+		_beginthread(CDataHandler::PollRemoteCommands, 0, nullptr);
+	}
+
+	vector<CDataHandler::CRemoteCommand> cmds = CDataHandler::TakeRemoteCommands();
+	// Typed commands (.selcal / .contactme / .msg) go one at a time, at least 1.5 s apart: EuroScope needs time to run the
+	// previous line, otherwise two commands end up joined on one line in the command box.
+	static vector<CDataHandler::CRemoteCommand> typeBacklog;
+	static clock_t lastTyped = 0;
+	vector<CDataHandler::CRemoteCommand> now;
+	for (auto& c : cmds) {
+		if (c.Type == "selcal" || c.Type == "contactme" || c.Type == "natmsg") typeBacklog.push_back(c);
+		else now.push_back(c);
+	}
+	if (!typeBacklog.empty() && TypingBusy == 0 && (lastTyped == 0 || (double)(clock() - lastTyped) / (double)CLOCKS_PER_SEC >= 1.5)) {
+		now.push_back(typeBacklog.front());
+		typeBacklog.erase(typeBacklog.begin());
+		lastTyped = clock();
+	}
+	cmds = now;
+	for (auto& cmd : cmds) {
+		try {
+			CFlightPlan es = plugin->FlightPlanSelect(cmd.Callsign.c_str());
+			if (cmd.Type == "highlight") {
+				// the circle only needs the aircraft's radar target (not a flight plan)
+				if (!CDataHandler::Highlight) { CDataHandler::ReportRemoteResult(cmd.Id, true, "circle is switched off (highlight=0 in vnaaats.cfg)"); continue; }
+				if (!plugin->RadarTargetSelect(cmd.Callsign.c_str()).IsValid()) { CDataHandler::ReportRemoteResult(cmd.Id, false, cmd.Callsign + " is not on your EuroScope radar"); continue; }
+				hlCallsign = cmd.Callsign;
+				hlUntil = clock() + 3000;
+				CDataHandler::ReportRemoteResult(cmd.Id, true, "Circled " + cmd.Callsign);
+				continue;
+			}
+			if (!es.IsValid()) { CDataHandler::ReportRemoteResult(cmd.Id, false, "EuroScope has no flight plan for " + cmd.Callsign); continue; }
+			bool mine = es.GetTrackingControllerIsMe();
+			string trackedBy = es.GetTrackingControllerCallsign();
+
+			if (cmd.Type == "track") {
+				// Another controller has offered it to me (a handoff): tracking it accepts the handoff
+				bool handoffToMe = !mine && string(es.GetHandoffTargetControllerCallsign()) == string(plugin->ControllerMyself().GetCallsign());
+				if (!mine && !trackedBy.empty() && !handoffToMe) { CDataHandler::ReportRemoteResult(cmd.Id, false, cmd.Callsign + " is already tracked by " + trackedBy); continue; }
+				CAircraftFlightPlan* fp = CDataHandler::GetFlightData(cmd.Callsign);
+				if (!fp->IsValid) {
+					// The aircraft is not on this radar's list yet (outside the filters): load it now rather than make the controller wait
+					CDataHandler::CreateFlightData(this, cmd.Callsign);
+					fp = CDataHandler::GetFlightData(cmd.Callsign);
+				}
+				if (!fp->IsValid) { CDataHandler::ReportRemoteResult(cmd.Id, false, "vNAAATS has not loaded " + cmd.Callsign + " yet - try again in a few seconds"); continue; }
+				// StartTracking() only works on an untracked aircraft; a handoff offered to me has to be accepted instead
+				bool started = true;
+				if (handoffToMe) es.AcceptHandoff();
+				else if (!mine) started = es.StartTracking();
+				if (!started) {
+					string why = "tracked by " + (trackedBy.empty() ? string("nobody") : trackedBy) + ", handoff offered to " + (string(es.GetHandoffTargetControllerCallsign()).empty() ? string("nobody") : string(es.GetHandoffTargetControllerCallsign())) + ", you are " + string(plugin->ControllerMyself().GetCallsign());
+					CLogger::Log(CLogType::WARN, "StartTracking refused for " + cmd.Callsign + ": " + why + ".", "CRadarDisplay::RunRemoteCommands");
+					CDataHandler::ReportRemoteResult(cmd.Id, false, "EuroScope would not let you track " + cmd.Callsign + " (" + why + ")");
+					continue;
+				}
+				// Level and Mach are optional: when the controller leaves them blank keep what is there, else take EuroScope's own figures
+				if (!cmd.Level.empty()) fp->FlightLevel = cmd.Level;
+				else if (fp->FlightLevel.empty() || fp->FlightLevel == "0") {
+					int fl = es.GetControllerAssignedData().GetFinalAltitude() / 100;
+					if (fl <= 0) fl = es.GetFlightPlanData().GetFinalAltitude() / 100;
+					fp->FlightLevel = to_string(fl > 0 ? fl : 0);
+				}
+				if (!cmd.Mach.empty()) fp->Mach = cmd.Mach;
+				else if (fp->Mach.empty() || fp->Mach == "0") {
+					int mc = es.GetControllerAssignedData().GetAssignedMach() / 10;
+					fp->Mach = to_string(mc > 0 ? mc : 0);
+				}
+				if (!cmd.Selcal.empty()) { fp->SELCAL = cmd.Selcal; fp->SelcalManual = true; }
+				// EuroScope needs a moment to report the new tracker after StartTracking(): if it still says nobody, it is me
+				string myCallsign = plugin->ControllerMyself().IsValid() ? string(plugin->ControllerMyself().GetCallsign()) : "";
+				string myId = plugin->ControllerMyself().IsValid() ? string(plugin->ControllerMyself().GetPositionId()) : "";
+				string trkCallsign = plugin->FlightPlanSelect(cmd.Callsign.c_str()).GetTrackingControllerCallsign();
+				string trkId = plugin->FlightPlanSelect(cmd.Callsign.c_str()).GetTrackingControllerId();
+				if (trkCallsign.empty() || handoffToMe) { trkCallsign = myCallsign; trkId = myId; }
+				fp->Sector = trkId;
+				fp->IsCleared = true;
+				if (CDataHandler::SquawkOnClearance) CUtils::AssignOceanicSquawk(plugin, cmd.Callsign);
+
+				CNetworkFlightPlan* netFP = new CNetworkFlightPlan();
+				netFP->Callsign = fp->Callsign;
+				netFP->Type = fp->Type;
+				netFP->AssignedLevel = atoi(fp->FlightLevel.c_str());
+				netFP->AssignedMach = atoi(fp->Mach.c_str());
+				netFP->Track = fp->Track;
+				netFP->Departure = fp->Depart;
+				netFP->Arrival = fp->Dest;
+				netFP->Direction = CUtils::GetAircraftDirection(plugin->RadarTargetSelect(cmd.Callsign.c_str()).GetPosition().GetReportedHeadingTrueNorth());
+				netFP->Selcal = fp->SELCAL == "N/A" ? "" : fp->SELCAL;
+				netFP->DatalinkConnected = fp->DLStatus == "true";
+				netFP->IsEquipped = fp->IsEquipped;
+				netFP->State = fp->State;
+				netFP->Etd = fp->Etd;
+				netFP->Relevant = true;
+				netFP->TargetMode = CUtils::GetTargetMode(plugin->RadarTargetSelect(cmd.Callsign.c_str()).GetPosition().GetRadarFlags());
+				netFP->TrackedBy = trkCallsign;
+				netFP->TrackedById = trkId;
+				netFP->Route = "";
+				netFP->RouteEtas = "";
+				vector<CRoutePosition> rte;
+				CRoutesHelper::GetRoute(this, &rte, cmd.Callsign);
+				for (size_t i = 0; i < rte.size(); i++) {
+					netFP->Route += rte[i].Fix + (i + 1 < rte.size() ? " " : "");
+					netFP->RouteEtas += rte[i].Estimate + (i + 1 < rte.size() ? " " : "");
+				}
+				CUtils::CNetworkAsyncData* data = new CUtils::CNetworkAsyncData();
+				data->Screen = this;
+				data->Callsign = fp->Callsign;
+				data->FP = netFP;
+				_beginthread(CDataHandler::PostNetworkAircraft, 0, (void*)data);
+				CDataHandler::ReportRemoteResult(cmd.Id, true, handoffToMe ? "Accepted the handoff and tracking " + cmd.Callsign : "Tracking " + cmd.Callsign);
+			}
+			else if (cmd.Type == "untrack") {
+				if (!mine) { CDataHandler::ReportRemoteResult(cmd.Id, false, cmd.Callsign + " is not tracked by you"); continue; }
+				es.EndTracking();
+				CAircraftFlightPlan* fp = CDataHandler::GetFlightData(cmd.Callsign);
+				if (fp->IsValid) fp->Sector = "-1";
+				CDataHandler::ReportRemoteResult(cmd.Id, true, "Released " + cmd.Callsign);
+			}
+			else if (cmd.Type == "takeover") {
+				// Relief: the controller before me has handed me this aircraft (or has gone and left it untracked)
+				if (mine) { CDataHandler::ReportRemoteResult(cmd.Id, true, "Already tracking " + cmd.Callsign); continue; }
+				bool handoffToMe = string(es.GetHandoffTargetControllerCallsign()) == string(plugin->ControllerMyself().GetCallsign());
+				if (!trackedBy.empty() && !handoffToMe) { CDataHandler::ReportRemoteResult(cmd.Id, false, cmd.Callsign + " is tracked by " + trackedBy + ", not offered to you"); continue; }
+				bool started = true;
+				if (handoffToMe) es.AcceptHandoff(); else started = es.StartTracking();
+				if (!started) { CDataHandler::ReportRemoteResult(cmd.Id, false, "EuroScope would not let you track " + cmd.Callsign); continue; }
+				CAircraftFlightPlan* fp = CDataHandler::GetFlightData(cmd.Callsign);
+				if (fp->IsValid) {
+					string myId = plugin->ControllerMyself().IsValid() ? string(plugin->ControllerMyself().GetPositionId()) : "";
+					fp->Sector = myId;
+				}
+				CDataHandler::ReportRemoteResult(cmd.Id, true, "Took over " + cmd.Callsign);
+			}
+			else if (cmd.Type == "transfer") {
+				if (!mine) { CDataHandler::ReportRemoteResult(cmd.Id, false, "Track " + cmd.Callsign + " first - you can only transfer your own aircraft"); continue; }
+				CController target = plugin->ControllerSelect(cmd.Target.c_str());
+				if (!target.IsValid()) { CDataHandler::ReportRemoteResult(cmd.Id, false, cmd.Target + " is not online in EuroScope"); continue; }
+				if (!es.InitiateHandoff(cmd.Target.c_str())) { CDataHandler::ReportRemoteResult(cmd.Id, false, "EuroScope would not start the handoff to " + cmd.Target); continue; }
+				CDataHandler::ReportRemoteResult(cmd.Id, true, "Handoff to " + cmd.Target + " started");
+			}
+			else if (cmd.Type == "selcal" || cmd.Type == "contactme" || cmd.Type == "natmsg") {
+				if (!CDataHandler::AutoType) { CDataHandler::ReportRemoteResult(cmd.Id, false, "auto-typing is off (add autotype=1 to vnaaats.cfg) - use Copy and paste instead"); continue; }
+				if (!(cmd.Text.rfind(".selcal ", 0) == 0 || cmd.Text == ".contactme" || cmd.Text.rfind(".contactme ", 0) == 0 || cmd.Text.rfind(".msg ", 0) == 0)) { CDataHandler::ReportRemoteResult(cmd.Id, false, "refused: not an allowed command"); continue; }
+				// .selcal and .contactme act on the selected aircraft (they take no callsign), so select it first
+				if (cmd.Type == "selcal" || cmd.Type == "contactme") plugin->SetASELAircraft(es);
+				InterlockedExchange(&TypingBusy, 1);
+				CTypeJob* job = new CTypeJob{ cmd.Text, cmd.Id };
+				if (cmd.Type == "contactme" && CDataHandler::AutoClick) {
+					// where the aircraft is on this radar (worked out here, on EuroScope's own thread)
+					// EuroScope waits for a click on the callsign of the tag, so click that when the tag was drawn just now
+					CRect area0(GetRadarArea());
+					auto cp = CAcTargets::CallsignPoints.find(cmd.Callsign);
+					if (cp != CAcTargets::CallsignPoints.end() && clock() - cp->second.second < 3000 && area0.PtInRect(cp->second.first)) { job->Click = true; job->TagClick = true; job->Px = cp->second.first; }
+					job->Callsign = cmd.Callsign;
+					CRadarTarget tgt = plugin->RadarTargetSelect(cmd.Callsign.c_str());
+					if (!job->Click && tgt.IsValid()) {
+						POINT px = ConvertCoordFromPositionToPixel(tgt.GetPosition().GetPosition());
+						CRect area(GetRadarArea());
+						if (area.PtInRect(px)) { job->Click = true; job->Px = px; }
+					}
+				}
+				_beginthread(TypeThread, 0, (void*)job);   // the thread reports the result
+			}
+			else if (cmd.Type == "highlight") {
+				if (!CDataHandler::Highlight) { CDataHandler::ReportRemoteResult(cmd.Id, true, "circle is switched off (highlight=0 in vnaaats.cfg)"); continue; }
+				hlCallsign = cmd.Callsign;
+				hlUntil = clock() + 3000;
+				CDataHandler::ReportRemoteResult(cmd.Id, true, "Circled " + cmd.Callsign);
+			}
+			else if (cmd.Type == "planget") {
+				// Hand the whole flight plan to the FDD edit window (as JSON in the result message)
+				CFlightPlanData fd = es.GetFlightPlanData();
+				auto S = [](const char* v) { return string(v ? v : ""); };
+				nlohmann::json j;
+				j["callsign"] = cmd.Callsign;
+				j["planType"] = S(fd.GetPlanType());
+				j["acInfo"] = S(fd.GetAircraftInfo());
+				j["origin"] = S(fd.GetOrigin());
+				j["dest"] = S(fd.GetDestination());
+				j["alternate"] = S(fd.GetAlternate());
+				j["tas"] = fd.GetTrueAirspeed();
+				j["alt"] = fd.GetFinalAltitude();
+				j["etd"] = S(fd.GetEstimatedDepartureTime());
+				j["enrouteH"] = S(fd.GetEnrouteHours());
+				j["enrouteM"] = S(fd.GetEnrouteMinutes());
+				j["fuelH"] = S(fd.GetFuelHours());
+				j["fuelM"] = S(fd.GetFuelMinutes());
+				j["route"] = S(fd.GetRoute());
+				j["remarks"] = S(fd.GetRemarks());
+				j["mine"] = mine;
+				j["trackedBy"] = trackedBy;
+				CDataHandler::ReportRemoteResult(cmd.Id, true, j.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
+			}
+			else if (cmd.Type == "planset") {
+				// Only the controller tracking the aircraft may change its flight plan
+				if (!mine) { CDataHandler::ReportRemoteResult(cmd.Id, false, "Track " + cmd.Callsign + " first - only the tracking controller can change its flight plan"); continue; }
+				nlohmann::json p = nlohmann::json::parse(cmd.Plan, nullptr, false);
+				if (p.is_discarded() || !p.is_object()) { CDataHandler::ReportRemoteResult(cmd.Id, false, "no flight plan received"); continue; }
+				CFlightPlanData fd = es.GetFlightPlanData();
+				auto S = [](const char* v) { return string(v ? v : ""); };
+				string failed;
+				// Change only what differs, so a "no change" answer from EuroScope is never taken as a refusal
+				auto setStr = [&](const char* name, const string& want, const string& have, const std::function<bool(const char*)>& setter) {
+					if (want != have && !setter(want.c_str())) failed += string(failed.empty() ? "" : ", ") + name;
+				};
+				setStr("flight rules", p.value("planType", "I"), S(fd.GetPlanType()), [&](const char* v) { return fd.SetPlanType(v); });
+				setStr("aircraft data", p.value("acInfo", ""), S(fd.GetAircraftInfo()), [&](const char* v) { return fd.SetAircraftInfo(v); });
+				setStr("departure", p.value("origin", ""), S(fd.GetOrigin()), [&](const char* v) { return fd.SetOrigin(v); });
+				setStr("destination", p.value("dest", ""), S(fd.GetDestination()), [&](const char* v) { return fd.SetDestination(v); });
+				setStr("alternate", p.value("alternate", ""), S(fd.GetAlternate()), [&](const char* v) { return fd.SetAlternate(v); });
+				setStr("departure time", p.value("etd", ""), S(fd.GetEstimatedDepartureTime()), [&](const char* v) { return fd.SetEstimatedDepartureTime(v); });
+				setStr("enroute hours", to_string(p.value("enrouteH", 0)), to_string(atoi(fd.GetEnrouteHours())), [&](const char* v) { return fd.SetEnrouteHours(v); });
+				setStr("enroute minutes", to_string(p.value("enrouteM", 0)), to_string(atoi(fd.GetEnrouteMinutes())), [&](const char* v) { return fd.SetEnrouteMinutes(v); });
+				setStr("fuel hours", to_string(p.value("fuelH", 0)), to_string(atoi(fd.GetFuelHours())), [&](const char* v) { return fd.SetFuelHours(v); });
+				setStr("fuel minutes", to_string(p.value("fuelM", 0)), to_string(atoi(fd.GetFuelMinutes())), [&](const char* v) { return fd.SetFuelMinutes(v); });
+				setStr("route", p.value("route", ""), S(fd.GetRoute()), [&](const char* v) { return fd.SetRoute(v); });
+				setStr("remarks", p.value("remarks", ""), S(fd.GetRemarks()), [&](const char* v) { return fd.SetRemarks(v); });
+				int tas = p.value("tas", 0), alt = p.value("alt", 0);
+				if (tas != fd.GetTrueAirspeed() && !fd.SetTrueAirspeed(tas)) failed += string(failed.empty() ? "" : ", ") + "TAS";
+				if (alt != fd.GetFinalAltitude() && !fd.SetFinalAltitude(alt)) failed += string(failed.empty() ? "" : ", ") + "altitude";
+				if (!failed.empty()) { CLogger::Log(CLogType::WARN, "Flight plan change for " + cmd.Callsign + " refused by EuroScope: " + failed, "CRadarDisplay::RunRemoteCommands"); CDataHandler::ReportRemoteResult(cmd.Id, false, "EuroScope would not change: " + failed); continue; }
+				if (!fd.AmendFlightPlan()) { CDataHandler::ReportRemoteResult(cmd.Id, false, "EuroScope did not send the amended flight plan"); continue; }
+				// Keep vNAAATS' own copy in step
+				CAircraftFlightPlan* fp = CDataHandler::GetFlightData(cmd.Callsign);
+				if (fp->IsValid) {
+					fp->Type = S(fd.GetAircraftFPType());
+					fp->Depart = S(fd.GetOrigin());
+					fp->Dest = S(fd.GetDestination());
+					fp->Etd = CUtils::ParseZuluTime(false, atoi(fd.GetEstimatedDepartureTime()));
+					fp->IsEquipped = CUtils::IsAircraftEquipped(S(fd.GetRemarks()), S(fd.GetAircraftInfo()), fd.GetCapibilities());
+					fp->WindowRefresh = true;
+				}
+				CLogger::Log(CLogType::NORM, "Flight plan for " + cmd.Callsign + " amended from the FDD.", "CRadarDisplay::RunRemoteCommands");
+				CDataHandler::ReportRemoteResult(cmd.Id, true, "Flight plan for " + cmd.Callsign + " amended");
+			}
+			else {
+				CDataHandler::ReportRemoteResult(cmd.Id, false, "unknown command");
+			}
+		}
+		catch (exception & e) {
+			CLogger::Log(CLogType::EXC, "FDD command failed: " + string(e.what()), "CRadarDisplay::RunRemoteCommands");
+			CDataHandler::ReportRemoteResult(cmd.Id, false, "plugin error");
+		}
+	}
+}
+
 void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 {
+	if (Phase == REFRESH_PHASE_BEFORE_TAGS) {
+		RunRemoteCommands();
+
+		// Sensible traffic filters for the position you log on as (once per position)
+		static string defaultsFor = "";
+		CController me = GetPlugIn()->ControllerMyself();
+		// The web display sends commands to the callsign you are logged on as: set it on every refresh, not only when an aircraft updates
+		if (me.IsValid()) CDataHandler::ControllerCallsign = me.GetCallsign();
+		if (me.IsValid() && me.IsController()) {
+			string myCs = me.GetCallsign();
+			if (myCs != defaultsFor) {
+				defaultsFor = myCs;
+				string up = myCs;
+				for (auto& ch : up) ch = (char)toupper((unsigned char)ch);
+				if (up.rfind("NAT", 0) == 0) { // NAT_FSS bandbox: the whole area, all traffic
+					CUtils::AreaSelection = 800;
+					CUtils::PosType = 801;
+					menuBar->SetDropDownValue(CMenuBar::DRP_AREASEL, CUtils::AreaSelection);
+					menuBar->SetDropDownValue(CMenuBar::DRP_TYPESEL, CUtils::PosType);
+					CLogger::Log(CLogType::NORM, "Logged on as " + myCs + ": area OCA and Multi-role selected.", "CRadarDisplay::OnRefresh");
+				}
+			}
+		}
+	}
+
 	// Create device context
 	CDC dc;
 	dc.Attach(hDC);
@@ -156,6 +802,8 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 	if (GetPlugIn()->FlightPlanSelectASEL().GetCallsign() != asel) {
 		asel = GetPlugIn()->FlightPlanSelectASEL().GetCallsign();
 		CLogger::Log(CLogType::NORM, "Selected aircraft changed to " + asel + ".", "CRadarDisplay::OnRefresh");
+		// Tell the server, so the FDD can outline this aircraft's strip
+		if (!CDataHandler::ControllerCallsign.empty()) _beginthread(CDataHandler::ReportAsel, 0, (void*)new CAselPush{ CDataHandler::ControllerCallsign, asel });
 	}
 
 	// Set the flight plan button state
@@ -281,6 +929,39 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		CRect radarBounds = this->GetRadarArea();
 		dc.TextOutA(radarBounds.right - 185, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 2, 
 			CUtils::GetLatLonString(&appCursor->latLonPosition).c_str());
+		// Selected aircraft, bottom centre: "BAW227 (Speedbird)   B788   EGLL - KBOS"
+		if (!asel.empty()) {
+			CFlightPlan selFP = GetPlugIn()->FlightPlanSelect(asel.c_str());
+			string line = asel;
+			string tele = CUtils::TelephonyFor(asel);
+			if (!tele.empty()) line += " (" + tele + ")";
+			if (selFP.IsValid()) {
+				string type = selFP.GetFlightPlanData().GetAircraftFPType();
+				string dep = selFP.GetFlightPlanData().GetOrigin();
+				string dest = selFP.GetFlightPlanData().GetDestination();
+				if (!type.empty()) line += "   " + type;
+				if (!dep.empty() || !dest.empty()) line += "   " + (dep.empty() ? string("????") : dep) + " - " + (dest.empty() ? string("????") : dest);
+			}
+			int selAlign = dc.SetTextAlign(TA_CENTER);
+			dc.TextOutA((radarBounds.left + radarBounds.right) / 2, radarBounds.bottom - dc.GetTextExtent("ABC").cy - 2, line.c_str());
+			dc.SetTextAlign(selAlign);
+		}
+		// White circle around an aircraft that was just clicked on the FDD (3 seconds)
+		if (!hlCallsign.empty()) {
+			if (clock() < hlUntil) {
+				CRadarTarget hlt = GetPlugIn()->RadarTargetSelect(hlCallsign.c_str());
+				if (hlt.IsValid()) {
+					POINT hp = ConvertCoordFromPositionToPixel(hlt.GetPosition().GetPosition());
+					CPen hpen(PS_SOLID, 3, RGB(255, 255, 255));
+					CPen* oldPen = dc.SelectObject(&hpen);
+					CBrush* oldBrush = (CBrush*)dc.SelectStockObject(NULL_BRUSH);
+					dc.Ellipse(hp.x - 24, hp.y - 24, hp.x + 24, hp.y + 24);
+					dc.SelectObject(oldBrush);
+					dc.SelectObject(oldPen);
+				}
+			}
+			else hlCallsign.clear();
+		}
 		dc.RestoreDC(sDC);
 
 		// Draw overlays if enabled
@@ -295,6 +976,18 @@ void CRadarDisplay::OnRefresh(HDC hDC, int Phase)
 		// Get entry time and direction
 		int entryMinutes;
 		bool direction;
+
+		// Erase routes that have been on the screen for routeseconds
+		if (!CRoutesHelper::ActiveRoutes.empty()) {
+			clock_t nowClock = clock();
+			for (int i = (int)CRoutesHelper::ActiveRoutes.size() - 1; i >= 0; i--) {
+				auto it = g_routeExpiry.find(CRoutesHelper::ActiveRoutes[i]);
+				if (it != g_routeExpiry.end() && nowClock >= it->second) {
+					g_routeExpiry.erase(it);
+					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + i);
+				}
+			}
+		}
 
 		// Draw routes
 		if (CRoutesHelper::ActiveRoutes.size() != CRoutesHelper::ActiveRoutes.empty() && CRoutesHelper::ActiveRoutes.size() != 0) {
@@ -661,6 +1354,27 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 			// Flight plan object
 			CFlightPlan fpData = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign());
 
+			// The copy made when the aircraft first appeared can be blank if the pilot's plan reached EuroScope later: fill the gaps
+			if (fpData.IsValid()) {
+				CFlightPlanData fd = fpData.GetFlightPlanData();
+				string esType = fd.GetAircraftFPType(), esDep = fd.GetOrigin(), esDest = fd.GetDestination();
+				bool changed = false;
+				// "NOFP" is what EuroScope shows while it has no data for a field, so it counts as blank
+				auto blank = [](const string& v) { return v.empty() || v == "NOFP"; };
+				if (blank(fp->Type) && !blank(esType) && esType != fp->Type) { fp->Type = esType; changed = true; }
+				if (blank(fp->Depart) && !blank(esDep) && esDep != fp->Depart) { fp->Depart = esDep; changed = true; }
+				if (blank(fp->Dest) && !blank(esDest) && esDest != fp->Dest) { fp->Dest = esDest; changed = true; }
+				if (changed) {
+					fp->Etd = CUtils::ParseZuluTime(false, atoi(fd.GetEstimatedDepartureTime()));
+					fp->IsEquipped = CUtils::IsAircraftEquipped(fd.GetRemarks(), fd.GetAircraftInfo(), fd.GetCapibilities());
+					fp->WindowRefresh = true;
+					CLogger::Log(CLogType::NORM, "Filled in blank flight plan details for " + string(RadarTarget.GetCallsign()) + " from EuroScope.", "CRadarDisplay::OnRadarTargetPositionUpdate");
+				}
+			}
+
+			// Remember who I am so changes sent to the server carry my callsign
+			CDataHandler::ControllerCallsign = GetPlugIn()->ControllerMyself().IsValid() ? GetPlugIn()->ControllerMyself().GetCallsign() : "";
+
 			// Update exit time
 			int exitMinutes = fpData.GetSectorExitMinutes();
 			if (exitMinutes != -1) {
@@ -668,8 +1382,10 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 			}
 
 			// Update selcal code (maybe move into an Update method in DataHandler if I find there is more to update than just the selcal code)
-			string selcal = CUtils::GetSelcalCode(&fpData);
-			fp->SELCAL = selcal != "" ? selcal : "N/A";
+			if (!fp->SelcalManual) {
+				string selcal = CUtils::GetSelcalCode(&fpData);
+				fp->SELCAL = selcal != "" ? selcal : "N/A";
+			}
 
 			// Download the vNAAATS network data on the plane
 			try {
@@ -681,7 +1397,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 				_beginthread(CDataHandler::DownloadNetworkAircraft, 0, (void*)data); // Async
 			}
 			catch (std::exception & ex) {
-				CLogger::DebugLog(this, "An exception occurred. " + *ex.what());
+				CLogger::DebugLog(this, string("An exception occurred. ") + ex.what());
 			}			
 
 			// Timer
@@ -758,7 +1474,7 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 					}
 				}
 				catch (std::exception & ex) {
-					CLogger::DebugLog(this, "An exception occurred. " + *ex.what());
+					CLogger::DebugLog(this, string("An exception occurred. ") + ex.what());
 				}
 
 				// Reset the clock
@@ -771,13 +1487,15 @@ void CRadarDisplay::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 		CAircraftFlightPlan* fp = CDataHandler::GetFlightData(RadarTarget.GetCallsign());
 		if (fp->IsValid) {
 			std::async(CLogger::Log, CLogType::WARN, "Aircraft " + string(fp->Callsign) + " outside relevant scope and will be erased. SectorExitMinutes: " + to_string(fp->ExitTime) + ".", "CRadarDisplay::OnRadarTargetPositionUpdate");
-			// Delete the flight data object
-			CDataHandler::DeleteFlightData(RadarTarget.GetCallsign());
+			// Ask the draw thread to delete it (deleting here could pull it out from under the screen while it is drawing)
+			CDataHandler::QueueDelete(RadarTarget.GetCallsign());
 		}
 	}
 }
 
 void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
+	// If I was tracking it, start the 5 minute window in which it is tracked again when the pilot returns
+	if (CDataHandler::Retrack) CDataHandler::MemoDisconnected(FlightPlan.GetCallsign());
 	// Close the flight plan window immediately and cancel the ASEL so that we don't get a crash
 	if (FlightPlan.GetCallsign() == asel) {
 		menuBar->SetButtonState(CMenuBar::BTN_FLIGHTPLAN, CInputState::INACTIVE);
@@ -858,7 +1576,7 @@ void CRadarDisplay::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 			}
 		}
 		catch (std::exception & ex) {
-			CLogger::DebugLog(this, "An exception occurred. " + *ex.what());
+			CLogger::DebugLog(this, string("An exception occurred. ") + ex.what());
 		}
 	}
 }
@@ -971,6 +1689,10 @@ void CRadarDisplay::OnOverScreenObject(int ObjectType, const char* sObjectId, PO
 
 void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, POINT Pt, RECT Area, int Button)
 {
+	if (clock() < g_ignoreClicksUntil) {        // the plugin's own click (Contact Me), not the controller's
+		if ((ObjectType == SCREEN_TAG || ObjectType == SCREEN_TAG_CS) && g_clickWant == string(sObjectId)) InterlockedExchange(&g_clickSeen, 1);   // proof the click reached the tag
+		return;
+	}
 	// If menu button
 	if (ObjectType == MENBAR) {
 		if (Button == BUTTON_RIGHT) { // Toggle buttons
@@ -1024,6 +1746,7 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 			CFlightPlan fp = GetPlugIn()->FlightPlanSelect(sObjectId);
 			GetPlugIn()->SetASELAircraft(fp);
 			CLogger::Log(CLogType::NORM, "Selected aircraft changed to " + asel + ".", "CRadarDisplay::OnClickScreenObject");
+			if (!CDataHandler::ControllerCallsign.empty()) _beginthread(CDataHandler::ReportAsel, 0, (void*)new CAselPush{ CDataHandler::ControllerCallsign, asel });
 			
 			// Re-instantiate FPW if needed
 			if (newFP) {
@@ -1207,10 +1930,12 @@ void CRadarDisplay::OnClickScreenObject(int ObjectType, const char* sObjectId, P
 				if (found != -1) {
 					CLogger::Log(CLogType::NORM, "Erasing route draw for: " + string(sObjectId), "CRadarDisplay::OnClickScreenObject");
 					CRoutesHelper::ActiveRoutes.erase(CRoutesHelper::ActiveRoutes.begin() + found);
+					g_routeExpiry.erase(string(sObjectId));
 				}
 				else {
 					CLogger::Log(CLogType::NORM, "Enabling route draw for: " + string(sObjectId), "CRadarDisplay::OnClickScreenObject");
 					CRoutesHelper::ActiveRoutes.push_back(string(sObjectId));
+					if (CDataHandler::RouteSeconds > 0) g_routeExpiry[string(sObjectId)] = clock() + (clock_t)CDataHandler::RouteSeconds * CLOCKS_PER_SEC;   // erased by itself after routeseconds
 				}
 			}
 		}
@@ -1390,11 +2115,26 @@ void CRadarDisplay::OnAsrContentLoaded(bool Loaded)
 	if (!Loaded)
 		return;
 
-	// Load the plugin data
-	CUtils::LoadPluginData(this);
+	CLogger::Log(CLogType::NORM, "ASR loaded, reading saved settings.", "CRadarDisplay::OnAsrContentLoaded");
+	// Load the plugin data (a bad saved value must never take EuroScope down)
+	try {
+		CUtils::LoadPluginData(this);
+	}
+	catch (...) {
+		CLogger::Log(CLogType::EXC, "Saved settings in the ASR could not be read - using defaults.", "CRadarDisplay::OnAsrContentLoaded");
+	}
+	CLogger::Log(CLogType::NORM, "Saved settings done, starting up.", "CRadarDisplay::OnAsrContentLoaded");
 
 	// Populate it
-	PopulateProgramData();
+	try {
+		PopulateProgramData();
+	}
+	catch (const std::exception& e) {
+		CLogger::Log(CLogType::EXC, string("Start-up failed: ") + e.what(), "CRadarDisplay::OnAsrContentLoaded");
+	}
+	catch (...) {
+		CLogger::Log(CLogType::EXC, "Start-up failed (unknown error).", "CRadarDisplay::OnAsrContentLoaded");
+	}
 }
 
 // TODO: Break into individual methods or create ScreenFunctions class/namespace
@@ -1432,26 +2172,23 @@ void CRadarDisplay::CursorStateUpdater(void* args)
 				// Get the position and monitor in which the point lies
 				GetCursorPos(&cursor->position);
 
-				// Get the monitor
-				HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
-				GetMonitorInfo(monitor, &monitorInfo);
-
-				// Get the monitor resolution
-				int monResX = abs(monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left);
-				int monResY = abs(monitorInfo.rcMonitor.top - monitorInfo.rcMonitor.bottom);
-
-				// Get the relative cursor position
-				if (cursor->position.x > monResX) { // greater than (x)
-					cursor->position.x = cursor->position.x % monResX;
+				// GetCursorPos is in SCREEN pixels, but EuroScope's pixel <-> lat/lon conversion
+				// works in the radar window's own client pixels. Convert (this was why the readout
+				// showed the wrong longitude, e.g. E30 over 30W, whenever the window was not at 0,0).
+				HWND underCursor = WindowFromPoint(cursor->position);
+				if (underCursor != NULL && ScreenToClient(underCursor, &cursor->position)) {
+					// done: cursor->position is now relative to the radar window
 				}
-				if (cursor->position.y > monResY) { // greater than (y)
-					cursor->position.y = cursor->position.y % monResY;
-				}
-				if (cursor->position.x < 0) { // less than (x)
-					cursor->position.x = monResX - (abs(cursor->position.x) % monResX);
-				}
-				if (cursor->position.y < 0) { // less than (y)
-					cursor->position.y = monResY - (abs(cursor->position.y) % monResY);
+				else {
+					// Fallback (old behaviour): wrap to the monitor size
+					HMONITOR monitor = MonitorFromPoint(cursor->position, MONITOR_DEFAULTTONEAREST);
+					GetMonitorInfo(monitor, &monitorInfo);
+					int monResX = abs(monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left);
+					int monResY = abs(monitorInfo.rcMonitor.top - monitorInfo.rcMonitor.bottom);
+					if (monResX > 0 && monResY > 0) {
+						cursor->position.x = ((cursor->position.x % monResX) + monResX) % monResX;
+						cursor->position.y = ((cursor->position.y % monResY) + monResY) % monResY;
+					}
 				}
 
 				// Get button presses
@@ -1464,6 +2201,12 @@ void CRadarDisplay::CursorStateUpdater(void* args)
 					cursor->position.y > radarArea.top + MENBAR_HEIGHT && // We want *our* radar screen so we add the vNAAATS menu bar height
 					cursor->position.y < radarArea.bottom) {
 					isCursorInsideRadarArea = true;
+				}
+
+				// Remember which window is the radar (ours, under the mouse, mouse inside the radar area)
+				if (isCursorInsideRadarArea && underCursor != NULL) {
+					DWORD wpid = 0; GetWindowThreadProcessId(underCursor, &wpid);
+					if (wpid == GetCurrentProcessId()) g_radarWnd = underCursor;
 				}
 
 				// Lat/lon position
@@ -1541,9 +2284,9 @@ void CRadarDisplay::CursorStateUpdater(void* args)
 		
 	}
 	catch (exception & ex) {
-		CLogger::DebugLog(cursor->screen, "An exception occurred in the CursorStateUpdater. " + *ex.what());
+		CLogger::DebugLog(cursor->screen, string("An exception occurred in the CursorStateUpdater. ") + ex.what());
 		CLogger::Log(CLogType::ERR, "An error occurred. \nCursor position: " + to_string(cursor->latLonPosition.m_Latitude) + "," + to_string(cursor->latLonPosition.m_Longitude)
-			+ "\nRefresh Resolution: " + to_string(cursor->screen->RefreshResolution) + "\nVerbose details: " + *ex.what(), "CRadarDisplay::CursorStateUpdater");
+			+ "\nRefresh Resolution: " + to_string(cursor->screen->RefreshResolution) + string("\nVerbose details: ") + ex.what(), "CRadarDisplay::CursorStateUpdater");
 	}
 
 	// Clean up and return

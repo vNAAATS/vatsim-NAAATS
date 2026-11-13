@@ -1,0 +1,14 @@
+{
+  "name": "vNAAATS Flight Data Display",
+  "short_name": "vNAAATS FDD",
+  "description": "Oceanic flight data display for VATSIM controllers",
+  "start_url": "/fdd",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1b30",
+  "theme_color": "#0b1b30",
+  "icons": [
+    { "src": "/icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

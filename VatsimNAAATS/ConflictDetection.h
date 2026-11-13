@@ -49,9 +49,10 @@ class CConflictDetection
 
 	private: 
 		// Separation values
-		static const int SEPV_LOW = 1000; // Subtract 150 otherwise it's way too sensitive
-		static const int SEPV_HIGH = 1900;
-		static const int SEPV_SUPERSONIC = 3900;
+		// Required vertical separation minus a 200 ft allowance: real altitudes wobble (FL350 / FL340 can measure 960 ft apart)
+		static const int SEPV_LOW = 800;       // 1000 ft RVSM
+		static const int SEPV_HIGH = 1700;     // 2000 ft above FL410
+		static const int SEPV_SUPERSONIC = 3700; // 4000 ft supersonic / Concorde
 		static const int SEPLAT_NONREDUCED = 60; // NM
 		static const int SEPLAT_REDUCED = 19; // NM
 		static const int SEPLON_REDUCED = 15; // NM

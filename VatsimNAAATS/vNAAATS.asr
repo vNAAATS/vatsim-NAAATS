@@ -1,0 +1,196 @@
+DisplayTypeName:vNAAATS Display
+DisplayTypeNeedRadarContent:0
+DisplayTypeGeoReferenced:1
+SECTORFILE:
+SECTORTITLE:
+ARTCC boundary:CZQO Shannon Transfer Line:
+ARTCC high boundary:BGGL - Sondrestorm Oceanic FIR:
+ARTCC high boundary:BIRD - Reykjavic FIR:
+ARTCC high boundary:CZEG - Edmonton FIR:
+ARTCC high boundary:CZQO - Gander OCA:
+ARTCC high boundary:CZQX - Gander Domestic FIR:
+ARTCC high boundary:CZQX - Gander GOTA:
+ARTCC high boundary:CZQX - Gander Oceanic FIR:
+ARTCC high boundary:EGGX - BOTA:
+ARTCC high boundary:EGGX - NOTA:
+ARTCC high boundary:EGGX - Shanwick FIR:
+ARTCC high boundary:EGGX - Shanwick Oceanic FIR:
+ARTCC high boundary:EISN - Shannon FIR:
+ARTCC high boundary:KZNY - New York Oceanic FIR:
+ARTCC high boundary:LPPO - Santa Maria FIR:
+ARTCC high boundary:LPPO - Santa Maria Oceanic FIR:
+Fixes:4520N:name
+Fixes:4520N:symbol
+Fixes:4530N:name
+Fixes:4530N:symbol
+Fixes:4540N:name
+Fixes:4540N:symbol
+Fixes:ADARA:name
+Fixes:ADARA:symbol
+Fixes:AGORI:name
+Fixes:AGORI:symbol
+Fixes:ALLRY:name
+Fixes:ALLRY:symbol
+Fixes:ATSIX:name
+Fixes:ATSIX:symbol
+Fixes:AVPUT:name
+Fixes:AVPUT:symbol
+Fixes:AVUTI:name
+Fixes:AVUTI:symbol
+Fixes:BALIX:name
+Fixes:BALIX:symbol
+Fixes:BEDRA:name
+Fixes:BEDRA:symbol
+Fixes:BEGAS:name
+Fixes:BEGAS:symbol
+Fixes:BOBTU:name
+Fixes:BOBTU:symbol
+Fixes:BUNAV:name
+Fixes:BUNAV:symbol
+Fixes:CUDDY:name
+Fixes:CUDDY:symbol
+Fixes:DINIM:name
+Fixes:DINIM:symbol
+Fixes:DOGAL:name
+Fixes:DOGAL:symbol
+Fixes:DORYY:name
+Fixes:DORYY:symbol
+Fixes:ELSIR:name
+Fixes:ELSIR:symbol
+Fixes:EMBOK:name
+Fixes:EMBOK:symbol
+Fixes:ERAKA:name
+Fixes:ERAKA:symbol
+Fixes:ETARI:name
+Fixes:ETARI:symbol
+Fixes:ETIKI:name
+Fixes:ETIKI:symbol
+Fixes:ETILO:name
+Fixes:ETILO:symbol
+Fixes:GOMUP:name
+Fixes:GOMUP:symbol
+Fixes:GONAN:name
+Fixes:GONAN:symbol
+Fixes:HOIST:name
+Fixes:HOIST:symbol
+Fixes:JANJO:name
+Fixes:JANJO:symbol
+Fixes:JOOPY:name
+Fixes:JOOPY:symbol
+Fixes:KETLA:name
+Fixes:KETLA:symbol
+Fixes:KOGAD:name
+Fixes:KOGAD:symbol
+Fixes:LASNO:name
+Fixes:LASNO:symbol
+Fixes:LIMRI:name
+Fixes:LIMRI:symbol
+Fixes:LOMSI:name
+Fixes:LOMSI:symbol
+Fixes:LUSEN:name
+Fixes:LUSEN:symbol
+Fixes:MALOT:name
+Fixes:MALOT:symbol
+Fixes:MAXAR:name
+Fixes:MAXAR:symbol
+Fixes:NEEKO:name
+Fixes:NEEKO:symbol
+Fixes:NICSO:name
+Fixes:NICSO:symbol
+Fixes:NILAV:name
+Fixes:NILAV:symbol
+Fixes:OMOKO:name
+Fixes:OMOKO:symbol
+Fixes:OMSAT:name
+Fixes:OMSAT:symbol
+Fixes:ORTAV:name
+Fixes:ORTAV:symbol
+Fixes:PIDSO:name
+Fixes:PIDSO:symbol
+Fixes:PIKIL:name
+Fixes:PIKIL:symbol
+Fixes:PORTI:name
+Fixes:PORTI:symbol
+Fixes:RAFIN:name
+Fixes:RAFIN:symbol
+Fixes:RATSU:name
+Fixes:RATSU:symbol
+Fixes:RESNO:name
+Fixes:RESNO:symbol
+Fixes:RIKAL:name
+Fixes:RIKAL:symbol
+Fixes:SAVRY:name
+Fixes:SAVRY:symbol
+Fixes:SEPAL:name
+Fixes:SEPAL:symbol
+Fixes:SIVIR:name
+Fixes:SIVIR:symbol
+Fixes:SOMAX:name
+Fixes:SOMAX:symbol
+Fixes:SUNOT:name
+Fixes:SUNOT:symbol
+Fixes:SUPRY:name
+Fixes:SUPRY:symbol
+Fixes:TAMEL:name
+Fixes:TAMEL:symbol
+Fixes:TOBOR:name
+Fixes:TOBOR:symbol
+Fixes:UMLER:name
+Fixes:UMLER:symbol
+Fixes:URTAK:name
+Fixes:URTAK:symbol
+Fixes:VENER:name
+Fixes:VENER:symbol
+Free Text:CZQO Adjacent FIRS\Edmonton (CZEG):freetext
+Free Text:CZQO Adjacent FIRS\Moncton (CZQM) / Gander (CZQX):freetext
+Free Text:CZQO Adjacent FIRS\Montreal (CZUL):freetext
+Free Text:CZQO Adjacent FIRS\New York (KZWY):freetext
+Free Text:CZQO Adjacent FIRS\Reykjavik (BIRD):freetext
+Free Text:CZQO Adjacent FIRS\Shanwick (EGGX):freetext
+Free Text:CZQO Grid Reference Numbers.\45/20:
+Free Text:EGGX Adjacent FIRS\Brest (LFRR):freetext
+Free Text:EGGX Adjacent FIRS\Gander (CZQO):freetext
+Free Text:EGGX Adjacent FIRS\London (LON):freetext
+Free Text:EGGX Adjacent FIRS\Madrid (LECM):freetext
+Free Text:EGGX Adjacent FIRS\Reykjavik (BIRD):freetext
+Free Text:EGGX Adjacent FIRS\Santa Maria (LPPO):freetext
+Free Text:EGGX Adjacent FIRS\Scottish (SCO):freetext
+Free Text:EGGX Adjacent FIRS\Shannon (EISN):freetext
+Geo:CZQO Concorde Track SM:
+Geo:CZQO Concorde Track SN:
+Geo:CZQO Concorde Track SO:
+Geo:CZQO Concorde Track SP:
+Geo:CZQO Landmark Coastline (Low Detail):
+Geo:CZQO Positional Grid Reference:
+Geo:EGGX Landmark Coastline (Low Detail):
+Geo:EGGX Landmark Positional Grid Reference:
+Geo:GEO:
+SHOWC:1
+SHOWSB:1
+BELOW:0
+ABOVE:0
+LEADER:5
+SHOWLEADER:1
+TURNLEADER:0
+HISTORY_DOTS:5
+SIMULATION_MODE:1
+DISABLEPANNING:0
+DISABLEZOOMING:0
+DisplayRotation:0.00000
+TAGFAMILY:Matias (built in)
+WINDOWAREA:41.829722:-68.345338:66.670441:7.922163
+PLUGIN:vNAAATS:AltFiltHigh:700
+PLUGIN:vNAAATS:AltFiltLow:200
+PLUGIN:vNAAATS:GridEnabled:false
+PLUGIN:vNAAATS:InboundX:1519
+PLUGIN:vNAAATS:InboundY:108
+PLUGIN:vNAAATS:MenuScroll:true
+PLUGIN:vNAAATS:OthersX:2285
+PLUGIN:vNAAATS:OthersY:143
+PLUGIN:vNAAATS:OverlayEnabled:false
+PLUGIN:vNAAATS:QckLookEnabled:false
+PLUGIN:vNAAATS:ScreenCount:1 Screen
+PLUGIN:vNAAATS:SelectedArea:800
+PLUGIN:vNAAATS:SelectedOverlay:800
+PLUGIN:vNAAATS:SelectedPosType:801
+PLUGIN:vNAAATS:TagsEnabled:true

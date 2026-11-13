@@ -12,6 +12,7 @@ clock_t CAcTargets::fiveSecondTimer = clock();
 string CAcTargets::SearchedAircraft = "";
 string CAcTargets::OpenTrackingDialog = "";
 map<string, bool> CAcTargets::ButtonStates;
+map<string, pair<POINT, clock_t>> CAcTargets::CallsignPoints;
 
 void CAcTargets::Initialise() {
 	// Initialise button states
@@ -48,6 +49,12 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 
 	// Aircraft position
 	CPosition position = target->GetPosition().GetPosition();
+
+	// After UNICOM + logoff the server asks for the tag to be released
+	if (acFP->ReleaseRequested) {
+		acFP->ReleaseRequested = false;
+		if (fp.GetTrackingControllerIsMe()) fp.EndTracking();
+	}
 
 	// Save context for later
 	int sDC = dc->SaveDC();
@@ -120,167 +127,67 @@ void CAcTargets::RenderTarget(Graphics* g, CDC* dc, CRadarScreen* screen, CRadar
 	// We change the target based on state
 	// Set middle
 	g->TranslateTransform(acPoint.x, acPoint.y, MatrixOrderAppend);
-	// Change targets depending on mode
-	if (targetMode == CRadarTargetMode::ADS_B) {	
-		if (acFP->IsCleared) {
-			// Rotate the graphics object and set the middle to the aircraft position
-			g->RotateTransform(target->GetPosition().GetReportedHeadingTrueNorth());
+	// Every target is drawn as a jet aircraft icon pointing along its heading, like the real system.
+	// Filled = cleared or tracked by a controller, outline only = neither. Colour: critical (flashing) / warning / handoff to me / mine / not mine.
+	{
+		g->RotateTransform(target->GetPosition().GetReportedHeadingTrueNorth());
 
-			// This is the aircraft icon
-			Point points[19] = {
-				Point(0,-8),
-				Point(-1,-7),
-				Point(-1,-2),
-				Point(-8,3),
-				Point(-8,4),
-				Point(-1,2),
-				Point(-1,7),
-				Point(-4,9),
-				Point(-4,10),
-				Point(0,9),
-				Point(4,10),
-				Point(4,9),
-				Point(1,7),
-				Point(1,2),
-				Point(8,4),
-				Point(8,3),
-				Point(1,-2),
-				Point(1,-7),
-				Point(0,-8)
-			};
-
-			// Fill the polygon with the appropriate colour and finish
-			if (status->ConflictStatus == CConflictStatus::CRITICAL) {
-				// Critical conflict status, so flash white and red every second
-				if (twoSecT >= 1.1) {
-					g->FillPolygon(&whiteBrush, points, 19);
-				}
-				else {
-					g->FillPolygon(&redBrush, points, 19);
-				}
-			}
-			else if (status->ConflictStatus == CConflictStatus::WARNING) {
-				// Warning status, turn target yellow
-				g->FillPolygon(&yellowBrush, points, 19);
-			}
-			else {
-				// No conflict, draw orange if tracked and blue if not
-				if (isHandoffToMe) {
-					g->FillPolygon(&whiteBrush, points, 19);
-				}
-				else {
-					if (fp.GetTrackingControllerIsMe())
-						g->FillPolygon(&orangeBrush, points, 19);
-					else
-						g->FillPolygon(&blueBrush, points, 19);
-				}
-			}
-
-			// Cleanup
-			g->EndContainer(gContainer);
-			DeleteObject(&points);
-		}
-		else {
-			// Make diamond with line
-			Point diamond[4] = {
-				Point(-6, 0),
-				Point(0, 6),
-				Point(6, 0),
-				Point(0, -6)
-			};
-
-			// Draw the polygon with the appropriate colour and finish
-			if (status->ConflictStatus == CConflictStatus::CRITICAL) {
-				// Critical conflict status, so flash white and red every second
-				if (twoSecT >= 1.1) {
-					g->DrawPolygon(&whitePen, diamond, 4);
-					g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
-				}
-				else {
-					g->DrawPolygon(&redPen, diamond, 4);
-					g->DrawLine(&redPen, Point(0, 6), Point(0, -6));
-				}
-			}
-			else if (status->ConflictStatus == CConflictStatus::WARNING) {
-				// Warning status, turn target yellow
-				g->DrawPolygon(&yellowPen, diamond, 4);
-				g->DrawLine(&yellowPen, Point(0, 6), Point(0, -6));
-			}
-			else {
-				// No conflict, draw orange if tracked and blue if not
-				if (isHandoffToMe) {
-					g->DrawPolygon(&whitePen, diamond, 4);
-					g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
-				}
-				else {
-					if (fp.GetTrackingControllerIsMe()) {
-						g->DrawPolygon(&orangePen, diamond, 4);
-						g->DrawLine(&orangePen, Point(0, 6), Point(0, -6));
-					}
-					else {
-						g->DrawPolygon(&bluePen, diamond, 4);
-						g->DrawLine(&bluePen, Point(0, 6), Point(0, -6));
-					}
-				}
-			}
-
-			// Cleanup
-			g->EndContainer(gContainer);
-			DeleteObject(&diamond);
-		}
-	}
-	else {
-		// Make asterisk
-		Point points[12] = {
-			Point(-5, 0),
-			Point(5, 0),
-			Point(0, 0),
-			Point(0, 5),
-			Point(0, -5),
-			Point(0, 0),
-			Point(-5, -5),
-			Point(5, 5),
-			Point(0,0),
-			Point(-5, 5),
-			Point(5, -5),
-			Point(0, 0)
+		// This is the aircraft icon
+		Point points[19] = {
+			Point(0,-8),
+			Point(-1,-7),
+			Point(-1,-2),
+			Point(-8,3),
+			Point(-8,4),
+			Point(-1,2),
+			Point(-1,7),
+			Point(-4,9),
+			Point(-4,10),
+			Point(0,9),
+			Point(4,10),
+			Point(4,9),
+			Point(1,7),
+			Point(1,2),
+			Point(8,4),
+			Point(8,3),
+			Point(1,-2),
+			Point(1,-7),
+			Point(0,-8)
 		};
 
-		// Draw the polygon with the appropriate colour and finish
+		// Pick the colour
+		SolidBrush* iconBrush = &blueBrush;
+		Pen* iconPen = &bluePen;
 		if (status->ConflictStatus == CConflictStatus::CRITICAL) {
-			// Critical conflict status, so flash white and red every second
-			if (twoSecT >= 1.1) {
-				g->DrawPolygon(&whitePen, points, 12);
-			}
-			else {
-				g->DrawPolygon(&redPen, points, 12);
-			}
+			// Critical conflict status, so flash white and red
+			bool white = twoSecT >= 1.1;
+			iconBrush = white ? &whiteBrush : &redBrush;
+			iconPen = white ? &whitePen : &redPen;
 		}
 		else if (status->ConflictStatus == CConflictStatus::WARNING) {
-			// Warning status, turn target yellow
-			g->DrawPolygon(&yellowPen, points, 12);
+			iconBrush = &yellowBrush;
+			iconPen = &yellowPen;
+		}
+		else if (isHandoffToMe) {
+			iconBrush = &whiteBrush;
+			iconPen = &whitePen;
+		}
+		else if (fp.GetTrackingControllerIsMe()) {
+			iconBrush = &orangeBrush;
+			iconPen = &orangePen;
+		}
+
+		// Solid when cleared, or whenever any controller is tracking the aircraft (clearance or not)
+		bool isTracked = fp.GetTrackingControllerIsMe() || string(fp.GetTrackingControllerCallsign()) != "";
+		if (acFP->IsCleared || isTracked) {
+			g->FillPolygon(iconBrush, points, 19);
 		}
 		else {
-			// No conflict, draw orange if tracked and blue if not
-			if (isHandoffToMe) {
-				g->DrawPolygon(&whitePen, points, 12);
-				g->DrawLine(&whitePen, Point(0, 6), Point(0, -6));
-			}
-			else {
-				if (fp.GetTrackingControllerIsMe()) {
-					g->DrawPolygon(&orangePen, points, 12);
-					g->DrawLine(&orangePen, Point(0, 6), Point(0, -6));
-				}
-				else {
-					g->DrawPolygon(&bluePen, points, 12);
-					g->DrawLine(&bluePen, Point(0, 6), Point(0, -6));
-				}
-			}
+			g->DrawPolygon(iconPen, points, 19);
 		}
 
 		// Cleanup
 		g->EndContainer(gContainer);
-		DeleteObject(&points);
 	}
 
 	// Check if leader lines are selected
@@ -431,6 +338,12 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 	CFlightPlan acFP = screen->GetPlugIn()->FlightPlanSelect(target->GetCallsign());
 	CAircraftFlightPlan fp;
 	CDataHandler::GetFlightData(acFP.GetCallsign(), fp);
+	string scratchNote = CDataHandler::SyncScratch(acFP); // scratchpad note (kept in step with the FDD)
+
+	// Callsign as shown on the tag: [BAW123] when the aircraft is connected to CPDLC
+	string csText = string(acFP.GetCallsign());
+	if (fp.CpdlcConnected) csText = "[" + csText + "]";
+	string csTagText = csText + (fp.NtSent ? "*" : ""); // width of the callsign plus the natTrak star, for the tag line
 
 	// Check if there is an active handoff to client controller
 	bool isHandoffToMe = string(acFP.GetHandoffTargetControllerCallsign()) == string(screen->GetPlugIn()->ControllerMyself().GetCallsign());
@@ -537,8 +450,14 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 		}
 
 		// Callsign
-		text = acFP.GetCallsign();
+		text = csText;
 		dc->TextOutA(tagRect.left + 1, tagRect.top, text.c_str());
+		// Red star: natTrak reminder was sent to the pilot
+		if (fp.NtSent) {
+			COLORREF oldColour = dc->SetTextColor(RGB(255, 0, 0));
+			dc->TextOutA(tagRect.left + 1 + dc->GetTextExtent(csText.c_str()).cx, tagRect.top, "*");
+			dc->SetTextColor(oldColour);
+		}
 		offsetY += 15;
 
 		// Orange if observer
@@ -566,9 +485,14 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 		dc->TextOutA(tagRect.left, tagRect.top + offsetY, text.c_str());
 		offsetX += 50;
 
-		// Mach
+		// Speed: once a controller is tracking the aircraft and a Mach number has been entered, show the assigned Mach (M84);
+		// otherwise show the ground speed in knots (N485)
 		int gs = target->GetPosition().GetReportedGS();
 		text = "N" + to_string(gs);
+		bool isTrackedByAnyone = acFP.GetTrackingControllerIsMe() || string(acFP.GetTrackingControllerCallsign()) != "";
+		if (fp.IsValid && isTrackedByAnyone && !fp.Mach.empty() && isdigit((unsigned char)fp.Mach[0]) && atoi(fp.Mach.c_str()) > 0) {
+			text = "M" + to_string(atoi(fp.Mach.c_str()));   // M79 / M81, as on the original radar
+		}
 
 		dc->TextOutA(tagRect.left + offsetX, tagRect.top + offsetY, text.c_str());
 		offsetX = 2;
@@ -606,6 +530,12 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 			tagRect.bottom += 25;
 		}
 
+		// Scratchpad note under the tag
+		if (!scratchNote.empty()) {
+			dc->SetTextColor(textColour);
+			dc->TextOutA(tagRect.left + 2, tagRect.bottom + 1, scratchNote.c_str());
+		}
+
 		// Draw box if they are the asel
 		if (acFP.GetCallsign() == asel) {
 			// Draw purple box if not cleared yet and 15 minutes out or already in airspace
@@ -616,8 +546,24 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 			}	
 		}
 				
+		// Contact Me sent from the FDD: yellow outline round the tag, red after 20 minutes if nobody is tracking the aircraft.
+		// Same rule as the FDD strip: gone once someone tracks it, and after 4 hours.
+		if (fp.IsValid && fp.ContactMeAt > 0) {
+			double cmAgeMin = difftime(time(NULL), (time_t)fp.ContactMeAt) / 60.0;
+			bool cmTracked = acFP.GetTrackingControllerIsMe() || string(acFP.GetTrackingControllerCallsign()) != "";
+			if (cmAgeMin >= 0 && cmAgeMin <= 240 && !cmTracked) {
+				COLORREF cmColour = cmAgeMin < 20.0 ? WarningYellow.ToCOLORREF() : CriticalRed.ToCOLORREF();
+				CRect cmOuter(tagRect);
+				cmOuter.InflateRect(2, 2);
+				CRect cmInner(tagRect);
+				cmInner.InflateRect(3, 3);
+				dc->Draw3dRect(cmOuter, cmColour, cmColour);
+				dc->Draw3dRect(cmInner, cmColour, cmColour);
+			}
+		}
+
 		/// Tag line
-		CSize txtExtent = dc->GetTextExtent(acFP.GetCallsign()); // Get callsign length
+		CSize txtExtent = dc->GetTextExtent(csTagText.c_str()); // Get callsign length
 
 		// Pen
 		CPen pen(PS_SOLID, 1, textColour);
@@ -677,7 +623,8 @@ POINT CAcTargets::RenderTag(Graphics* g, CDC* dc, CRadarScreen* screen, CRadarTa
 		screen->AddScreenObject(SCREEN_TAG, acFP.GetCallsign(), tagRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
 
 		// Now create screen object for callsign
-		CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(acFP.GetCallsign()).cx, tagRect.top + dc->GetTextExtent(acFP.GetCallsign()).cy);
+		CRect callsignRect(tagRect.left, tagRect.top, tagRect.left + dc->GetTextExtent(csTagText.c_str()).cx, tagRect.top + dc->GetTextExtent(csTagText.c_str()).cy);
+		CallsignPoints[string(acFP.GetCallsign())] = { POINT{ callsignRect.CenterPoint().x, callsignRect.CenterPoint().y }, clock() };
 		screen->AddScreenObject(SCREEN_TAG_CS, acFP.GetCallsign(), callsignRect, true, (string(acFP.GetPilotName()) + " - " + string(acFP.GetFlightPlanData().GetRoute())).c_str());
 
 		// Restore context

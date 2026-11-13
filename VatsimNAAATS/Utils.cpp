@@ -4,6 +4,12 @@
 #include "Utils.h"
 #include "Constants.h"
 #include "RadarDisplay.h"
+#include "Logger.h"
+#include <chrono>
+#include <map>
+#include <mutex>
+#include <fstream>
+#include <cctype>
 
 // Default values
 int CUtils::InboundX = 1400;
@@ -22,11 +28,48 @@ bool CUtils::GridEnabled = false;
 bool CUtils::TagsEnabled = true;
 bool CUtils::QckLookEnabled = false;
 bool CUtils::OverlayEnabled = false;
-int CUtils::AreaSelection = 802;
+int CUtils::AreaSelection = 800; // OCA (whole oceanic area), locked
 int CUtils::SelectedOverlay = 800;
-int CUtils::PosType = 802;
+int CUtils::PosType = 801; // Multi-role, locked
 char CUtils::DllPathFile[_MAX_PATH];
 string CUtils::DllPath;
+
+string CUtils::TelephonyFor(const string& callsign) {
+	static std::map<string, string> table;
+	static bool loaded = false;
+	static std::mutex m;
+	std::lock_guard<std::mutex> lock(m);
+	if (!loaded) {
+		loaded = true;
+		std::ifstream in(DllPath + "\\ICAO_Airlines.txt");
+		string line;
+		while (std::getline(in, line)) {
+			if (!line.empty() && line.back() == '\r') line.pop_back();
+			if (line.empty() || line[0] == ';') continue;
+			// ICAO <TAB> COMPANY <TAB> RADIO CALLSIGN <TAB> COUNTRY
+			size_t t1 = line.find('\t');
+			if (t1 != 3) continue;
+			size_t t2 = line.find('\t', t1 + 1);
+			if (t2 == string::npos) continue;
+			size_t t3 = line.find('\t', t2 + 1);
+			string tele = line.substr(t2 + 1, t3 == string::npos ? string::npos : t3 - t2 - 1);
+			if (tele.empty()) continue;
+			// Title case: SPEEDBIRD -> Speedbird
+			bool start = true;
+			for (auto& c : tele) {
+				c = start ? (char)toupper((unsigned char)c) : (char)tolower((unsigned char)c);
+				start = (c == ' ' || c == '-');
+			}
+			table[line.substr(0, 3)] = tele;
+		}
+		CLogger::Log(CLogType::NORM, "Loaded " + to_string(table.size()) + " radio callsigns from ICAO_Airlines.txt.", "CUtils::TelephonyFor");
+	}
+	// Airline callsigns are three letters followed by a digit (BAW227); anything else (G-ABCD, N123AB) has no telephony name.
+	if (callsign.size() < 4 || !isalpha((unsigned char)callsign[0]) || !isalpha((unsigned char)callsign[1]) ||
+		!isalpha((unsigned char)callsign[2]) || !isdigit((unsigned char)callsign[3])) return "";
+	auto it = table.find(callsign.substr(0, 3));
+	return it == table.end() ? "" : it->second;
+}
 
 // Save plugin data
 void CUtils::SavePluginData(CRadarScreen* screen) {
@@ -527,7 +570,7 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	// Area selection
 	stra = screen->GetDataFromAsr(SET_AREASEL.c_str());
 	if (stra != NULL) {
-		AreaSelection = stoi(stra);
+		AreaSelection = 800; // locked to OCA whatever an older .asr saved
 	}
 
 	// Overlay selection
@@ -539,14 +582,12 @@ void CUtils::LoadPluginData(CRadarScreen* screen) {
 	// Position type selection
 	stra = screen->GetDataFromAsr(SET_POSTYPESEL.c_str());
 	if (stra != NULL) {
-		PosType = stoi(stra);
+		PosType = 801; // locked to Multi-role whatever an older .asr saved
 	}
 
 	// Show a user message saying that the plugin was loaded successfully
 	screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("version " + PLUGIN_VERSION + " initialised.").c_str(), false, false, false, false, false);
 
-	if (IS_ALPHA)
-		screen->GetPlugIn()->DisplayUserMessage("Message", "vNAAATS Plugin", string("This is a BETA version. Please report any issues to a.ogden@vatcan.ca or submit them here: https://ganderoceanic.com/vnaaats-feedback.").c_str(), false, false, false, false, false);
 }
 
 // Returns the requested format, or returns the same string if the format was unchanged
@@ -663,7 +704,28 @@ bool CUtils::IsExitPoint(string pointName, bool side) {
 	}
 }
 
+// An aircraft that has left the relevant scope (handed off, through the exit point) stays relevant for this long.
+static const double RELEVANT_KEEP_SECONDS = 15.0 * 60.0;
+static std::mutex relevantLock;
+static std::map<std::string, std::chrono::steady_clock::time_point> lastRelevant;
+
 bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled) {
+	std::string cs = target->GetCallsign();
+	auto now = std::chrono::steady_clock::now();
+	if (IsAircraftRelevantNow(screen, target, filtersDisabled)) {
+		std::lock_guard<std::mutex> lk(relevantLock);
+		lastRelevant[cs] = now;
+		return true;
+	}
+	std::lock_guard<std::mutex> lk(relevantLock);
+	auto it = lastRelevant.find(cs);
+	if (it == lastRelevant.end()) return false;
+	if (std::chrono::duration<double>(now - it->second).count() < RELEVANT_KEEP_SECONDS) return true;
+	lastRelevant.erase(it);
+	return false;
+}
+
+bool CUtils::IsAircraftRelevantNow(CRadarScreen* screen, CRadarTarget* target, bool filtersDisabled) {
 	// Flag
 	bool valid = true;
 
@@ -763,6 +825,14 @@ bool CUtils::IsAircraftRelevant(CRadarScreen* screen, CRadarTarget* target, bool
 		}
 	}
 	
+	// Whole oceanic area (bandbox: area BDBX + Multi-role): show every aircraft that is actually in or near it, by position,
+	// whatever EuroScope's sector entry time says (it is -1 when the logged-in sector does not cover the aircraft's route).
+	if (areaSel == 800 && PosType == 801) {
+		double altFt = target->GetPosition().GetPressureAltitude();
+		if (altFt >= 25000 && pos.m_Latitude >= 43 && pos.m_Latitude <= 75 && pos.m_Longitude >= -60 && pos.m_Longitude <= -10)
+			valid = true;
+	}
+
 	string callsign = (string)screen->GetPlugIn()->ControllerMyself().GetCallsign();
 	if (!screen->GetPlugIn()->ControllerMyself().IsController() || callsign.find("SUP") != string::npos) {
 
@@ -800,7 +870,7 @@ bool CUtils::IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipC
 	// Extract B1 & B2 if they exist
 	if (pbnFound != string::npos) {
 		pbnFound += 4;
-		for (char c = rawRemarks[pbnFound]; c != ' '; c = rawRemarks[pbnFound]) {
+		for (char c = pbnFound < rawRemarks.size() ? rawRemarks[pbnFound] : ' '; c != ' '; c = pbnFound < rawRemarks.size() ? rawRemarks[pbnFound] : ' ') {
 			if (c == 'B' && (rawRemarks[pbnFound + 1] == '1' || rawRemarks[pbnFound + 1] == '2')) {
 				return true;
 			}
@@ -818,6 +888,7 @@ bool CUtils::IsAircraftEquipped(string rawRemarks, string rawAcInfo, char equipC
 			return true; // Aircraft is AGCS equipped
 		return false;
 	}
+	return false; // nothing to judge by: not shown as equipped
 }
 
 // Get radar target mode
@@ -1256,4 +1327,21 @@ string CUtils::GetLatLonString(CPosition* pos, bool space, int precision, bool s
 
 	// Return result
 	return res;
+}
+
+bool CUtils::AssignOceanicSquawk(CPlugIn* plugin, const string& callsign) {
+	try {
+		CFlightPlan fp = plugin->FlightPlanSelect(callsign.c_str());
+		if (!fp.IsValid()) return false;
+		// Already on 2000 (assigned or squawking)? Nothing to do.
+		if (string(fp.GetControllerAssignedData().GetSquawk()) == "2000") return true;
+		bool ok = fp.GetControllerAssignedData().SetSquawk("2000");
+		CLogger::Log(ok ? CLogType::NORM : CLogType::WARN,
+			string(ok ? "Assigned squawk 2000 to " : "Could not assign squawk 2000 to ") + callsign + ".", "CUtils::AssignOceanicSquawk");
+		return ok;
+	}
+	catch (exception & e) {
+		CLogger::Log(CLogType::EXC, "Squawk assignment failed for " + callsign + ": " + string(e.what()), "CUtils::AssignOceanicSquawk");
+		return false;
+	}
 }

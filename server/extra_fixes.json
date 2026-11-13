@@ -1,0 +1,3 @@
+{
+  "_comment": "Add fixes missing from fixes.json here: \"NAME\": [latitude, longitude] in decimal degrees, west is negative. Check /unresolved to see which are missing."
+}

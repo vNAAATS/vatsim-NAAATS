@@ -58,3 +58,11 @@ vNAAATS/vNAAATS/Debug/vc140.idb
 vNAAATS/Debug/vNAAATS.pdb
 vNAAATS/Debug/vNAAATS.ilk
 vNAAATS/Debug/vNAAATS.exp
+
+# Local settings (contains the API key)
+vnaaats.cfg
+
+# Python
+__pycache__/
+*.pyc
+launcher/target/

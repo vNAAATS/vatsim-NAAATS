@@ -5,6 +5,7 @@ vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on t
 
 ### Main Features
 - Custom drawn oceanic tags with detailed mode and status indicators
+- Custom made CPDLC Hoppies Network
 - Smart traffic filtering by area and altitude; oceanic controllers only see the aircraft relevant to them
 - NAT Track overlays and overview window
 - Smart route drawing function, interpolating NAT tracks as the aircraft's route if they are flying one
@@ -22,7 +23,6 @@ vNAAATS is a plugin designed to revolutionise day-to-day oceanic operations on t
 - Saving of data
 - ... and more!
 
-![Gander Logo](https://cdn.ganderoceanic.ca/resources/media/img/brand/bnr/ZQO_BNRSMALL_BLUE.png)
-![vNAAATS Logo](https://cdn.ganderoceanic.ca/resources/media/img/vNAAATS-logo.png)
 
-Deleaker has helped me to make vNAAATS amazing by helping me expose the root causes of countless, irritating memory leaks. Without this outstanding piece of software, vNAAATS would be nowhere near as developed as it is right now. Go check out the VS extension here! http://deleaker.com/
+
+

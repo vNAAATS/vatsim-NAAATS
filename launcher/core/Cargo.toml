@@ -1,0 +1,11 @@
+[package]
+name = "vnaaats-core"
+version = "0.1.0"
+edition = "2021"
+description = "The file work of the vNAAATS app: find the plugin, read and edit vnaaats.cfg, replace the DLL."
+
+[dependencies]
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,55 @@
+name: Server package
+# Builds the server + flight data display into one tar.gz and publishes it as the "server-latest" pre-release,
+# so the server can be updated with a single curl command (no file copying). It holds no keys or passwords.
+on:
+  push:
+    branches: [server-and-squawk]
+    paths: ['server/**', 'web/**', '.github/workflows/server-package.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: server-package
+  cancel-in-progress: true
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the flight data display
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+      - name: Run the server tests
+        run: python3 -m unittest discover -s server/tests
+      - name: Assemble the package
+        run: |
+          mkdir vnaaats-server
+          cp -r server/*.py server/*.json server/README.md server/deploy server/tests server/topsky_cpdlc.txt vnaaats-server/
+          cp web/CHANGELOG.md vnaaats-server/CHANGELOG-display.md
+          cp -r web/build vnaaats-server/web
+          find vnaaats-server -name __pycache__ -prune -exec rm -rf {} +
+          tar -czf vnaaats-server.tar.gz vnaaats-server
+      - name: Publish as the server-latest pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete server-latest --yes --cleanup-tag || true
+          gh release create server-latest vnaaats-server.tar.gz --prerelease \
+            --title "Server package (latest)" \
+            --notes "Latest server and built flight data display. Install on the server with one command (see the project chat). Contains no keys or passwords." \
+            --target "${{ github.sha }}"
+      - name: Attach to the version release (full versions only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(tr -d '[:space:]' < pluginversion.txt)
+          case "$ver" in [0-9]*.[0-9]*.[0-9]*) ;; *) echo "Version $ver is a test build - no version release."; exit 0;; esac
+          for i in $(seq 1 40); do gh release view "v$ver" >/dev/null 2>&1 && break; sleep 20; done
+          gh release upload "v$ver" vnaaats-server.tar.gz --clobber

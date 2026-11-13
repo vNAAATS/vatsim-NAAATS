@@ -567,8 +567,8 @@ void CConflictDetection::CheckSTCA(CRadarScreen* screen, CRadarTarget* target, m
 		}
 	}
 	catch (exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Target: " + string(target->GetCallsign()) + "\nVerbose details: " + *ex.what(), "CConflictDetection::CheckSTCA");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Target: " + string(target->GetCallsign()) + string("\nVerbose details: ") + ex.what(), "CConflictDetection::CheckSTCA");
 	}
 }
 
@@ -809,8 +809,8 @@ CSepStatus CConflictDetection::DetectStatus(CRadarScreen* screen, CAircraftStatu
 
 	}
 	catch (exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Acft A: " + aircraftA->Callsign + ". Acft B: " + aircraftB->Callsign + "\nVerbose details: " + *ex.what(), "CConflictDetection::DetectStatus");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Acft A: " + aircraftA->Callsign + ". Acft B: " + aircraftB->Callsign + string("\nVerbose details: ") + ex.what(), "CConflictDetection::DetectStatus");
 	}
 
 	// Return the status
@@ -883,8 +883,8 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoute(CRadarScreen* 
 		}
 	}
 	catch (exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CConflictDetection::GetStatusesAlongRoute");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + string("\nVerbose details: ") + ex.what(), "CConflictDetection::GetStatusesAlongRoute");
 	}
 
 	// Return
@@ -948,8 +948,8 @@ vector<CAircraftStatus> CConflictDetection::GetStatusesAlongRoutePoints(CRadarSc
 	}
 	}
 	catch (exception & ex) {
-		CLogger::DebugLog(screen, "An exception occurred. " + *ex.what());
-		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + "\nVerbose details: " + *ex.what(), "CConflictDetection::GetStatusesAlongRoutePoints");
+		CLogger::DebugLog(screen, string("An exception occurred. ") + ex.what());
+		CLogger::Log(CLogType::ERR, "An error occurred. Callsign: " + callsign + string("\nVerbose details: ") + ex.what(), "CConflictDetection::GetStatusesAlongRoutePoints");
 	}
 
 	// Return

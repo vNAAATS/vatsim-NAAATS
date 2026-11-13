@@ -1,0 +1,29 @@
+name: Build flight data display
+on:
+  push:
+    paths: ['web/**']
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fdd-web
+          path: web/build
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s server/tests

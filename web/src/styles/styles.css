@@ -1,0 +1,123 @@
+/* Custom styles needed outside of tailwind */
+
+/* Scroll bar customisation */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track:vertical {
+  background-color: #142942;
+  border-top: 2px solid rgba(12, 24, 39, 1);
+  border-left: 2px solid rgba(12, 24, 39, 1);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  background-color: #142942;
+  border-top: 2px solid rgba(12, 24, 39, 1);
+  border-left: 2px solid rgba(12, 24, 39, 1);
+}
+
+::-webkit-scrollbar-thumb {
+  width: 10px;
+  background-clip: content-box;
+  background-color: #1d395d;
+  border-top: 2px solid rgba(66, 125, 197, 1);
+  border-left: 2px solid rgba(66, 125, 197, 1);
+  border-right: 2px solid rgba(12, 24, 39, 1);
+  border-bottom: 2px solid rgba(12, 24, 39, 1);
+}
+
+::-webkit-scrollbar-button {
+  background-color: #1d395d;
+  border-style: solid;
+  height: 16px;
+  width: 16px;
+}
+
+/* Disable double button */
+::-webkit-scrollbar-button:vertical:start:increment,
+::-webkit-scrollbar-button:vertical:end:decrement,
+::-webkit-scrollbar-button:horizontal:start:increment,
+::-webkit-scrollbar-button:horizontal:end:decrement {
+  display: none;
+}
+
+@keyframes fadein {
+  0% {
+      opacity: 0%;
+      filter: brightness(1)
+  }
+  100% {
+      opacity: 100%;
+      filter: brightness(1)
+  }
+}
+
+@keyframes translateFromLeft {
+    from {
+        transform: translateX(-200%);
+        opacity: 100;
+        will-change: transform;
+    }
+    to {
+        left: 50%;
+        opacity:100;
+    }
+}
+
+@keyframes translateFromRight {
+  from {
+      transform: translateX(200%);
+      opacity: 100;
+      will-change: transform;
+  }
+  to {
+      left: 50%;
+      opacity:100;
+  }
+}
+
+/* Up */
+::-webkit-scrollbar-button:vertical:decrement {
+  border-width: 0 7px 14px 7px;
+  border-color: rgba(12, 24, 39, 1) rgba(12, 24, 39, 1) #1d395d
+    rgba(12, 24, 39, 1);
+}
+::-webkit-scrollbar-button:vertical:decrement:active {
+  border-color: rgba(12, 24, 39, 1) rgba(12, 24, 39, 1) #142942
+    rgba(12, 24, 39, 1);
+}
+
+/* Down */
+::-webkit-scrollbar-button:vertical:increment {
+  border-width: 14px 7px 0 7px;
+  border-color: #1d395d rgba(12, 24, 39, 1) rgba(12, 24, 39, 1)
+    rgba(12, 24, 39, 1);
+}
+::-webkit-scrollbar-button:vertical:increment:active {
+  border-color: #142942 rgba(12, 24, 39, 1) rgba(12, 24, 39, 1)
+    rgba(12, 24, 39, 1);
+}
+
+/* Left */
+::-webkit-scrollbar-button:horizontal:decrement {
+  border-width: 7px 14px 7px 0;
+  border-color: rgba(12, 24, 39, 1) #1d395d rgba(12, 24, 39, 1)
+    rgba(12, 24, 39, 1);
+}
+::-webkit-scrollbar-button:horizontal:decrement:active {
+  border-color: rgba(12, 24, 39, 1) #142942 rgba(12, 24, 39, 1)
+    rgba(12, 24, 39, 1);
+}
+
+/* Right */
+::-webkit-scrollbar-button:horizontal:increment {
+  border-width: 7px 0 7px 14px;
+  border-color: rgba(12, 24, 39, 1) rgba(12, 24, 39, 1) rgba(12, 24, 39, 1)
+    #1d395d;
+}
+::-webkit-scrollbar-button:horizontal:increment:active {
+  border-color: rgba(12, 24, 39, 1) rgba(12, 24, 39, 1) rgba(12, 24, 39, 1)
+    #142942;
+}
