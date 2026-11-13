@@ -53,7 +53,22 @@ const autoMem = new Set<string>();
 const autoFailed = new Map<string, string>();     // callsign -> why the automatic action failed (its card then shows)
 export const autoLog = writable<string>("");      // last automatic action, shown beside the switch
 
-async function autoTransfer(cs: string, to: { callsign: string; frequency: string }): Promise<void> {
+// Aircraft you tracked that the controller has since released or transferred by hand: auto handoff leaves them alone from then on.
+const handledByHand = new Set<string>();
+const wasMine = new Set<string>();
+function findAc(cs: string): any {
+  let found: any = null;
+  dataHandler.networkAircraft.forEach((group) => group.forEach((ac: any) => { if (ac.Callsign === cs) found = ac; }));
+  return found;
+}
+/** True while the tag is still yours: checked again just before an automatic action, in case you released or transferred it a moment ago. */
+function stillMine(cs: string, me: string): boolean {
+  const ac = findAc(cs);
+  return !handledByHand.has(cs) && !!ac && String(ac.TrackedBy ?? "").toUpperCase() === me;
+}
+
+async function autoTransfer(cs: string, to: { callsign: string; frequency: string }, me: string): Promise<void> {
+  if (!stillMine(cs, me)) return;
   const id = await acmenu.queueCommand({ type: "transfer", callsign: cs, target: to.callsign, freq: to.frequency });
   if (typeof id === "string") { autoFailed.set(cs, id); autoLog.set("Auto handoff of " + cs + " failed: " + id); return; }
   for (let i = 0; i < 10; i++) {
@@ -65,7 +80,8 @@ async function autoTransfer(cs: string, to: { callsign: string; frequency: strin
   autoFailed.set(cs, "EuroScope did not answer. Hand off in EuroScope instead.");
   autoLog.set("Auto handoff of " + cs + ": EuroScope did not answer");
 }
-async function autoUnicom(cs: string): Promise<void> {
+async function autoUnicom(cs: string, me: string): Promise<void> {
+  if (!stillMine(cs, me)) return;
   const e = await cp.sendUnicom(cs);
   if (e) { autoFailed.set(cs, e); autoLog.set("Auto UNICOM for " + cs + " failed: " + e); } else autoLog.set("Auto handoff: " + cs + " sent to UNICOM (tag is released when the pilot answers)");
 }
@@ -103,7 +119,10 @@ export function update(position: string): void {
   if (me && me !== "OBSERVER") {
     dataHandler.networkAircraft.forEach((group) => group.forEach((ac: any) => {
       const h = ac.Handoff;
-      if (!h || String(ac.TrackedBy ?? "").toUpperCase() !== me) return;
+      const mine = String(ac.TrackedBy ?? "").toUpperCase() === me;
+      if (mine) { if (!handledByHand.has(ac.Callsign)) wasMine.add(ac.Callsign); }
+      else if (wasMine.has(ac.Callsign)) { handledByHand.add(ac.Callsign); }   // it was yours and now is not: you released or transferred it
+      if (!h || !mine || handledByHand.has(ac.Callsign)) return;
       seen.add(ac.Callsign);
       if (h.nm > CLEAR_NM) { done.delete(ac.Callsign + "|near"); done.delete(ac.Callsign + "|leaving"); return; }
       const auto = get(handoffAuto);
@@ -112,8 +131,8 @@ export function update(position: string): void {
       if (!kind) return;
       const key = ac.Callsign + "|" + kind;
       if (auto.on && ac.Cpdlc && !autoFailed.has(ac.Callsign)) {
-        if (kind === "near" && h.nm <= auto.nm && h.online?.length) { if (!triedBefore("T|" + ac.Callsign)) void autoTransfer(ac.Callsign, h.online[0]); return; }
-        if (kind === "leaving") { if (!triedBefore("U|" + ac.Callsign)) void autoUnicom(ac.Callsign); return; }
+        if (kind === "near" && h.nm <= auto.nm && h.online?.length) { if (!triedBefore("T|" + ac.Callsign)) void autoTransfer(ac.Callsign, h.online[0], me); return; }
+        if (kind === "leaving") { if (!triedBefore("U|" + ac.Callsign)) void autoUnicom(ac.Callsign, me); return; }
         if (kind === "near") return;                                       // waiting for the chosen distance: no card yet
       }
       cards.push({ callsign: ac.Callsign, kind, nm: h.nm, fix: h.fix, name: h.name, cpdlc: !!ac.Cpdlc, online: h.online ?? [], error: autoFailed.get(ac.Callsign) });
