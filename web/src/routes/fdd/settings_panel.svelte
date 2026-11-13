@@ -29,7 +29,7 @@
     error = ""; saved = false; loaded = false;
     const r = await st.loadSettings();
     if (typeof r === "string") { error = r; return; }
-    values = { autotype: "1", autoclick: "1", highlight: "1", retrack: "1", squawk: "1", remotelog: "1", ...(r.defaults ?? {}), ...r.settings };
+    values = { autotype: "1", autoclick: "1", highlight: "1", retrack: "1", remotelog: "1", ...(r.defaults ?? {}), ...r.settings };
     loaded = true;
   }
   $: if ($settingsOpen) load();

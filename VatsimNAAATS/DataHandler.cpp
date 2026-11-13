@@ -70,7 +70,7 @@ string CDataHandler::UrlEncode(const string& value) {
 	return out;
 }
 
-// vnaaats.cfg lines:  server=http://host   key=SECRET   squawk=1
+// vnaaats.cfg lines:  server=http://host   key=SECRET
 void CDataHandler::LoadSettings() {
 	string server = DEFAULT_SERVER, key;
 	ifstream in(CUtils::DllPath + "\\vnaaats.cfg");
