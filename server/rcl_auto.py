@@ -374,7 +374,7 @@ class RclAuto:
                 cs = item[0]
                 if cs in online and sent_now < TELEX_PER_TICK:
                     try:
-                        st.send_telex(cs, commands_mod.NATMSG, by=BY)
+                        st.send_telex(cs, commands_mod.NATMSG_AUTO, by=BY)
                     except Exception as e:
                         log.warning("Auto RCL telex to %s failed: %s", cs, e)
                         self.hist(cs, "telex-failed", e)
@@ -485,7 +485,7 @@ class RclAuto:
                 self.pending, self.approved = {}, set()
             to_send = due_list
         for cs, rec, tr in to_send:
-            typ, _, args, err = commands_mod.clean_command({"type": "natmsg", "callsign": cs})
+            typ, _, args, err = commands_mod.clean_command({"type": "natmsg", "callsign": cs, "auto": True})
             if err:
                 continue
             cid = self.queue.add(sender, typ, cs, args, by=BY)

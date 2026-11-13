@@ -103,7 +103,7 @@ class RclTests(Base):
         cmds = self.q.pending_for("CZQO_CTR")
         self.assertEqual(cmds[0]["type"], "natmsg")
         self.assertEqual(cmds[0]["by"], "AUTO")
-        self.assertTrue(cmds[0]["args"]["text"].startswith(".msg BAW1 Hello"))
+        self.assertTrue(cmds[0]["args"]["text"].startswith(".msg BAW1 *THIS IS AN AUTOMATED MESSAGE*"))
 
     def test_sent_once_and_marked(self):
         self.poll()
@@ -373,7 +373,8 @@ class TelexTests(Base):
         self.poll()
         self.assertIsNone(self.rcl.tick())
         self.assertEqual([x[0] for x in self.st.sent], ["BAW1"])
-        self.assertTrue(self.st.sent[0][1].startswith("Hello, you will soon be entering oceanic"))
+        self.assertTrue(self.st.sent[0][1].startswith("*THIS IS AN AUTOMATED MESSAGE* - Your flight plan has you entering the NAT Oceanic"))
+        self.assertTrue(self.st.sent[0][1].endswith("https://ganderoceanic.ca/"))
         self.assertEqual(self.q.pending_for("CZQO_CTR"), [])
         self.assertTrue(self.store.get("BAW1")["ntSent"])                    # the red star shows for a telex too
         self.t[0] += 30

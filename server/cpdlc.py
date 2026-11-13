@@ -35,6 +35,24 @@ PING_SECONDS = 300
 PING_MISSES_TO_DROP = 2
 FAST_POLL_SECONDS = 120          # keep polling every ~20 s for this long after traffic
 MAX_TEXT = 240
+TELEX_PART = 220          # longest single telex sent; longer messages are split
+TELEX_MAX_TOTAL = 800     # longest whole message send_telex accepts
+
+
+def split_telex(text, size=TELEX_PART):
+    """Cut a message into parts of at most `size` characters, at spaces."""
+    parts, cur = [], ""
+    for word in text.split(" "):
+        if cur and len(cur) + 1 + len(word) > size:
+            parts.append(cur)
+            cur = word
+        else:
+            cur = (cur + " " + word) if cur else word
+    if cur:
+        parts.append(cur)
+    return parts
+
+
 REPLY_STATES = (("WILCO", "WILCO"), ("UNABLE", "UNABLE"), ("ROGER", "ROGER"), ("AFFIRM", "AFFIRM"),
                 ("NEGATIVE", "NEGATIVE"), ("STANDBY", "STANDBY"))
 
@@ -460,12 +478,14 @@ class CpdlcStation:
         text = re.sub(r"[^A-Z0-9 @./,:+\-]", "", (text or "").upper()).strip()
         if not re.fullmatch(r"[A-Z0-9]{2,8}", cs):
             raise ValueError("bad callsign")
-        if not text or len(text) > MAX_TEXT * 2:
-            raise ValueError("message must be 1-%d characters" % (MAX_TEXT * 2))
-        answer = self.client.request(cs, "telex", text)
-        if parse_blocks(answer)[0] != "ok":
-            raise RuntimeError("Hoppie refused the telex: " + (answer or "").strip()[:120])
-        self._store("UP", cs, None, None, "", "TELEX: " + text, state="", by=by)
+        if not text or len(text) > TELEX_MAX_TOTAL:
+            raise ValueError("message must be 1-%d characters" % TELEX_MAX_TOTAL)
+        # a long message goes as several telexes, each cut at a sentence or word boundary, in order
+        for part in split_telex(text):
+            answer = self.client.request(cs, "telex", part)
+            if parse_blocks(answer)[0] != "ok":
+                raise RuntimeError("Hoppie refused the telex: " + (answer or "").strip()[:120])
+            self._store("UP", cs, None, None, "", "TELEX: " + part, state="", by=by)
 
     # --- receiving
     def handle_cpdlc(self, sender, packet):

@@ -358,6 +358,9 @@ class TypedCommandTests(unittest.TestCase):
         self.assertIsNotNone(c.clean_command({"type": "selcal", "callsign": "BAW1", "selcal": "AB1"})[3])
         t = c.clean_command({"type": "natmsg", "callsign": "BAW1"})[2]["text"]
         self.assertTrue(t.startswith(".msg BAW1 Hello, you will soon be entering oceanic airspace."))
+        ta = c.clean_command({"type": "natmsg", "callsign": "BAW1", "auto": True})[2]["text"]
+        self.assertTrue(ta.startswith(".msg BAW1 *THIS IS AN AUTOMATED MESSAGE* - Your flight plan"))
+        self.assertTrue(ta.endswith("Further details and assistance can be found at https://ganderoceanic.ca/"))
 
 
 class ScratchTests(unittest.TestCase):

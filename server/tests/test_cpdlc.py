@@ -70,6 +70,18 @@ class StationTests(unittest.TestCase):
         t = [x for x in hop.sent if x["type"] == "telex"][0]
         self.assertEqual((t["to"], t["packet"]), ("BAW2606", "CLX 1103 CLRD TO KMIA"))
 
+    def test_long_telex_is_split_in_order(self):
+        import cpdlc
+        import commands
+        hop, st = make()
+        st.send_telex("BAW2606", commands.NATMSG_AUTO, by="AUTO")
+        parts = [x["packet"] for x in hop.sent if x["type"] == "telex"]
+        self.assertGreater(len(parts), 1)
+        self.assertTrue(all(len(p) <= cpdlc.TELEX_PART for p in parts))
+        joined = " ".join(parts)
+        self.assertTrue(joined.startswith("THIS IS AN AUTOMATED MESSAGE - YOUR FLIGHT PLAN"))
+        self.assertTrue(joined.endswith("HTTPS://GANDEROCEANIC.CA/"))
+
     def test_other_telex_is_logged_and_unseen(self):
         hop, st = make()
         hop.queue = [("BAW2606", "HELLO CAN YOU HELP", "telex")]
