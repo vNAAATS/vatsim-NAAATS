@@ -1,6 +1,7 @@
 //! The file work of the vNAAATS app. Kept apart from the window code so it can be tested on any computer.
 use sha2::{Digest, Sha256};
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 pub const DLL_NAME: &str = "VatsimNAAATS.dll";
@@ -45,6 +46,24 @@ pub struct CfgInfo {
     pub exists: bool,
     pub has_key: bool,
     pub server: String,
+}
+
+/// The key saved in vnaaats.cfg (None when there is no file, no key line, or it still holds the placeholder).
+pub fn read_key(dir: &Path) -> Option<String> {
+    let text = fs::read_to_string(dir.join(CFG_NAME)).ok()?;
+    for line in text.lines() {
+        let line = line.trim();
+        if line.starts_with('#') {
+            continue;
+        }
+        if let Some((k, v)) = line.split_once('=') {
+            if k.trim() == "key" {
+                let v = clean_key(v);
+                return if v.is_empty() || v == PLACEHOLDER { None } else { Some(v) };
+            }
+        }
+    }
+    None
 }
 
 pub fn read_cfg(dir: &Path) -> CfgInfo {
@@ -150,6 +169,135 @@ pub fn replace_file(dest: &Path, bytes: &[u8], expected_sha: &str) -> Result<(),
         return Err(format!("could not replace {}: {}", dest.display(), e));
     }
     Ok(())
+}
+
+/// Files that hold a controller's own choices (EuroScope profile with login details, screen layout, voice setup).
+/// A sector pack installs them only when the controller does not have them yet; they are never overwritten.
+fn is_personal(rel: &Path) -> bool {
+    let name = rel.file_name().map(|n| n.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+    name.ends_with(".prf") || ["screen layout.txt", "vccs.txt", "voicechannels.txt"].contains(&name.as_str())
+}
+
+/// Point an existing EuroScope profile at the sector file named in the pack's own profile, leaving every other line as it was.
+fn patch_prf_sector(existing: &Path, pack_prf: &str) -> Result<(), String> {
+    let want = pack_prf.lines().find(|l| l.starts_with("Settings\tsector\t")).map(|l| l.trim_end().to_string());
+    let Some(want) = want else { return Ok(()) };
+    let old = fs::read(existing).map_err(|e| e.to_string())?;
+    let text = String::from_utf8_lossy(&old).into_owned();
+    let eol = if text.contains("\r\n") { "\r\n" } else { "\n" };
+    let mut found = false;
+    let lines: Vec<String> = text.lines().map(|l| if l.starts_with("Settings\tsector\t") { found = true; want.clone() } else { l.to_string() }).collect();
+    if !found {
+        return Ok(());
+    }
+    if lines.join(eol) + eol == text {
+        return Ok(());
+    }
+    fs::write(existing, lines.join(eol) + eol).map_err(|e| format!("could not update your EuroScope profile: {}", e))
+}
+
+/// Where a pack should be unpacked. The zip holds a top-level folder (such as EXCXO) next to its .sct, .ese and .prf files.
+/// If the folder the controller chose IS that folder, the pack goes in its parent, so it does not end up as EXCXO/EXCXO.
+pub fn pack_dest(zip_path: &Path, root: &Path) -> Result<PathBuf, String> {
+    let file = fs::File::open(zip_path).map_err(|e| e.to_string())?;
+    let mut zip = zip::ZipArchive::new(file).map_err(|_| "the download is not a valid zip file".to_string())?;
+    let me = root.file_name().map(|n| n.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+    for i in 0..zip.len() {
+        let f = zip.by_index(i).map_err(|e| e.to_string())?;
+        if let Some(rel) = f.enclosed_name() {
+            let mut parts = rel.components();
+            if let (Some(first), Some(_)) = (parts.next(), parts.next()) {
+                if first.as_os_str().to_string_lossy().to_ascii_lowercase() == me {
+                    return root.parent().map(|p| p.to_path_buf()).ok_or_else(|| "that folder has no parent folder".to_string());
+                }
+            }
+        }
+    }
+    Ok(root.to_path_buf())
+}
+
+/// After a pack is in, remove the earlier builds of its sector and extension files (same name up to the first "_", older stamp).
+fn remove_old_sector_files(zip_path: &Path, dest: &Path) {
+    let Ok(file) = fs::File::open(zip_path) else { return };
+    let Ok(mut zip) = zip::ZipArchive::new(file) else { return };
+    let mut keep: Vec<String> = Vec::new();
+    for i in 0..zip.len() {
+        if let Ok(f) = zip.by_index(i) {
+            if let Some(rel) = f.enclosed_name() {
+                if rel.components().count() == 1 {
+                    let n = rel.to_string_lossy().to_ascii_lowercase();
+                    if n.ends_with(".sct") || n.ends_with(".ese") {
+                        keep.push(n);
+                    }
+                }
+            }
+        }
+    }
+    let prefixes: Vec<String> = keep.iter().filter_map(|n| n.split_once('_').map(|(a, _)| format!("{}_", a))).collect();
+    let Ok(rd) = fs::read_dir(dest) else { return };
+    for e in rd.flatten() {
+        let name = e.file_name().to_string_lossy().to_ascii_lowercase();
+        if (name.ends_with(".sct") || name.ends_with(".ese")) && !keep.contains(&name) && prefixes.iter().any(|p| name.starts_with(p)) {
+            let _ = fs::remove_file(e.path());
+        }
+    }
+}
+
+/// Unpack a sector pack zip into `dest`, replacing files of the same name. Returns how many files were written.
+/// Paths that try to leave `dest` ("../x", absolute paths) are refused, and `vnaaats.cfg` (the controller's own key and settings) is never touched. Personal files (see `is_personal`) are not overwritten (an existing .prf is only pointed at the new sector file), and the plugin DLL is left to the plugin updater.
+/// Each file is written beside its target and renamed into place, so a locked file stops the update with a plain message instead of leaving half a file.
+pub fn extract_pack(zip_path: &Path, dest: &Path) -> Result<usize, String> {
+    let file = fs::File::open(zip_path).map_err(|e| format!("could not open the download: {}", e))?;
+    let mut zip = zip::ZipArchive::new(file).map_err(|_| "the download is not a valid zip file".to_string())?;
+    // check every name first so a bad zip changes nothing
+    for i in 0..zip.len() {
+        let f = zip.by_index(i).map_err(|e| e.to_string())?;
+        if f.enclosed_name().is_none() {
+            return Err("the zip contains an unsafe file path, so it was not installed".into());
+        }
+    }
+    let mut written = 0;
+    for i in 0..zip.len() {
+        let mut f = zip.by_index(i).map_err(|e| e.to_string())?;
+        let rel = f.enclosed_name().ok_or("unsafe path")?;
+        let target = dest.join(&rel);
+        if f.is_dir() {
+            fs::create_dir_all(&target).map_err(|e| e.to_string())?;
+            continue;
+        }
+        if rel.file_name().map(|n| n.to_string_lossy().eq_ignore_ascii_case(CFG_NAME)).unwrap_or(false) {
+            continue;
+        }
+        if rel.file_name().map(|n| n.to_string_lossy().eq_ignore_ascii_case(DLL_NAME)).unwrap_or(false) {
+            continue;                           // the plugin is updated by its own check (the pack's copy may be older than the latest release)
+        }
+        if target.exists() && is_personal(&rel) {
+            // an existing profile keeps the controller's own details, but must point at the new sector file
+            if rel.extension().map(|e| e.to_string_lossy().eq_ignore_ascii_case("prf")).unwrap_or(false) {
+                let mut pack_text = String::new();
+                f.read_to_string(&mut pack_text).ok();
+                patch_prf_sector(&target, &pack_text)?;
+            }
+            continue;                           // the controller's own settings are only installed when they have none
+        }
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        let mut tmp_name = target.file_name().map(|n| n.to_os_string()).unwrap_or_default();
+        tmp_name.push(".new");
+        let tmp = target.with_file_name(tmp_name);
+        {
+            let mut out = fs::File::create(&tmp).map_err(|e| format!("could not write {}: {}", rel.display(), e))?;
+            std::io::copy(&mut f, &mut out).map_err(|e| format!("could not write {}: {}", rel.display(), e))?;
+        }
+        if let Err(e) = fs::rename(&tmp, &target) {
+            let _ = fs::remove_file(&tmp);
+            return Err(format!("could not replace {} - close EuroScope and try again ({})", rel.display(), e));
+        }
+        written += 1;
+    }
+    remove_old_sector_files(zip_path, dest);
+    Ok(written)
 }
 
 pub fn is_exe(path: &Path) -> bool {
@@ -329,5 +477,106 @@ mod tests {
         replace_dll(&dll, &new, &sha256_hex(&new).to_uppercase()).unwrap();
         assert_eq!(fs::read(&dll).unwrap(), new);
         assert!(!d.path().join("VatsimNAAATS.dll.new").exists());
+    }
+
+    fn make_zip(dir: &Path, entries: &[(&str, &str)]) -> PathBuf {
+        use std::io::Write;
+        let p = dir.join("pack.zip");
+        let mut w = zip::ZipWriter::new(fs::File::create(&p).unwrap());
+        let opt = zip::write::SimpleFileOptions::default();
+        for (n, c) in entries {
+            w.start_file(*n, opt).unwrap();
+            w.write_all(c.as_bytes()).unwrap();
+        }
+        w.finish().unwrap();
+        p
+    }
+
+    #[test]
+    fn extract_pack_replaces_files_and_keeps_cfg() {
+        let t = tempfile::tempdir().unwrap();
+        let dest = t.path().join("sector");
+        fs::create_dir_all(dest.join("Plugins")).unwrap();
+        fs::write(dest.join("Plugins").join(CFG_NAME), "key=mine").unwrap();
+        fs::write(dest.join("EXCXO.sct"), "old").unwrap();
+        let z = make_zip(t.path(), &[("EXCXO.sct", "new"), ("Plugins/vnaaats.cfg", "key=theirs"), ("Plugins/Sub/a.txt", "a")]);
+        assert_eq!(extract_pack(&z, &dest).unwrap(), 2);
+        assert_eq!(fs::read_to_string(dest.join("EXCXO.sct")).unwrap(), "new");
+        assert_eq!(fs::read_to_string(dest.join("Plugins").join(CFG_NAME)).unwrap(), "key=mine");
+        assert_eq!(fs::read_to_string(dest.join("Plugins/Sub/a.txt")).unwrap(), "a");
+        assert!(!dest.join("EXCXO.sct.new").exists());
+    }
+
+    #[test]
+    fn extract_pack_keeps_personal_settings_but_installs_them_when_missing() {
+        let t = tempfile::tempdir().unwrap();
+        let dest = t.path().join("sector");
+        fs::create_dir_all(dest.join("EXCXO/Settings")).unwrap();
+        fs::write(dest.join("EXCXO/Settings/Screen Layout.txt"), "mine").unwrap();
+        fs::write(dest.join("EXCXO.prf"), "my login").unwrap();
+        let z = make_zip(t.path(), &[("EXCXO/Settings/Screen Layout.txt", "pack"), ("EXCXO.prf", "pack"), ("EXCXO/Settings/General.txt", "pack"), ("EXCXO/Settings/VCCS.txt", "pack")]);
+        extract_pack(&z, &dest).unwrap();
+        assert_eq!(fs::read_to_string(dest.join("EXCXO/Settings/Screen Layout.txt")).unwrap(), "mine");
+        assert_eq!(fs::read_to_string(dest.join("EXCXO.prf")).unwrap(), "my login");
+        assert_eq!(fs::read_to_string(dest.join("EXCXO/Settings/General.txt")).unwrap(), "pack");
+        assert_eq!(fs::read_to_string(dest.join("EXCXO/Settings/VCCS.txt")).unwrap(), "pack");   // missing, so installed
+    }
+
+    #[test]
+    fn extract_pack_skips_the_dll_repoints_the_profile_and_removes_old_sector_files() {
+        let t = tempfile::tempdir().unwrap();
+        let dest = t.path().join("data");
+        fs::create_dir_all(dest.join("EXCXO/Plugins/vNAAATS V2")).unwrap();
+        fs::write(dest.join("EXCXO/Plugins/vNAAATS V2").join(DLL_NAME), "latest").unwrap();
+        fs::write(dest.join("P.prf"), "Settings\tname\tmine\r\nSettings\tsector\t\\old_1.sct\r\nSounds\tx\t1\r\n").unwrap();
+        fs::write(dest.join("pack_1.sct"), "a").unwrap();
+        fs::write(dest.join("pack_1.ese"), "a").unwrap();
+        fs::write(dest.join("mine.sct"), "keep").unwrap();
+        let z = make_zip(t.path(), &[("pack_2.sct", "b"), ("pack_2.ese", "b"), ("P.prf", "Settings\tsector\t\\pack_2.sct\r\nSettings\tname\tpack\r\n"), ("EXCXO/Plugins/vNAAATS V2/VatsimNAAATS.dll", "older")]);
+        extract_pack(&z, &dest).unwrap();
+        assert_eq!(fs::read_to_string(dest.join("EXCXO/Plugins/vNAAATS V2").join(DLL_NAME)).unwrap(), "latest");
+        assert_eq!(fs::read_to_string(dest.join("P.prf")).unwrap(), "Settings\tname\tmine\r\nSettings\tsector\t\\pack_2.sct\r\nSounds\tx\t1\r\n");
+        assert!(dest.join("pack_2.sct").exists() && dest.join("pack_2.ese").exists());
+        assert!(!dest.join("pack_1.sct").exists() && !dest.join("pack_1.ese").exists());
+        assert!(dest.join("mine.sct").exists());
+    }
+
+    #[test]
+    fn pack_dest_steps_up_when_the_chosen_folder_is_the_packs_own_folder() {
+        let t = tempfile::tempdir().unwrap();
+        let z = make_zip(t.path(), &[("pack_1.sct", "a"), ("EXCXO/Settings/General.txt", "g")]);
+        let inside = t.path().join("data").join("EXCXO");
+        assert_eq!(pack_dest(&z, &inside).unwrap(), t.path().join("data"));
+        let parent = t.path().join("data");
+        assert_eq!(pack_dest(&z, &parent).unwrap(), parent);
+    }
+
+    #[test]
+    fn reads_the_saved_key() {
+        let d = tempfile::tempdir().unwrap();
+        assert_eq!(read_key(d.path()), None);
+        fs::write(d.path().join(CFG_NAME), "# key=ignored\r\nserver=x\r\nkey=PASTE_YOUR_API_KEY_HERE\r\n").unwrap();
+        assert_eq!(read_key(d.path()), None);
+        fs::write(d.path().join(CFG_NAME), "# key=ignored\r\nserver=x\r\nkey = 1234567.abc \r\n").unwrap();
+        assert_eq!(read_key(d.path()), Some("1234567.abc".to_string()));
+    }
+
+    #[test]
+    fn extract_pack_refuses_paths_outside_the_folder() {
+        let t = tempfile::tempdir().unwrap();
+        let dest = t.path().join("sector");
+        fs::create_dir_all(&dest).unwrap();
+        let z = make_zip(t.path(), &[("ok.txt", "x"), ("../evil.txt", "x")]);
+        assert!(extract_pack(&z, &dest).is_err());
+        assert!(!dest.join("ok.txt").exists());          // nothing was written
+        assert!(!t.path().join("evil.txt").exists());
+    }
+
+    #[test]
+    fn extract_pack_rejects_a_non_zip() {
+        let t = tempfile::tempdir().unwrap();
+        let p = t.path().join("x.zip");
+        fs::write(&p, "not a zip").unwrap();
+        assert!(extract_pack(&p, t.path()).is_err());
     }
 }

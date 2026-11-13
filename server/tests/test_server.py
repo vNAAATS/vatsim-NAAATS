@@ -501,6 +501,7 @@ class KeySignInTest(unittest.TestCase):
         cls.feed = {"pilots": [], "controllers": []}
         cls.net.refresh(fetch=lambda: cls.feed)
         auth = s.Auth({"VNAAATS_POSITIONS": "CZQO_CTR,EGGX_CTR,NAT_FSS"})
+        cls.auth = auth
         cls.srv = s.ThreadingHTTPServer(("127.0.0.1", 0), s.make_handler(cache, store, KEY, None, cls.net, None, auth, None, None, None, cls.members))
         threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
         cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
@@ -525,6 +526,19 @@ class KeySignInTest(unittest.TestCase):
         self.net.slurper_cache.clear()
         rows = self.net.live_positions("1700040", fetch=lambda c: "%s,EGGX_ATIS,atc,121.0,0,0,0,0,0,0,0,0,0,0,0,\n%s,BAW1,pilot,0,0,0,0,0,0,0,0,0,0,0,0,\n" % (c, c))
         self.assertEqual(rows, [])                                                               # ATIS (range 0) and pilot rows do not count
+
+    def test_key_check_for_the_app(self):
+        code, out = self.post("/auth/get-key", {"agree": True, "email": "kc@example.com", "cid": "1700077", "name": "KC"})
+        def ask(k):
+            try:
+                with urllib.request.urlopen(self.base + "/KeyCheck?code=" + k) as r:
+                    return r.status, json.loads(r.read().decode())
+            except urllib.error.HTTPError as e:
+                return e.code, json.loads(e.read().decode())
+        self.assertEqual(ask(out["key"]), (200, {"ok": True}))
+        self.assertEqual(ask("1700077.nope"), (401, {"ok": False, "reason": "unknown"}))
+        self.assertEqual(ask(""), (401, {"ok": False, "reason": "unknown"}))
+        self.auth.failures.clear()                                        # wrong tries count toward the shared lock-out; do not leak into other tests
 
     def test_key_session_closes_an_hour_after_leaving_vatsim(self):
         a = s.Auth({})

@@ -21,6 +21,8 @@ struct Saved {
     afv: Option<String>,
     #[serde(default)]
     trackaudio: Option<String>,
+    #[serde(default)]
+    sector_id: Option<String>,          // which sector pack release was last installed here
 }
 
 fn config_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -45,6 +47,39 @@ fn check_origin(w: &WebviewWindow) -> Result<(), String> {
     } else {
         Err("not allowed from this page".into())
     }
+}
+
+const SECTOR_RELEASE: &str = "https://api.github.com/repos/garythms/vatsim-NAAATS-v2/releases/tags/sector-pack";
+
+/// The sector pack release on GitHub: (zip download address, file name, a label that changes whenever the file is replaced).
+fn sector_latest() -> Result<(String, String, String), String> {
+    let resp = ureq::get(SECTOR_RELEASE).set("User-Agent", "vnaaats-app").timeout(std::time::Duration::from_secs(30)).call().map_err(|e| format!("could not check for a sector pack: {}", e))?;
+    let v: serde_json::Value = serde_json::from_reader(resp.into_reader()).map_err(|e| e.to_string())?;
+    let a = v["assets"].as_array().and_then(|l| l.iter().find(|a| a["name"].as_str().map(|n| n.to_ascii_lowercase().ends_with(".zip")).unwrap_or(false))).ok_or("the sector pack release has no zip file")?;
+    let url = a["browser_download_url"].as_str().ok_or("no download address")?.to_string();
+    if !url.starts_with("https://github.com/garythms/vatsim-NAAATS-v2/") {
+        return Err("unexpected sector pack address".into());
+    }
+    let id = format!("{}:{}", a["id"], a["updated_at"].as_str().unwrap_or(""));
+    Ok((url, a["name"].as_str().unwrap_or("sector pack").to_string(), id))
+}
+
+/// Ask the server whether this key is accepted. "ok", or why not ("unknown", "expired", "revoked").
+/// None when it cannot be told (offline, or an older server without the check): the app then does not warn.
+fn key_check(key: &str) -> Option<String> {
+    match ureq::get(&format!("{}/KeyCheck", SITE)).query("code", key).timeout(std::time::Duration::from_secs(15)).call() {
+        Ok(_) => Some("ok".to_string()),
+        Err(ureq::Error::Status(401, resp)) => {
+            let v: serde_json::Value = serde_json::from_reader(resp.into_reader()).ok()?;
+            v["reason"].as_str().map(String::from)
+        }
+        Err(_) => None,
+    }
+}
+
+fn euroscope_running(saved: &Saved) -> bool {
+    let name = saved.euroscope.as_deref().and_then(|p| Path::new(p).file_name().map(|n| n.to_string_lossy().to_string())).unwrap_or_else(|| "EuroScope.exe".to_string());
+    is_running(&name)
 }
 
 fn http_get(path: &str, max: u64) -> Result<Vec<u8>, String> {
@@ -74,6 +109,10 @@ struct Status {
     font_found: bool,
     cfg_exists: bool,
     cfg_has_key: bool,
+    euroscope_running: bool,
+    sector_name: Option<String>,
+    sector_up_to_date: Option<bool>,    // None when it cannot be checked
+    key_status: Option<String>,         // "ok", "unknown", "expired", "revoked"; None when there is no key or the server cannot say
     error: Option<String>,
 }
 
@@ -99,8 +138,18 @@ async fn status(window: WebviewWindow, app: tauri::AppHandle) -> Result<Status, 
         font_found: false,
         cfg_exists: false,
         cfg_has_key: false,
+        euroscope_running: euroscope_running(&saved),
+        sector_name: None,
+        sector_up_to_date: None,
+        key_status: None,
         error: None,
     };
+    if saved.root.is_some() {
+        if let Ok((_, name, id)) = sector_latest() {
+            st.sector_name = Some(name);
+            st.sector_up_to_date = Some(saved.sector_id.as_deref() == Some(id.as_str()));
+        }
+    }
     let Some(root) = saved.root else { return Ok(st) };
     let mut airlines_local: Option<String> = None;
     if let Some(dll) = vnaaats_core::find_plugin_dll(Path::new(&root), 6) {
@@ -116,6 +165,11 @@ async fn status(window: WebviewWindow, app: tauri::AppHandle) -> Result<Status, 
             let c = vnaaats_core::read_cfg(dir);
             st.cfg_exists = c.exists;
             st.cfg_has_key = c.has_key;
+            if c.has_key {
+                if let Some(k) = vnaaats_core::read_key(dir) {
+                    st.key_status = key_check(&k);
+                }
+            }
         }
     }
     match http_get("/plugin/latest.json", 4096).and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).map_err(|e| e.to_string())) {
@@ -175,11 +229,45 @@ async fn update_plugin(window: WebviewWindow, app: tauri::AppHandle) -> Result<S
     let sha = info["sha256"].as_str().ok_or("the server did not say which plugin is the latest")?.to_string();
     let current = std::fs::read(&dll).ok().map(|b| vnaaats_core::sha256_hex(&b));
     if current.as_deref().map(|h| !h.eq_ignore_ascii_case(&sha)).unwrap_or(true) {
+        if euroscope_running(&load(&app)) {
+            return Err("close EuroScope first - it has the plugin open - then update again".into());
+        }
         let bytes = http_get("/plugin/VatsimNAAATS.dll", 20 * 1024 * 1024)?;
         vnaaats_core::replace_dll(&dll, &bytes, &sha)?;
         done.push(format!("plugin {}", info["version"].as_str().unwrap_or("")));
     }
     Ok(if done.is_empty() { "already up to date".to_string() } else { done.join(" and ") })
+}
+
+/// Download the latest sector pack (a zip on the project's GitHub "sector-pack" release) and unpack it over the EXOCO folder.
+#[tauri::command]
+async fn update_sector(window: WebviewWindow, app: tauri::AppHandle) -> Result<String, String> {
+    check_origin(&window)?;
+    let mut saved = load(&app);
+    let root = saved.root.clone().ok_or("choose your EXOCO folder first")?;
+    if euroscope_running(&saved) {
+        return Err("close EuroScope first, then update the sector pack again".into());
+    }
+    let (url, name, id) = sector_latest()?;
+    if saved.sector_id.as_deref() == Some(id.as_str()) {
+        return Ok("sector pack already up to date".to_string());
+    }
+    let tmp = std::env::temp_dir().join("vnaaats-sector-pack.zip");
+    {
+        use std::io::Read;
+        let resp = ureq::get(&url).set("User-Agent", "vnaaats-app").timeout(std::time::Duration::from_secs(600)).call().map_err(|e| format!("could not download the sector pack: {}", e))?;
+        let mut out = std::fs::File::create(&tmp).map_err(|e| e.to_string())?;
+        let n = std::io::copy(&mut resp.into_reader().take(600 * 1024 * 1024), &mut out).map_err(|e| format!("the download stopped: {}", e))?;
+        if n == 0 {
+            return Err("the sector pack download was empty".into());
+        }
+    }
+    let result = vnaaats_core::pack_dest(&tmp, Path::new(&root)).and_then(|dest| vnaaats_core::extract_pack(&tmp, &dest));
+    let _ = std::fs::remove_file(&tmp);
+    let count = result?;
+    saved.sector_id = Some(id);
+    store(&app, &saved)?;
+    Ok(format!("sector pack {} ({} files)", name, count))
 }
 
 /// Rewrites vnaaats.cfg from the server's current template (comments and option list), keeping the controller's own values.
@@ -508,7 +596,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, refresh_cfg, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout, app_update_check, app_update_install])
+        .invoke_handler(tauri::generate_handler![status, pick_folder, update_plugin, update_sector, refresh_cfg, save_key, pick_exe, launch, open_url, cred_get, cred_save, cred_forget, open_nattrak, nattrak_open, nattrak_signed_in, open_popout, app_update_check, app_update_install])
         .run(tauri::generate_context!())
         .expect("the vNAAATS app could not start");
 }

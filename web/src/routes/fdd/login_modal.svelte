@@ -43,12 +43,10 @@
   let savedKeyText: string = sess.getKey();
   let waiting: boolean = false;
   let keyError: string = "";
-  let launched: boolean = false;
   let keyTimer: any = null;
   async function tryKey(): Promise<void> {
     if (!savedKeyText || $session.loggedIn) return;
     waiting = true;
-    if (!launched) { launched = true; void app.autoLaunch(); }       // start EuroScope, VACS and the audio client so you can connect
     const r = await sess.loginKey(savedKeyText);
     if (r.state === "in") { waiting = false; keyError = ""; return; }
     if (r.state === "error") { keyError = r.msg; if (/not valid|expired/.test(r.msg)) { waiting = false; stopKey(); } return; }
@@ -94,7 +92,6 @@
   // A position is chosen straight away. natTrak is signed in to later, from the natTrak box on the display, once the controller is online on VATSIM.
   async function pick(p: string): Promise<void> {
     error = await sess.choosePosition(p);
-    if (!error && p !== "") void app.autoLaunch();
   }
 </script>
 

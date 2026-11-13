@@ -2212,6 +2212,16 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                         return self._send(200, [])
                     with network.lock:
                         return self._send(200, [c for c in network.controllers if cpdlc_mod.station_listed(c["callsign"])])
+                if p == "/KeyCheck":                          # the vNAAATS app asks whether the key in vnaaats.cfg is accepted, before it starts EuroScope
+                    ip = self._client_ip()
+                    if auth and auth.throttled(ip):
+                        return self._send(429, {"ok": False, "reason": "throttled"})
+                    bad = key_problem(q.get("code", ""))
+                    if bad:
+                        if auth:
+                            auth.record_failure(ip)
+                        return self._send(401, {"ok": False, "reason": bad})
+                    return self._send(200, {"ok": True})
                 if p == "/PluginScratch":                     # the plugin reports a scratchpad note typed in EuroScope
                     bad = key_problem(q.get("code", ""))
                     if bad:
