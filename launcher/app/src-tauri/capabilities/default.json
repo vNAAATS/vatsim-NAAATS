@@ -9,6 +9,8 @@
     "allow-status",
     "allow-pick-folder",
     "allow-update-plugin",
+    "allow-update-sector",
+    "allow-refresh-cfg",
     "allow-save-key",
     "allow-pick-exe",
     "allow-launch",
