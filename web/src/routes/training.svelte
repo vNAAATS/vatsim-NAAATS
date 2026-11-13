@@ -84,6 +84,7 @@
     <h2 class="text-2xl font-bold mb-2">More</h2>
     <ul class="list-disc ml-6 space-y-1 mb-10">
       <li><a class="underline" href="/manual">User manual</a> for the full detail.</li>
+      <li><a class="underline" href="/icons">Icon key</a>: what every symbol and colour means.</li>
       <li><a class="underline" href="/guide">Install guide</a> and <a class="underline" href="/download">downloads</a>.</li>
     </ul>
   </div>

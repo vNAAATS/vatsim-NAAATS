@@ -118,6 +118,13 @@
       <a href="/vNAAATS-user-guide.pdf" rel="external" download class="inline-block px-5 py-2 mb-2 border-2 border-blue-10">Download</a>
     </div>
 
+    <div class="p-5 mb-6 border-2 border-blue-10 bg-blue-3">
+      <div class="text-lg font-bold">Icon key (PDF)</div>
+      <div class="text-sm opacity-80 mb-3">What every symbol, colour and flashing state means on the display and in EuroScope. The <a href="/icons" class="underline">icon key page</a> is always the newest.</div>
+      <a href="/vNAAATS-icon-key.pdf" rel="external" class="inline-block px-5 py-2 mr-2 mb-2 font-bold bg-blue-10 text-black">Open the icon key (PDF)</a>
+      <a href="/vNAAATS-icon-key.pdf" rel="external" download class="inline-block px-5 py-2 mb-2 border-2 border-blue-10">Download</a>
+    </div>
+
     <a href="/get-key" style="display:none" aria-hidden="true" tabindex="-1">.</a>
     <p class="text-sm opacity-80">Please report problems at
       <a class="underline" href="https://github.com/{repo}/issues">github.com/{repo}/issues</a>. Source code:

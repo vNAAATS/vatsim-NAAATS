@@ -107,6 +107,7 @@
 
     <h2 id="strips" class="text-2xl font-bold mb-2">5. Flight strips and their symbols</h2>
     <p class="mb-3 opacity-90">Each flight is one strip, and strips are grouped under the track or entry fix. The group heading shows the track's fixes, and each strip shows its estimated time over every fix, lined up underneath. Click the <b>callsign</b> to open the aircraft menu and select the aircraft (it also becomes the selected aircraft in EuroScope when you use a command on it). It works the other way too: click an aircraft in EuroScope and its strip is outlined in <b>yellow</b>, scrolled into view and shown even if a filter, the search box, the time window or Hide would normally keep it off the list (needs plugin 1.5b18 or newer, and the same position on the FDD as in EuroScope).</p>
+    <p class="mb-3 opacity-90">A one-page <a class="underline" href="/icons">icon key</a> lists every symbol and colour, with a <a class="underline" rel="external" href="/vNAAATS-icon-key.pdf">PDF</a> to download or print.</p>
     <p class="mb-3 opacity-90">Every strip shows: callsign, aircraft type, departure and arrival, assigned level, Mach (three digits, so Concorde shows M200), the track, the fix times, and symbols:</p>
     <ul class="list-disc ml-6 space-y-2 mb-3">
       <li><b>[CALLSIGN] in brackets</b> - the pilot is logged on to CPDLC with vNAAATS.</li>
