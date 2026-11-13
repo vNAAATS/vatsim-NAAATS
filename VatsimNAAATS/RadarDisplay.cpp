@@ -339,6 +339,8 @@ static void TypeThread(void* arg) {
 	CTypeJob* job = (CTypeJob*)arg;
 	try {
 		string why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste";
+		// Record every line the plugin types into EuroScope (first 60 characters), so a stray line in the command box can be traced
+		CLogger::Log(CLogType::NORM, string("Typing into EuroScope (command #") + to_string(job->Id) + (job->ClickFreq ? ", RCL message" : "") + "): " + job->Text.substr(0, 60), "TypeThread");
 		bool typedOk = CDataHandler::BackgroundType ? TypeIntoEuroScopeBackground(job->Text, why) : TypeIntoEuroScope(job->Text, why, job->ClickFreq);
 		if (typedOk) {
 			bool failed = false;
@@ -366,7 +368,7 @@ static void TypeThread(void* arg) {
 			}
 			if (!failed) CDataHandler::ReportRemoteResult(job->Id, true, note);
 		}
-		else CDataHandler::ReportRemoteResult(job->Id, false, why);
+		else { CLogger::Log(CLogType::WARN, "Typing command #" + to_string(job->Id) + " failed: " + why, "TypeThread"); CDataHandler::ReportRemoteResult(job->Id, false, why); }
 	}
 	catch (...) { CDataHandler::ReportRemoteResult(job->Id, false, "plugin error while typing"); }
 	Sleep(1200);                                    // leave EuroScope time to run the line before the next one
