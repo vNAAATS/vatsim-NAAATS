@@ -2,6 +2,9 @@
 
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
+## 2.9.1 - 2026-11-13
+- Group by direction: the Group menu on the flight list now has "by direction", which lists westbound flights first and then eastbound, each with the number of aircraft. It works with the search, filters and sort. User manual updated. Server deploy needed (web files).
+
 ## 2.9.0 - 2026-11-13
 - FDD for Windows: after the welcome animation a short "ALL SYSTEMS GO" screen shows for 5 seconds (Continue skips it): the server version, whether the VATSIM data and NAT tracks are up to date, oceanic-bound flights and Gander/Shanwick positions online, and CPDLC. If something is wrong it says "Some systems need attention" and lists it; it never blocks the checks that follow, and it shows once per time the app is opened. Needs the server deploy (it reads the new /api/status); the app itself is unchanged.
 - New public status page at vnaaats.com/status: server version and uptime, whether the VATSIM data and the NAT track feed are working, how many aircraft are on CPDLC, oceanic-bound flights and pilots online, which Gander, Shanwick and neighbouring ATC positions are online, and the sector pack that is currently published. It refreshes itself every 15 seconds and shows no keys, names or flight plans (new server endpoint /api/status). Server deploy needed.

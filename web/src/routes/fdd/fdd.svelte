@@ -102,7 +102,7 @@
   }
   // Search, grouping and sorting
   let search: string = "";
-  let groupBy: string = "TRACK";   // TRACK | ENTRY
+  let groupBy: string = "TRACK";   // TRACK | ENTRY | LEVEL | DIRECTION
   // Traffic window: only flights within 60 min of the oceanic entry, until 15 min after the exit ("ALL" shows everything)
   const WIN_AHEAD: number = 60;
   const WIN_BEHIND: number = 15;   // minutes past the exit point (or the handoff) a flight stays, faded
@@ -138,6 +138,18 @@
         }
       });
       [...byLevel.keys()].sort((a, b) => b - a).forEach((k) => out.push({ key: "FL" + k, label: k > 0 ? "FL" + k : "No level", track: "", kind: "LEVEL", rows: byLevel.get(k)!.sort(cmp) }));
+      return out;
+    }
+    if (g === "DIRECTION") {
+      // Westbound first, then eastbound (Direction true = eastbound)
+      const byDir: Record<string, any[]> = { WB: [], EB: [] };
+      dataHandler.networkAircraft.forEach((m, track) => {
+        for (const ac of m.values()) {
+          if (!matches(ac, track, f, mine, eb, wb, rr, tg) || !searchMatch(ac, s)) continue;
+          byDir[ac.Direction ? "EB" : "WB"].push(ac);
+        }
+      });
+      (["WB", "EB"] as const).forEach((k) => { if (byDir[k].length) out.push({ key: k, label: k === "WB" ? "Westbound" : "Eastbound", track: "", kind: "LEVEL", rows: byDir[k].sort(cmp) }); });
       return out;
     }
     if (g === "ENTRY") {
@@ -411,6 +423,7 @@
         <option value="TRACK">by track</option>
         <option value="ENTRY">by entry fix</option>
         <option value="LEVEL">by flight level</option>
+        <option value="DIRECTION">by direction</option>
       </select>
     </label>
     <label>Sort

@@ -92,7 +92,7 @@
       <li><b>Hidden (n)</b> - shown once you have hidden a strip. Pick a callsign from the list to <b>unhide</b> it.</li>
       
       <li><b>Show</b> - <i>entry -60 / exit +15 min</i> (the default) shows a flight from 60 minutes before its oceanic entry estimate until 15 minutes after its exit estimate, so the list stays short. Flights that have been handed off, or are past their exit point, stay for those 15 minutes <b>faded</b>. If you are signed in as a Gander (CZQO_) or Shanwick (EGGX_) position you also see the other OCA's flights that are 30 minutes or less from 30W; flights that have crossed 30W to the neighbour stay 15 minutes, faded. <i>All flights</i> shows everything. "n hidden" counts the flights the time window is keeping off the list. Flights with no times, the selected flight, CPDLC-connected flights, pending natTrak requests and flights tracked by an oceanic controller always show.</li>
-      <li><b>Group</b> - by track, by entry fix, or by flight level (highest first, with the number of aircraft under each heading).</li>
+      <li><b>Group</b> - by track, by entry fix, by flight level (highest first), or by direction (westbound, then eastbound), with the number of aircraft under each heading.</li>
       <li><b>Sort</b> - newest first, entry ETA, callsign, level or last changed.</li>
       <li><b>CPDLC button</b> - opens the CPDLC drawer. It shows how many aircraft are connected, an envelope with the unread count, and flashes "new logon" when a pilot has just logged on. See section 9.</li>
       <li><b>n shown</b> - how many strips are listed.</li>
