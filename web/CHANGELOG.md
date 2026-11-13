@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## 2.9.1 - 2026-11-13
+- Fix: the Contact Me outline (yellow, then red) came back after you tracked the flight, spoke to the pilot and then released the tag. Contact Me now ends for good once an oceanic controller has tracked the flight, on the FDD strip and on the EuroScope tag, so releasing the tag later no longer turns it red. Server deploy needed.
 - Auto handoff now leaves an aircraft alone once you have released or transferred its tag yourself: if a flight that was yours is no longer tracked by you, nothing is sent for it (no transfer, no UNICOM, no card), and the tag is checked again just before any automatic action. Server deploy needed (web files).
 - Group by direction: the Group menu on the flight list now has "by direction", which lists westbound flights first and then eastbound, each with the number of aircraft. It works with the search, filters and sort. User manual updated. Server deploy needed (web files).
 

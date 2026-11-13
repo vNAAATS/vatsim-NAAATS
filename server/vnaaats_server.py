@@ -462,7 +462,12 @@ class FlightStore:
             if old and old.get("ntSent"):
                 rec["ntSent"] = old["ntSent"]                 # natTrak reminder sent: survives plugin updates
             if old and old.get("cmAt"):
-                rec["cmAt"] = old["cmAt"]                     # contact-me sent: survives plugin updates
+                by_now = str(rec.get("trackedBy", "")).upper()
+                if by_now != "NATTRAK" and by_now.startswith(OCEANIC_PREFIXES) and by_now:
+                    pass                                      # an oceanic controller has the flight: the pilot made contact, so contact-me ends for good
+                                                              # (releasing the tag later must not bring the yellow/red outline back)
+                else:
+                    rec["cmAt"] = old["cmAt"]                 # contact-me sent: survives plugin updates
             if old and old.get("manual"):
                 rec["manual"] = old["manual"]                 # added by hand on the display: stays so
             if old and "scratch" in old:

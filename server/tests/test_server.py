@@ -476,6 +476,20 @@ class ContactMeTest(unittest.TestCase):
         self.assertEqual(store.mark_cm("BAW1", now=2000.0)["cmAt"], 2000.0)       # existing record: later send replaces the time
 
 
+    def test_cm_ends_when_an_oceanic_controller_tracks(self):
+        store = s.FlightStore(os.path.join(tempfile.mkdtemp(), "c2.db"))
+        store.upsert({"callsign": "AFR4N", "level": "350", "track": "A"})
+        store.mark_cm("AFR4N", now=1000.0)
+        store.upsert({"callsign": "AFR4N", "level": "350", "track": "A", "trackedBy": ""})
+        self.assertEqual(store.get("AFR4N")["cmAt"], 1000.0)                      # nobody tracking: still waiting
+        store.upsert({"callsign": "AFR4N", "level": "350", "track": "A", "trackedBy": "NATTRAK"})
+        self.assertEqual(store.get("AFR4N")["cmAt"], 1000.0)                      # the natTrak star is not a controller
+        store.upsert({"callsign": "AFR4N", "level": "350", "track": "A", "trackedBy": "NAT_FSS"})
+        self.assertNotIn("cmAt", store.get("AFR4N"))                              # an oceanic controller has it: contact made
+        store.upsert({"callsign": "AFR4N", "level": "350", "track": "A", "trackedBy": ""})
+        self.assertNotIn("cmAt", store.get("AFR4N"))                              # released afterwards: the outline stays gone
+
+
 class RetrackTest(unittest.TestCase):
     def test_journal(self):
         tmp = tempfile.mkdtemp()
