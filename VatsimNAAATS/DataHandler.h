@@ -65,6 +65,9 @@ class CDataHandler
 	static volatile long SettingsBusy; // 1 while a fetch is running
 	static volatile long SettingsMessagePending; // 1 = tell the controller to restart EuroScope
 	static void FetchSettings(void* args); // writes changed FDD settings into vnaaats.cfg (they apply when EuroScope is restarted)
+	static bool RclFreqClick; // rclfreqclick (default 25,67; 0 = off): before Auto RCL types, click 131.900 in EuroScope's channel list at the bottom left
+	static int RclFreqX; // pixels from the left edge of the EuroScope window
+	static int RclFreqY; // pixels up from the bottom edge of the EuroScope window
 	static bool BackgroundType; // backgroundtype=1 (experimental, default off): type into EuroScope without bringing it to the front
 	static int RouteSeconds; // routeseconds=10 (default): a route drawn with a right click on a tag is erased after this many seconds (0 = stays until clicked again)
 	static int ContactButton; // contactbutton=left|middle|right: the mouse button the plugin clicks the aircraft with (match your EuroScope ASEL button)

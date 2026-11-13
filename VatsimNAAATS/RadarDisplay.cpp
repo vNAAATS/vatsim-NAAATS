@@ -201,11 +201,17 @@ static bool TypeIntoEuroScopeBackground(const string& text, string& why) {
 
 // Type a line into EuroScope's command line: Home (focuses it), the text, Enter.
 // EuroScope is brought to the front first (the controller has just clicked in the browser). Fails if Windows will not allow that.
-static bool TypeIntoEuroScope(const string& text, string& why) {
+static bool ClickEsFreq(HWND es, string& why);   // defined below, with the other clicks
+static bool TypeIntoEuroScope(const string& text, string& why, bool clickFreq = false) {
 	HWND es = NULL;
 	EnumWindows(FindEsWindow, (LPARAM)&es);
 	if (!es) return false;
 	if (!BringEsToFront(es)) { why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste"; return false; }
+	// Auto RCL: select 131.900 in the channel list at the bottom left first, so the message goes out on that channel
+	if (clickFreq && CDataHandler::RclFreqClick) {
+		if (!ClickEsFreq(es, why)) return false;
+		Sleep(300);
+	}
 	// True while EuroScope is still the window in front. Typing goes to whichever window is in front, so this is checked before every
 	// key press: if the controller clicks into another program (Discord, a browser...) the typing stops at once instead of carrying on there.
 	auto esInFront = [&]() -> bool {
@@ -302,13 +308,38 @@ static bool ClickRadarPoint(POINT clientPt, string& why) {
 	return true;
 }
 
-struct CTypeJob { string Text; int Id; bool Click = false; POINT Px = { 0, 0 }; string Callsign; bool TagClick = false; };
+// Click 131.900 in EuroScope's channel list (bottom left of the window; it stays at the same distance from the bottom whatever else is in the list).
+// The spot is rclfreqclick=x,y in vnaaats.cfg: pixels from the left and from the bottom of the EuroScope window.
+static bool ClickEsFreq(HWND es, string& why) {
+	RECT rc = {};
+	if (!GetClientRect(es, &rc)) { why = "could not read the EuroScope window size to click 131.900"; return false; }
+	POINT sp = { CDataHandler::RclFreqX, rc.bottom - CDataHandler::RclFreqY };
+	if (sp.y < 0 || !ClientToScreen(es, &sp)) { why = "could not work out where 131.900 is on screen (check rclfreqclick in vnaaats.cfg)"; return false; }
+	HWND hit = WindowFromPoint(sp);
+	DWORD hitPid = 0; if (hit) GetWindowThreadProcessId(hit, &hitPid);
+	if (!hit || hitPid != GetCurrentProcessId()) { why = "another window is covering 131.900 in EuroScope, so the click would not reach it - nothing was typed"; return false; }
+	POINT back; GetCursorPos(&back);
+	g_ignoreClicksUntil = clock() + 1500;
+	SetCursorPos(sp.x - 2, sp.y - 2);
+	Sleep(80);
+	SetCursorPos(sp.x, sp.y);
+	Sleep(150);
+	mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+	Sleep(60);
+	mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+	Sleep(150);
+	SetCursorPos(back.x, back.y);
+	CLogger::Log(CLogType::NORM, "Clicked 131.900 at screen " + to_string(sp.x) + "," + to_string(sp.y) + " before typing", "ClickEsFreq");
+	return true;
+}
+
+struct CTypeJob { string Text; int Id; bool Click = false; bool ClickFreq = false; POINT Px = { 0, 0 }; string Callsign; bool TagClick = false; };
 static volatile LONG TypingBusy = 0;
 static void TypeThread(void* arg) {
 	CTypeJob* job = (CTypeJob*)arg;
 	try {
 		string why = "Windows would not let the plugin bring EuroScope to the front - click on EuroScope and try again, or use Copy and paste";
-		bool typedOk = CDataHandler::BackgroundType ? TypeIntoEuroScopeBackground(job->Text, why) : TypeIntoEuroScope(job->Text, why);
+		bool typedOk = CDataHandler::BackgroundType ? TypeIntoEuroScopeBackground(job->Text, why) : TypeIntoEuroScope(job->Text, why, job->ClickFreq);
 		if (typedOk) {
 			bool failed = false;
 			string note = string(CDataHandler::BackgroundType ? "Sent to EuroScope (background): " : "Sent to EuroScope: ") + job->Text.substr(0, 40);
@@ -632,6 +663,7 @@ void CRadarDisplay::RunRemoteCommands()
 				if (cmd.Type == "selcal" || cmd.Type == "contactme") plugin->SetASELAircraft(es);
 				InterlockedExchange(&TypingBusy, 1);
 				CTypeJob* job = new CTypeJob{ cmd.Text, cmd.Id };
+				job->ClickFreq = (cmd.Type == "natmsg");          // Auto RCL / RCL REQ: click 131.900 before typing
 				if (cmd.Type == "contactme" && CDataHandler::AutoClick) {
 					// where the aircraft is on this radar (worked out here, on EuroScope's own thread)
 					// EuroScope waits for a click on the callsign of the tag, so click that when the tag was drawn just now

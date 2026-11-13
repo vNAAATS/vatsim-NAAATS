@@ -54,6 +54,9 @@ bool CDataHandler::AutoClick = true;
 int CDataHandler::ContactButton = 0;   // 0 left, 1 middle, 2 right
 int CDataHandler::RouteSeconds = 10;
 bool CDataHandler::BackgroundType = false;
+bool CDataHandler::RclFreqClick = true;
+int CDataHandler::RclFreqX = 25;
+int CDataHandler::RclFreqY = 67;
 bool CDataHandler::Highlight = true;
 
 string CDataHandler::UrlEncode(const string& value) {
@@ -87,6 +90,13 @@ void CDataHandler::LoadSettings() {
 		else if (k == "retrack") Retrack = (v != "0");
 		else if (k == "autoclick") AutoClick = (v != "0");
 		else if (k == "contactbutton") ContactButton = (v == "middle" ? 1 : (v == "right" ? 2 : 0));
+		else if (k == "rclfreqclick") {
+			if (v == "0") RclFreqClick = false;
+			else {
+				int x = 0, y = 0;
+				if (sscanf_s(v.c_str(), "%d,%d", &x, &y) == 2 && x > 0 && y > 0 && x < 5000 && y < 5000) { RclFreqClick = true; RclFreqX = x; RclFreqY = y; }
+			}
+		}
 		else if (k == "backgroundtype") BackgroundType = (v == "1");
 		else if (k == "routeseconds") { try { RouteSeconds = max(0, min(600, stoi(v))); } catch (...) { RouteSeconds = 10; } }
 		else if (k == "settingsstamp") { try { SettingsStamp = stoll(v); } catch (...) { SettingsStamp = 0; } }
