@@ -78,7 +78,7 @@ import { writable } from "svelte/store";
 export const launchNotes = writable<string[]>([]);
 const PROG_NAME: Record<string, string> = { euroscope: "EuroScope", vacs: "VACS", afv: "Audio for VATSIM", trackaudio: "TrackAudio" };
 
-/** Called after a position is chosen: starts EuroScope, VACS and the chosen audio client once per app session, if ticked and located. */
+/** Called when the controller says Yes on the start screen: starts EuroScope, VACS and the chosen audio client (each only if ticked, located and not already running). */
 export async function autoLaunch(): Promise<void> {
   if (!inApp()) return;
   try { if (sessionStorage.getItem("vnaaats.cfgrefreshed") !== "1") { sessionStorage.setItem("vnaaats.cfgrefreshed", "1"); await refreshCfg(); } } catch (e) { /* the file stays as it is */ }   // vnaaats.cfg gets the current comments and option list once per app session; values are kept
@@ -89,10 +89,10 @@ export async function autoLaunch(): Promise<void> {
   for (const k of ["euroscope", "vacs", ...(audio === "none" ? [] : [audio])] as AutoKind[]) {
     if (!autoGet(k)) continue;
     if (!st[k]) { if (k === audio) notes.push(PROG_NAME[k] + " is not opened: its program has not been chosen yet (setup screen)."); continue; }
-    const flag = "vnaaats.launched." + k;
-    try { if (sessionStorage.getItem(flag) === "1") continue; } catch (e) { /* carry on */ }
-    try { await launch(k); try { sessionStorage.setItem(flag, "1"); } catch (e) { /* carry on */ } }
-    catch (e) { notes.push(PROG_NAME[k] + " did not start: " + errText(e)); }       // not marked as launched, so the next position choice tries again
+    // No "already launched this session" memory: the app itself skips a program that is already running, and a program the controller
+    // closed since the last Yes should open again.
+    try { await launch(k); }
+    catch (e) { notes.push(PROG_NAME[k] + " did not start: " + errText(e)); }
   }
   if (notes.length) { launchNotes.set(notes); setTimeout(() => launchNotes.set([]), 15000); }
 }

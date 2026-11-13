@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- FDD for Windows fix: pressing Yes on the start screen now opens every ticked program that is not already running (before, a program opened earlier in the same app session was skipped even after it had been closed, so only EuroScope reopened). Needs the new app build or server deploy: the web page is served by the server.
 - FDD for Windows fix: the sector pack update and the vnaaats.cfg refresh were being refused by the app ("Command update_sector not allowed by ACL"); both are now allowed. Needs the new app build.
 - FDD for Windows: when it refreshes vnaaats.cfg it now also removes the retired `squawk=` line (the plugin ignores it), so controllers using the app no longer have it left at the bottom of their file. Needs the new app build.
 - FDD for Windows: new start screen. Nothing (EuroScope, VACS, audio) opens until the checks are done and you press Yes: it shows whether the plugin, airline list, sector pack and your API key are up to date and working, then asks "Ready to open ...?". If the key is wrong, expired or withdrawn it says "API key update is required", opens vnaaats.com/access on request and lets you paste the new key before anything starts. New server check /KeyCheck (server deploy needed; on an older server the key check is skipped).
