@@ -105,12 +105,45 @@ let welcomeResolve: () => void = () => {};
 export const welcomeDone: Promise<void> = new Promise<void>((r) => { welcomeResolve = r; });
 export function finishWelcome(): void { welcomeResolve(); }
 
+// The "all systems go" screen after the welcome animation; the start screen and update question wait for it
+let splashResolve: () => void = () => {};
+export const splashDone: Promise<void> = new Promise<void>((r) => { splashResolve = r; });
+export function finishSplash(): void { splashResolve(); }
+
 // The saved sign-in (kept in the Windows Credential Manager)
 export const credGet = (): Promise<{ name: string; password: string } | null> => call("cred_get");
 export const credSave = (name: string, password: string): Promise<void> => call("cred_save", { name, password });
 export const credForget = (): Promise<void> => call("cred_forget");
 
-export function errText(e: unknown): string { return typeof e === "string" ? e : (e as any)?.message ?? "something went wrong"; }
+// The technical text behind the last error shown in plain words (for the "Copy details" link)
+export const errDetail = writable<string>("");
+
+// Turns a raw error from the app into a sentence a controller can act on. The raw text is kept in errDetail.
+export function friendlyError(raw: string): string {
+  const r = raw.toLowerCase();
+  if (/not allowed|acl|permission list/.test(r)) return "This version of the app is missing a permission it needs. Close FDD for Windows and open it again so it can update itself, then try again.";
+  if (/euroscope is (open|running)|close euroscope/.test(r)) return "EuroScope is open. Close it first, then try again.";
+  if (/os error (5)\b|access is denied|permission denied/.test(r)) return "Windows would not let the app change that file. Close EuroScope and anything else using the folder, then try again.";
+  if (/os error (32)\b|being used by another process|sharing violation/.test(r)) return "A file is in use by another program. Close EuroScope, then try again.";
+  if (/dns|connect|timed out|timeout|network|unreachable|tls|certificate|os error (10060|10061|11001)/.test(r)) return "Could not reach the internet or the vNAAATS server. Check your connection and try again.";
+  if (/rate limit|403|429/.test(r)) return "GitHub is busy right now. Wait a minute and try again.";
+  if (/disk full|no space|os error 112/.test(r)) return "There is not enough free space on the disk.";
+  return raw;
+}
+
+export function errText(e: unknown): string {
+  const raw = typeof e === "string" ? e : (e as any)?.message ?? "something went wrong";
+  errDetail.set(raw);
+  return friendlyError(raw);
+}
+
+// Puts the technical details (and the versions) on the clipboard so they can be pasted into Discord
+export async function copyErrorDetails(extra: string = ""): Promise<boolean> {
+  let raw = "";
+  errDetail.subscribe((v) => (raw = v))();
+  const text = ["vNAAATS error details", extra, raw].filter(Boolean).join("\n");
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
+}
 
 // Open natTrak's "new clearance" page with fields filled in. It never presses Create. In the app this is its own window that fills the form;
 // in a browser it opens natTrak and the caller shows the values to copy.

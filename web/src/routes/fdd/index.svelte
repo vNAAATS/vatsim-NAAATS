@@ -7,6 +7,7 @@
   import AppSetup from "./app_setup.svelte";
   import AppUpdate from "./app_update.svelte";
   import Welcome from "./welcome.svelte";
+  import SystemsCheck from "./systems_check.svelte";
   import CpdlcPanel from "./cpdlc_panel.svelte";
   import SettingsPanel from "./settings_panel.svelte";
   import ReliefPanel from "./relief_panel.svelte";
@@ -31,6 +32,7 @@
 </script>
 
 <Welcome />
+<SystemsCheck />
 <AppSetup />
 <AppUpdate />
 <LoginModal />

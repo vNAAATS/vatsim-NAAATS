@@ -19,6 +19,7 @@ const pages: { href: string; label: string }[] = [
     { href: "/manual", label: "User manual" },
     { href: "/videos", label: "How To Use - Videos" },
     { href: "/training", label: "Oceanic training" },
+    { href: "/status", label: "Server status" },
     { href: "/code-signing", label: "Code signing" },
     { href: "/privacy", label: "Privacy" },
 ];

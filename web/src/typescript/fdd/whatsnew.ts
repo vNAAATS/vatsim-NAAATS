@@ -8,6 +8,19 @@ export type Note = { id: string; date: string; items: { title: string; text: str
 
 export const NOTES: Note[] = [
   {
+    id: "2.9.0",
+    date: "13 November 2026",
+    items: [
+      { title: "Voice position reports for any flight", text: "Not only Concorde. In the aircraft menu, press \"Voice reports\" for a flight that reports by voice (for example one that is not ADS equipped). It then gets a Position reports window where you type each estimate and actual time, and the strip flags it when a report is overdue. It switches itself off after 18 hours." },
+      { title: "Sector pack installs itself", text: "FDD for Windows now checks for a new vNAAATS sector pack and installs it for you (close EuroScope first). Your own profile, screen layout and voice files are kept." },
+      { title: "New start screen", text: "Nothing opens until the checks are done. You see whether the plugin, airline list, sector pack and your API key are up to date, then choose Yes to open EuroScope, VACS and your audio client. If your key has expired the app tells you and takes you to get a new one." },
+      { title: "All systems go", text: "FDD for Windows now shows a quick ALL SYSTEMS GO screen for 5 seconds when it opens, so you can see the server, VATSIM data and tracks are healthy before anything starts. If something is wrong it tells you." },
+      { title: "Clearer errors", text: "If something goes wrong the app now says what to do in plain words, with a Copy details link you can paste into Discord." },
+      { title: "Server status page", text: "vnaaats.com/status shows whether the server, VATSIM data and tracks are working, how many flights and aircraft on CPDLC there are, and which oceanic ATC is online. Check it first if something looks wrong." },
+      { title: "Smaller changes", text: "The squawk option is gone from vnaaats.cfg (the app tidies your file), the Yes button now opens every program that is not already running, and the user manual explains voice reports." },
+    ],
+  },
+  {
     id: "2.8.0",
     date: "10 November 2026",
     items: [

@@ -68,7 +68,31 @@ TRAINEE_KEY_HOURS = 2            # how long an instructor-issued trainee key las
 NATTRAK_URL = os.environ.get("VNAAATS_NATTRAK_URL", "https://nattrak.vatsim.net/api/tracks")
 REFRESH = int(os.environ.get("VNAAATS_REFRESH_SECONDS", "600"))
 STALE_FLIGHT_SECONDS = 24 * 3600
-SERVER_VERSION = "2.8.0"      # shown at /health so you can tell which version is running
+SERVER_VERSION = "2.9.0"      # shown at /health so you can tell which version is running
+STARTED_AT = time.time()
+SECTOR_RELEASE_URL = os.environ.get("VNAAATS_SECTOR_RELEASE", "https://api.github.com/repos/garythms/vatsim-NAAATS-v2/releases/tags/sector-pack")   # 'off' hides it on the status page
+_sector_cache = {"at": 0.0, "val": None}
+
+
+def sector_pack_info():
+    """The sector pack on the project's GitHub release (name, size, date), kept 10 minutes. None when it cannot be read."""
+    if SECTOR_RELEASE_URL.lower() == "off":
+        return None
+    if time.time() - _sector_cache["at"] < 600:
+        return _sector_cache["val"]
+    val = None
+    try:
+        req = urllib.request.Request(SECTOR_RELEASE_URL, headers={"User-Agent": "vnaaats-server", "Accept": "application/vnd.github+json"})
+        with urllib.request.urlopen(req, timeout=4) as r:
+            rel = json.loads(r.read().decode("utf-8"))
+        zips = [a for a in rel.get("assets", []) if str(a.get("name", "")).lower().endswith(".zip")]
+        if zips:
+            a = max(zips, key=lambda x: str(x.get("updated_at", "")))
+            val = {"name": a.get("name", ""), "size": a.get("size", 0), "updated": a.get("updated_at", "")}
+    except Exception as e:
+        log.warning("Sector pack release lookup failed: %s", e)
+    _sector_cache.update(at=time.time(), val=val)
+    return val
 VATSIM_FEED = os.environ.get("VNAAATS_VATSIM_FEED", "https://data.vatsim.net/v3/vatsim-data.json")
 VATSIM_TRANSCEIVERS = os.environ.get("VNAAATS_VATSIM_TRANSCEIVERS", "https://data.vatsim.net/v3/transceivers-data.json")
 FEED_SECONDS = int(os.environ.get("VNAAATS_FEED_SECONDS", "15"))        # VATSIM refreshes its feed about every 15 s, so asking faster is pointless
@@ -2483,6 +2507,24 @@ def make_handler(cache, store, api_key, web_dir=None, network=None, natrak=None,
                 if p == "/health":
                     with cache.lock:
                         return self._send(200, {"ok": True, "version": SERVER_VERSION, "tracks": len(cache.tracks), "tracksUpdated": cache.updated, "trackError": cache.error})
+                if p == "/api/status":                        # public health summary for the status page: no keys, names or flight plans
+                    with cache.lock:
+                        tracks = {"count": len(cache.tracks), "updated": cache.updated, "error": cache.error}
+                    feed = {"enabled": bool(network), "updated": None, "error": None, "oceanicFlights": 0, "pilotsOnline": 0}
+                    atc = []
+                    if network:
+                        with network.lock:
+                            feed.update(updated=network.updated, error=network.error, oceanicFlights=len(network.flights), pilotsOnline=len(network.positions))
+                            atc = [{"callsign": c["callsign"], "frequency": c["frequency"]} for c in network.controllers if cpdlc_mod.station_listed(c["callsign"])]
+                    cp = {"enabled": bool(cpdlc), "connected": 0}
+                    if cpdlc:
+                        try:
+                            cp["connected"] = len(cpdlc.status().get("connected", []))
+                        except Exception:
+                            pass
+                    return self._send(200, {"version": SERVER_VERSION, "now": time.time(), "uptimeSeconds": int(time.time() - STARTED_AT),
+                                            "tracks": tracks, "feed": feed, "atc": atc, "cpdlc": cp,
+                                            "flightsOnDisplay": len(store.all_flights()), "sectorPack": sector_pack_info()})
                 if p == "/unresolved":
                     with cache.lock:
                         return self._send(200, cache.unresolved)

@@ -111,6 +111,20 @@ class T(unittest.TestCase):
         self.assertEqual((v["route"][0]["latitude"], v["route"][0]["longitude"]), (50.5, -50.0))
         self.assertNotIn("ALLRY", json.loads(self.get("/unresolved")[1]))
 
+    def test_public_status(self):
+        s.SECTOR_RELEASE_URL = "off"                                   # no GitHub lookup in tests
+        code, body = self.get("/api/status")                             # no key needed: it holds no keys, names or flight plans
+        self.assertEqual(code, 200)
+        d = json.loads(body)
+        self.assertEqual(d["version"], s.SERVER_VERSION)
+        self.assertGreaterEqual(d["uptimeSeconds"], 0)
+        self.assertEqual(d["tracks"]["count"], 2)
+        self.assertFalse(d["feed"]["enabled"])
+        self.assertEqual(d["atc"], [])
+        self.assertFalse(d["cpdlc"]["enabled"])
+        self.assertIsNone(d["sectorPack"])
+        self.assertNotIn(KEY, body)
+
     def test_nattrak_placeholder(self):
         self.assertEqual(self.get("/GetNatTrakData"), (200, "[]"))
 

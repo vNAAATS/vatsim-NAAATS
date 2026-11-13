@@ -1,0 +1,7 @@
+[Unit]
+Description=vNAAATS database backup
+
+[Service]
+Type=oneshot
+User=vnaaats
+ExecStart=/usr/bin/python3 /opt/vnaaats/deploy/backup.py

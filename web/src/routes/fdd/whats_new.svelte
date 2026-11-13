@@ -39,6 +39,7 @@
       <div class="px-3 pb-3 flex items-center gap-3">
         <button class="px-4 py-1 font-bold bg-blue-10 text-black" on:click={close}>Got it</button>
         <a class="underline text-sm opacity-80" href="/manual" target="_blank">User manual</a>
+        <a class="underline text-sm opacity-80" href="https://github.com/garythms/vatsim-NAAATS-v2/blob/master/web/CHANGELOG.md" target="_blank" rel="noopener">Full list of changes</a>
       </div>
     </div>
   </div>

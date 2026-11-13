@@ -9,7 +9,7 @@
   onMount(async () => {
     if (!app.inApp()) return;
     try { if (sessionStorage.getItem(ASKED) === "1") return; } catch (e) { /* ask anyway */ }
-    await app.welcomeDone;
+    await app.splashDone;
     info = await app.updateCheck();
   });
   function later(): void { try { sessionStorage.setItem(ASKED, "1"); } catch (e) { /* asked again next time */ } info = null; }

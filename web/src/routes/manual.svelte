@@ -16,7 +16,7 @@
     ["nattrak", "8. natTrak requests and alerts"],
     ["cpdlc", "9. CPDLC"],
     ["tracks", "10. Tracks panel"],
-    ["conc", "11. Concorde position reports"],
+    ["conc", "11. Position reports (Concorde and voice reports)"],
     ["es", "12. What you see in EuroScope"],
     ["cfg", "13. Settings in vnaaats.cfg"],
     ["flow", "14. A typical shift, step by step"],
@@ -74,7 +74,7 @@
       <li><b>Right, top:</b> the <b>Flight Plan</b> panel for the selected aircraft.</li>
       <li><b>Right, middle:</b> natTrak information.</li>
       <li><b>Right, bottom:</b> the <b>Tracks</b> panel (today's NATs).</li>
-      <li><b>Pop-ups:</b> the aircraft menu (click a callsign), the CPDLC drawer, and the Concorde position reports table.</li>
+      <li><b>Pop-ups:</b> the aircraft menu (click a callsign), the CPDLC drawer, and the position reports table.</li>
     </ul>
 
     <h2 id="topbar" class="text-2xl font-bold mb-2">4. The top bars and filters</h2>
@@ -98,7 +98,7 @@
       <li><b>n shown</b> - how many strips are listed.</li>
       <li><b>Auto RCL</b> - the RCL reminder (section 8). Shows <i>Auto RCL: N waiting</i> when flights need a reminder and it is waiting for the sending controller to say go. Click it to open the box.</li>
       <li><b>Settings</b> - display options, plus a <b>What's new</b> button that re-opens the latest change notes (they also appear once after an update).</li>
-      <li><b>Overdue</b> (flashing clock) - Concorde flights overdue a position report. See section 11.</li>
+      <li><b>Overdue</b> (flashing clock) - Concorde or voice-report flights overdue a position report. See section 11.</li>
       <li><b>Warning triangle + number</b> - how many flights currently have a warning on their strip.</li>
     </ul>
 
@@ -124,7 +124,7 @@
         </ul>
         Hover to see the callsign and frequency. If VATSIM has no radio information, it shows who is tracking the aircraft in EuroScope instead.</li>
       <li><b>Clipboard with a tick</b> - the clearance was processed on natTrak (hover for the time).</li>
-      <li><b>Flashing strip</b> - a natTrak request is waiting, a CPDLC message or logon needs a look, or a Concorde is overdue. Flashing can be turned off (see section 8).</li>
+      <li><b>Flashing strip</b> - a natTrak request is waiting, a CPDLC message or logon needs a look, or a Concorde or voice-report flight is overdue. Flashing can be turned off (see section 8).</li>
     </ul>
     <p class="mb-6 opacity-90">Strips for flights tracked by an oceanic controller (CZQO, EGGX, NAT_FSS and so on) never disappear until the flight has been untracked for 15 minutes (shown faded once untracked). Flights whose pilot has left VATSIM are hidden unless they are selected, on CPDLC, or have a request pending. A filed <b>NAT track</b> such as <i>HOIST NATF GOMUP</i> is checked against today's tracks and replaced by that track's fixes between the filed entry and exit fix, so the strip sits under the right track. After you send <b>Contact me</b> the callsign cell turns <b>yellow</b>; if 20 minutes later nobody is tracking the flight and it is still in oceanic airspace it turns <b>red</b>, and it clears once an oceanic controller tracks it. <b>If EuroScope crashes</b> or you lose your connection, the plugin tracks your aircraft again about 20 seconds after you are back (within 5 minutes, never an aircraft another controller has taken, and not if someone with a different name has signed in on the FDD at your position). Put <i>retrack=0</i> in vnaaats.cfg to turn this off. Waypoints are always shown as four digits (for example 52/50), whatever format the flight plan used.</p>
 
@@ -140,7 +140,7 @@
       <li><b>Contact Me</b> - <b>Send</b> runs EuroScope's contact-me command for the aircraft. <b>Copy .contactme</b> copies it.</li>
       <li><b>RCL REQ</b> - the reminder asking the pilot to request oceanic clearance on natTrak (CPDLC clearance is not available). <b>Send</b> types the message into EuroScope for you, <b>Copy</b> copies it, <b>I have sent it - mark with red *</b> puts the red * on the strip and the radar tag, and <b>Remove mark</b> clears it.</li>
       <li><b>Hide</b> - hides the strip <b>for you only</b>, in this browser, for 12 hours. Nobody else is affected and EuroScope and VATSIM are not touched. Bring it back from the <i>Hidden</i> list or with <i>Add callsign</i>.</li>
-      <li><b>Position reports</b> - Concorde only. See section 11.</li>
+      <li><b>Position reports</b> - Concorde, or any flight with <b>Voice reports</b> switched on. See section 11.</li>
       <li><b>Supervisor</b> (red) - write a message to the supervisors, or press <b>No Contact</b> for the standard text, then <b>Copy .wallop</b> and paste it in EuroScope.</li>
     </ul>
     <p class="mb-6 opacity-90">Track, untrack, transfer, SELCAL and contact me need you to be signed in with a position and EuroScope connected. <b>Send</b> buttons need <b>autotype=1</b> in vnaaats.cfg (section 13); without it use the <b>Copy</b> buttons and paste the command into EuroScope's command line (click in it, Ctrl+V, Enter). EuroScope's contact-me and SELCAL commands work on the <i>selected</i> aircraft and take no callsign, so the plugin selects the aircraft for you before it types them.</p>
@@ -156,7 +156,7 @@
       <li><b>Route (edit)</b> - amend the route. Latitude/longitude fixes must be written as two numbers over two numbers (51/20). Forms such as 51N20W are refused with a red warning as you type. Fixes you keep keep their times; new fixes have none. This changes the FDD and server only, <b>not</b> the flight plan in EuroScope or on VATSIM.</li>
       <li><b>Note</b> (up to 15 characters) - the EuroScope <b>scratchpad</b>. It shows under the tag in EuroScope, goes with the aircraft to the next controller, and anything typed in the scratchpad in EuroScope shows here. Letters, numbers, spaces and / . , + * - only. Clear it to remove the note.</li>
       <li><b>SELCAL</b> - on the route row, editable.</li>
-      <li><b>Position reports</b> button - Concorde only.</li>
+      <li><b>Position reports</b> button - Concorde, or any flight with Voice reports switched on.</li>
       <li><b>Last change HHMMz by POSITION</b> - who last changed level, Mach, track, SELCAL or the route.</li>
     </ul>
     <p class="mb-6 opacity-90">If the panel says <i>View only - sign in and pick a position to edit</i>, nothing can be changed yet: sign in and choose a position.</p>
@@ -216,9 +216,17 @@
     <h2 id="tracks" class="text-2xl font-bold mb-2">10. Tracks panel</h2>
     <p class="mb-6 opacity-90">Bottom right. The heading shows the TMI. Westbound and eastbound tracks are listed with their validity time once on the heading (for example <i>Westbound 1130-1900z</i>). Each track is two lines: its name and fixes, then its flight levels. The same fixes appear as the column headings over the strips.</p>
 
-    <h2 id="conc" class="text-2xl font-bold mb-2">11. Concorde position reports</h2>
-    <p class="mb-3 opacity-90">For aircraft type CONC, a <b>Position reports</b> button appears in the aircraft menu and flight plan panel. It opens a table with every fix on the route and three times: <b>Calc</b> (calculated), <b>Est</b> and <b>Actual</b>. Type times as four digits, or press <b>now</b> to fill the current time. Reported times replace the calculated times on the strip.</p>
-    <p class="mb-6 opacity-90">A Concorde <b>flashes</b> (strip, button and table row), and the top bar shows a red <i>overdue</i> count, when the next fix's time passed more than 3 minutes ago with no report.</p>
+    <h2 id="conc" class="text-2xl font-bold mb-2">11. Position reports (Concorde and voice reports)</h2>
+    <p class="mb-3 opacity-90">A <b>Position reports</b> button opens a table with every fix on the route and three times: <b>Calc</b> (calculated), <b>Est</b> and <b>Actual</b>. Type times as four digits, or press <b>now</b> to fill the current time. Reported times replace the calculated times on the strip. Concorde always has it.</p>
+    <h3 class="text-lg font-bold mb-1">Any other flight: Voice reports</h3>
+    <p class="mb-2 opacity-90">Some aircraft cannot send automatic position reports (for example, one that is not ADS equipped) and report by voice instead. For those:</p>
+    <ol class="list-decimal ml-6 mb-3 space-y-1 opacity-90">
+      <li>Click the callsign to open the aircraft menu.</li>
+      <li>Press <b>Voice reports: off</b>. It changes to <b>Voice reports: ON</b> and a <b>Position reports</b> button appears (also in the flight plan panel).</li>
+      <li>Type each report as the pilot gives it. Press <b>now</b> for the current time.</li>
+    </ol>
+    <p class="mb-2 opacity-90">Good to know: it is for that one flight only, everyone on the display sees it, and it switches itself off after 18 hours. Switching it on or off clears the times typed so far, so only turn it off when you are done.</p>
+    <p class="mb-6 opacity-90">A flight with position reports <b>flashes</b> (strip, button and table row), and the top bar shows a red <i>overdue</i> count, when the next fix's time passed more than 3 minutes ago with no report.</p>
 
     <h2 id="es" class="text-2xl font-bold mb-2">12. What you see in EuroScope</h2>
     <ul class="list-disc ml-6 space-y-2 mb-3">

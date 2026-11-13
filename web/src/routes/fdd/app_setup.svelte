@@ -3,6 +3,7 @@
   import * as app from "../../typescript/fdd/app";
   import * as sess from "../../typescript/fdd/session";
   import * as vc from "../../typescript/fdd/vacs";
+  import config from "../../config.json";
   const { vacs } = vc;
 
   let show: boolean = false;
@@ -20,6 +21,12 @@
   const SEEN = "vnaaats.appSetupSeen";
   function seen(): boolean { try { return sessionStorage.getItem(SEEN) === "1"; } catch (e) { return false; } }
 
+  const { errDetail } = app;
+  let copied: boolean = false;
+  async function copyDetails(): Promise<void> {
+    copied = await app.copyErrorDetails("App " + (st?.app_version ?? "?") + ", display " + config.version);
+    setTimeout(() => (copied = false), 3000);
+  }
   let problem: string = "";                         // why the app did not answer
   async function refresh(): Promise<void> {
     try {
@@ -37,7 +44,7 @@
   }
   onMount(async () => {
     if (!app.inApp() || seen()) return;
-    await app.welcomeDone;
+    await app.splashDone;
     await refresh();
     prefs();
     firstTime = !isDone();
@@ -146,7 +153,7 @@
       {:else}
         {#if st && st.euroscope_running && !(pluginOk && sectorOk)}<div class="mb-2 text-sm text-yellow-300">EuroScope is open. Close it first, then press <b>Update now</b>.</div>{/if}
         {#if !(pluginOk && sectorOk)}<div class="mb-3 text-sm opacity-90">Close EuroScope first, then press <b>Update now</b>. Your vnaaats.cfg (and your key) is not touched.</div>{/if}
-        {#if msg}<div class="mb-2 text-sm text-yellow-300">{msg}</div>{/if}
+        {#if msg}<div class="mb-2 text-sm text-yellow-300">{msg}{#if msg.startsWith("✖") && $errDetail} <button class="underline text-xs ml-1" on:click={copyDetails}>{copied ? "Copied" : "Copy details"}</button>{/if}</div>{/if}
         <div class="flex gap-2">
           {#if !(pluginOk && sectorOk)}<button class="flex-1 py-2 {BTN}" disabled={busy} on:click={doUpdate}>{busy ? "Updating..." : "Update now"}</button>{/if}
           <button class="flex-1 py-2 border border-blue-6" disabled={busy} on:click={notNow}>{pluginOk && sectorOk ? "Continue" : "Not now"}</button>
@@ -162,7 +169,9 @@
         <ul class="mb-3 text-sm space-y-1">
           <li class={pluginOk ? "text-green-300" : "text-yellow-300"}>{pluginOk ? "✔ Plugin" + (st.latest_version ? " " + st.latest_version : "") + " and airline list are the latest" : "⚠ The plugin or its files are not up to date"}</li>
           {#if st.sector_up_to_date !== null && st.sector_up_to_date !== undefined}
-            <li class={sectorOk ? "text-green-300" : "text-yellow-300"}>{sectorOk ? "✔ Sector pack is the latest" : "⚠ A newer sector pack is available (not installed)"}</li>
+            <li class={sectorOk ? "text-green-300" : "text-yellow-300"}>{sectorOk ? "✔ Sector pack" + (st.sector_name ? " " + st.sector_name : "") + " is the latest" : "⚠ A newer sector pack is available (not installed)"}</li>
+          {:else}
+            <li class="text-yellow-300">⚠ Sector pack: could not be checked this time (no answer from GitHub). It will be checked again next time.</li>
           {/if}
           {#if st.key_status === "ok"}<li class="text-green-300">✔ Your API key works</li>
           {:else if keyBad}<li class="text-red-300">✖ Your API key {KEY_WHY[st.key_status ?? "unknown"] ?? "is not accepted"}</li>
@@ -179,7 +188,7 @@
           </div>
         {/if}
       {/if}
-      {#if msg}<div class="mb-2 text-sm text-yellow-300">{msg}</div>{/if}
+      {#if msg}<div class="mb-2 text-sm text-yellow-300">{msg}{#if msg.startsWith("✖") && $errDetail} <button class="underline text-xs ml-1" on:click={copyDetails}>{copied ? "Copied" : "Copy details"}</button>{/if}</div>{/if}
       {#if toOpen.length}
         <div class="mb-3 text-sm">{allGood ? "No updates are needed." : "Some things above need attention."} Ready to open {toOpen.join(", ")} now?</div>
         <div class="flex gap-2">
@@ -203,7 +212,7 @@
         <button class="mt-2 underline text-xs" on:click={() => app.openExternal("https://vnaaats.com/guide")}>Open the full install guide in your browser</button>
       </details>
       {#if !st && problem}
-        <div class="mb-2 text-yellow-300 text-sm break-words">The app could not check this computer: {problem}</div>
+        <div class="mb-2 text-yellow-300 text-sm break-words">The app could not check this computer: {problem} <button class="underline text-xs ml-1" on:click={copyDetails}>{copied ? "Copied" : "Copy details"}</button></div>
         <div class="flex gap-2">
           <button class={BTN} on:click={refresh}>Try again</button>
           <button class="px-3 py-1 border border-blue-6" on:click={done}>Continue anyway</button>
@@ -244,6 +253,11 @@
                 <div class="text-yellow-300 text-sm">A newer sector pack{st.sector_name ? " (" + st.sector_name + ")" : ""} is available. Close EuroScope first, then update.</div>
                 <button class="{BTN} mt-1" disabled={busy} on:click={update}>Update now</button>
               {/if}
+            </div>
+          {:else}
+            <div class={STEP}>
+              <b>Sector pack</b>
+              <div class="text-yellow-300 text-sm">⚠ Could not be checked this time (no answer from GitHub). It will be checked again next time.</div>
             </div>
           {/if}
           {#if st.dll_found}
@@ -311,7 +325,7 @@
             <label class="flex items-center gap-2 mt-2 text-sm"><input type="checkbox" bind:checked={autoAudio} on:change={() => app.autoSet(audio === "none" ? "afv" : audio, autoAudio)} /> Open {AUDIO_NAME[audio]} for me when I say yes on the start screen</label>
           {/if}
         </div>
-        {#if msg}<div class="mb-2 text-sm text-yellow-300">{msg}</div>{/if}
+        {#if msg}<div class="mb-2 text-sm text-yellow-300">{msg}{#if msg.startsWith("✖") && $errDetail} <button class="underline text-xs ml-1" on:click={copyDetails}>{copied ? "Copied" : "Copy details"}</button>{/if}</div>{/if}
         <button class="w-full py-2 font-bold {ready ? 'bg-blue-10 text-black' : 'border border-blue-6'}" on:click={done}>{ready ? "Continue" : "Continue anyway"}</button>
       {/if}
     </div>
