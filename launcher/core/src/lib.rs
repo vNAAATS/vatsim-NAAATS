@@ -304,6 +304,9 @@ pub fn is_exe(path: &Path) -> bool {
     path.is_file() && path.extension().map(|e| e.to_string_lossy().eq_ignore_ascii_case("exe")).unwrap_or(false)
 }
 
+/// Options the plugin no longer has. A refresh drops these lines instead of keeping them at the end of the file.
+const RETIRED_OPTIONS: &[&str] = &["squawk"];
+
 /// Bring vnaaats.cfg up to date with the template on the server: the comments and the list of options are replaced by the template's,
 /// every value the controller already has (key, server, switches, settingsstamp ...) is kept, options the file does not have are
 /// left out (the plugin's own defaults apply, so behaviour does not change), and lines the template does not know are kept at the end.
@@ -340,7 +343,7 @@ pub fn refresh_cfg(dir: &Path, template: &str) -> Result<bool, String> {
             }
         }
     }
-    let extras: Vec<&(String, String)> = have.iter().filter(|(k, _)| !used.contains(k)).collect();
+    let extras: Vec<&(String, String)> = have.iter().filter(|(k, _)| !used.contains(k) && !RETIRED_OPTIONS.contains(&k.as_str())).collect();
     if !extras.is_empty() {
         out.push(String::new());
         for (k, v) in extras { out.push(format!("{}={}", k, v)); }
@@ -374,7 +377,7 @@ mod tests {
         fs::write(d.path().join(CFG_NAME), "# old header\r\nserver=https://x.example\r\nkey=1234567.abc\r\nautotype=0\r\nsquawk=0\r\nsettingsstamp=5\r\n").unwrap();
         assert_eq!(refresh_cfg(d.path(), tpl), Ok(true));
         let t = fs::read_to_string(d.path().join(CFG_NAME)).unwrap();
-        assert_eq!(t, "# new header\r\nserver=https://x.example\r\nkey=1234567.abc\r\n\r\n# autotype help\r\nautotype=0\r\n# highlight help\r\n\r\nsquawk=0\r\nsettingsstamp=5\r\n");
+        assert_eq!(t, "# new header\r\nserver=https://x.example\r\nkey=1234567.abc\r\n\r\n# autotype help\r\nautotype=0\r\n# highlight help\r\n\r\nsettingsstamp=5\r\n");
         assert!(!t.contains("highlight=") && !t.contains("PASTE"));  // not in their file: not added
         assert_eq!(refresh_cfg(d.path(), tpl), Ok(false));          // second time: nothing to do
         assert!(refresh_cfg(d.path(), "<html>nope").is_err());
@@ -559,6 +562,15 @@ mod tests {
         assert_eq!(read_key(d.path()), None);
         fs::write(d.path().join(CFG_NAME), "# key=ignored\r\nserver=x\r\nkey = 1234567.abc \r\n").unwrap();
         assert_eq!(read_key(d.path()), Some("1234567.abc".to_string()));
+    }
+
+    #[test]
+    fn refresh_cfg_drops_retired_options_but_keeps_unknown_ones() {
+        let d = tempfile::tempdir().unwrap();
+        fs::write(d.path().join(CFG_NAME), "# old\r\nserver=https://x.example\r\nkey=1234567.abc\r\nsquawk=1\r\nmyoption=5\r\n").unwrap();
+        assert!(refresh_cfg(d.path(), "# new\r\nserver=https://vnaaats.com\r\nkey=PASTE_YOUR_API_KEY_HERE\r\n").unwrap());
+        let t = fs::read_to_string(d.path().join(CFG_NAME)).unwrap();
+        assert_eq!(t, "# new\r\nserver=https://x.example\r\nkey=1234567.abc\r\n\r\nmyoption=5\r\n");
     }
 
     #[test]

@@ -3,6 +3,7 @@
 Version shown in the header (`src/config.json`). Bump it whenever the display changes.
 
 ## Unreleased
+- FDD for Windows: when it refreshes vnaaats.cfg it now also removes the retired `squawk=` line (the plugin ignores it), so controllers using the app no longer have it left at the bottom of their file. Needs the new app build.
 - FDD for Windows: new start screen. Nothing (EuroScope, VACS, audio) opens until the checks are done and you press Yes: it shows whether the plugin, airline list, sector pack and your API key are up to date and working, then asks "Ready to open ...?". If the key is wrong, expired or withdrawn it says "API key update is required", opens vnaaats.com/access on request and lets you paste the new key before anything starts. New server check /KeyCheck (server deploy needed; on an older server the key check is skipped).
 - FDD for Windows: the sector pack now updates from the app. When the display opens and a newer pack is on the project's "sector-pack" GitHub release, the update screen lists it and Update now installs it into the EXOCO folder (never touching vnaaats.cfg). Updating the plugin or the sector pack while EuroScope is open now stops with "close EuroScope first". Needs the new app build; the web page change is static only.
 
